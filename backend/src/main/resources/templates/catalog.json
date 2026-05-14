@@ -1,0 +1,110 @@
+[
+  {
+    "key": "north-star",
+    "name": "北极星",
+    "summary": "经典专业风，头部信息清晰，适合通用求职场景。",
+    "category": "经典专业",
+    "layout": "classic",
+    "theme": {
+      "pageBackground": "#ffffff",
+      "borderColor": "rgba(20, 33, 61, 0.08)",
+      "mutedText": "rgba(20, 33, 61, 0.58)",
+      "accent": "#3157a4",
+      "accentSoft": "rgba(49, 87, 164, 0.1)",
+      "accentText": "#3157a4",
+      "heroBackground": "linear-gradient(135deg, rgba(27, 47, 93, 0.96), rgba(67, 100, 188, 0.9))",
+      "heroText": "#fbfdff",
+      "heroMuted": "rgba(251, 253, 255, 0.72)",
+      "railBackground": "linear-gradient(180deg, rgba(245, 248, 255, 0.95), rgba(255, 255, 255, 0.98))",
+      "panelBackground": "rgba(49, 87, 164, 0.08)"
+    },
+    "preview": {
+      "canvasBackground": "linear-gradient(180deg, rgba(244, 239, 227, 0.7), rgba(238, 242, 247, 0.8))",
+      "sheetBackground": "#ffffff",
+      "heroBackground": "linear-gradient(135deg, #1f3669, #4b74d1)",
+      "asideBackground": "rgba(49, 87, 164, 0.08)",
+      "lineColor": "rgba(20, 33, 61, 0.12)"
+    }
+  },
+  {
+    "key": "grid-slate",
+    "name": "网格石板",
+    "summary": "现代双栏风，侧栏承载辅助信息，主栏突出核心经历。",
+    "category": "现代双栏",
+    "layout": "two-column",
+    "theme": {
+      "pageBackground": "#ffffff",
+      "borderColor": "rgba(20, 33, 61, 0.08)",
+      "mutedText": "rgba(20, 33, 61, 0.58)",
+      "accent": "#ff8c42",
+      "accentSoft": "rgba(255, 140, 66, 0.16)",
+      "accentText": "#8a4500",
+      "heroBackground": "linear-gradient(180deg, rgba(255, 140, 66, 0.16), rgba(255, 255, 255, 0.92))",
+      "heroText": "#14213d",
+      "heroMuted": "rgba(20, 33, 61, 0.68)",
+      "railBackground": "linear-gradient(180deg, rgba(255, 140, 66, 0.14), rgba(255, 255, 255, 0.94))",
+      "panelBackground": "rgba(255, 140, 66, 0.14)"
+    },
+    "preview": {
+      "canvasBackground": "linear-gradient(180deg, rgba(255, 243, 235, 0.8), rgba(245, 247, 251, 0.84))",
+      "sheetBackground": "#ffffff",
+      "heroBackground": "linear-gradient(180deg, #ff8c42, #ffd166)",
+      "asideBackground": "rgba(255, 140, 66, 0.18)",
+      "lineColor": "rgba(20, 33, 61, 0.14)"
+    }
+  },
+  {
+    "key": "pure-form",
+    "name": "纯序",
+    "summary": "极简 ATS 风，版式克制紧凑，强调可读性和结构化。",
+    "category": "ATS 极简",
+    "layout": "minimal",
+    "theme": {
+      "pageBackground": "#ffffff",
+      "borderColor": "rgba(31, 41, 55, 0.12)",
+      "mutedText": "rgba(31, 41, 55, 0.6)",
+      "accent": "#1f2937",
+      "accentSoft": "rgba(31, 41, 55, 0.08)",
+      "accentText": "#1f2937",
+      "heroBackground": "linear-gradient(180deg, #f3f4f6, #ffffff)",
+      "heroText": "#111827",
+      "heroMuted": "rgba(31, 41, 55, 0.66)",
+      "railBackground": "linear-gradient(180deg, rgba(249, 250, 251, 0.96), rgba(255, 255, 255, 0.98))",
+      "panelBackground": "rgba(31, 41, 55, 0.06)"
+    },
+    "preview": {
+      "canvasBackground": "linear-gradient(180deg, rgba(247, 248, 250, 0.92), rgba(255, 255, 255, 0.92))",
+      "sheetBackground": "#ffffff",
+      "heroBackground": "#eef2f7",
+      "asideBackground": "rgba(31, 41, 55, 0.08)",
+      "lineColor": "rgba(31, 41, 55, 0.14)"
+    }
+  },
+  {
+    "key": "ink-flow",
+    "name": "墨流",
+    "summary": "编辑感模板，身份气质更强，适合产品与创意岗位。",
+    "category": "编辑创意",
+    "layout": "editorial",
+    "theme": {
+      "pageBackground": "#ffffff",
+      "borderColor": "rgba(20, 33, 61, 0.08)",
+      "mutedText": "rgba(57, 47, 90, 0.58)",
+      "accent": "#392f5a",
+      "accentSoft": "rgba(57, 47, 90, 0.1)",
+      "accentText": "#392f5a",
+      "heroBackground": "linear-gradient(160deg, rgba(37, 28, 58, 0.98), rgba(71, 52, 108, 0.92))",
+      "heroText": "#f8f3ff",
+      "heroMuted": "rgba(248, 243, 255, 0.72)",
+      "railBackground": "linear-gradient(180deg, rgba(244, 239, 252, 0.78), rgba(255, 255, 255, 0.95))",
+      "panelBackground": "rgba(255, 255, 255, 0.09)"
+    },
+    "preview": {
+      "canvasBackground": "linear-gradient(180deg, rgba(247, 240, 255, 0.86), rgba(241, 234, 252, 0.7))",
+      "sheetBackground": "#ffffff",
+      "heroBackground": "linear-gradient(135deg, #2f2146, #58417f)",
+      "asideBackground": "rgba(57, 47, 90, 0.14)",
+      "lineColor": "rgba(57, 47, 90, 0.16)"
+    }
+  }
+]

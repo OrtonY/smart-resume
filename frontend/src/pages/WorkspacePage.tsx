@@ -17,15 +17,16 @@ import {
   Layout,
   List,
   Modal,
-  Select,
   Space,
   Spin,
   Switch,
   Tag,
   Typography,
 } from 'antd'
-import { startTransition, useDeferredValue, useEffect, useState, type ReactNode } from 'react'
+import { startTransition, useCallback, useDeferredValue, useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
+import { ResumeTemplatePicker } from '../features/resume/components/ResumeTemplatePicker'
 import {
   createShare,
   createResume,
@@ -37,6 +38,11 @@ import {
   restoreResume,
   updateResume,
 } from '../features/resume/api/resumeApi'
+import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
+import {
+  FALLBACK_RESUME_TEMPLATE_CATALOG,
+  resolveResumeTemplate,
+} from '../features/resume/templateCatalog'
 import type {
   CertificateItem,
   EducationItem,
@@ -49,7 +55,6 @@ import type {
   SkillItem,
   WorkExperienceItem,
 } from '../features/resume/types'
-import { RESUME_TEMPLATES } from '../lib/constants/templates'
 
 const { Sider, Content } = Layout
 const { Paragraph, Text } = Typography
@@ -64,6 +69,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
 
 export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const { message } = App.useApp()
+  const { templates, loading: loadingTemplates } = useResumeTemplateCatalog()
   const [resumeList, setResumeList] = useState<ResumeSummary[]>([])
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ResumeDetail | null>(null)
@@ -73,46 +79,73 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [createResumeTitle, setCreateResumeTitle] = useState('My Resume')
-  const [createTemplateKey, setCreateTemplateKey] = useState(RESUME_TEMPLATES[0].key)
+  const [createTemplateKey, setCreateTemplateKey] = useState(FALLBACK_RESUME_TEMPLATE_CATALOG[0].key)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const deferredDraft = useDeferredValue(draft)
 
-  useEffect(() => {
-    void loadResumeList()
-  }, [includeDeleted, accessToken])
+  const loadResumeList = useCallback(async () => {
+    setLoadingResumeList(true)
+    try {
+      const list = await listResumes(includeDeleted)
+      setResumeList(list)
+      if (list.length === 0) {
+        setSelectedResumeId(null)
+        return
+      }
 
-  useEffect(() => {
-    if (!selectedResumeId) {
-      setDraft(null)
-      setShareLinks([])
-      return
+      startTransition(() => {
+        setSelectedResumeId((currentSelectedResumeId) => {
+          if (currentSelectedResumeId && list.some((resume) => resume.id === currentSelectedResumeId)) {
+            return currentSelectedResumeId
+          }
+
+          return list[0].id
+        })
+      })
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
+    } finally {
+      setLoadingResumeList(false)
     }
-    void loadResumeDetail(selectedResumeId)
-  }, [selectedResumeId])
+  }, [includeDeleted, message])
 
-  useEffect(() => {
-    if (!draft || !selectedResumeId) {
-      return
-    }
+  const clearActiveResume = useCallback(() => {
+    setDraft(null)
+    setShareLinks([])
+  }, [])
 
-    // 只比较可编辑字段，避免后端返回的额外字段导致重复保存
-    const draftSignature = JSON.stringify({
-      title: draft.title,
-      templateKey: draft.templateKey,
-      content: draft.content,
-    })
-    if (draftSignature === lastSavedSignature) {
-      return
-    }
-
-    setSaveState('saving')
-    const timeoutId = window.setTimeout(async () => {
+  const loadResumeDetail = useCallback(
+    async (resumeId: string) => {
+      setLoadingResumeDetail(true)
       try {
-        const saved = await updateResume(selectedResumeId, {
-          title: draft.title,
-          templateKey: draft.templateKey,
-          content: draft.content,
+        const [detail, shares] = await Promise.all([getResume(resumeId), listShares(resumeId)])
+        setDraft(detail)
+        const signature = JSON.stringify({
+          title: detail.title,
+          templateKey: detail.templateKey,
+          content: detail.content,
+        })
+        setLastSavedSignature(signature)
+        setShareLinks(shares)
+        setSaveState('saved')
+      } catch (error) {
+        void message.error(error instanceof Error ? error.message : '无法加载简历详情。')
+      } finally {
+        setLoadingResumeDetail(false)
+      }
+    },
+    [message],
+  )
+
+  const persistDraft = useCallback(
+    async (resumeId: string, currentDraft: ResumeDetail) => {
+      setSaveState('saving')
+      try {
+        const saved = await updateResume(resumeId, {
+          title: currentDraft.title,
+          templateKey: currentDraft.templateKey,
+          content: currentDraft.content,
         })
         const signature = JSON.stringify({
           title: saved.title,
@@ -137,51 +170,51 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
         setSaveState('save_failed')
         void message.error(error instanceof Error ? error.message : '自动保存失败。')
       }
-    }, 900)
+    },
+    [message],
+  )
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadResumeList()
+    }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [draft, selectedResumeId, lastSavedSignature])
+  }, [accessToken, loadResumeList])
 
-  async function loadResumeList() {
-    setLoadingResumeList(true)
-    try {
-      const list = await listResumes(includeDeleted)
-      setResumeList(list)
-      if (list.length === 0) {
-        setSelectedResumeId(null)
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (!selectedResumeId) {
+        clearActiveResume()
         return
       }
 
-      if (!selectedResumeId || !list.some((resume) => resume.id === selectedResumeId)) {
-        startTransition(() => setSelectedResumeId(list[0].id))
-      }
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
-    } finally {
-      setLoadingResumeList(false)
-    }
-  }
+      void loadResumeDetail(selectedResumeId)
+    }, 0)
 
-  async function loadResumeDetail(resumeId: string) {
-    setLoadingResumeDetail(true)
-    try {
-      const [detail, shares] = await Promise.all([getResume(resumeId), listShares(resumeId)])
-      setDraft(detail)
-      // 只比较可编辑字段，避免后端返回的额外字段导致重复保存
-      const signature = JSON.stringify({
-        title: detail.title,
-        templateKey: detail.templateKey,
-        content: detail.content,
-      })
-      setLastSavedSignature(signature)
-      setShareLinks(shares)
-      setSaveState('saved')
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载简历详情。')
-    } finally {
-      setLoadingResumeDetail(false)
+    return () => window.clearTimeout(timeoutId)
+  }, [clearActiveResume, loadResumeDetail, selectedResumeId])
+
+  useEffect(() => {
+    if (!draft || !selectedResumeId) {
+      return
     }
-  }
+
+    const draftSignature = JSON.stringify({
+      title: draft.title,
+      templateKey: draft.templateKey,
+      content: draft.content,
+    })
+    if (draftSignature === lastSavedSignature) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void persistDraft(selectedResumeId, draft)
+    }, 900)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [draft, lastSavedSignature, persistDraft, selectedResumeId])
 
   async function handleCreateResume() {
     try {
@@ -307,7 +340,15 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   }
 
   function selectedTemplateSummary() {
-    return RESUME_TEMPLATES.find((item) => item.key === draft?.templateKey)?.summary ?? '选择此简历的视觉风格。'
+    return resolveResumeTemplate(templates, draft?.templateKey ?? createTemplateKey).summary
+  }
+
+  function selectedTemplateName(templateKey: string) {
+    return resolveResumeTemplate(templates, templateKey).name
+  }
+
+  function selectedTemplateCategory(templateKey: string) {
+    return resolveResumeTemplate(templates, templateKey).category
   }
 
   return (
@@ -386,8 +427,10 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
                       }
                       description={
                         <Space direction="vertical" size={4}>
-                          <Tag color="default">{item.templateKey}</Tag>
-                          <span style={{ color: 'rgba(245,247,251,0.64)' }}>更新于 {new Date(item.updatedAt).toLocaleString()}</span>
+                          <Tag color="default">{selectedTemplateName(item.templateKey)}</Tag>
+                          <span style={{ color: 'rgba(245,247,251,0.64)' }}>
+                            更新于 {new Date(item.updatedAt).toLocaleString()}
+                          </span>
                         </Space>
                       }
                     />
@@ -442,15 +485,29 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
                     placeholder="简历标题"
                   />
 
-                  <Select
-                    size="large"
-                    value={draft.templateKey}
-                    onChange={(value) => updateDraft((next) => { next.templateKey = value })}
-                    options={RESUME_TEMPLATES.map((template) => ({
-                      value: template.key,
-                      label: `${template.name} · ${template.summary}`,
-                    }))}
-                  />
+                  <Card className="workspace-template-summary" size="small">
+                    <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                      <div>
+                        <Paragraph style={{ marginBottom: 8 }} type="secondary">
+                          当前模板
+                        </Paragraph>
+                        <Space wrap>
+                          <Tag color="gold">{selectedTemplateCategory(draft.templateKey)}</Tag>
+                          {loadingTemplates ? <Tag color="processing">目录同步中</Tag> : null}
+                        </Space>
+                        <Paragraph style={{ margin: '10px 0 0' }}>
+                          <strong>{selectedTemplateName(draft.templateKey)}</strong>
+                        </Paragraph>
+                        <Paragraph style={{ marginBottom: 0 }} type="secondary">
+                          {selectedTemplateSummary()}
+                        </Paragraph>
+                      </div>
+
+                      <Link to={`/app/templates?resumeId=${draft.id}`}>
+                        <Button block>打开模板中心</Button>
+                      </Link>
+                    </Space>
+                  </Card>
 
                   <Collapse
                     size="large"
@@ -468,7 +525,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
                             <Input
                               value={draft.content.personalInfo.headline}
                               onChange={(event) => updateDraft((next) => { next.content.personalInfo.headline = event.target.value })}
-                              placeholder="职位/头衔"
+                              placeholder="职位 / 头衔"
                             />
                             <Input
                               value={draft.content.personalInfo.phone}
@@ -501,7 +558,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
                             rows={5}
                             value={draft.content.personalSummary}
                             onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
-                            placeholder="写下您希望招聘者首先注意到的故事。"
+                            placeholder="写下招聘者最应该先注意到的职业亮点。"
                           />
                         ),
                       },
@@ -541,12 +598,12 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
               </Card>
 
               <Space direction="vertical" size={18} style={{ width: '100%' }}>
-                {deferredDraft ? <ResumePreview resume={deferredDraft} /> : <EmptyPreview />}
+                {deferredDraft ? <ResumePreview resume={deferredDraft} templates={templates} /> : <EmptyPreview />}
 
                 <Card className="glass-card" bordered={false} title="公开分享链接">
                   {shareLinks.length === 0 ? (
                     <div className="empty-state">
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="创建最新版或快照链接来发布此简历。" />
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="创建最新版或快照链接来发布这份简历。" />
                     </div>
                   ) : (
                     <div className="share-list">
@@ -591,13 +648,12 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
       >
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <Input value={createResumeTitle} onChange={(event) => setCreateResumeTitle(event.target.value)} placeholder="简历标题" />
-          <Select
+          <ResumeTemplatePicker
+            templates={templates}
             value={createTemplateKey}
             onChange={setCreateTemplateKey}
-            options={RESUME_TEMPLATES.map((template) => ({
-              value: template.key,
-              label: `${template.name} · ${template.summary}`,
-            }))}
+            compact
+            ariaLabel="创建简历时选择模板"
           />
         </Space>
       </Modal>
@@ -683,7 +739,7 @@ function renderWorkSection(
         <Input value={item.role} placeholder="职位" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
-        <TextArea rows={4} value={item.description} placeholder="工作内容、范围和成就" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+        <TextArea rows={4} value={item.description} placeholder="工作内容、范围和成果" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.workExperience.splice(index, 1) }),
