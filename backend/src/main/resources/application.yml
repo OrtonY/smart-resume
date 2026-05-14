@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: smart-resume-backend
+  datasource:
+    url: ${SMART_RESUME_DB_URL:jdbc:postgresql://localhost:5432/smart_resume}
+    username: ${SMART_RESUME_DB_USERNAME:postgres}
+    password: ${SMART_RESUME_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jackson:
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+server:
+  port: ${SMART_RESUME_BACKEND_PORT:8080}
+
+mybatis-flex:
+  global-config:
+    normal-value-of-logic-delete: false
+    deleted-value-of-logic-delete: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  auth:
+    token-secret: ${SMART_RESUME_TOKEN_SECRET:smart-resume-dev-secret-change-me}
+    token-validity-days: 30

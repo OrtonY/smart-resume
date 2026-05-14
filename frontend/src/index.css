@@ -1,0 +1,290 @@
+:root {
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: #14213d;
+  background:
+    radial-gradient(circle at top left, rgba(255, 196, 61, 0.35), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(60, 95, 180, 0.2), transparent 22%),
+    linear-gradient(180deg, #f4efe3 0%, #eef2f7 45%, #ffffff 100%);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --border-soft: rgba(20, 33, 61, 0.08);
+  --text-primary: #14213d;
+  --text-secondary: #4f5d75;
+  --accent: #ff8c42;
+  --accent-deep: #c85000;
+  --accent-cool: #3157a4;
+  --success: #1f8f63;
+  --shadow-soft: 0 24px 64px rgba(40, 56, 92, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  color: var(--text-primary);
+}
+
+a {
+  color: inherit;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.full-page-center {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  border-radius: 28px;
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 251, 255, 0.82));
+  box-shadow: var(--shadow-soft);
+}
+
+.auth-card .ant-card-body {
+  padding: 30px;
+}
+
+.auth-kicker {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-cool);
+}
+
+.auth-title {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.auth-subtitle {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+}
+
+.workspace-layout {
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.workspace-frame {
+  min-height: calc(100vh - 36px);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--border-soft);
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.workspace-sidebar {
+  background:
+    linear-gradient(180deg, rgba(18, 24, 38, 0.96), rgba(31, 44, 69, 0.92)),
+    linear-gradient(135deg, rgba(255, 140, 66, 0.18), transparent 58%);
+  color: #f5f7fb;
+  padding: 18px;
+}
+
+.workspace-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workspace-brand {
+  padding: 6px 2px 10px;
+}
+
+.workspace-brand h1 {
+  margin: 8px 0 4px;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 26px;
+  color: white;
+}
+
+.workspace-brand p {
+  margin: 0;
+  color: rgba(245, 247, 251, 0.7);
+}
+
+.workspace-main {
+  background: transparent;
+}
+
+.workspace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.workspace-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 18px;
+}
+
+.glass-card {
+  border-radius: 26px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  box-shadow: 0 12px 40px rgba(20, 33, 61, 0.08);
+}
+
+.glass-card .ant-card-body {
+  padding: 22px;
+}
+
+.resume-preview {
+  border-radius: 24px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 16px 44px rgba(20, 33, 61, 0.12);
+}
+
+.resume-preview__hero {
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.resume-preview__hero h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.resume-preview__hero p {
+  margin: 8px 0 0;
+  color: rgba(20, 33, 61, 0.72);
+}
+
+.resume-preview__section {
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(20, 33, 61, 0.06);
+}
+
+.resume-preview__section:last-child {
+  border-bottom: none;
+}
+
+.resume-preview__section h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.resume-preview__timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.resume-preview__item-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.resume-preview__meta {
+  margin: 4px 0 0;
+  color: rgba(20, 33, 61, 0.68);
+  font-size: 13px;
+}
+
+.resume-preview__body {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  color: rgba(20, 33, 61, 0.86);
+}
+
+.preview--north-star .resume-preview__hero {
+  background: linear-gradient(135deg, rgba(27, 47, 93, 0.96), rgba(67, 100, 188, 0.9));
+  color: #fbfdff;
+}
+
+.preview--north-star .resume-preview__hero p {
+  color: rgba(251, 253, 255, 0.75);
+}
+
+.preview--ink-flow .resume-preview__hero {
+  background: linear-gradient(135deg, #1e1e2e, #392f5a);
+  color: #fffbf0;
+}
+
+.preview--grid-slate .resume-preview__hero {
+  background:
+    linear-gradient(135deg, rgba(255, 140, 66, 0.92), rgba(255, 196, 61, 0.92)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent);
+  color: #2c1a00;
+}
+
+.save-state {
+  min-width: 96px;
+  text-align: center;
+}
+
+.share-list {
+  display: grid;
+  gap: 10px;
+}
+
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.empty-state {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1280px) {
+  .workspace-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-layout {
+    padding: 0;
+  }
+
+  .workspace-frame {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+}
