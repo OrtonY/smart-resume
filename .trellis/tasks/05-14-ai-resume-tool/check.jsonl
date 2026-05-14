@@ -1,0 +1,6 @@
+{"file":".trellis/spec/guides/index.md","reason":"Quality review should include cross-layer consistency and code reuse checks."}
+{"file":".trellis/spec/backend/index.md","reason":"Check backend work against the agreed stack baseline and domain split."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Review persistence changes against initial PostgreSQL conventions."}
+{"file":".trellis/spec/frontend/index.md","reason":"Check frontend work against the agreed app structure and feature boundaries."}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Review auto-save and editor state handling against the agreed frontend state model."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Review runtime validation and TypeScript discipline in frontend changes."}

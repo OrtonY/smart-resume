@@ -1,0 +1,8 @@
+{"file":".trellis/spec/guides/index.md","reason":"Cross-layer and reuse reminders for a feature spanning backend, frontend, database, and AI orchestration."}
+{"file":".trellis/spec/backend/index.md","reason":"Backend stack baseline and domain boundaries for Spring Boot + Spring AI + PostgreSQL."}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"Initial backend module layout for scaffolding the service."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Initial persistence and migration conventions for PostgreSQL-backed resume data."}
+{"file":".trellis/spec/frontend/index.md","reason":"Frontend stack baseline and expected product areas for the TypeScript + Ant Design app."}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"Initial frontend feature-first layout for the resume workspace."}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Auto-save editor state, server sync, and page-local state boundaries for the resume workspace."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Type ownership and validation expectations for form-heavy and AI-assisted frontend flows."}
