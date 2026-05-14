@@ -1,9 +1,10 @@
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { Button, Card, Result, Spin, message } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare } from '../features/resume/api/resumeApi'
+import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import type { ResumeDetail } from '../features/resume/types'
 
 export function PublicSharePage() {
@@ -11,12 +12,9 @@ export function PublicSharePage() {
   const [resume, setResume] = useState<ResumeDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [messageApi, contextHolder] = message.useMessage()
+  const { templates } = useResumeTemplateCatalog()
 
-  useEffect(() => {
-    void loadPublicShare()
-  }, [shareCode])
-
-  async function loadPublicShare() {
+  const loadPublicShare = useCallback(async () => {
     setLoading(true)
     try {
       setResume(await getPublicShare(shareCode))
@@ -26,7 +24,15 @@ export function PublicSharePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [messageApi, shareCode])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadPublicShare()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadPublicShare])
 
   return (
     <div className="full-page-center">
@@ -45,7 +51,7 @@ export function PublicSharePage() {
             <Spin size="large" tip="正在加载分享的简历..." />
           </div>
         ) : resume ? (
-          <ResumePreview resume={resume} />
+          <ResumePreview resume={resume} templates={templates} />
         ) : (
           <Result status="404" title="分享链接不可用" subTitle="此公开分享可能已过期或不存在。" />
         )}

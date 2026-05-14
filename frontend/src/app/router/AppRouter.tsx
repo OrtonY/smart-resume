@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { PublicSharePage } from '../../pages/PublicSharePage'
 import { SetupPage } from '../../pages/SetupPage'
+import { TemplateGalleryPage } from '../../pages/TemplateGalleryPage'
 import { UnlockPage } from '../../pages/UnlockPage'
 import { WorkspacePage } from '../../pages/WorkspacePage'
 import { getBootstrapStatus } from '../../features/system/api/systemApi'
@@ -52,18 +53,15 @@ export function AppRouter() {
         <Route path="/share/:shareCode" element={<PublicSharePage />} />
 
         {!bootstrapStatus.passwordConfigured ? (
-          <>
-            <Route
-              path="*"
-              element={<SetupPage onConfigured={handleAuthenticated} onRefreshBootstrap={loadBootstrapStatus} />}
-            />
-          </>
+          <Route
+            path="*"
+            element={<SetupPage onConfigured={handleAuthenticated} onRefreshBootstrap={loadBootstrapStatus} />}
+          />
         ) : !accessToken ? (
-          <>
-            <Route path="*" element={<UnlockPage onAuthenticated={handleAuthenticated} />} />
-          </>
+          <Route path="*" element={<UnlockPage onAuthenticated={handleAuthenticated} />} />
         ) : (
           <>
+            <Route path="/app/templates" element={<TemplateGalleryPage />} />
             <Route path="/app" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="*" element={<Navigate to="/app" replace />} />
           </>
