@@ -20,6 +20,15 @@ public final class ResumeDtos {
     ) {
     }
 
+    public record ResumePageResponse(
+        List<ResumeSummaryResponse> items,
+        long total,
+        int page,
+        int pageSize,
+        int totalPages
+    ) {
+    }
+
     public record ResumeDetailResponse(
         String id,
         String title,

@@ -91,6 +91,14 @@ export interface ResumeSummary {
   updatedAt: string
 }
 
+export interface ResumePage {
+  items: ResumeSummary[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 export interface ResumeDetail {
   id: string
   title: string

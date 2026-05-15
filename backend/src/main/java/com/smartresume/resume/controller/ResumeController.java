@@ -3,7 +3,7 @@ package com.smartresume.resume.controller;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
-import com.smartresume.resume.dto.ResumeDtos.ResumeSummaryResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
 import com.smartresume.resume.service.ResumeService;
 import jakarta.validation.Valid;
@@ -29,8 +29,13 @@ public class ResumeController {
     }
 
     @GetMapping
-    public ApiResponse<List<ResumeSummaryResponse>> listResumes(@RequestParam(defaultValue = "false") boolean includeDeleted) {
-        return ApiResponse.success(resumeService.listResumes(includeDeleted));
+    public ApiResponse<ResumePageResponse> listResumes(
+        @RequestParam(defaultValue = "false") boolean includeDeleted,
+        @RequestParam(defaultValue = "false") boolean deletedOnly,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "6") int pageSize
+    ) {
+        return ApiResponse.success(resumeService.listResumes(includeDeleted, deletedOnly, page, pageSize));
     }
 
     @PostMapping

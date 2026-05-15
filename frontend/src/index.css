@@ -208,25 +208,36 @@ a {
 
 .resume-list-grid {
   display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .resume-list-card {
+  position: relative;
   display: grid;
-  gap: 18px;
-  padding: 20px;
+  gap: 14px;
+  grid-template-rows: auto minmax(92px, auto) auto;
+  padding: 14px;
   text-align: left;
   border: 1px solid rgba(20, 33, 61, 0.1);
-  border-radius: 26px;
+  border-radius: 22px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 255, 0.82)),
     linear-gradient(120deg, rgba(49, 87, 164, 0.08), transparent 52%);
-  cursor: pointer;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
     border-color 180ms ease;
+}
+
+.resume-list-card--empty {
+  min-height: 460px;
+  border-style: dashed;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(248, 250, 255, 0.24));
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .resume-list-card:hover,
@@ -237,14 +248,52 @@ a {
   outline: none;
 }
 
-.resume-list-card__link {
-  display: grid;
-  gap: 18px;
+.resume-list-card__preview-button {
+  display: block;
+  width: 100%;
   padding: 0;
-  text-align: left;
   border: none;
   background: transparent;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.resume-list-card__preview {
+  height: 290px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(244, 247, 251, 0.86);
+}
+
+.resume-list-card__preview .resume-preview-stage {
+  height: 100%;
+  padding: 10px;
+  background: transparent;
+}
+
+.resume-list-card__preview .resume-preview-paper {
+  margin: 0 auto;
+}
+
+.resume-list-card__preview-fallback {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  height: 100%;
+  color: rgba(49, 87, 164, 0.68);
+  font-size: 28px;
+}
+
+.resume-list-card__share-action {
+  position: absolute;
+  right: 24px;
+  top: 258px;
+  z-index: 2;
+  box-shadow: 0 12px 28px rgba(20, 33, 61, 0.18);
 }
 
 .resume-list-card__topline,
@@ -294,6 +343,28 @@ a {
 .resume-list-card__share-list {
   display: grid;
   gap: 12px;
+}
+
+.resume-list-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.recycle-list {
+  display: grid;
+  gap: 14px;
+}
+
+.recycle-list__item .ant-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-list-card__actions {
+  justify-content: flex-end;
 }
 
 .resume-editor-shell {
@@ -1488,7 +1559,11 @@ a {
   }
 
   .resume-list-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .resume-list-card--empty {
+    display: none;
   }
 
   .template-editor-grid {
