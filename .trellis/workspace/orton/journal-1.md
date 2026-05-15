@@ -72,3 +72,37 @@ Implemented a dynamic resume template center with backend catalog CRUD, backup r
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Resume editor layout persistence and A4 preview workflow
+
+**Date**: 2026-05-15
+**Task**: Resume editor layout persistence and A4 preview workflow
+**Branch**: `master`
+
+### Summary
+
+Persisted resume editor section order and hidden state across frontend, API, backend, and snapshots, then refined the editor layout with per-panel scrolling, inline hide toggles, share-link viewing from the list page, and A4-based preview behavior with centered modal preview.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `76b8bc2` | (see git log) |
+| `b89a90c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
