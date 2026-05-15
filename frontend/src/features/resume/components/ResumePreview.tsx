@@ -19,7 +19,7 @@ interface ResumePreviewProps {
   sectionOrder?: ResumeSectionKey[]
   hiddenSections?: ResumeSectionKey[]
   templates?: ResumeTemplateDefinition[]
-  previewMode?: 'auto' | 'a4-fit'
+  previewMode?: 'auto' | 'a4-fit' | 'a4-paged'
   onClick?: () => void
 }
 
@@ -45,8 +45,22 @@ interface PreviewModel {
   skills: string[]
 }
 
+interface PageSlice {
+  offset: number
+  inset: number
+  visibleHeight: number
+}
+
+interface PageItem {
+  top: number
+  bottom: number
+  effectiveBottom: number
+}
+
 const A4_PREVIEW_WIDTH_PX = 794
 const A4_PREVIEW_HEIGHT_PX = 1123
+const A4_PREVIEW_PAGE_GAP_PX = 28
+const A4_PREVIEW_CONTINUATION_TOP_SPACING_PX = 56
 export function ResumePreview({
   resume,
   sectionOrder,
@@ -56,10 +70,11 @@ export function ResumePreview({
   onClick,
 }: ResumePreviewProps) {
   const stageRef = useRef<HTMLDivElement | null>(null)
-  const previewRef = useRef<HTMLElement | null>(null)
+  const measureRef = useRef<HTMLElement | null>(null)
   const [previewMetrics, setPreviewMetrics] = useState({
     scale: 1,
-    paperHeight: A4_PREVIEW_HEIGHT_PX,
+    contentHeight: A4_PREVIEW_HEIGHT_PX,
+    pageSlices: [{ offset: 0, inset: 0, visibleHeight: A4_PREVIEW_HEIGHT_PX }] as PageSlice[],
   })
   const template = resolveResumeTemplate(templates, resume.templateKey)
   const model = createPreviewModel(resume, template)
@@ -67,43 +82,72 @@ export function ResumePreview({
   const orderedKeys = normalizeResumeSectionOrder(sectionOrder ?? layout.sectionOrder)
   const hiddenKeySet = new Set(hiddenSections ?? layout.hiddenSections)
   const sectionNodes = createSectionNodes(model, hiddenKeySet)
+  const templateStyleVariables = createTemplateStyleVariables(template)
   const isFixedA4Preview = previewMode === 'a4-fit'
+  const isPagedA4Preview = previewMode === 'a4-paged'
   const stageStyle = {
     '--resume-preview-scale': String(previewMetrics.scale),
+    '--resume-preview-page-gap': `${Math.max(18, Math.round(A4_PREVIEW_PAGE_GAP_PX * previewMetrics.scale))}px`,
   } as CSSProperties
   const paperStyle = {
     width: `${A4_PREVIEW_WIDTH_PX * previewMetrics.scale}px`,
-    height: `${previewMetrics.paperHeight * previewMetrics.scale}px`,
+    height: `${(isFixedA4Preview ? A4_PREVIEW_HEIGHT_PX : previewMetrics.contentHeight) * previewMetrics.scale}px`,
   }
+  const pagedPaperStyle = {
+    ...templateStyleVariables,
+    width: `${A4_PREVIEW_WIDTH_PX * previewMetrics.scale}px`,
+    height: `${A4_PREVIEW_HEIGHT_PX * previewMetrics.scale}px`,
+  } as CSSProperties
+  const previewClassName = [
+    'resume-preview',
+    `preview--${template.layout}`,
+    isFixedA4Preview ? 'resume-preview--a4-fit' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const pageStartOffsets = isPagedA4Preview
+    ? previewMetrics.pageSlices
+    : [{ offset: 0, inset: 0, visibleHeight: previewMetrics.contentHeight }]
+  const renderedTemplate = () => renderTemplate(model, sectionNodes, orderedKeys)
 
   useEffect(() => {
     const stageElement = stageRef.current
-    const previewElement = previewRef.current
+    const measureElement = measureRef.current
 
-    if (!stageElement || !previewElement) {
+    if (!stageElement || !measureElement) {
       return
     }
 
     const updateMetrics = () => {
       const stageWidth = stageElement.clientWidth || A4_PREVIEW_WIDTH_PX
-      const stageHeight = stageElement.clientHeight
       const widthScale = stageWidth / A4_PREVIEW_WIDTH_PX
-      const heightScale = stageHeight > 0 ? stageHeight / A4_PREVIEW_HEIGHT_PX : Number.POSITIVE_INFINITY
-      const nextScale = isFixedA4Preview
-        ? Math.min(1, widthScale, heightScale)
-        : Math.min(1, widthScale)
-      const nextPaperHeight = isFixedA4Preview
-        ? A4_PREVIEW_HEIGHT_PX
-        : Math.max(A4_PREVIEW_HEIGHT_PX, previewElement.scrollHeight)
+      const nextScale = isPagedA4Preview
+        ? Math.min(1, widthScale)
+        : isFixedA4Preview
+          ? Math.min(1, widthScale, (stageElement.clientHeight || A4_PREVIEW_HEIGHT_PX) / A4_PREVIEW_HEIGHT_PX)
+          : Math.min(1, widthScale)
+      const nextContentHeight = Math.max(A4_PREVIEW_HEIGHT_PX, measureElement.scrollHeight)
+      const nextPageSlices = isPagedA4Preview
+        ? createPagedPreviewSlices(
+          nextContentHeight,
+          readMeasuredPageItems(measureElement),
+          A4_PREVIEW_CONTINUATION_TOP_SPACING_PX,
+        )
+        : [{ offset: 0, inset: 0, visibleHeight: nextContentHeight }]
 
       setPreviewMetrics((current) => {
-        if (Math.abs(current.scale - nextScale) < 0.001 && current.paperHeight === nextPaperHeight) {
+        if (
+          Math.abs(current.scale - nextScale) < 0.001
+          && current.contentHeight === nextContentHeight
+          && arePageSlicesEqual(current.pageSlices, nextPageSlices)
+        ) {
           return current
         }
 
         return {
           scale: nextScale,
-          paperHeight: nextPaperHeight,
+          contentHeight: nextContentHeight,
+          pageSlices: nextPageSlices,
         }
       })
     }
@@ -115,16 +159,14 @@ export function ResumePreview({
     })
 
     resizeObserver.observe(stageElement)
-    if (!isFixedA4Preview) {
-      resizeObserver.observe(previewElement)
-    }
+    resizeObserver.observe(measureElement)
     window.addEventListener('resize', updateMetrics)
 
     return () => {
       resizeObserver.disconnect()
       window.removeEventListener('resize', updateMetrics)
     }
-  }, [hiddenSections, isFixedA4Preview, orderedKeys, resume, sectionNodes])
+  }, [hiddenSections, isFixedA4Preview, isPagedA4Preview, orderedKeys, resume, sectionNodes])
 
   function handlePreviewKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!onClick) {
@@ -142,6 +184,7 @@ export function ResumePreview({
       className={[
         'resume-preview-stage',
         isFixedA4Preview ? 'resume-preview-stage--fit' : '',
+        isPagedA4Preview ? 'resume-preview-stage--paged' : '',
         onClick ? 'resume-preview-stage--interactive' : '',
       ]
         .filter(Boolean)
@@ -153,23 +196,152 @@ export function ResumePreview({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      <div className="resume-preview-paper" style={paperStyle}>
+      <div className="resume-preview-measure" aria-hidden="true">
         <article
-          className={[
-            'resume-preview',
-            `preview--${template.layout}`,
-            isFixedA4Preview ? 'resume-preview--a4-fit' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          ref={previewRef}
-          style={createTemplateStyleVariables(template)}
+          className={[previewClassName, 'resume-preview--measure'].filter(Boolean).join(' ')}
+          ref={measureRef}
+          style={templateStyleVariables}
         >
-          {renderTemplate(model, sectionNodes, orderedKeys)}
+          {renderedTemplate()}
         </article>
       </div>
+
+      {isPagedA4Preview ? (
+        <div className="resume-preview-pages">
+          {pageStartOffsets.map((pageSlice, pageIndex) => {
+            return (
+              <div className="resume-preview-paper resume-preview-paper--page" key={pageIndex} style={pagedPaperStyle}>
+                <div
+                  className="resume-preview-page-viewport"
+                  style={{
+                    paddingTop: `${pageSlice.inset * previewMetrics.scale}px`,
+                  }}
+                >
+                  <div
+                    className="resume-preview-page-window"
+                    style={{
+                      height: `${pageSlice.visibleHeight * previewMetrics.scale}px`,
+                    }}
+                  >
+                    <article
+                      className={[previewClassName, 'resume-preview--page'].filter(Boolean).join(' ')}
+                      style={{
+                        ...templateStyleVariables,
+                        minHeight: `${previewMetrics.contentHeight}px`,
+                        top: `${-pageSlice.offset * previewMetrics.scale}px`,
+                        transform: `scale(${previewMetrics.scale})`,
+                      }}
+                    >
+                      {renderedTemplate()}
+                    </article>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="resume-preview-paper" style={paperStyle}>
+          <article className={previewClassName} style={templateStyleVariables}>
+            {renderedTemplate()}
+          </article>
+        </div>
+      )}
     </div>
   )
+}
+
+function readMeasuredPageItems(root: HTMLElement) {
+  const rootRect = root.getBoundingClientRect()
+  const nodes = Array.from(root.querySelectorAll<HTMLElement>('[data-preview-page-item]'))
+
+  return nodes
+    .map((node, index, current) => {
+      const rect = node.getBoundingClientRect()
+      const top = rect.top - rootRect.top
+      const bottom = rect.bottom - rootRect.top
+      const keepWithNext = node.dataset.previewKeepWithNext === 'true'
+      const nextNode = keepWithNext ? current[index + 1] : null
+      const nextBottom = nextNode
+        ? nextNode.getBoundingClientRect().bottom - rootRect.top
+        : bottom
+
+      return {
+        top,
+        bottom,
+        effectiveBottom: keepWithNext ? Math.max(bottom, nextBottom) : bottom,
+      }
+    })
+    .filter((item) => item.bottom > item.top)
+}
+
+function createPagedPreviewSlices(
+  contentHeight: number,
+  items: PageItem[],
+  continuationTopSpacing: number,
+) {
+  const safeContentHeight = Math.max(A4_PREVIEW_HEIGHT_PX, contentHeight)
+  const normalizedItems = items
+    .map((item) => ({
+      top: Math.max(0, Math.floor(item.top)),
+      bottom: Math.max(0, Math.ceil(item.bottom)),
+      effectiveBottom: Math.max(0, Math.ceil(item.effectiveBottom)),
+    }))
+    .sort((left, right) => left.top - right.top)
+
+  if (normalizedItems.length === 0) {
+    return [{ offset: 0, inset: 0, visibleHeight: safeContentHeight }]
+  }
+
+  const slices: PageSlice[] = []
+  let currentOffset = 0
+  let pageIndex = 0
+  let guard = 0
+
+  while (currentOffset < safeContentHeight && guard < 200) {
+    const inset = pageIndex === 0 ? 0 : continuationTopSpacing
+    const capacity = Math.max(1, A4_PREVIEW_HEIGHT_PX - inset)
+    const visibleLimit = currentOffset + capacity
+    const remainingItems = normalizedItems.filter((item) => item.top >= currentOffset - 1)
+    const moduleBreakTops = remainingItems
+      .filter((item) => item.effectiveBottom > visibleLimit && item.top > currentOffset)
+      .filter((item) => item.effectiveBottom - item.top <= capacity)
+      .map((item) => item.top)
+    const nextBreak = moduleBreakTops.length > 0
+      ? Math.min(...moduleBreakTops)
+      : Math.min(safeContentHeight, visibleLimit)
+    const visibleHeight = nextBreak > currentOffset
+      ? Math.min(capacity, nextBreak - currentOffset)
+      : capacity
+
+    slices.push({
+      offset: currentOffset,
+      inset,
+      visibleHeight,
+    })
+
+    if (currentOffset + visibleHeight >= safeContentHeight) {
+      break
+    }
+
+    currentOffset = nextBreak > currentOffset ? nextBreak : currentOffset + capacity
+    pageIndex += 1
+    guard += 1
+  }
+
+  return slices
+}
+
+function arePageSlicesEqual(current: PageSlice[], next: PageSlice[]) {
+  if (current.length !== next.length) {
+    return false
+  }
+
+  return current.every((slice, index) => (
+    slice.offset === next[index].offset
+    && slice.inset === next[index].inset
+    && slice.visibleHeight === next[index].visibleHeight
+  ))
 }
 
 function renderTemplate(
@@ -485,6 +657,7 @@ function PreviewSection({
 
   return (
     <section
+      data-preview-page-item
       className={[
         'resume-template__section',
         compact ? 'is-compact' : '',

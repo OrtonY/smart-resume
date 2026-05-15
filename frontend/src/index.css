@@ -523,6 +523,25 @@ a {
   gap: 18px;
 }
 
+.resume-editor-section-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.resume-editor-section-grid__full {
+  grid-column: 1 / -1;
+}
+
+.resume-editor-long-textarea.ant-input {
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  resize: vertical;
+}
+
 .resume-editor-avatar-field {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -671,6 +690,7 @@ a {
 }
 
 .resume-preview-stage {
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -680,6 +700,12 @@ a {
 
 .resume-preview-stage--fit {
   height: 100%;
+}
+
+.resume-preview-stage--paged {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .resume-preview-stage--interactive {
@@ -697,7 +723,46 @@ a {
   flex: none;
 }
 
+.resume-preview-paper--page {
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--template-page-background, #ffffff);
+  border: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+  box-shadow: 0 16px 44px rgba(20, 33, 61, 0.12);
+}
+
 .resume-preview-stage--fit .resume-preview-paper {
+  overflow: hidden;
+}
+
+.resume-preview-measure {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.resume-preview-pages {
+  display: grid;
+  justify-items: center;
+  gap: var(--resume-preview-page-gap, 28px);
+  width: 100%;
+}
+
+.resume-preview-page-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.resume-preview-page-window {
+  position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -716,19 +781,36 @@ a {
   transform-origin: top left;
 }
 
+.resume-preview--measure {
+  position: relative;
+  transform: none;
+}
+
 .resume-preview--a4-fit {
   height: 1123px;
 }
 
+.resume-preview--page {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
 .resume-preview-modal {
   display: grid;
-  place-items: center;
-  min-height: min(78vh, 960px);
+  place-items: start center;
+  max-height: min(78vh, 960px);
+  overflow: auto;
 }
 
 .resume-preview-modal .resume-preview-stage {
   width: 100%;
-  height: min(78vh, 960px);
+  min-height: min(78vh, 960px);
+}
+
+.resume-preview-modal .resume-preview-stage--paged {
+  height: auto;
 }
 
 .resume-template {
@@ -999,7 +1081,6 @@ a {
   display: grid;
   gap: 12px;
   padding: 14px 0 16px;
-  border-bottom: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
 }
 
 .resume-template__section.is-compact {
@@ -1015,7 +1096,6 @@ a {
 }
 
 .resume-template__section:last-child {
-  border-bottom: none;
   padding-bottom: 0;
 }
 

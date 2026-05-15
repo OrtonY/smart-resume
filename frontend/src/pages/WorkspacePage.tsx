@@ -28,7 +28,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
@@ -1287,7 +1287,7 @@ function ResumeEditorView({
                     sectionOrder={sectionOrder}
                     hiddenSections={hiddenSections}
                     templates={templates}
-                    previewMode="a4-fit"
+                    previewMode="a4-paged"
                     onClick={() => setPreviewDialogOpen(true)}
                   />
                   <Paragraph type="secondary" className="resume-editor-preview__hint">
@@ -1318,7 +1318,7 @@ function ResumeEditorView({
               sectionOrder={sectionOrder}
               hiddenSections={hiddenSections}
               templates={templates}
-              previewMode="a4-fit"
+              previewMode="a4-paged"
             />
           ) : null}
         </div>
@@ -1354,16 +1354,22 @@ function saveStateLabel(saveState: SaveState) {
 }
 
 function SectionGrid({ children }: { children: ReactNode }) {
+  return <div className="resume-editor-section-grid">{children}</div>
+}
+
+function SectionGridFullWidth({ children }: { children: ReactNode }) {
+  return <div className="resume-editor-section-grid__full">{children}</div>
+}
+
+function LongTextArea(props: ComponentProps<typeof TextArea>) {
+  const { className, ...rest } = props
+
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: 12,
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-      }}
-    >
-      {children}
-    </div>
+    <TextArea
+      {...rest}
+      className={['resume-editor-long-textarea', className].filter(Boolean).join(' ')}
+      wrap="off"
+    />
   )
 }
 
@@ -1450,7 +1456,7 @@ function renderModuleContent(
   switch (moduleKey) {
     case 'summary':
       return (
-        <TextArea
+        <LongTextArea
           rows={6}
           value={draft.content.personalSummary}
           onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
@@ -1543,7 +1549,9 @@ function renderEducationSection(
         <Input value={item.major} placeholder="专业" onChange={(event) => updateDraft((next) => { next.content.education[index].major = event.target.value })} />
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
-        <TextArea rows={3} value={item.description} placeholder="亮点描述" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+        <SectionGridFullWidth>
+          <LongTextArea rows={3} value={item.description} placeholder="亮点描述" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+        </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.education.splice(index, 1) }),
@@ -1565,7 +1573,9 @@ function renderWorkSection(
         <Input value={item.role} placeholder="职位" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
-        <TextArea rows={4} value={item.description} placeholder="工作内容、范围和成果" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+        <SectionGridFullWidth>
+          <LongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+        </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.workExperience.splice(index, 1) }),
@@ -1587,7 +1597,9 @@ function renderProjectSection(
         <Input value={item.role} placeholder="角色" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].role = event.target.value })} />
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
-        <TextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+        <SectionGridFullWidth>
+          <LongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+        </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.projectExperience.splice(index, 1) }),
@@ -1627,7 +1639,9 @@ function renderHonorSection(
         <Input value={item.title} placeholder="奖项名称" onChange={(event) => updateDraft((next) => { next.content.honors[index].title = event.target.value })} />
         <Input value={item.issuer} placeholder="颁发机构" onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
         <Input value={item.awardedAt} placeholder="获奖时间" onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
-        <TextArea rows={3} value={item.description} placeholder="奖项说明" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+        <SectionGridFullWidth>
+          <LongTextArea rows={3} value={item.description} placeholder="奖项说明" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+        </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.honors.splice(index, 1) }),

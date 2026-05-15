@@ -50,10 +50,10 @@ public class ResumeService {
 
     // Editor layout keys for reorder/hide behavior in the resume editor.
     private static final List<String> DEFAULT_EDITOR_LAYOUT_SECTION_ORDER = List.of(
+        "education",
         "summary",
         "workExperience",
         "projectExperience",
-        "education",
         "skills",
         "honors",
         "certificates"
