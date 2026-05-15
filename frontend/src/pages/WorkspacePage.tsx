@@ -27,7 +27,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { ResumeTemplatePicker } from '../features/resume/components/ResumeTemplatePicker'
@@ -45,6 +45,7 @@ import {
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
+  getDefaultResumeTemplate,
   resolveResumeTemplate,
 } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
@@ -81,6 +82,7 @@ interface ResumeModuleDefinition {
   removable: boolean
 }
 const DEFAULT_LAYOUT = createDefaultResumeLayout()
+const MAX_AVATAR_FILE_SIZE_BYTES = 1024 * 1024
 
 const MODULE_DEFINITIONS: ResumeModuleDefinition[] = [
   {
@@ -133,6 +135,27 @@ const MODULE_DEFINITIONS: ResumeModuleDefinition[] = [
   },
 ]
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result)
+        return
+      }
+
+      reject(new Error('Unable to read avatar file'))
+    }
+
+    reader.onerror = () => {
+      reject(new Error('Unable to read avatar file'))
+    }
+
+    reader.readAsDataURL(file)
+  })
+}
+
 function createResumeSignature(resume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'>) {
   return JSON.stringify({
     title: resume.title,
@@ -154,7 +177,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [createResumeTitle, setCreateResumeTitle] = useState('未命名简历')
-  const [createTemplateKey, setCreateTemplateKey] = useState(FALLBACK_RESUME_TEMPLATE_CATALOG[0].key)
+  const [createTemplateKey, setCreateTemplateKey] = useState(getDefaultResumeTemplate(FALLBACK_RESUME_TEMPLATE_CATALOG).key)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
@@ -733,8 +756,54 @@ function ResumeEditorView({
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
   orderedModuleDefinitions: ResumeModuleDefinition[]
 }) {
+  const { message } = App.useApp()
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleAvatarPickerOpen = useCallback(() => {
+    avatarInputRef.current?.click()
+  }, [])
+
+  const handleAvatarRemove = useCallback(() => {
+    onUpdateDraft((next) => {
+      next.content.personalInfo.avatar = ''
+    })
+
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = ''
+    }
+  }, [onUpdateDraft])
+
+  const handleAvatarFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      void message.error('仅支持上传图片文件。')
+      return
+    }
+
+    if (file.size > MAX_AVATAR_FILE_SIZE_BYTES) {
+      void message.error('头像图片需控制在 1 MB 以内。')
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+
+      onUpdateDraft((next) => {
+        next.content.personalInfo.avatar = dataUrl
+      })
+      void message.success('头像已更新。')
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '头像读取失败，请重试。')
+    }
+  }, [message, onUpdateDraft])
 
   return (
     <div className="workspace-layout">
@@ -901,7 +970,19 @@ function ResumeEditorView({
                         />
                       </Space>
                     ) : null,
-                    children: <div id={moduleAnchorId(module.key)}>{renderModuleContent(module.key, draft, onUpdateDraft)}</div>,
+                    children: (
+                      <div id={moduleAnchorId(module.key)}>
+                        {renderModuleContent(
+                          module.key,
+                          draft,
+                          onUpdateDraft,
+                          avatarInputRef,
+                          handleAvatarFileChange,
+                          handleAvatarPickerOpen,
+                          handleAvatarRemove,
+                        )}
+                      </div>
+                    ),
                   }
                 })}
               />
@@ -1001,10 +1082,50 @@ function renderModuleContent(
   moduleKey: ResumeModuleId,
   draft: ResumeDetail,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  avatarInputRef: { current: HTMLInputElement | null },
+  onAvatarFileChange: (event: ChangeEvent<HTMLInputElement>) => void,
+  onAvatarPickerOpen: () => void,
+  onAvatarRemove: () => void,
 ) {
-  switch (moduleKey) {
-    case 'personal-info':
-      return (
+  if (moduleKey === 'personal-info') {
+    return (
+      <div className="resume-editor-personal-info">
+        <div className="resume-editor-avatar-field">
+          <input
+            ref={avatarInputRef}
+            className="resume-editor-avatar-field__input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={onAvatarFileChange}
+          />
+          <div className="resume-editor-avatar-field__preview">
+            {draft.content.personalInfo.avatar ? (
+              <img src={draft.content.personalInfo.avatar} alt="Avatar preview" />
+            ) : (
+              <div className="resume-editor-avatar-field__placeholder">Avatar</div>
+            )}
+          </div>
+          <div className="resume-editor-avatar-field__body">
+            <Text strong>头像</Text>
+            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              上传后会自动转换为 base64 保存。建议使用 1 MB 以内的方形职业头像。
+            </Paragraph>
+            <Space wrap>
+              <Button type="default" icon={<PlusOutlined />} onClick={onAvatarPickerOpen}>
+                {draft.content.personalInfo.avatar ? '更换头像' : '上传头像'}
+              </Button>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={onAvatarRemove}
+                disabled={!draft.content.personalInfo.avatar}
+              >
+                移除头像
+              </Button>
+            </Space>
+          </div>
+        </div>
+
         <SectionGrid>
           <Input
             value={draft.content.personalInfo.fullName}
@@ -1037,7 +1158,11 @@ function renderModuleContent(
             placeholder="个人网站 / 作品集"
           />
         </SectionGrid>
-      )
+      </div>
+    )
+  }
+
+  switch (moduleKey) {
     case 'summary':
       return (
         <TextArea

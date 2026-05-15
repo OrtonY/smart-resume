@@ -54,6 +54,8 @@ export interface ResumeTemplateCreatePayload extends ResumeTemplateUpdatePayload
   key: string
 }
 
+export const DEFAULT_RESUME_TEMPLATE_KEY = 'north-star'
+
 export const FALLBACK_RESUME_TEMPLATE_CATALOG: ResumeTemplateDefinition[] = [
   {
     key: 'north-star',
@@ -166,7 +168,12 @@ export const FALLBACK_RESUME_TEMPLATE_CATALOG: ResumeTemplateDefinition[] = [
 ]
 
 export function getDefaultResumeTemplate(catalog: ResumeTemplateDefinition[]) {
-  return catalog[0] ?? FALLBACK_RESUME_TEMPLATE_CATALOG[0]
+  return (
+    catalog.find((template) => template.key === DEFAULT_RESUME_TEMPLATE_KEY)
+    ?? FALLBACK_RESUME_TEMPLATE_CATALOG.find((template) => template.key === DEFAULT_RESUME_TEMPLATE_KEY)
+    ?? catalog[0]
+    ?? FALLBACK_RESUME_TEMPLATE_CATALOG[0]
+  )
 }
 
 export function resolveResumeTemplate(catalog: ResumeTemplateDefinition[], key: string) {
