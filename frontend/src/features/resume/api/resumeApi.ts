@@ -1,11 +1,5 @@
 import { request } from '../../../lib/http/apiClient'
-import type {
-  ExportPlaceholderResponse,
-  ResumeDetail,
-  ResumePage,
-  ShareLink,
-  ShareMode,
-} from '../types'
+import type { ResumeDetail, ResumePage, ShareLink, ShareMode } from '../types'
 
 export function listResumes(includeDeleted = false, page = 1, pageSize = 6) {
   return request<ResumePage>(`/api/resumes?includeDeleted=${includeDeleted}&page=${page}&pageSize=${pageSize}`)
@@ -57,12 +51,6 @@ export function createShare(resumeId: string, mode: ShareMode) {
 
 export function listShares(resumeId: string) {
   return request<ShareLink[]>(`/api/resumes/${resumeId}/shares`)
-}
-
-export function requestPdfExport(resumeId: string) {
-  return request<ExportPlaceholderResponse>(`/api/resumes/${resumeId}/exports/pdf`, {
-    method: 'POST',
-  })
 }
 
 export function getPublicShare(shareCode: string) {
