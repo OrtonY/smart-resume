@@ -347,7 +347,6 @@ function EditorialPreview({
           ) : (
             <p>让结构保持克制，把最强的经历和成果放到最前面。</p>
           )}
-          <ContactList items={model.contact} stacked />
         </div>
       </header>
 
