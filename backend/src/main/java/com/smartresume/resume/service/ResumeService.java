@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -144,7 +145,7 @@ public class ResumeService {
         int nextVersion = resumeVersionMapper.selectAll().stream()
             .filter(version -> resumeId.equals(version.getResumeId()))
             .map(ResumeVersionEntity::getVersionNumber)
-            .filter(number -> number != null)
+            .filter(Objects::nonNull)
             .max(Integer::compareTo)
             .orElse(0) + 1;
 
@@ -340,7 +341,7 @@ public class ResumeService {
 
     private ResumeContentPayload defaultContent() {
         return new ResumeContentPayload(
-            new ResumeDtos.PersonalInfo("", "", "", "", "", ""),
+            new ResumeDtos.PersonalInfo("", "", "", "", "", "", ""),
             "",
             List.of(),
             List.of(),

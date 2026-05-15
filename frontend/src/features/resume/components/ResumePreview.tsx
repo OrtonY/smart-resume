@@ -35,6 +35,7 @@ interface PreviewModel {
   name: string
   headline: string
   summary: string
+  avatar?: string
   contact: Array<{ label: string; value: string }>
   education: TimelineEntry[]
   work: TimelineEntry[]
@@ -46,8 +47,6 @@ interface PreviewModel {
 
 const A4_PREVIEW_WIDTH_PX = 794
 const A4_PREVIEW_HEIGHT_PX = 1123
-const NARRATIVE_SECTION_KEYS: ResumeSectionKey[] = ['summary', 'workExperience', 'projectExperience', 'education']
-const SUPPORTING_SECTION_KEYS: ResumeSectionKey[] = ['skills', 'honors', 'certificates']
 
 export function ResumePreview({
   resume,
@@ -192,6 +191,48 @@ function renderTemplate(
   }
 }
 
+function IdentityBlock({ model }: { model: PreviewModel }) {
+  return (
+    <div className="resume-template__identity">
+      <span className="resume-template__eyebrow">{model.template.category}</span>
+      <h1>{model.name}</h1>
+      <p>{model.headline}</p>
+    </div>
+  )
+}
+
+function ProfileAvatar({
+  avatar,
+  name,
+  compact = false,
+  hero = false,
+}: {
+  avatar?: string
+  name: string
+  compact?: boolean
+  hero?: boolean
+}) {
+  const source = (avatar ?? '').trim()
+
+  if (!source) {
+    return null
+  }
+
+  return (
+    <div
+      className={[
+        'resume-template__avatar',
+        compact ? 'is-compact' : '',
+        hero ? 'is-hero' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <img src={source} alt={`${name} avatar`} loading="lazy" />
+    </div>
+  )
+}
+
 function ClassicPreview({
   model,
   sectionNodes,
@@ -203,24 +244,22 @@ function ClassicPreview({
 }) {
   return (
     <div className="resume-template resume-template--classic">
-      <header className="resume-template__masthead resume-template__masthead--classic">
-        <div className="resume-template__identity">
-          <span className="resume-template__eyebrow">{model.template.category}</span>
-          <h1>{model.name}</h1>
-          <p>{model.headline}</p>
+      <header className="resume-template__masthead resume-template__masthead--classic resume-template__masthead--dense">
+        <div className="resume-template__masthead-main resume-template__masthead-main--dense">
+          <div className="resume-template__identity resume-template__identity--dense">
+            <h1>{model.name}</h1>
+            <p>{model.headline}</p>
+          </div>
+          <ContactList items={model.contact} inline dense hideLabels />
         </div>
-        <ContactList items={model.contact} stacked />
+        <div className="resume-template__masthead-aside">
+          <ProfileAvatar avatar={model.avatar} name={model.name} compact />
+        </div>
       </header>
 
-      <div className="resume-template__body resume-template__body--classic">
-        <div className="resume-template__main">
-          {renderSectionStack(orderedKeys, NARRATIVE_SECTION_KEYS, sectionNodes)}
-        </div>
-
-        <aside className="resume-template__rail">
-          {renderSectionStack(orderedKeys, SUPPORTING_SECTION_KEYS, sectionNodes)}
-        </aside>
-      </div>
+      <main className="resume-template__content-column resume-template__content-column--classic">
+        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
+      </main>
     </div>
   )
 }
@@ -238,16 +277,19 @@ function ModernSplitPreview({
     <div className="resume-template resume-template--split">
       <aside className="resume-template__sidebar">
         <div className="resume-template__sidebar-header">
-          <span className="resume-template__eyebrow">{model.template.category}</span>
-          <h1>{model.name}</h1>
-          <p>{model.headline}</p>
+          <div className="resume-template__sidebar-profile">
+            <ProfileAvatar avatar={model.avatar} name={model.name} compact />
+            <div className="resume-template__sidebar-header-copy">
+              <IdentityBlock model={model} />
+            </div>
+          </div>
         </div>
-        <ContactList items={model.contact} stacked />
-        {renderSectionStack(orderedKeys, ['summary', 'skills', 'certificates'], sectionNodes)}
+        <ContactList items={model.contact} stacked card />
+        {renderSectionStack(orderedKeys, ['skills', 'honors', 'certificates'], sectionNodes)}
       </aside>
 
       <main className="resume-template__content-column">
-        {renderSectionStack(orderedKeys, ['workExperience', 'projectExperience', 'education', 'honors'], sectionNodes)}
+        {renderSectionStack(orderedKeys, ['summary', 'workExperience', 'projectExperience', 'education'], sectionNodes)}
       </main>
     </div>
   )
@@ -265,10 +307,11 @@ function MinimalPreview({
   return (
     <div className="resume-template resume-template--minimal">
       <header className="resume-template__masthead resume-template__masthead--minimal">
-        <span className="resume-template__eyebrow">{model.template.category}</span>
-        <h1>{model.name}</h1>
-        <p>{model.headline}</p>
-        <ContactList items={model.contact} inline />
+        <div className="resume-template__masthead-main">
+          <IdentityBlock model={model} />
+          <ContactList items={model.contact} inline card />
+        </div>
+        <ProfileAvatar avatar={model.avatar} name={model.name} compact />
       </header>
 
       <div className="resume-template__content-column resume-template__content-column--minimal">
@@ -292,10 +335,11 @@ function EditorialPreview({
   return (
     <div className="resume-template resume-template--editorial">
       <header className="resume-template__hero">
-        <div className="resume-template__identity">
-          <span className="resume-template__eyebrow">{model.template.category}</span>
-          <h1>{model.name}</h1>
-          <p>{model.headline}</p>
+        <div className="resume-template__hero-main">
+          <div className="resume-template__hero-identity-row">
+            <IdentityBlock model={model} />
+            <ProfileAvatar avatar={model.avatar} name={model.name} hero />
+          </div>
         </div>
         <div className="resume-template__hero-panel">
           <h2>个人简介</h2>
@@ -325,10 +369,16 @@ function ContactList({
   items,
   stacked = false,
   inline = false,
+  card = false,
+  dense = false,
+  hideLabels = false,
 }: {
   items: Array<{ label: string; value: string }>
   stacked?: boolean
   inline?: boolean
+  card?: boolean
+  dense?: boolean
+  hideLabels?: boolean
 }) {
   if (items.length === 0) {
     return null
@@ -340,6 +390,9 @@ function ContactList({
         'resume-template__contact-list',
         stacked ? 'is-stacked' : '',
         inline ? 'is-inline' : '',
+        card ? 'is-card' : '',
+        dense ? 'is-dense' : '',
+        hideLabels ? 'is-label-hidden' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -370,11 +423,13 @@ function TimelineSection({
       <div className={`resume-template__timeline${compact ? ' is-compact' : ''}`}>
         {items.map((item, index) => (
           <article className="resume-template__entry" key={`${title}-${index}-${item.title}`}>
-            <div className="resume-template__entry-head">
-              <h3>{item.title}</h3>
-              {item.subtitle ? <p>{item.subtitle}</p> : null}
+            <div className="resume-template__entry-topline">
+              <div className="resume-template__entry-head">
+                <h3>{item.title}</h3>
+                {item.subtitle ? <p>{item.subtitle}</p> : null}
+              </div>
+              {item.meta ? <div className="resume-template__entry-meta">{item.meta}</div> : null}
             </div>
-            {item.meta ? <div className="resume-template__entry-meta">{item.meta}</div> : null}
             {item.body ? <p className="resume-template__paragraph">{item.body}</p> : null}
           </article>
         ))}
@@ -392,6 +447,14 @@ function SkillSection({
   items: string[]
   tone: 'soft' | 'bold' | 'plain' | 'editorial'
 }) {
+  if (tone === 'plain') {
+    return (
+      <PreviewSection title={title} hidden={items.length === 0}>
+        <p className="resume-template__inline-list">{items.join(' / ')}</p>
+      </PreviewSection>
+    )
+  }
+
   return (
     <PreviewSection title={title} hidden={items.length === 0}>
       <div className={`resume-template__skill-cloud resume-template__skill-cloud--${tone}`}>
@@ -447,6 +510,7 @@ function createPreviewModel(
     name: content.personalInfo.fullName || resume.title,
     headline: content.personalInfo.headline || '用结构化表达讲清你的职业价值。',
     summary: content.personalSummary.trim(),
+    avatar: (content.personalInfo.avatar ?? '').trim(),
     contact: [
       { label: '电话', value: content.personalInfo.phone },
       { label: '邮箱', value: content.personalInfo.email },

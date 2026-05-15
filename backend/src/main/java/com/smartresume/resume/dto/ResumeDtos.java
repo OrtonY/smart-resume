@@ -77,7 +77,8 @@ public final class ResumeDtos {
         String phone,
         String email,
         String city,
-        String website
+        String website,
+        String avatar
     ) {
     }
 

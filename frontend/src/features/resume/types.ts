@@ -5,6 +5,7 @@ export interface PersonalInfo {
   email: string
   city: string
   website: string
+  avatar?: string
 }
 
 export interface EducationItem {
@@ -124,6 +125,7 @@ export function createEmptyResumeContent(): ResumeContent {
       email: '',
       city: '',
       website: '',
+      avatar: '',
     },
     personalSummary: '',
     education: [],

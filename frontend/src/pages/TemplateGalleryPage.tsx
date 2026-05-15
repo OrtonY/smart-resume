@@ -38,7 +38,9 @@ import {
   replaceResumeTemplateCatalogCache,
 } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
+  DEFAULT_RESUME_TEMPLATE_KEY,
   FALLBACK_RESUME_TEMPLATE_CATALOG,
+  getDefaultResumeTemplate,
   type ManagedResumeTemplateDefinition,
   type ResumeTemplateDefinition,
   type ResumeTemplateLayout,
@@ -85,7 +87,7 @@ const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; label: string }>
 
 const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'> = {
   title: '产品经理示例简历',
-  templateKey: FALLBACK_RESUME_TEMPLATE_CATALOG[0].key,
+  templateKey: getDefaultResumeTemplate(FALLBACK_RESUME_TEMPLATE_CATALOG).key,
   layout: createDefaultResumeLayout(),
   content: {
     personalInfo: {
@@ -95,6 +97,7 @@ const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'lay
       email: 'zhixia.lin@example.com',
       city: '上海',
       website: 'portfolio.example.com',
+      avatar: '',
     },
     personalSummary:
       '8 年互联网产品经验，擅长 B 端工作流、AI 产品设计与跨团队落地，长期负责从 0 到 1 的产品规划、验证与规模化交付。',
@@ -159,9 +162,13 @@ const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'lay
 }
 
 const FALLBACK_MANAGED_TEMPLATE: ManagedResumeTemplateDefinition = {
-  ...FALLBACK_RESUME_TEMPLATE_CATALOG[0],
+  ...getDefaultResumeTemplate(FALLBACK_RESUME_TEMPLATE_CATALOG),
   builtIn: true,
   updatedAt: null,
+}
+
+function getDefaultManagedTemplate(catalog: ManagedResumeTemplateDefinition[]) {
+  return catalog.find((template) => template.key === DEFAULT_RESUME_TEMPLATE_KEY) ?? catalog[0] ?? FALLBACK_MANAGED_TEMPLATE
 }
 
 export function TemplateGalleryPage() {
@@ -185,7 +192,7 @@ export function TemplateGalleryPage() {
   const [deletingTemplateKey, setDeletingTemplateKey] = useState<string | null>(null)
 
   const selectedTemplate = useMemo(
-    () => templates.find((item) => item.key === selectedTemplateKey) ?? templates[0] ?? null,
+    () => templates.find((item) => item.key === selectedTemplateKey) ?? getDefaultManagedTemplate(templates),
     [selectedTemplateKey, templates],
   )
 
@@ -796,7 +803,7 @@ function chooseTemplateKey(
     return options.resumeKey
   }
 
-  return templates[0]?.key ?? ''
+  return templates.find((template) => template.key === DEFAULT_RESUME_TEMPLATE_KEY)?.key ?? templates[0]?.key ?? ''
 }
 
 function cloneManagedTemplate(template: ManagedResumeTemplateDefinition): ManagedResumeTemplateDefinition {
