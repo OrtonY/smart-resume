@@ -15,6 +15,7 @@ public class ResumeVersionEntity {
     private String title;
     private String templateKey;
     private String contentJson;
+    private String layoutJson;
     private LocalDateTime createdAt;
 
     public String getId() {
@@ -63,6 +64,14 @@ public class ResumeVersionEntity {
 
     public void setContentJson(String contentJson) {
         this.contentJson = contentJson;
+    }
+
+    public String getLayoutJson() {
+        return layoutJson;
+    }
+
+    public void setLayoutJson(String layoutJson) {
+        this.layoutJson = layoutJson;
     }
 
     public LocalDateTime getCreatedAt() {

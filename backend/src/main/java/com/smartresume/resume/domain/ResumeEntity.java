@@ -12,6 +12,7 @@ public class ResumeEntity {
     private String id;
     private String title;
     private String templateKey;
+    private String layoutJson;
     private Boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -39,6 +40,14 @@ public class ResumeEntity {
 
     public void setTemplateKey(String templateKey) {
         this.templateKey = templateKey;
+    }
+
+    public String getLayoutJson() {
+        return layoutJson;
+    }
+
+    public void setLayoutJson(String layoutJson) {
+        this.layoutJson = layoutJson;
     }
 
     public Boolean getDeleted() {

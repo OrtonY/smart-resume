@@ -10,6 +10,7 @@ import com.smartresume.resume.dto.ResumeDtos;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeSummaryResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
 import com.smartresume.resume.mapper.ResumeMapper;
@@ -31,12 +32,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ResumeService {
 
-    private static final List<String> SECTION_ORDER = List.of(
+    // Storage-level section types for rows in resume_sections.
+    private static final List<String> STORED_SECTION_TYPES = List.of(
         "personal_info",
         "personal_summary",
         "education",
         "work_experience",
         "project_experience",
+        "skills",
+        "honors",
+        "certificates"
+    );
+
+    // Editor layout keys for reorder/hide behavior in the resume editor.
+    private static final List<String> DEFAULT_EDITOR_LAYOUT_SECTION_ORDER = List.of(
+        "summary",
+        "workExperience",
+        "projectExperience",
+        "education",
         "skills",
         "honors",
         "certificates"
@@ -74,6 +87,7 @@ public class ResumeService {
         resume.setId(UUID.randomUUID().toString());
         resume.setTitle(request.title());
         resume.setTemplateKey(request.templateKey());
+        resume.setLayoutJson(toJson(defaultLayout()));
         resume.setDeleted(false);
         resume.setCreatedAt(now);
         resume.setUpdatedAt(now);
@@ -93,6 +107,7 @@ public class ResumeService {
         LocalDateTime now = LocalDateTime.now();
         resume.setTitle(request.title());
         resume.setTemplateKey(request.templateKey());
+        resume.setLayoutJson(toJson(normalizeLayout(request.layout())));
         resume.setUpdatedAt(now);
         resumeMapper.update(resume);
         saveSections(resumeId, request.content(), now);
@@ -140,6 +155,7 @@ public class ResumeService {
         version.setTitle(resume.getTitle());
         version.setTemplateKey(resume.getTemplateKey());
         version.setContentJson(toJson(content));
+        version.setLayoutJson(toJson(readLayoutOrDefault(resume.getLayoutJson())));
         version.setCreatedAt(LocalDateTime.now());
         resumeVersionMapper.insert(version);
         return version;
@@ -155,6 +171,7 @@ public class ResumeService {
             version.getTitle(),
             version.getTemplateKey(),
             fromJson(version.getContentJson(), ResumeContentPayload.class),
+            readLayoutOrDefault(version.getLayoutJson()),
             version.getCreatedAt(),
             null
         );
@@ -176,9 +193,14 @@ public class ResumeService {
             resume.getTitle(),
             resume.getTemplateKey(),
             content,
+            loadLayout(resume),
             resume.getUpdatedAt(),
             resume.getDeletedAt()
         );
+    }
+
+    private ResumeLayoutPayload loadLayout(ResumeEntity resume) {
+        return readLayoutOrDefault(resume.getLayoutJson());
     }
 
     private ResumeEntity requireResume(String resumeId) {
@@ -252,8 +274,8 @@ public class ResumeService {
             .filter(section -> resumeId.equals(section.getResumeId()))
             .collect(Collectors.toMap(ResumeSectionEntity::getSectionType, section -> section, (left, right) -> right));
 
-        for (int index = 0; index < SECTION_ORDER.size(); index++) {
-            String sectionType = SECTION_ORDER.get(index);
+        for (int index = 0; index < STORED_SECTION_TYPES.size(); index++) {
+            String sectionType = STORED_SECTION_TYPES.get(index);
             ResumeSectionEntity section = existingByType.getOrDefault(sectionType, new ResumeSectionEntity());
             if (section.getId() == null) {
                 section.setId(UUID.randomUUID().toString());
@@ -270,6 +292,49 @@ public class ResumeService {
             } else {
                 resumeSectionMapper.insert(section);
             }
+        }
+    }
+
+    private ResumeLayoutPayload defaultLayout() {
+        return new ResumeLayoutPayload(DEFAULT_EDITOR_LAYOUT_SECTION_ORDER, List.of());
+    }
+
+    private ResumeLayoutPayload normalizeLayout(ResumeLayoutPayload layout) {
+        ResumeLayoutPayload source = layout == null ? defaultLayout() : layout;
+        List<String> sectionOrder = normalizeLayoutOrder(source.sectionOrder());
+        List<String> hiddenSections = source.hiddenSections() == null
+            ? List.of()
+            : source.hiddenSections().stream()
+                .filter(sectionOrder::contains)
+                .distinct()
+                .toList();
+        return new ResumeLayoutPayload(sectionOrder, hiddenSections);
+    }
+
+    private List<String> normalizeLayoutOrder(List<String> sectionOrder) {
+        List<String> source = sectionOrder == null ? DEFAULT_EDITOR_LAYOUT_SECTION_ORDER : sectionOrder;
+        List<String> deduplicated = new ArrayList<>();
+        for (String key : source) {
+            if (key != null && !deduplicated.contains(key) && DEFAULT_EDITOR_LAYOUT_SECTION_ORDER.contains(key)) {
+                deduplicated.add(key);
+            }
+        }
+        for (String key : DEFAULT_EDITOR_LAYOUT_SECTION_ORDER) {
+            if (!deduplicated.contains(key)) {
+                deduplicated.add(key);
+            }
+        }
+        return deduplicated;
+    }
+
+    private ResumeLayoutPayload readLayoutOrDefault(String json) {
+        if (json == null || json.isBlank() || "null".equals(json)) {
+            return defaultLayout();
+        }
+        try {
+            return normalizeLayout(objectMapper.readValue(json, ResumeLayoutPayload.class));
+        } catch (IOException exception) {
+            return defaultLayout();
         }
     }
 

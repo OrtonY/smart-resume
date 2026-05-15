@@ -24,7 +24,7 @@ export function getResume(resumeId: string) {
 
 export function updateResume(
   resumeId: string,
-  payload: Pick<ResumeDetail, 'title' | 'templateKey' | 'content'>,
+  payload: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'>,
 ) {
   return request<ResumeDetail>(`/api/resumes/${resumeId}`, {
     method: 'PUT',

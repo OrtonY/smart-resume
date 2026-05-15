@@ -46,6 +46,7 @@ import {
   type ResumeTemplateTheme,
   type ResumeTemplateUpdatePayload,
 } from '../features/resume/templateCatalog'
+import { createDefaultResumeLayout } from '../features/resume/types'
 import type { ResumeDetail } from '../features/resume/types'
 
 const { Paragraph, Text, Title } = Typography
@@ -82,9 +83,10 @@ const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; label: string }>
   { key: 'lineColor', label: 'Preview line color' },
 ]
 
-const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content'> = {
+const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'> = {
   title: '产品经理示例简历',
   templateKey: FALLBACK_RESUME_TEMPLATE_CATALOG[0].key,
+  layout: createDefaultResumeLayout(),
   content: {
     personalInfo: {
       fullName: '林知夏',
@@ -396,6 +398,7 @@ export function TemplateGalleryPage() {
         title: resume.title,
         templateKey: selectedTemplate.key,
         content: resume.content,
+        layout: resume.layout,
       })
       setResume(updated)
       void message.success('已应用到当前简历。')
@@ -859,6 +862,7 @@ function buildPreviewResume(resume: ResumeDetail | null, templateKey: string) {
   return {
     title: resume.title,
     templateKey,
+    layout: resume.layout,
     content: resume.content,
   }
 }
