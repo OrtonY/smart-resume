@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-05-15
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~174 | Active |
+| `journal-1.md` | ~207 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-05-15 | Implement PDF and DOCX export | `4ab81b7` | `master` |
 | 5 | 2026-05-15 | Resume preview pagination fix | `3ce0177` | `master` |
 | 4 | 2026-05-15 | Adjust resume frontend workflows | `1c46819` | `master` |
 | 3 | 2026-05-15 | Resume editor layout persistence and A4 preview workflow | `76b8bc2`, `b89a90c` | `master` |
