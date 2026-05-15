@@ -130,3 +130,71 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 #### Correct
 - Normalize unknown payloads at the API boundary before exposing them to hooks/components.
 - Keep template metadata centralized in the catalog and pass layout-specific rendering through shared resolver helpers.
+
+## Scenario: Resume Editor Layout Persistence
+
+### 1. Scope / Trigger
+- Trigger: resume editor module order and hidden-state are persisted across frontend state, backend DTOs, and database snapshots.
+- Why this needs code-spec depth: treating layout as browser-local UI state causes reload/share/snapshot drift from the canonical resume model.
+
+### 2. Signatures
+- Frontend type:
+  - `ResumeLayout = { sectionOrder: ResumeSectionKey[]; hiddenSections: ResumeSectionKey[] }`
+  - `ResumeDetail.layout: ResumeLayout`
+  - `normalizeResumeLayout(layout?): ResumeLayout`
+- Frontend mutation:
+  - `updateResume(resumeId, { title, templateKey, content, layout })`
+- Backend DTOs:
+  - `ResumeDetailResponse(..., ResumeContentPayload content, ResumeLayoutPayload layout, ...)`
+  - `ResumeUpdateRequest(String title, String templateKey, ResumeContentPayload content, ResumeLayoutPayload layout)`
+  - `ResumeLayoutPayload(List<String> sectionOrder, List<String> hiddenSections)`
+- Database:
+  - `resumes.layout_json text not null`
+  - `resume_versions.layout_json text not null`
+
+### 3. Contracts
+- `layout.sectionOrder`:
+  - ordered list of fixed section keys
+  - allowed values: `summary`, `workExperience`, `projectExperience`, `education`, `skills`, `honors`, `certificates`
+  - duplicates and unknown values must be normalized away
+- `layout.hiddenSections`:
+  - subset of the same allowed keys
+  - order is not semantically important, but duplicates must be removed
+- Backend response contract:
+  - every resume detail payload must include a non-null `layout`
+  - snapshot/public-share resume detail must include the persisted layout from `resume_versions.layout_json`
+- Frontend editor contract:
+  - module reorder/hide/show mutates `draft.layout`
+  - autosave signature must include `layout`
+  - preview should default to `resume.layout` when explicit overrides are not provided
+
+### 4. Validation & Error Matrix
+- Missing `layout` in update request -> reject with validation error
+- Unknown/duplicated section keys from storage or API -> normalize to canonical fixed-section order
+- Hidden section not present in normalized `sectionOrder` -> drop it during normalization
+- Legacy resume row with null `layout_json` -> backend must return default layout instead of null
+
+### 5. Good/Base/Bad Cases
+- Good: user hides `skills`, moves `education` above `projects`, reloads the editor, and sees the same structure.
+- Base: old resumes created before layout persistence still load with the default fixed-section order and no hidden sections.
+- Bad: layout is only written to `localStorage`; another browser tab, share view, or snapshot sees a different resume structure.
+
+### 6. Tests Required
+- Frontend:
+  - lint/build must pass after `ResumeDetail` and `updateResume` contract expansion
+  - preview must compile for both live editor data and fallback/demo resume data with `layout`
+- Backend:
+  - app/test compile must pass after DTO/entity/migration changes
+  - resume detail retrieval should return default layout when persisted value is missing or malformed
+  - snapshot creation should carry `layout_json` into `resume_versions`
+- Cross-layer assertion:
+  - UI reorder/hide state survives `updateResume` -> database -> `getResume` round-trip
+
+### 7. Wrong vs Correct
+#### Wrong
+- Store editor module order/hidden state as browser-only preferences while title/content/template save to the backend.
+- Let preview invent its own default ordering independently of the canonical resume payload.
+
+#### Correct
+- Persist editor layout as part of the resume contract and include it in snapshots/public reads.
+- Normalize layout at both API boundary and UI boundary so old or partial data still renders safely.
