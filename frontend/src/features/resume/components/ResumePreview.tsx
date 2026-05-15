@@ -343,9 +343,9 @@ function EditorialPreview({
         <div className="resume-template__hero-panel">
           <h2>个人简介</h2>
           {showSummary ? (
-            <p>{model.summary}</p>
+            <p className="resume-template__paragraph">{model.summary}</p>
           ) : (
-            <p>让结构保持克制，把最强的经历和成果放到最前面。</p>
+            <p className="resume-template__paragraph">让结构保持克制，把最强的经历和成果放到最前面。</p>
           )}
         </div>
       </header>
@@ -410,11 +410,13 @@ function TimelineSection({
   items,
   compact = false,
   minimal = false,
+  inlineSubtitle = false,
 }: {
   title: string
   items: TimelineEntry[]
   compact?: boolean
   minimal?: boolean
+  inlineSubtitle?: boolean
 }) {
   return (
     <PreviewSection title={title} hidden={items.length === 0} compact={compact} minimal={minimal}>
@@ -422,7 +424,7 @@ function TimelineSection({
         {items.map((item, index) => (
           <article className="resume-template__entry" key={`${title}-${index}-${item.title}`}>
             <div className="resume-template__entry-topline">
-              <div className="resume-template__entry-head">
+              <div className={`resume-template__entry-head${inlineSubtitle ? ' is-inline-subtitle' : ''}`}>
                 <h3>{item.title}</h3>
                 {item.subtitle ? <p>{item.subtitle}</p> : null}
               </div>
@@ -566,7 +568,7 @@ function createSectionNodes(
       <TimelineSection title="项目经历" items={model.projects} />
     ),
     education: hiddenSections.has('education') ? null : (
-      <TimelineSection title="教育经历" items={model.education} />
+      <TimelineSection title="教育经历" items={model.education} inlineSubtitle />
     ),
     skills: hiddenSections.has('skills') ? null : (
       <SkillSection title="技能特长" items={model.skills} tone="plain" />
