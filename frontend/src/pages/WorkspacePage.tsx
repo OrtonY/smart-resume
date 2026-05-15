@@ -4,8 +4,9 @@ import {
   ArrowUpOutlined,
   CopyOutlined,
   DeleteOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
   EyeOutlined,
-  ExportOutlined,
   EyeInvisibleOutlined,
   FileAddOutlined,
   LogoutOutlined,
@@ -28,7 +29,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
@@ -38,13 +39,15 @@ import {
   listDeletedResumes,
   listResumes,
   listShares,
-  requestPdfExport,
   restoreResume,
   updateResume,
 } from '../features/resume/api/resumeApi'
+import { exportResumeDocx } from '../features/resume/export/docxExport'
+import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
   resolveResumeTemplate,
+  type ResumeTemplateDefinition,
 } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
 import type {
@@ -72,6 +75,7 @@ interface WorkspacePageProps {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
+type ExportFormat = 'pdf' | 'docx'
 type ResumeModuleId = 'personal-info' | ResumeSectionKey
 type ShareDialogState = {
   resumeId: string
@@ -182,6 +186,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const [loadingResumeList, setLoadingResumeList] = useState(true)
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null)
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
   const deferredDraft = useDeferredValue(draft)
@@ -390,13 +395,30 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     void message.success(`${mode === 'LATEST' ? '最新版本' : '快照'}分享链接已复制。`)
   }
 
-  async function handleExportPdf() {
-    if (!resumeId) {
+  async function handleExport(format: ExportFormat, template: ResumeTemplateDefinition, previewRoot?: HTMLElement | null) {
+    if (!resumeId || !draft || exportingFormat) {
       return
     }
 
-    const result = await requestPdfExport(resumeId)
-    void message.info(result.message)
+    setExportingFormat(format)
+    try {
+      if (format === 'pdf') {
+        if (!previewRoot) {
+          throw new Error('未找到可导出的简历预览。')
+        }
+
+        await exportResumePdf(previewRoot, draft.title)
+        void message.success('PDF 已开始下载。')
+        return
+      }
+
+      await exportResumeDocx(draft, template)
+      void message.success('DOCX 已开始下载。')
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '导出失败，请重试。')
+    } finally {
+      setExportingFormat(null)
+    }
   }
 
   function moveSection(sectionKey: ResumeSectionKey, direction: -1 | 1) {
@@ -460,7 +482,8 @@ function showSection(sectionKey: ResumeSectionKey) {
         hiddenSections={hiddenSections}
         loadingTemplates={loadingTemplates}
         onCreateShare={handleCreateShare}
-        onExportPdf={handleExportPdf}
+        exportingFormat={exportingFormat}
+        onExport={handleExport}
         onExpandedModulesChange={handleExpandedModulesChange}
         onFocusModule={focusModule}
         onHideSection={hideSection}
@@ -1007,8 +1030,9 @@ function ResumeEditorView({
   hiddenSections,
   loadingTemplates,
   onCreateShare,
+  exportingFormat,
   onExpandedModulesChange,
-  onExportPdf,
+  onExport,
   onFocusModule,
   onHideSection,
   onLogout,
@@ -1026,8 +1050,9 @@ function ResumeEditorView({
   hiddenSections: ResumeSectionKey[]
   loadingTemplates: boolean
   onCreateShare: (mode: ShareMode) => Promise<void>
+  exportingFormat: ExportFormat | null
   onExpandedModulesChange: (keys: string | string[]) => void
-  onExportPdf: () => Promise<void>
+  onExport: (format: ExportFormat, template: ResumeTemplateDefinition, previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onLogout: () => void
@@ -1042,6 +1067,7 @@ function ResumeEditorView({
   const { message } = App.useApp()
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const exportPreviewRef = useRef<HTMLDivElement | null>(null)
 
   const handleAvatarPickerOpen = useCallback(() => {
     document.getElementById(AVATAR_INPUT_ID)?.click()
@@ -1130,8 +1156,21 @@ function ResumeEditorView({
             <Button icon={<ShareAltOutlined />} onClick={() => void onCreateShare('SNAPSHOT')}>
               分享快照
             </Button>
-            <Button icon={<ExportOutlined />} onClick={() => void onExportPdf()}>
+            <Button
+              icon={<FilePdfOutlined />}
+              loading={exportingFormat === 'pdf'}
+              disabled={Boolean(exportingFormat)}
+              onClick={() => void onExport('pdf', selectedTemplate, exportPreviewRef.current)}
+            >
               导出 PDF
+            </Button>
+            <Button
+              icon={<FileWordOutlined />}
+              loading={exportingFormat === 'docx'}
+              disabled={Boolean(exportingFormat)}
+              onClick={() => void onExport('docx', selectedTemplate)}
+            >
+              导出 DOCX
             </Button>
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
               锁定
@@ -1323,6 +1362,16 @@ function ResumeEditorView({
           ) : null}
         </div>
       </Modal>
+
+      <div className="resume-export-source" ref={exportPreviewRef} aria-hidden="true">
+        <ResumePreview
+          resume={draft}
+          sectionOrder={sectionOrder}
+          hiddenSections={hiddenSections}
+          templates={templates}
+          previewMode="a4-paged"
+        />
+      </div>
     </div>
   )
 }

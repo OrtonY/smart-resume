@@ -813,6 +813,20 @@ a {
   height: auto;
 }
 
+.resume-export-source {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 794px;
+  height: auto;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.resume-export-source .resume-preview-stage {
+  width: 794px;
+}
+
 .resume-template {
   color: var(--text-primary);
 }
