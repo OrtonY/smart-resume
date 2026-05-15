@@ -106,3 +106,36 @@ Persisted resume editor section order and hidden state across frontend, API, bac
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: Adjust resume frontend workflows
+
+**Date**: 2026-05-15
+**Task**: Adjust resume frontend workflows
+**Branch**: `master`
+
+### Summary
+
+Adjusted resume homepage thumbnail pagination, recycle bin flow, template directory behavior, and editor template-switch return path; updated frontend state-management guidance and verified frontend lint/build.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1c46819` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
