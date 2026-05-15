@@ -54,7 +54,7 @@ export interface ResumeTemplateCreatePayload extends ResumeTemplateUpdatePayload
   key: string
 }
 
-export const DEFAULT_RESUME_TEMPLATE_KEY = 'north-star'
+export const DEFAULT_RESUME_TEMPLATE_KEY = 'pure-form'
 
 export const FALLBACK_RESUME_TEMPLATE_CATALOG: ResumeTemplateDefinition[] = [
   {

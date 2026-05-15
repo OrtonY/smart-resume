@@ -770,27 +770,20 @@ a {
 }
 
 .resume-template__masthead--classic {
-  padding: 26px 34px 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 253, 0.98));
-  color: var(--text-primary);
-  border-bottom: 1px solid rgba(20, 33, 61, 0.12);
+  background: var(--template-hero-background);
+  color: var(--template-hero-text);
 }
 
 .resume-template__masthead--classic .resume-template__eyebrow,
 .resume-template__masthead--classic .resume-template__identity p,
 .resume-template__masthead--classic .resume-template__contact-list span {
-  color: var(--template-muted-text, rgba(20, 33, 61, 0.68));
-}
-
-.resume-template__masthead--classic .resume-template__contact-list.is-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--template-hero-muted);
 }
 
 .resume-template__masthead--minimal {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  align-items: center;
   gap: 18px;
   padding: 30px 30px 22px;
   background: var(--template-hero-background);
@@ -1021,7 +1014,10 @@ a {
 }
 
 .resume-template__contact-list.is-inline {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
 }
 
 .resume-template__contact-list.is-dense {
@@ -1033,7 +1029,8 @@ a {
 }
 
 .resume-template__contact-list.is-inline.is-dense {
-  grid-template-columns: repeat(auto-fit, minmax(140px, max-content));
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -1397,7 +1394,6 @@ a {
   .resume-template__masthead,
   .resume-template__masthead--minimal,
   .resume-template__hero-identity-row {
-    grid-template-columns: 1fr;
     flex-direction: column;
   }
 

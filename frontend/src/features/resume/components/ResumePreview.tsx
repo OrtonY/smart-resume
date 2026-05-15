@@ -47,6 +47,8 @@ interface PreviewModel {
 
 const A4_PREVIEW_WIDTH_PX = 794
 const A4_PREVIEW_HEIGHT_PX = 1123
+const NARRATIVE_SECTION_KEYS: ResumeSectionKey[] = ['summary', 'workExperience', 'projectExperience', 'education']
+const SUPPORTING_SECTION_KEYS: ResumeSectionKey[] = ['skills', 'honors', 'certificates']
 
 export function ResumePreview({
   resume,
@@ -244,22 +246,27 @@ function ClassicPreview({
 }) {
   return (
     <div className="resume-template resume-template--classic">
-      <header className="resume-template__masthead resume-template__masthead--classic resume-template__masthead--dense">
-        <div className="resume-template__masthead-main resume-template__masthead-main--dense">
-          <div className="resume-template__identity resume-template__identity--dense">
-            <h1>{model.name}</h1>
-            <p>{model.headline}</p>
-          </div>
-          <ContactList items={model.contact} inline dense hideLabels />
+      <header className="resume-template__masthead resume-template__masthead--classic">
+        <div className="resume-template__identity">
+          <span className="resume-template__eyebrow">{model.template.category}</span>
+          <h1>{model.name}</h1>
+          <p>{model.headline}</p>
         </div>
         <div className="resume-template__masthead-aside">
           <ProfileAvatar avatar={model.avatar} name={model.name} compact />
+          <ContactList items={model.contact} stacked />
         </div>
       </header>
 
-      <main className="resume-template__content-column resume-template__content-column--classic">
-        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
-      </main>
+      <div className="resume-template__body resume-template__body--classic">
+        <div className="resume-template__main">
+          {renderSectionStack(orderedKeys, NARRATIVE_SECTION_KEYS, sectionNodes)}
+        </div>
+
+        <aside className="resume-template__rail">
+          {renderSectionStack(orderedKeys, SUPPORTING_SECTION_KEYS, sectionNodes)}
+        </aside>
+      </div>
     </div>
   )
 }
@@ -308,8 +315,12 @@ function MinimalPreview({
     <div className="resume-template resume-template--minimal">
       <header className="resume-template__masthead resume-template__masthead--minimal">
         <div className="resume-template__masthead-main">
-          <IdentityBlock model={model} />
-          <ContactList items={model.contact} inline card />
+          <div className="resume-template__identity">
+            <span className="resume-template__eyebrow">{model.template.category}</span>
+            <h1>{model.name}</h1>
+            <p>{model.headline}</p>
+          </div>
+          <ContactList items={model.contact} inline />
         </div>
         <ProfileAvatar avatar={model.avatar} name={model.name} compact />
       </header>
