@@ -2,13 +2,17 @@ import { request } from '../../../lib/http/apiClient'
 import type {
   ExportPlaceholderResponse,
   ResumeDetail,
-  ResumeSummary,
+  ResumePage,
   ShareLink,
   ShareMode,
 } from '../types'
 
-export function listResumes(includeDeleted = false) {
-  return request<ResumeSummary[]>(`/api/resumes?includeDeleted=${includeDeleted}`)
+export function listResumes(includeDeleted = false, page = 1, pageSize = 6) {
+  return request<ResumePage>(`/api/resumes?includeDeleted=${includeDeleted}&page=${page}&pageSize=${pageSize}`)
+}
+
+export function listDeletedResumes(page = 1, pageSize = 6) {
+  return request<ResumePage>(`/api/resumes?deletedOnly=true&page=${page}&pageSize=${pageSize}`)
 }
 
 export function createResume(payload: { title: string; templateKey: string }) {

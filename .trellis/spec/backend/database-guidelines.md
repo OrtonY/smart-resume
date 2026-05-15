@@ -122,3 +122,38 @@ The exact ID strategy remains open until the MVP concurrency and integration nee
 #### Correct
 - Keep one checked-in backup catalog under `resources/templates/` and treat database rows as the operational catalog.
 - Separate public read access from authenticated management APIs so share pages can resolve templates without exposing write access.
+
+## Scenario: Resume List Deleted-Only Query
+
+### 1. Scope / Trigger
+- Trigger: the UI has a dedicated recycle-bin route and needs a backend query that returns only soft-deleted resumes.
+
+### 2. Signatures
+- Public list API: `GET /api/resumes?includeDeleted={boolean}&deletedOnly={boolean}`
+- Service method: `ResumeService.listResumes(boolean includeDeleted, boolean deletedOnly)`
+
+### 3. Contracts
+- `includeDeleted=false, deletedOnly=false` -> active resumes only
+- `includeDeleted=true, deletedOnly=false` -> all resumes
+- `deletedOnly=true` -> deleted resumes only, regardless of `includeDeleted`
+- Deleted-only responses still use the same `ResumeSummaryResponse` DTO shape
+
+### 4. Validation & Error Matrix
+- Both flags omitted -> active resumes only
+- `deletedOnly=true` with `includeDeleted=true` -> deleted-only wins
+- Unknown resume state -> filter by `deleted` boolean in service, not in the controller
+
+### 5. Good/Base/Bad Cases
+- Good: homepage queries active resumes and recycle bin queries deleted resumes through distinct API flags.
+- Base: legacy clients calling `includeDeleted=true` still receive all resumes.
+- Bad: recycle bin is emulated by fetching all resumes and filtering only in the frontend.
+
+### 6. Tests Required
+- Service test coverage for the deleted-only branch.
+- Controller/API assertion that deleted-only and include-deleted queries both serialize the same summary DTO shape.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Let the frontend fake a recycle-bin list from `includeDeleted=true` without a server-side deleted-only mode.
+#### Correct
+- Add a deleted-only query mode so the server remains the source of truth for deleted resume visibility.

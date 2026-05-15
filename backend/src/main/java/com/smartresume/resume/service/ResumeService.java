@@ -2,15 +2,19 @@ package com.smartresume.resume.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.domain.ResumeSectionEntity;
 import com.smartresume.resume.domain.ResumeVersionEntity;
+import com.smartresume.resume.domain.table.ResumeEntityTableDef;
 import com.smartresume.resume.dto.ResumeDtos;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
+import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeSummaryResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
 import com.smartresume.resume.mapper.ResumeMapper;
@@ -19,7 +23,6 @@ import com.smartresume.resume.mapper.ResumeVersionMapper;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,12 +76,25 @@ public class ResumeService {
         this.objectMapper = objectMapper;
     }
 
-    public List<ResumeSummaryResponse> listResumes(boolean includeDeleted) {
-        return resumeMapper.selectAll().stream()
-            .filter(resume -> includeDeleted || !Boolean.TRUE.equals(resume.getDeleted()))
-            .sorted(Comparator.comparing(ResumeEntity::getUpdatedAt).reversed())
+    public ResumePageResponse listResumes(boolean includeDeleted, boolean deletedOnly, int page, int pageSize) {
+        int safePageSize = Math.max(1, pageSize);
+        int safePage = Math.max(1, page);
+        ResumeEntityTableDef resume = ResumeEntityTableDef.RESUME_ENTITY;
+        QueryWrapper query = QueryWrapper.create()
+            .where(deletedOnly ? resume.DELETED.eq(true) : resume.DELETED.eq(false, !includeDeleted))
+            .orderBy(resume.UPDATED_AT, false);
+        Page<ResumeEntity> pagedResumes = resumeMapper.paginate(safePage, safePageSize, query);
+        List<ResumeSummaryResponse> items = pagedResumes.getRecords().stream()
             .map(this::toSummary)
             .toList();
+
+        return new ResumePageResponse(
+            items,
+            pagedResumes.getTotalRow(),
+            (int) pagedResumes.getPageNumber(),
+            (int) pagedResumes.getPageSize(),
+            Math.max(1, (int) pagedResumes.getTotalPage())
+        );
     }
 
     @Transactional

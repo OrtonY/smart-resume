@@ -2,6 +2,7 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  FileAddOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
@@ -33,7 +34,7 @@ import {
   restoreBuiltInTemplatesFromBackup,
   updateResumeTemplate,
 } from '../features/resume/api/templateCatalogApi'
-import { getResume, updateResume } from '../features/resume/api/resumeApi'
+import { createResume, getResume, updateResume } from '../features/resume/api/resumeApi'
 import {
   replaceResumeTemplateCatalogCache,
 } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -191,6 +192,8 @@ export function TemplateGalleryPage() {
   const [restoringBuiltIns, setRestoringBuiltIns] = useState(false)
   const [applyingTemplateKey, setApplyingTemplateKey] = useState<string | null>(null)
   const [deletingTemplateKey, setDeletingTemplateKey] = useState<string | null>(null)
+  const [creatingResumeTemplateKey, setCreatingResumeTemplateKey] = useState<string | null>(null)
+  const isResumeTemplateChange = Boolean(resumeId)
 
   const selectedTemplate = useMemo(
     () => templates.find((item) => item.key === selectedTemplateKey) ?? getDefaultManagedTemplate(templates),
@@ -313,10 +316,28 @@ export function TemplateGalleryPage() {
     }
   }, [resume?.templateKey, selectionTouched])
 
-  async function handleTemplateSelect(nextTemplateKey: string) {
+  function handleTemplateSelect(nextTemplateKey: string) {
     setSelectionTouched(true)
     setEditorMode('edit')
     setSelectedTemplateKey(nextTemplateKey)
+    setEditorDraft(null)
+  }
+
+  async function handleCreateResumeFromTemplate(templateKey: string) {
+    const template = templates.find((item) => item.key === templateKey)
+    setCreatingResumeTemplateKey(templateKey)
+    try {
+      const detail = await createResume({
+        title: template ? `${template.name}简历` : '未命名简历',
+        templateKey,
+      })
+      void message.success('简历已创建。')
+      navigate(`/app/resumes/${detail.id}`)
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '无法创建简历。')
+    } finally {
+      setCreatingResumeTemplateKey(null)
+    }
   }
 
   function handleCreateFromCurrent() {
@@ -455,7 +476,7 @@ export function TemplateGalleryPage() {
   if (loadingTemplates && templates.length === 0) {
     return (
       <div className="full-page-center" style={{ minHeight: '100vh' }}>
-        <Spin size="large" tip="正在加载模板中心..." />
+        <Spin size="large" tip={isResumeTemplateChange ? '正在加载修改模板...' : '正在加载模板目录...'} />
       </div>
     )
   }
@@ -488,23 +509,31 @@ export function TemplateGalleryPage() {
     <div className="template-gallery-page">
       <div className="template-gallery-page__head">
         <div>
-          <Button icon={<ArrowLeftOutlined />} type="text" onClick={() => navigate('/app')}>
-            返回工作区
-          </Button>
+          <Space wrap>
+            <Button icon={<ArrowLeftOutlined />} type="text" onClick={() => navigate('/app')}>
+              返回工作区
+            </Button>
+            {resume ? (
+              <Button type="text" onClick={() => navigate(`/app/resumes/${resume.id}`)}>
+                返回当前简历
+              </Button>
+            ) : null}
+          </Space>
           <Title level={2} style={{ marginBottom: 8 }}>
-            模板中心
+            {isResumeTemplateChange ? '修改模板' : '模板目录'}
           </Title>
           <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-            模板元数据可以保持相对固定，样式定义由数据库管理。内置模板支持一键从
-            `templates/catalog.json` 恢复，自定义模板支持持续新增和微调。
+            {isResumeTemplateChange
+              ? '选择模板并应用到当前简历，已有内容会保留，只切换展示样式。'
+              : '先浏览模板样式，在右侧预览确认后再创建新简历。'}
           </Paragraph>
         </div>
 
         <Card className="glass-card template-gallery-summary" bordered={false}>
           <Space direction="vertical" size={6}>
-            <Text type="secondary">{resume ? '当前关联简历' : '独立预览模式'}</Text>
+            <Text type="secondary">{resume ? '当前关联简历' : '创建入口'}</Text>
             <Title level={4} style={{ margin: 0 }}>
-              {resume ? resume.title : '未绑定具体简历'}
+              {resume ? resume.title : '预览后创建简历'}
             </Title>
             <Space wrap>
               {resume ? (
@@ -512,7 +541,7 @@ export function TemplateGalleryPage() {
                   当前模板：{linkedTemplateName ?? resume.templateKey}
                 </Tag>
               ) : (
-                <Tag color="purple">使用示例内容预览</Tag>
+                <Tag color="purple">点击模板仅切换预览</Tag>
               )}
               <Tag color={editorMode === 'create' ? 'gold' : 'success'}>
                 {editorMode === 'create' ? '新建模板草稿' : '编辑已有模板'}
@@ -552,7 +581,7 @@ export function TemplateGalleryPage() {
               <Alert
                 type={resume ? 'info' : 'success'}
                 showIcon
-                message={resume ? '可直接把当前选中的模板应用到这份简历。' : '当前未绑定 resumeId，预览使用示例简历数据。'}
+                message={resume ? '可直接把当前选中的模板应用到这份简历。' : '点击模板会更新右侧预览和下方配置区；创建简历需要在右侧手动确认。'}
               />
 
               <ResumeTemplatePicker
@@ -754,15 +783,29 @@ export function TemplateGalleryPage() {
                 </Paragraph>
                 <Space wrap>
                   {resume ? (
+                    <>
+                      <Button
+                        type="primary"
+                        onClick={() => void handleApplyTemplateToResume()}
+                        loading={applyingTemplateKey === selectedTemplate?.key}
+                        disabled={!canApplyTemplate}
+                      >
+                        应用到当前简历
+                      </Button>
+                      <Button onClick={() => navigate(`/app/resumes/${resume.id}`)}>
+                        返回当前简历
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       type="primary"
-                      onClick={() => void handleApplyTemplateToResume()}
-                      loading={applyingTemplateKey === selectedTemplate?.key}
-                      disabled={!canApplyTemplate}
+                      icon={<FileAddOutlined />}
+                      onClick={() => void handleCreateResumeFromTemplate(previewTemplate.key)}
+                      loading={creatingResumeTemplateKey === previewTemplate.key}
                     >
-                      应用到当前简历
+                      使用此模板创建简历
                     </Button>
-                  ) : null}
+                  )}
                   <Text type="secondary">
                     最近更新：{previewTemplate.updatedAt ? new Date(previewTemplate.updatedAt).toLocaleString() : '内置备份'}
                   </Text>

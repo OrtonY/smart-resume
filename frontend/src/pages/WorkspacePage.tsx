@@ -12,6 +12,7 @@ import {
   PlusOutlined,
   RollbackOutlined,
   ShareAltOutlined,
+  InboxOutlined,
 } from '@ant-design/icons'
 import {
   App,
@@ -21,21 +22,20 @@ import {
   Empty,
   Input,
   Modal,
+  Pagination,
   Space,
   Spin,
-  Switch,
   Tag,
   Typography,
 } from 'antd'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
-import { ResumeTemplatePicker } from '../features/resume/components/ResumeTemplatePicker'
 import {
   createShare,
-  createResume,
   deleteResume,
   getResume,
+  listDeletedResumes,
   listResumes,
   listShares,
   requestPdfExport,
@@ -44,8 +44,6 @@ import {
 } from '../features/resume/api/resumeApi'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
-  FALLBACK_RESUME_TEMPLATE_CATALOG,
-  getDefaultResumeTemplate,
   resolveResumeTemplate,
 } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
@@ -56,6 +54,7 @@ import type {
   ProjectExperienceItem,
   ResumeDetail,
   ResumeLayout,
+  ResumePage,
   ResumeSectionKey,
   ResumeSummary,
   ShareLink,
@@ -74,6 +73,10 @@ interface WorkspacePageProps {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
 type ResumeModuleId = 'personal-info' | ResumeSectionKey
+type ShareDialogState = {
+  resumeId: string
+  resumeTitle: string
+} | null
 
 interface ResumeModuleDefinition {
   key: ResumeModuleId
@@ -83,6 +86,8 @@ interface ResumeModuleDefinition {
 }
 const DEFAULT_LAYOUT = createDefaultResumeLayout()
 const MAX_AVATAR_FILE_SIZE_BYTES = 1024 * 1024
+const RESUMES_PER_PAGE = 6
+const AVATAR_INPUT_ID = 'resume-editor-avatar-input'
 
 const MODULE_DEFINITIONS: ResumeModuleDefinition[] = [
   {
@@ -167,34 +172,34 @@ function createResumeSignature(resume: Pick<ResumeDetail, 'title' | 'templateKey
 
 export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { resumeId } = useParams()
   const { message } = App.useApp()
   const { templates, loading: loadingTemplates } = useResumeTemplateCatalog()
   const [resumeList, setResumeList] = useState<ResumeSummary[]>([])
+  const [resumePage, setResumePage] = useState<ResumePage | null>(null)
   const [draft, setDraft] = useState<ResumeDetail | null>(null)
-  const [includeDeleted, setIncludeDeleted] = useState(false)
   const [loadingResumeList, setLoadingResumeList] = useState(true)
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [createResumeTitle, setCreateResumeTitle] = useState('未命名简历')
-  const [createTemplateKey, setCreateTemplateKey] = useState(getDefaultResumeTemplate(FALLBACK_RESUME_TEMPLATE_CATALOG).key)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
   const deferredDraft = useDeferredValue(draft)
   const isEditorView = Boolean(resumeId)
+  const isRecycleBinView = location.pathname === '/app/recycle-bin'
 
   const loadResumeList = useCallback(async () => {
     setLoadingResumeList(true)
     try {
-      const list = await listResumes(includeDeleted)
-      setResumeList(list)
+      const page = isRecycleBinView ? await listDeletedResumes(1, RESUMES_PER_PAGE) : await listResumes(false, 1, RESUMES_PER_PAGE)
+      setResumePage(page)
+      setResumeList(page.items)
     } catch (error) {
       void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
     } finally {
       setLoadingResumeList(false)
     }
-  }, [includeDeleted, message])
+  }, [isRecycleBinView, message])
 
   const loadResumeDetail = useCallback(
     async (targetResumeId: string) => {
@@ -340,22 +345,23 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     [updateDraft],
   )
 
-  async function handleCreateResume() {
-    try {
-      const detail = await createResume({
-        title: createResumeTitle.trim() || '未命名简历',
-        templateKey: createTemplateKey,
-      })
-
-      setCreateModalOpen(false)
-      setCreateResumeTitle('未命名简历')
-      await loadResumeList()
-      navigate(`/app/resumes/${detail.id}`)
-      void message.success('简历已创建。')
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法创建简历。')
-    }
-  }
+  const handlePageChange = useCallback(
+    async (nextPage: number) => {
+      setLoadingResumeList(true)
+      try {
+        const page = isRecycleBinView
+          ? await listDeletedResumes(nextPage, RESUMES_PER_PAGE)
+          : await listResumes(false, nextPage, RESUMES_PER_PAGE)
+        setResumePage(page)
+        setResumeList(page.items)
+      } catch (error) {
+        void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
+      } finally {
+        setLoadingResumeList(false)
+      }
+    },
+    [isRecycleBinView, message],
+  )
 
   async function handleDeleteResume(targetResumeId: string) {
     await deleteResume(targetResumeId)
@@ -480,98 +486,122 @@ function showSection(sectionKey: ResumeSectionKey) {
       </div>
     )
   ) : (
-    <ResumeListView
-      createResumeButton={
-        <Button type="primary" size="large" icon={<FileAddOutlined />} onClick={() => setCreateModalOpen(true)}>
-          创建简历
-        </Button>
-      }
-      includeDeleted={includeDeleted}
-      loadingResumeList={loadingResumeList}
-      onDeleteResume={handleDeleteResume}
-      onLogout={onLogout}
-      onOpenResume={(targetResumeId) => navigate(`/app/resumes/${targetResumeId}`)}
-      onRestoreResume={handleRestoreResume}
-      resumeList={resumeList}
-      setIncludeDeleted={setIncludeDeleted}
-      selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
-    />
+    isRecycleBinView ? (
+      <RecycleBinView
+        loadingResumeList={loadingResumeList}
+        onPageChange={handlePageChange}
+        onLogout={onLogout}
+        onRestoreResume={handleRestoreResume}
+        resumePage={resumePage}
+        resumeList={resumeList}
+        selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
+        templates={templates}
+      />
+    ) : (
+      <ResumeListView
+        loadingResumeList={loadingResumeList}
+        onDeleteResume={handleDeleteResume}
+        onPageChange={handlePageChange}
+        onLogout={onLogout}
+        onOpenResume={(targetResumeId) => navigate(`/app/resumes/${targetResumeId}`)}
+        resumePage={resumePage}
+        resumeList={resumeList}
+        selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
+        templates={templates}
+      />
+    )
   )
 
-  return (
-    <>
-      {pageContent}
-
-      <Modal
-        title="创建新简历"
-        open={createModalOpen}
-        onOk={() => void handleCreateResume()}
-        onCancel={() => setCreateModalOpen(false)}
-        okText="创建"
-      >
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
-          <Input value={createResumeTitle} onChange={(event) => setCreateResumeTitle(event.target.value)} placeholder="简历标题" />
-          <ResumeTemplatePicker
-            templates={templates}
-            value={createTemplateKey}
-            onChange={setCreateTemplateKey}
-            compact
-            ariaLabel="创建简历时选择模板"
-          />
-        </Space>
-      </Modal>
-    </>
-  )
+  return pageContent
 }
 
 function ResumeListView({
-  createResumeButton,
-  includeDeleted,
   loadingResumeList,
   onDeleteResume,
+  onPageChange,
   onLogout,
   onOpenResume,
-  onRestoreResume,
+  resumePage,
   resumeList,
   selectedTemplateName,
-  setIncludeDeleted,
+  templates,
 }: {
-  createResumeButton: ReactNode
-  includeDeleted: boolean
   loadingResumeList: boolean
   onDeleteResume: (resumeId: string) => Promise<void>
+  onPageChange: (page: number) => Promise<void>
   onLogout: () => void
   onOpenResume: (resumeId: string) => void
-  onRestoreResume: (resumeId: string) => Promise<void>
+  resumePage: ResumePage | null
   resumeList: ResumeSummary[]
   selectedTemplateName: (templateKey: string) => string
-  setIncludeDeleted: (nextValue: boolean) => void
+  templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
 }) {
   const { message } = App.useApp()
-  const [expandedShareResumeId, setExpandedShareResumeId] = useState<string | null>(null)
+  const [shareDialog, setShareDialog] = useState<ShareDialogState>(null)
   const [loadingShareResumeId, setLoadingShareResumeId] = useState<string | null>(null)
   const [shareLinksByResumeId, setShareLinksByResumeId] = useState<Record<string, ShareLink[]>>({})
+  const [previewDetailsByResumeId, setPreviewDetailsByResumeId] = useState<Record<string, ResumeDetail>>({})
+  const visibleResumes = resumeList
+  const visibleResumeIds = useMemo(() => visibleResumes.map((item) => item.id), [visibleResumes])
+  const loadingPreviewIds = visibleResumeIds.filter((id) => !previewDetailsByResumeId[id])
+  const emptySlotCount = Math.max(0, RESUMES_PER_PAGE - visibleResumes.length)
 
-  const toggleSharePanel = useCallback(async (resumeId: string) => {
-    if (expandedShareResumeId === resumeId) {
-      setExpandedShareResumeId(null)
-      return
-    }
-
-    setExpandedShareResumeId(resumeId)
-    setLoadingShareResumeId(resumeId)
+  const openShareDialog = useCallback(async (resume: ResumeSummary) => {
+    setShareDialog({
+      resumeId: resume.id,
+      resumeTitle: resume.title,
+    })
+    setLoadingShareResumeId(resume.id)
     try {
-      const shares = await listShares(resumeId)
+      const shares = await listShares(resume.id)
       setShareLinksByResumeId((current) => ({
         ...current,
-        [resumeId]: shares,
+        [resume.id]: shares,
       }))
     } catch (error) {
       void message.error(error instanceof Error ? error.message : '无法加载分享链接。')
     } finally {
-      setLoadingShareResumeId((current) => (current === resumeId ? null : current))
+      setLoadingShareResumeId((current) => (current === resume.id ? null : current))
     }
-  }, [expandedShareResumeId, message])
+  }, [message])
+
+  useEffect(() => {
+    const missingResumes = visibleResumes.filter((item) => !previewDetailsByResumeId[item.id])
+    if (missingResumes.length === 0) {
+      return
+    }
+
+    let cancelled = false
+    const missingIds = missingResumes.map((item) => item.id)
+
+    Promise.allSettled(missingIds.map((id) => getResume(id)))
+      .then((results) => {
+        if (cancelled) {
+          return
+        }
+
+        const loadedDetails = results.reduce<Record<string, ResumeDetail>>((next, result) => {
+          if (result.status === 'fulfilled') {
+            next[result.value.id] = {
+              ...result.value,
+              layout: normalizeResumeLayout(result.value.layout),
+            }
+          }
+          return next
+        }, {})
+
+        if (Object.keys(loadedDetails).length > 0) {
+          setPreviewDetailsByResumeId((current) => ({
+            ...current,
+            ...loadedDetails,
+          }))
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [previewDetailsByResumeId, visibleResumes])
 
   return (
     <div className="workspace-layout">
@@ -584,7 +614,16 @@ function ResumeListView({
           </div>
 
           <div className="workspace-hub__actions">
-            {createResumeButton}
+            <Link to="/app/templates">
+              <Button type="primary" size="large" icon={<FileAddOutlined />}>
+                模板目录
+              </Button>
+            </Link>
+            <Link to="/app/recycle-bin">
+              <Button size="large" icon={<InboxOutlined />}>
+                回收桶
+              </Button>
+            </Link>
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
               锁定工作区
             </Button>
@@ -592,11 +631,13 @@ function ResumeListView({
         </div>
 
         <div className="workspace-hub__toolbar">
-          <Space align="center">
-            <Text strong>显示已删除</Text>
-            <Switch checked={includeDeleted} onChange={setIncludeDeleted} />
+          <Space wrap align="center">
+            <Text strong>我的简历</Text>
+            <Tag color="blue">{resumePage?.total ?? resumeList.length} 份</Tag>
           </Space>
-          <Tag color="blue">{resumeList.length} 份简历</Tag>
+          {(resumePage?.total ?? resumeList.length) > RESUMES_PER_PAGE ? (
+            <Text type="secondary">每页最多展示 {RESUMES_PER_PAGE} 份简历</Text>
+          ) : null}
         </div>
 
         {loadingResumeList ? (
@@ -608,109 +649,351 @@ function ResumeListView({
             <Empty description="还没有简历，先创建一份试试。" />
           </Card>
         ) : (
-          <div className="resume-list-grid">
-            {resumeList.map((item) => (
-              <article className="resume-list-card" key={item.id}>
-                <button
-                  className="resume-list-card__link"
-                  type="button"
-                  onClick={() => onOpenResume(item.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      onOpenResume(item.id)
-                    }
+          <Space direction="vertical" size={18} style={{ width: '100%' }}>
+            <div className="resume-list-grid">
+              {visibleResumes.map((item) => (
+                <ResumeVisualCard
+                  key={item.id}
+                  item={item}
+                  loadingPreview={loadingPreviewIds.includes(item.id)}
+                  onDeleteResume={onDeleteResume}
+                  onOpenResume={onOpenResume}
+                  onOpenShareDialog={openShareDialog}
+                  previewDetail={previewDetailsByResumeId[item.id]}
+                  selectedTemplateName={selectedTemplateName(item.templateKey)}
+                  templates={templates}
+                />
+              ))}
+              {Array.from({ length: emptySlotCount }).map((_, index) => (
+                <div className="resume-list-card resume-list-card--empty" key={`empty-slot-${index}`} aria-hidden="true" />
+              ))}
+            </div>
+
+            {resumePage && resumePage.totalPages > 1 ? (
+              <div className="resume-list-pagination">
+                <Pagination
+                  current={resumePage.page}
+                  pageSize={RESUMES_PER_PAGE}
+                  total={resumePage.total}
+                  onChange={(nextPage) => void onPageChange(nextPage)}
+                  showSizeChanger={false}
+                />
+              </div>
+            ) : null}
+          </Space>
+        )}
+      </div>
+
+      <ShareLinksModal
+        loading={loadingShareResumeId === shareDialog?.resumeId}
+        onClose={() => setShareDialog(null)}
+        shareDialog={shareDialog}
+        shareLinks={shareDialog ? shareLinksByResumeId[shareDialog.resumeId] ?? [] : []}
+      />
+    </div>
+  )
+}
+
+function ResumeVisualCard({
+  item,
+  loadingPreview,
+  onDeleteResume,
+  onOpenResume,
+  onOpenShareDialog,
+  onRestoreResume,
+  previewDetail,
+  selectedTemplateName,
+  status = 'active',
+  templates,
+}: {
+  item: ResumeSummary
+  loadingPreview: boolean
+  onDeleteResume?: (resumeId: string) => Promise<void>
+  onOpenResume?: (resumeId: string) => void
+  onOpenShareDialog?: (resume: ResumeSummary) => Promise<void>
+  onRestoreResume?: (resumeId: string) => Promise<void>
+  previewDetail?: ResumeDetail
+  selectedTemplateName: string
+  status?: 'active' | 'deleted'
+  templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
+}) {
+  const preview = (
+    <div className="resume-list-card__preview">
+      {previewDetail ? (
+        <ResumePreview
+          resume={previewDetail}
+          templates={templates}
+          previewMode="a4-fit"
+        />
+      ) : (
+        <div className="resume-list-card__preview-fallback">
+          {loadingPreview ? <Spin size="small" /> : <FileAddOutlined />}
+          <Text type="secondary">{loadingPreview ? '正在生成预览' : selectedTemplateName}</Text>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <article className="resume-list-card">
+      {onOpenResume ? (
+        <button
+          className="resume-list-card__preview-button"
+          type="button"
+          onClick={() => onOpenResume(item.id)}
+          aria-label={`打开 ${item.title}`}
+        >
+          {preview}
+        </button>
+      ) : (
+        <div className="resume-list-card__preview-button" aria-label={`${item.title} 预览`}>
+          {preview}
+        </div>
+      )}
+
+      {onOpenShareDialog ? (
+        <Button
+          className="resume-list-card__share-action"
+          shape="circle"
+          icon={<ShareAltOutlined />}
+          onClick={() => void onOpenShareDialog(item)}
+          aria-label={`查看 ${item.title} 的分享链接`}
+        />
+      ) : null}
+
+      <div className="resume-list-card__body">
+        <div className="resume-list-card__topline">
+          <Tag color="default">{selectedTemplateName}</Tag>
+          <Tag color={status === 'deleted' ? 'red' : 'blue'}>{status === 'deleted' ? '已删除' : '可编辑'}</Tag>
+        </div>
+        <strong>{item.title}</strong>
+        <p>{status === 'deleted' ? '删除于' : '更新于'} {new Date(item.updatedAt).toLocaleString()}</p>
+      </div>
+
+      <div className="resume-list-card__actions">
+        {onRestoreResume ? (
+          <Button
+            type="primary"
+            icon={<RollbackOutlined />}
+            onClick={() => {
+              void onRestoreResume(item.id)
+            }}
+          >
+            恢复
+          </Button>
+        ) : null}
+
+        {onDeleteResume ? (
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              void onDeleteResume(item.id)
+            }}
+          >
+            删除
+          </Button>
+        ) : null}
+      </div>
+    </article>
+  )
+}
+
+function ShareLinksModal({
+  loading,
+  onClose,
+  shareDialog,
+  shareLinks,
+}: {
+  loading: boolean
+  onClose: () => void
+  shareDialog: ShareDialogState
+  shareLinks: ShareLink[]
+}) {
+  const { message } = App.useApp()
+
+  return (
+    <Modal
+      title={shareDialog ? `${shareDialog.resumeTitle} 的分享链接` : '分享链接'}
+      open={Boolean(shareDialog)}
+      onCancel={onClose}
+      footer={null}
+      destroyOnHidden
+    >
+      {loading ? (
+        <div className="resume-list-card__share-loading">
+          <Spin />
+        </div>
+      ) : shareLinks.length === 0 ? (
+        <Empty description="还没有分享链接，进入编辑页后可以创建最新版或快照链接。" />
+      ) : (
+        <div className="share-list">
+          {shareLinks.map((share) => {
+            const fullUrl = `${window.location.origin}${share.sharePath}`
+
+            return (
+              <div className="share-row" key={share.shareCode}>
+                <Space direction="vertical" size={4}>
+                  <Space wrap>
+                    <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>
+                      {share.shareMode === 'LATEST' ? '最新版' : '快照'}
+                    </Tag>
+                    <Text code>{share.shareCode}</Text>
+                  </Space>
+                  <Text copyable={{ text: fullUrl }}>{fullUrl}</Text>
+                  <Text type="secondary">{new Date(share.createdAt).toLocaleString()}</Text>
+                </Space>
+
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(fullUrl)
+                    void message.success('分享链接已复制。')
                   }}
                 >
-                  <div className="resume-list-card__topline">
-                    <Tag color="default">{selectedTemplateName(item.templateKey)}</Tag>
-                    {item.deleted ? <Tag color="red">已删除</Tag> : <Tag color="blue">可编辑</Tag>}
-                  </div>
+                  复制
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </Modal>
+  )
+}
 
-                  <div className="resume-list-card__body">
-                    <strong>{item.title}</strong>
-                    <p>更新于 {new Date(item.updatedAt).toLocaleString()}</p>
-                  </div>
-                </button>
+function RecycleBinView({
+  loadingResumeList,
+  onPageChange,
+  onLogout,
+  onRestoreResume,
+  resumePage,
+  resumeList,
+  selectedTemplateName,
+  templates,
+}: {
+  loadingResumeList: boolean
+  onPageChange: (page: number) => Promise<void>
+  onLogout: () => void
+  onRestoreResume: (resumeId: string) => Promise<void>
+  resumePage: ResumePage | null
+  resumeList: ResumeSummary[]
+  selectedTemplateName: (templateKey: string) => string
+  templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
+}) {
+  const [previewDetailsByResumeId, setPreviewDetailsByResumeId] = useState<Record<string, ResumeDetail>>({})
+  const visibleResumes = resumeList
+  const visibleResumeIds = useMemo(() => visibleResumes.map((item) => item.id), [visibleResumes])
+  const loadingPreviewIds = visibleResumeIds.filter((id) => !previewDetailsByResumeId[id])
+  const emptySlotCount = Math.max(0, RESUMES_PER_PAGE - visibleResumes.length)
 
-                <div className="resume-list-card__actions">
-                  <Button type="primary" onClick={() => onOpenResume(item.id)}>
-                    打开编辑器
-                  </Button>
+  useEffect(() => {
+    const missingResumes = visibleResumes.filter((item) => !previewDetailsByResumeId[item.id])
+    if (missingResumes.length === 0) {
+      return
+    }
 
-                  {!item.deleted ? (
-                    <Button onClick={() => void toggleSharePanel(item.id)}>
-                      {expandedShareResumeId === item.id ? '收起分享' : '查看分享'}
-                    </Button>
-                  ) : null}
+    let cancelled = false
+    const missingIds = missingResumes.map((item) => item.id)
 
-                  {item.deleted ? (
-                    <Button
-                      icon={<RollbackOutlined />}
-                      onClick={() => {
-                        void onRestoreResume(item.id)
-                      }}
-                    >
-                      恢复
-                    </Button>
-                  ) : (
-                    <Button
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => {
-                        void onDeleteResume(item.id)
-                      }}
-                    >
-                      删除
-                    </Button>
-                  )}
-                </div>
+    Promise.allSettled(missingIds.map((id) => getResume(id)))
+      .then((results) => {
+        if (cancelled) {
+          return
+        }
 
-                {!item.deleted && expandedShareResumeId === item.id ? (
-                  <div className="resume-list-card__share-panel">
-                    <div className="resume-list-card__share-head">
-                      <Text strong>分享链接</Text>
-                      {loadingShareResumeId === item.id ? <Tag color="processing">加载中</Tag> : null}
-                    </div>
+        const loadedDetails = results.reduce<Record<string, ResumeDetail>>((next, result) => {
+          if (result.status === 'fulfilled') {
+            next[result.value.id] = {
+              ...result.value,
+              layout: normalizeResumeLayout(result.value.layout),
+            }
+          }
+          return next
+        }, {})
 
-                    {loadingShareResumeId === item.id ? (
-                      <div className="resume-list-card__share-loading">
-                        <Spin size="small" />
-                      </div>
-                    ) : (shareLinksByResumeId[item.id] ?? []).length === 0 ? (
-                      <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                        还没有分享链接，进入编辑页后可以创建最新版或快照链接。
-                      </Paragraph>
-                    ) : (
-                      <div className="resume-list-card__share-list">
-                        {(shareLinksByResumeId[item.id] ?? []).map((share) => (
-                          <div className="share-row" key={share.shareCode}>
-                            <Space direction="vertical" size={2}>
-                              <Space wrap>
-                                <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>{share.shareMode}</Tag>
-                                <Text code>{share.shareCode}</Text>
-                              </Space>
-                              <Text type="secondary">{new Date(share.createdAt).toLocaleString()}</Text>
-                            </Space>
+        if (Object.keys(loadedDetails).length > 0) {
+          setPreviewDetailsByResumeId((current) => ({
+            ...current,
+            ...loadedDetails,
+          }))
+        }
+      })
 
-                            <Button
-                              icon={<CopyOutlined />}
-                              onClick={async () => {
-                                await navigator.clipboard.writeText(`${window.location.origin}${share.sharePath}`)
-                                void message.success('分享链接已复制。')
-                              }}
-                            >
-                              复制链接
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-              </article>
-            ))}
+    return () => {
+      cancelled = true
+    }
+  }, [previewDetailsByResumeId, visibleResumes])
+
+  return (
+    <div className="workspace-layout">
+      <div className="workspace-hub workspace-hub--recycle">
+        <div className="workspace-hub__hero">
+          <div className="workspace-hub__copy">
+            <Tag color="default">Recycle Bin</Tag>
+            <h1>回收桶</h1>
+            <p>这里仅展示已删除简历。恢复后，简历会重新回到首页列表。</p>
           </div>
+
+          <div className="workspace-hub__actions">
+            <Link to="/app">
+              <Button type="primary" size="large" icon={<ArrowLeftOutlined />}>
+                返回首页
+              </Button>
+            </Link>
+            <Button icon={<LogoutOutlined />} onClick={onLogout}>
+              锁定工作区
+            </Button>
+          </div>
+        </div>
+
+        <div className="workspace-hub__toolbar">
+          <Space wrap align="center">
+            <Text strong>已删除简历</Text>
+            <Tag color="red">{resumePage?.total ?? resumeList.length} 份</Tag>
+          </Space>
+        </div>
+
+        {loadingResumeList ? (
+          <div className="workspace-loading-state">
+            <Spin size="large" />
+          </div>
+        ) : resumeList.length === 0 ? (
+          <Card className="glass-card workspace-hub__empty" bordered={false}>
+            <Empty description="回收桶为空。" />
+          </Card>
+        ) : (
+          <Space direction="vertical" size={18} style={{ width: '100%' }}>
+            <div className="resume-list-grid">
+              {visibleResumes.map((item) => (
+                <ResumeVisualCard
+                  key={item.id}
+                  item={item}
+                  loadingPreview={loadingPreviewIds.includes(item.id)}
+                  onRestoreResume={onRestoreResume}
+                  previewDetail={previewDetailsByResumeId[item.id]}
+                  selectedTemplateName={selectedTemplateName(item.templateKey)}
+                  status="deleted"
+                  templates={templates}
+                />
+              ))}
+              {Array.from({ length: emptySlotCount }).map((_, index) => (
+                <div className="resume-list-card resume-list-card--empty" key={`recycle-empty-slot-${index}`} aria-hidden="true" />
+              ))}
+            </div>
+
+            {resumePage && resumePage.totalPages > 1 ? (
+              <div className="resume-list-pagination">
+                <Pagination
+                  current={resumePage.page}
+                  pageSize={RESUMES_PER_PAGE}
+                  total={resumePage.total}
+                  onChange={(nextPage) => void onPageChange(nextPage)}
+                  showSizeChanger={false}
+                />
+              </div>
+            ) : null}
+          </Space>
         )}
       </div>
     </div>
@@ -759,10 +1042,9 @@ function ResumeEditorView({
   const { message } = App.useApp()
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
-  const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleAvatarPickerOpen = useCallback(() => {
-    avatarInputRef.current?.click()
+    document.getElementById(AVATAR_INPUT_ID)?.click()
   }, [])
 
   const handleAvatarRemove = useCallback(() => {
@@ -770,8 +1052,9 @@ function ResumeEditorView({
       next.content.personalInfo.avatar = ''
     })
 
-    if (avatarInputRef.current) {
-      avatarInputRef.current.value = ''
+    const input = document.getElementById(AVATAR_INPUT_ID)
+    if (input instanceof HTMLInputElement) {
+      input.value = ''
     }
   }, [onUpdateDraft])
 
@@ -808,6 +1091,14 @@ function ResumeEditorView({
   return (
     <div className="workspace-layout">
       <div className="resume-editor-shell">
+        <input
+          id={AVATAR_INPUT_ID}
+          className="resume-editor-avatar-field__input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={handleAvatarFileChange}
+        />
+
         <div className="resume-editor-shell__topbar">
           <div className="resume-editor-shell__title">
             <Space wrap>
@@ -831,7 +1122,7 @@ function ResumeEditorView({
 
           <Space wrap className="resume-editor-shell__actions">
             <Link to={`/app/templates?resumeId=${draft.id}`}>
-              <Button>模板中心</Button>
+              <Button>修改模板</Button>
             </Link>
             <Button icon={<ShareAltOutlined />} onClick={() => void onCreateShare('LATEST')}>
               分享最新版
@@ -976,8 +1267,6 @@ function ResumeEditorView({
                           module.key,
                           draft,
                           onUpdateDraft,
-                          avatarInputRef,
-                          handleAvatarFileChange,
                           handleAvatarPickerOpen,
                           handleAvatarRemove,
                         )}
@@ -1082,8 +1371,6 @@ function renderModuleContent(
   moduleKey: ResumeModuleId,
   draft: ResumeDetail,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
-  avatarInputRef: { current: HTMLInputElement | null },
-  onAvatarFileChange: (event: ChangeEvent<HTMLInputElement>) => void,
   onAvatarPickerOpen: () => void,
   onAvatarRemove: () => void,
 ) {
@@ -1091,13 +1378,6 @@ function renderModuleContent(
     return (
       <div className="resume-editor-personal-info">
         <div className="resume-editor-avatar-field">
-          <input
-            ref={avatarInputRef}
-            className="resume-editor-avatar-field__input"
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            onChange={onAvatarFileChange}
-          />
           <div className="resume-editor-avatar-field__preview">
             {draft.content.personalInfo.avatar ? (
               <img src={draft.content.personalInfo.avatar} alt="Avatar preview" />

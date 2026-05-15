@@ -62,6 +62,7 @@ export function AppRouter() {
         ) : (
           <>
             <Route path="/app/templates" element={<TemplateGalleryPage />} />
+            <Route path="/app/recycle-bin" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="/app/resumes/:resumeId" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="/app" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="*" element={<Navigate to="/app" replace />} />
