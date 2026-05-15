@@ -770,14 +770,21 @@ a {
 }
 
 .resume-template__masthead--classic {
+  padding: 26px 34px 18px;
   background: var(--template-hero-background);
   color: var(--template-hero-text);
+  border-bottom: 1px solid rgba(20, 33, 61, 0.12);
 }
 
 .resume-template__masthead--classic .resume-template__eyebrow,
 .resume-template__masthead--classic .resume-template__identity p,
 .resume-template__masthead--classic .resume-template__contact-list span {
   color: var(--template-hero-muted);
+}
+
+.resume-template__masthead--classic .resume-template__contact-list.is-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .resume-template__masthead--minimal {
@@ -790,14 +797,7 @@ a {
   border-bottom: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.1));
 }
 
-.resume-template__body--classic {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.72fr);
-  gap: 0;
-}
-
 .resume-template__main,
-.resume-template__rail,
 .resume-template__sidebar,
 .resume-template__content-column,
 .resume-template__notes-column {
@@ -808,11 +808,6 @@ a {
 .resume-template__content-column,
 .resume-template__notes-column {
   padding: 24px 28px 30px;
-}
-
-.resume-template__rail {
-  padding: 24px 24px 30px 0;
-  background: var(--template-rail-background);
 }
 
 .resume-template__sidebar {
@@ -848,6 +843,9 @@ a {
 
 .resume-template__content-column--classic {
   padding: 20px 34px 34px;
+  display: grid;
+  grid-auto-rows: min-content;
+  gap: 0;
 }
 
 .resume-template__hero {
@@ -1384,7 +1382,6 @@ a {
     padding-right: 0;
   }
 
-  .resume-template__body--classic,
   .resume-template--split,
   .resume-template__editorial-grid,
   .resume-template__hero {
@@ -1402,20 +1399,6 @@ a {
     min-width: 0;
   }
 
-  .resume-template__masthead-main--dense {
-    padding-left: 0;
-  }
-
-  .resume-template__entry-topline {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .resume-template__entry-meta {
-    text-align: left;
-  }
-
-  .resume-template__rail,
   .resume-template__sidebar,
   .resume-template__notes-column {
     padding: 0 28px 30px;
@@ -1458,7 +1441,6 @@ a {
   .resume-template__main,
   .resume-template__content-column,
   .resume-template__notes-column,
-  .resume-template__rail,
   .resume-template__sidebar {
     padding-left: 20px;
     padding-right: 20px;

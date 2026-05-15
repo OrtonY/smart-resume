@@ -47,9 +47,6 @@ interface PreviewModel {
 
 const A4_PREVIEW_WIDTH_PX = 794
 const A4_PREVIEW_HEIGHT_PX = 1123
-const NARRATIVE_SECTION_KEYS: ResumeSectionKey[] = ['summary', 'workExperience', 'projectExperience', 'education']
-const SUPPORTING_SECTION_KEYS: ResumeSectionKey[] = ['skills', 'honors', 'certificates']
-
 export function ResumePreview({
   resume,
   sectionOrder,
@@ -258,15 +255,9 @@ function ClassicPreview({
         </div>
       </header>
 
-      <div className="resume-template__body resume-template__body--classic">
-        <div className="resume-template__main">
-          {renderSectionStack(orderedKeys, NARRATIVE_SECTION_KEYS, sectionNodes)}
-        </div>
-
-        <aside className="resume-template__rail">
-          {renderSectionStack(orderedKeys, SUPPORTING_SECTION_KEYS, sectionNodes)}
-        </aside>
-      </div>
+      <main className="resume-template__content-column resume-template__content-column--classic">
+        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
+      </main>
     </div>
   )
 }
