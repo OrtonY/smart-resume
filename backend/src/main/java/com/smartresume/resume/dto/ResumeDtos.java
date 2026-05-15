@@ -25,6 +25,7 @@ public final class ResumeDtos {
         String title,
         String templateKey,
         ResumeContentPayload content,
+        ResumeLayoutPayload layout,
         LocalDateTime updatedAt,
         LocalDateTime deletedAt
     ) {
@@ -45,7 +46,10 @@ public final class ResumeDtos {
         String templateKey,
         @NotNull(message = "Resume content is required")
         @Valid
-        ResumeContentPayload content
+        ResumeContentPayload content,
+        @NotNull(message = "Resume layout is required")
+        @Valid
+        ResumeLayoutPayload layout
     ) {
     }
 
@@ -58,6 +62,12 @@ public final class ResumeDtos {
         List<@Valid SkillItem> skills,
         List<@Valid HonorItem> honors,
         List<@Valid CertificateItem> certificates
+    ) {
+    }
+
+    public record ResumeLayoutPayload(
+        List<@NotBlank(message = "Section key cannot be blank") String> sectionOrder,
+        List<@NotBlank(message = "Hidden section key cannot be blank") String> hiddenSections
     ) {
     }
 

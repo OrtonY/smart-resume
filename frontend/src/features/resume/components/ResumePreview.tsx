@@ -1,16 +1,26 @@
 import { Empty } from 'antd'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
   createTemplateStyleVariables,
   resolveResumeTemplate,
   type ResumeTemplateDefinition,
 } from '../templateCatalog'
-import type { ResumeDetail } from '../types'
+import {
+  DEFAULT_RESUME_SECTION_ORDER,
+  normalizeResumeLayout,
+  normalizeResumeSectionOrder,
+  type ResumeDetail,
+  type ResumeSectionKey,
+} from '../types'
 
 interface ResumePreviewProps {
-  resume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content'>
+  resume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'>
+  sectionOrder?: ResumeSectionKey[]
+  hiddenSections?: ResumeSectionKey[]
   templates?: ResumeTemplateDefinition[]
+  previewMode?: 'auto' | 'a4-fit'
+  onClick?: () => void
 }
 
 interface TimelineEntry {
@@ -34,38 +44,163 @@ interface PreviewModel {
   skills: string[]
 }
 
+const A4_PREVIEW_WIDTH_PX = 794
+const A4_PREVIEW_HEIGHT_PX = 1123
+const NARRATIVE_SECTION_KEYS: ResumeSectionKey[] = ['summary', 'workExperience', 'projectExperience', 'education']
+const SUPPORTING_SECTION_KEYS: ResumeSectionKey[] = ['skills', 'honors', 'certificates']
+
 export function ResumePreview({
   resume,
+  sectionOrder,
+  hiddenSections,
   templates = FALLBACK_RESUME_TEMPLATE_CATALOG,
+  previewMode = 'auto',
+  onClick,
 }: ResumePreviewProps) {
+  const stageRef = useRef<HTMLDivElement | null>(null)
+  const previewRef = useRef<HTMLElement | null>(null)
+  const [previewMetrics, setPreviewMetrics] = useState({
+    scale: 1,
+    paperHeight: A4_PREVIEW_HEIGHT_PX,
+  })
   const template = resolveResumeTemplate(templates, resume.templateKey)
   const model = createPreviewModel(resume, template)
+  const layout = normalizeResumeLayout(resume.layout)
+  const orderedKeys = normalizeResumeSectionOrder(sectionOrder ?? layout.sectionOrder)
+  const hiddenKeySet = new Set(hiddenSections ?? layout.hiddenSections)
+  const sectionNodes = createSectionNodes(model, hiddenKeySet)
+  const isFixedA4Preview = previewMode === 'a4-fit'
+  const stageStyle = {
+    '--resume-preview-scale': String(previewMetrics.scale),
+  } as CSSProperties
+  const paperStyle = {
+    width: `${A4_PREVIEW_WIDTH_PX * previewMetrics.scale}px`,
+    height: `${previewMetrics.paperHeight * previewMetrics.scale}px`,
+  }
+
+  useEffect(() => {
+    const stageElement = stageRef.current
+    const previewElement = previewRef.current
+
+    if (!stageElement || !previewElement) {
+      return
+    }
+
+    const updateMetrics = () => {
+      const stageWidth = stageElement.clientWidth || A4_PREVIEW_WIDTH_PX
+      const stageHeight = stageElement.clientHeight
+      const widthScale = stageWidth / A4_PREVIEW_WIDTH_PX
+      const heightScale = stageHeight > 0 ? stageHeight / A4_PREVIEW_HEIGHT_PX : Number.POSITIVE_INFINITY
+      const nextScale = isFixedA4Preview
+        ? Math.min(1, widthScale, heightScale)
+        : Math.min(1, widthScale)
+      const nextPaperHeight = isFixedA4Preview
+        ? A4_PREVIEW_HEIGHT_PX
+        : Math.max(A4_PREVIEW_HEIGHT_PX, previewElement.scrollHeight)
+
+      setPreviewMetrics((current) => {
+        if (Math.abs(current.scale - nextScale) < 0.001 && current.paperHeight === nextPaperHeight) {
+          return current
+        }
+
+        return {
+          scale: nextScale,
+          paperHeight: nextPaperHeight,
+        }
+      })
+    }
+
+    updateMetrics()
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMetrics()
+    })
+
+    resizeObserver.observe(stageElement)
+    if (!isFixedA4Preview) {
+      resizeObserver.observe(previewElement)
+    }
+    window.addEventListener('resize', updateMetrics)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updateMetrics)
+    }
+  }, [hiddenSections, isFixedA4Preview, orderedKeys, resume, sectionNodes])
+
+  function handlePreviewKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!onClick) {
+      return
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onClick()
+    }
+  }
 
   return (
-    <article
-      className={`resume-preview preview--${template.layout}`}
-      style={createTemplateStyleVariables(template)}
+    <div
+      className={[
+        'resume-preview-stage',
+        isFixedA4Preview ? 'resume-preview-stage--fit' : '',
+        onClick ? 'resume-preview-stage--interactive' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      ref={stageRef}
+      style={stageStyle}
+      onClick={onClick}
+      onKeyDown={handlePreviewKeyDown}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
-      {renderTemplate(model)}
-    </article>
+      <div className="resume-preview-paper" style={paperStyle}>
+        <article
+          className={[
+            'resume-preview',
+            `preview--${template.layout}`,
+            isFixedA4Preview ? 'resume-preview--a4-fit' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          ref={previewRef}
+          style={createTemplateStyleVariables(template)}
+        >
+          {renderTemplate(model, sectionNodes, orderedKeys)}
+        </article>
+      </div>
+    </div>
   )
 }
 
-function renderTemplate(model: PreviewModel) {
+function renderTemplate(
+  model: PreviewModel,
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>,
+  orderedKeys: ResumeSectionKey[],
+) {
   switch (model.template.layout) {
     case 'two-column':
-      return <ModernSplitPreview model={model} />
+      return <ModernSplitPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />
     case 'minimal':
-      return <MinimalPreview model={model} />
+      return <MinimalPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />
     case 'editorial':
-      return <EditorialPreview model={model} />
+      return <EditorialPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />
     case 'classic':
     default:
-      return <ClassicPreview model={model} />
+      return <ClassicPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />
   }
 }
 
-function ClassicPreview({ model }: { model: PreviewModel }) {
+function ClassicPreview({
+  model,
+  sectionNodes,
+  orderedKeys,
+}: {
+  model: PreviewModel
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>
+  orderedKeys: ResumeSectionKey[]
+}) {
   return (
     <div className="resume-template resume-template--classic">
       <header className="resume-template__masthead resume-template__masthead--classic">
@@ -79,25 +214,26 @@ function ClassicPreview({ model }: { model: PreviewModel }) {
 
       <div className="resume-template__body resume-template__body--classic">
         <div className="resume-template__main">
-          <PreviewSection title="个人简介" hidden={!model.summary}>
-            <p className="resume-template__paragraph">{model.summary}</p>
-          </PreviewSection>
-          <TimelineSection title="工作经历" items={model.work} />
-          <TimelineSection title="项目经历" items={model.projects} />
-          <TimelineSection title="教育经历" items={model.education} />
+          {renderSectionStack(orderedKeys, NARRATIVE_SECTION_KEYS, sectionNodes)}
         </div>
 
         <aside className="resume-template__rail">
-          <SkillSection title="技能" items={model.skills} tone="soft" />
-          <TimelineSection title="荣誉奖项" items={model.honors} compact />
-          <TimelineSection title="证书" items={model.certificates} compact />
+          {renderSectionStack(orderedKeys, SUPPORTING_SECTION_KEYS, sectionNodes)}
         </aside>
       </div>
     </div>
   )
 }
 
-function ModernSplitPreview({ model }: { model: PreviewModel }) {
+function ModernSplitPreview({
+  model,
+  sectionNodes,
+  orderedKeys,
+}: {
+  model: PreviewModel
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>
+  orderedKeys: ResumeSectionKey[]
+}) {
   return (
     <div className="resume-template resume-template--split">
       <aside className="resume-template__sidebar">
@@ -107,24 +243,25 @@ function ModernSplitPreview({ model }: { model: PreviewModel }) {
           <p>{model.headline}</p>
         </div>
         <ContactList items={model.contact} stacked />
-        <PreviewSection title="个人简介" hidden={!model.summary}>
-          <p className="resume-template__paragraph">{model.summary}</p>
-        </PreviewSection>
-        <SkillSection title="技能" items={model.skills} tone="bold" />
-        <TimelineSection title="证书" items={model.certificates} compact />
+        {renderSectionStack(orderedKeys, ['summary', 'skills', 'certificates'], sectionNodes)}
       </aside>
 
       <main className="resume-template__content-column">
-        <TimelineSection title="工作经历" items={model.work} />
-        <TimelineSection title="项目经历" items={model.projects} />
-        <TimelineSection title="教育经历" items={model.education} />
-        <TimelineSection title="荣誉奖项" items={model.honors} compact />
+        {renderSectionStack(orderedKeys, ['workExperience', 'projectExperience', 'education', 'honors'], sectionNodes)}
       </main>
     </div>
   )
 }
 
-function MinimalPreview({ model }: { model: PreviewModel }) {
+function MinimalPreview({
+  model,
+  sectionNodes,
+  orderedKeys,
+}: {
+  model: PreviewModel
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>
+  orderedKeys: ResumeSectionKey[]
+}) {
   return (
     <div className="resume-template resume-template--minimal">
       <header className="resume-template__masthead resume-template__masthead--minimal">
@@ -135,21 +272,23 @@ function MinimalPreview({ model }: { model: PreviewModel }) {
       </header>
 
       <div className="resume-template__content-column resume-template__content-column--minimal">
-        <PreviewSection title="个人简介" hidden={!model.summary} minimal>
-          <p className="resume-template__paragraph">{model.summary}</p>
-        </PreviewSection>
-        <TimelineSection title="工作经历" items={model.work} minimal />
-        <TimelineSection title="项目经历" items={model.projects} minimal />
-        <TimelineSection title="教育经历" items={model.education} minimal />
-        <SkillSection title="技能" items={model.skills} tone="plain" />
-        <TimelineSection title="荣誉奖项" items={model.honors} compact minimal />
-        <TimelineSection title="证书" items={model.certificates} compact minimal />
+        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
       </div>
     </div>
   )
 }
 
-function EditorialPreview({ model }: { model: PreviewModel }) {
+function EditorialPreview({
+  model,
+  sectionNodes,
+  orderedKeys,
+}: {
+  model: PreviewModel
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>
+  orderedKeys: ResumeSectionKey[]
+}) {
+  const showSummary = Boolean(sectionNodes.summary)
+
   return (
     <div className="resume-template resume-template--editorial">
       <header className="resume-template__hero">
@@ -159,23 +298,23 @@ function EditorialPreview({ model }: { model: PreviewModel }) {
           <p>{model.headline}</p>
         </div>
         <div className="resume-template__hero-panel">
-          <h2>Profile</h2>
-          <p>{model.summary || '用同一份结构化简历内容，切换出更鲜明的职业表达。'}</p>
+          <h2>个人简介</h2>
+          {showSummary ? (
+            <p>{model.summary}</p>
+          ) : (
+            <p>让结构保持克制，把最强的经历和成果放到最前面。</p>
+          )}
           <ContactList items={model.contact} stacked />
         </div>
       </header>
 
       <div className="resume-template__editorial-grid">
         <main className="resume-template__content-column">
-          <TimelineSection title="工作经历" items={model.work} />
-          <TimelineSection title="项目经历" items={model.projects} />
+          {renderSectionStack(orderedKeys, ['workExperience', 'projectExperience'], sectionNodes)}
         </main>
 
         <aside className="resume-template__notes-column">
-          <TimelineSection title="教育经历" items={model.education} compact />
-          <SkillSection title="技能" items={model.skills} tone="editorial" />
-          <TimelineSection title="荣誉奖项" items={model.honors} compact />
-          <TimelineSection title="证书" items={model.certificates} compact />
+          {renderSectionStack(orderedKeys, ['education', 'skills', 'honors', 'certificates'], sectionNodes)}
         </aside>
       </div>
     </div>
@@ -298,7 +437,7 @@ function PreviewSection({
 }
 
 function createPreviewModel(
-  resume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content'>,
+  resume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'>,
   template: ResumeTemplateDefinition,
 ): PreviewModel {
   const { content } = resume
@@ -347,6 +486,48 @@ function createPreviewModel(
   }
 }
 
+function createSectionNodes(
+  model: PreviewModel,
+  hiddenSections: Set<ResumeSectionKey>,
+): Record<ResumeSectionKey, ReactNode | null> {
+  return {
+    summary: hiddenSections.has('summary') ? null : (
+      <PreviewSection title="个人简介" hidden={!model.summary}>
+        <p className="resume-template__paragraph">{model.summary}</p>
+      </PreviewSection>
+    ),
+    workExperience: hiddenSections.has('workExperience') ? null : (
+      <TimelineSection title="工作经历" items={model.work} />
+    ),
+    projectExperience: hiddenSections.has('projectExperience') ? null : (
+      <TimelineSection title="项目经历" items={model.projects} />
+    ),
+    education: hiddenSections.has('education') ? null : (
+      <TimelineSection title="教育经历" items={model.education} />
+    ),
+    skills: hiddenSections.has('skills') ? null : (
+      <SkillSection title="技能特长" items={model.skills} tone="plain" />
+    ),
+    honors: hiddenSections.has('honors') ? null : (
+      <TimelineSection title="荣誉奖项" items={model.honors} compact />
+    ),
+    certificates: hiddenSections.has('certificates') ? null : (
+      <TimelineSection title="资格证书" items={model.certificates} compact />
+    ),
+  }
+}
+
+function renderSectionStack(
+  orderedKeys: ResumeSectionKey[],
+  supportedKeys: ResumeSectionKey[],
+  sectionNodes: Record<ResumeSectionKey, ReactNode | null>,
+) {
+  return orderedKeys
+    .filter((key) => supportedKeys.includes(key))
+    .map((key) => sectionNodes[key])
+    .filter(Boolean)
+}
+
 function joinParts(parts: Array<string | undefined>) {
   return parts
     .map((part) => (part ?? '').trim())
@@ -369,7 +550,7 @@ export function EmptyPreview() {
   return (
     <div className="glass-card">
       <div className="empty-state">
-        <Empty description="创建或选择简历以开始构建预览。" />
+        <Empty description="创建或打开一份简历后，这里会实时显示预览。" />
       </div>
     </div>
   )
