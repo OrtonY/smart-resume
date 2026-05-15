@@ -911,6 +911,7 @@ a {
 .resume-template__hero-panel p {
   line-height: 1.7;
   color: var(--template-hero-text);
+  white-space: pre-wrap;
 }
 
 .resume-template__editorial-grid {
@@ -988,6 +989,13 @@ a {
 .resume-template__entry-head {
   display: grid;
   gap: 3px;
+}
+
+.resume-template__entry-head.is-inline-subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
 }
 
 .resume-template__entry-head h3 {
