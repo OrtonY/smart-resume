@@ -139,3 +139,36 @@ Adjusted resume homepage thumbnail pagination, recycle bin flow, template direct
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: Resume preview pagination fix
+
+**Date**: 2026-05-15
+**Task**: Resume preview pagination fix
+**Branch**: `master`
+
+### Summary
+
+Updated resume defaults and editor preview behavior, then fixed paged preview rendering to clip at module-level page breaks with square A4 pages and continuation spacing.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3ce0177` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
