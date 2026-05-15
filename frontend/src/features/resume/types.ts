@@ -65,10 +65,10 @@ export interface ResumeContent {
 }
 
 export const RESUME_SECTION_KEYS = [
+  'education',
   'summary',
   'workExperience',
   'projectExperience',
-  'education',
   'skills',
   'honors',
   'certificates',

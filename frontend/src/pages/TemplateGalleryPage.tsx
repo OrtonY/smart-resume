@@ -513,11 +513,6 @@ export function TemplateGalleryPage() {
             <Button icon={<ArrowLeftOutlined />} type="text" onClick={() => navigate('/app')}>
               返回工作区
             </Button>
-            {resume ? (
-              <Button type="text" onClick={() => navigate(`/app/resumes/${resume.id}`)}>
-                返回当前简历
-              </Button>
-            ) : null}
           </Space>
           <Title level={2} style={{ marginBottom: 8 }}>
             {isResumeTemplateChange ? '修改模板' : '模板目录'}
@@ -818,6 +813,7 @@ export function TemplateGalleryPage() {
                   templateKey: previewTemplate.key,
                 }}
                 templates={[previewTemplate]}
+                previewMode="a4-paged"
               />
             </Space>
           </Card>
