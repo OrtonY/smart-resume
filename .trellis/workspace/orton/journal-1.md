@@ -172,3 +172,36 @@ Updated resume defaults and editor preview behavior, then fixed paged preview re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: Implement PDF and DOCX export
+
+**Date**: 2026-05-15
+**Task**: Implement PDF and DOCX export
+**Branch**: `master`
+
+### Summary
+
+Implemented browser-based PDF export and template-aware DOCX export for resume editor, with UI wiring, dynamic loading, and verification.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ab81b7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
