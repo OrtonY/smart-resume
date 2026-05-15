@@ -683,6 +683,11 @@ a {
   color: var(--template-muted-text, rgba(20, 33, 61, 0.56));
 }
 
+.resume-template__identity--compact {
+  display: grid;
+  gap: 8px;
+}
+
 .resume-template__identity h1 {
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   font-size: clamp(28px, 4vw, 38px);
@@ -797,6 +802,14 @@ a {
   border-bottom: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.1));
 }
 
+.resume-template__masthead--compact {
+  align-items: center;
+}
+
+.resume-template__masthead--compact .resume-template__eyebrow {
+  display: none;
+}
+
 .resume-template__main,
 .resume-template__sidebar,
 .resume-template__content-column,
@@ -855,6 +868,10 @@ a {
   padding: 24px;
   background: var(--template-hero-background);
   color: var(--template-hero-text);
+}
+
+.resume-template__hero--compact {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .resume-template__hero .resume-template__eyebrow,

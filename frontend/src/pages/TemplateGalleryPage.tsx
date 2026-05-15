@@ -97,6 +97,7 @@ const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'lay
       email: 'zhixia.lin@example.com',
       city: '上海',
       website: 'portfolio.example.com',
+      expectedSalary: '',
       avatar: '',
     },
     personalSummary:
