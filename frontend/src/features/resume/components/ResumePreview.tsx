@@ -193,10 +193,30 @@ function renderTemplate(
 function IdentityBlock({ model }: { model: PreviewModel }) {
   return (
     <div className="resume-template__identity">
-      <span className="resume-template__eyebrow">{model.template.category}</span>
       <h1>{model.name}</h1>
       <p>{model.headline}</p>
     </div>
+  )
+}
+
+function ResumeHeader({
+  model,
+}: {
+  model: PreviewModel
+}) {
+  const avatarNode = <ProfileAvatar avatar={model.avatar} name={model.name} compact />
+
+  return (
+    <header className="resume-template__masthead resume-template__masthead--classic resume-template__masthead--compact">
+      <div className="resume-template__masthead-main resume-template__masthead-main--compact">
+        <div className="resume-template__identity resume-template__identity--compact">
+          <h1>{model.name}</h1>
+          <p>{model.headline}</p>
+        </div>
+        <ContactList items={model.contact} inline />
+      </div>
+      <div className="resume-template__masthead-aside">{avatarNode}</div>
+    </header>
   )
 }
 
@@ -243,17 +263,7 @@ function ClassicPreview({
 }) {
   return (
     <div className="resume-template resume-template--classic">
-      <header className="resume-template__masthead resume-template__masthead--classic">
-        <div className="resume-template__identity">
-          <span className="resume-template__eyebrow">{model.template.category}</span>
-          <h1>{model.name}</h1>
-          <p>{model.headline}</p>
-        </div>
-        <div className="resume-template__masthead-aside">
-          <ProfileAvatar avatar={model.avatar} name={model.name} compact />
-          <ContactList items={model.contact} stacked />
-        </div>
-      </header>
+      <ResumeHeader model={model} />
 
       <main className="resume-template__content-column resume-template__content-column--classic">
         {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
@@ -304,17 +314,7 @@ function MinimalPreview({
 }) {
   return (
     <div className="resume-template resume-template--minimal">
-      <header className="resume-template__masthead resume-template__masthead--minimal">
-        <div className="resume-template__masthead-main">
-          <div className="resume-template__identity">
-            <span className="resume-template__eyebrow">{model.template.category}</span>
-            <h1>{model.name}</h1>
-            <p>{model.headline}</p>
-          </div>
-          <ContactList items={model.contact} inline />
-        </div>
-        <ProfileAvatar avatar={model.avatar} name={model.name} compact />
-      </header>
+      <ResumeHeader model={model} />
 
       <div className="resume-template__content-column resume-template__content-column--minimal">
         {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
@@ -336,12 +336,9 @@ function EditorialPreview({
 
   return (
     <div className="resume-template resume-template--editorial">
-      <header className="resume-template__hero">
+      <header className="resume-template__hero resume-template__hero--compact">
         <div className="resume-template__hero-main">
-          <div className="resume-template__hero-identity-row">
-            <IdentityBlock model={model} />
-            <ProfileAvatar avatar={model.avatar} name={model.name} hero />
-          </div>
+          <ResumeHeader model={model} />
         </div>
         <div className="resume-template__hero-panel">
           <h2>个人简介</h2>
@@ -518,6 +515,7 @@ function createPreviewModel(
       { label: '邮箱', value: content.personalInfo.email },
       { label: '城市', value: content.personalInfo.city },
       { label: '链接', value: content.personalInfo.website },
+      { label: '期望薪资', value: content.personalInfo.expectedSalary },
     ].filter((item) => item.value.trim().length > 0),
     education: content.education.map((item) => ({
       title: item.school || '学校',
