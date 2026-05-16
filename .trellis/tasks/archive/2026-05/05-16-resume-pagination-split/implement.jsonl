@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "PreviewSection / TimelineSection 等组件改造需要遵循组件设计规范"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "ResumePreview 中 useEffect + ResizeObserver 的测量逻辑改造需符合 hook 规范"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "PageItem / PageSlice 类型扩展（嵌套 child/fragment）需保证类型安全"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "贪心填充算法重写需符合代码质量标准与禁用模式"}

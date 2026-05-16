@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "校验分页算法实现是否遵循代码质量标准"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "校验扩展后的 PageItem / PageSlice 类型定义与使用"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "校验 data-preview-page-item 标记体系在组件层的一致性"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "校验测量 / ResizeObserver / useEffect 改造是否合规"}
