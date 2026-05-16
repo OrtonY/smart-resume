@@ -1,14 +1,14 @@
 import {
-  ArrowDownOutlined,
   ArrowLeftOutlined,
-  ArrowUpOutlined,
   CopyOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   FilePdfOutlined,
   FileWordOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
   FileAddOutlined,
+  HolderOutlined,
   LogoutOutlined,
   PlusOutlined,
   RollbackOutlined,
@@ -20,6 +20,7 @@ import {
   Button,
   Card,
   Collapse,
+  Dropdown,
   Empty,
   Input,
   Modal,
@@ -30,6 +31,9 @@ import {
   Typography,
 } from 'antd'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
@@ -422,19 +426,15 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     }
   }
 
-  function moveSection(sectionKey: ResumeSectionKey, direction: -1 | 1) {
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
     updateLayout((layout) => {
-      const currentIndex = layout.sectionOrder.indexOf(sectionKey)
-      const targetIndex = currentIndex + direction
-
-      if (currentIndex === -1 || targetIndex < 0 || targetIndex >= layout.sectionOrder.length) {
-        return
+      const oldIndex = layout.sectionOrder.indexOf(active.id as ResumeSectionKey)
+      const newIndex = layout.sectionOrder.indexOf(over.id as ResumeSectionKey)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        layout.sectionOrder = arrayMove(layout.sectionOrder, oldIndex, newIndex)
       }
-
-      const next = [...layout.sectionOrder]
-      const [currentItem] = next.splice(currentIndex, 1)
-      next.splice(targetIndex, 0, currentItem)
-      layout.sectionOrder = next
     })
   }
 
@@ -489,7 +489,7 @@ function showSection(sectionKey: ResumeSectionKey) {
         onFocusModule={focusModule}
         onHideSection={hideSection}
         onLogout={onLogout}
-        onMoveSection={moveSection}
+        onDragEnd={handleDragEnd}
         onShowSection={showSection}
         onUpdateDraft={updateDraft}
         saveState={saveState}
@@ -1037,7 +1037,7 @@ function ResumeEditorView({
   onFocusModule,
   onHideSection,
   onLogout,
-  onMoveSection,
+  onDragEnd,
   onShowSection,
   onUpdateDraft,
   saveState,
@@ -1057,7 +1057,7 @@ function ResumeEditorView({
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onLogout: () => void
-  onMoveSection: (sectionKey: ResumeSectionKey, direction: -1 | 1) => void
+  onDragEnd: (event: DragEndEvent) => void
   onShowSection: (sectionKey: ResumeSectionKey) => void
   onUpdateDraft: (mutator: (next: ResumeDetail) => void) => void
   saveState: SaveState
@@ -1069,6 +1069,19 @@ function ResumeEditorView({
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const exportPreviewRef = useRef<HTMLDivElement | null>(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+
+  const personalInfoModule = orderedModuleDefinitions.find((module) => module.key === 'personal-info')
+  const sortableModules = orderedModuleDefinitions.filter((module) => module.key !== 'personal-info')
+
+  const shareMenuItems = [
+    { key: 'LATEST', label: '分享最新版' },
+    { key: 'SNAPSHOT', label: '分享快照' },
+  ]
+  const exportMenuItems = [
+    { key: 'pdf', label: '导出 PDF', icon: <FilePdfOutlined /> },
+    { key: 'docx', label: '导出 DOCX', icon: <FileWordOutlined /> },
+  ]
 
   const handleAvatarPickerOpen = useCallback(() => {
     document.getElementById(AVATAR_INPUT_ID)?.click()
@@ -1152,28 +1165,12 @@ function ResumeEditorView({
               <Button>修改模板</Button>
             </Link>
             <AiConfigurationButton />
-            <Button icon={<ShareAltOutlined />} onClick={() => void onCreateShare('LATEST')}>
-              分享最新版
-            </Button>
-            <Button icon={<ShareAltOutlined />} onClick={() => void onCreateShare('SNAPSHOT')}>
-              分享快照
-            </Button>
-            <Button
-              icon={<FilePdfOutlined />}
-              loading={exportingFormat === 'pdf'}
-              disabled={Boolean(exportingFormat)}
-              onClick={() => void onExport('pdf', selectedTemplate, exportPreviewRef.current)}
-            >
-              导出 PDF
-            </Button>
-            <Button
-              icon={<FileWordOutlined />}
-              loading={exportingFormat === 'docx'}
-              disabled={Boolean(exportingFormat)}
-              onClick={() => void onExport('docx', selectedTemplate)}
-            >
-              导出 DOCX
-            </Button>
+            <Dropdown menu={{ items: shareMenuItems, onClick: ({ key }) => void onCreateShare(key as ShareMode) }}>
+              <Button icon={<ShareAltOutlined />}>分享</Button>
+            </Dropdown>
+            <Dropdown menu={{ items: exportMenuItems, onClick: ({ key }) => void onExport(key as ExportFormat, selectedTemplate, key === 'pdf' ? exportPreviewRef.current : undefined) }}>
+              <Button icon={<DownloadOutlined />} loading={Boolean(exportingFormat)} disabled={Boolean(exportingFormat)}>导出</Button>
+            </Dropdown>
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
               锁定
             </Button>
@@ -1203,52 +1200,34 @@ function ResumeEditorView({
             </div>
 
             <div className="resume-editor-rail__list">
-              {orderedModuleDefinitions.map((module) => {
-                const isHidden = module.key !== 'personal-info' && hiddenSections.includes(module.key as ResumeSectionKey)
-
-                return (
-                <div className={`resume-editor-module-row${isHidden ? ' resume-editor-module-row--hidden' : ''}`} key={module.key}>
+              {personalInfoModule ? (
+                <div className="resume-editor-module-row" key="personal-info">
                   <button
                     className="resume-editor-module-row__button"
                     type="button"
-                    onClick={() => onFocusModule(module.key)}
+                    onClick={() => onFocusModule('personal-info')}
                   >
-                    <span>
-                      {module.title}
-                      {isHidden ? <Tag color="default">已隐藏</Tag> : null}
-                    </span>
-                    <small>{module.description}</small>
+                    <span>{personalInfoModule.title}</span>
+                    <small>{personalInfoModule.description}</small>
                   </button>
-
-                  {module.removable ? (
-                    <Space size={4}>
-                      <Button
-                        size="small"
-                        type="text"
-                        icon={<ArrowUpOutlined />}
-                        onClick={() => onMoveSection(module.key as ResumeSectionKey, -1)}
-                        disabled={sectionOrder.indexOf(module.key as ResumeSectionKey) === 0}
-                      />
-                      <Button
-                        size="small"
-                        type="text"
-                        icon={<ArrowDownOutlined />}
-                        onClick={() => onMoveSection(module.key as ResumeSectionKey, 1)}
-                        disabled={sectionOrder.indexOf(module.key as ResumeSectionKey) === sectionOrder.length - 1}
-                      />
-                      <Button
-                        size="small"
-                        type="text"
-                        icon={isHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                        onClick={() => (isHidden ? onShowSection(module.key as ResumeSectionKey) : onHideSection(module.key as ResumeSectionKey))}
-                      />
-                    </Space>
-                  ) : (
-                    <Tag color="default">固定</Tag>
-                  )}
+                  <Tag color="default">固定</Tag>
                 </div>
-                )
-              })}
+              ) : null}
+
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+                  {sortableModules.map((module) => (
+                    <SortableModuleRow
+                      key={module.key}
+                      module={module}
+                      isHidden={hiddenSections.includes(module.key as ResumeSectionKey)}
+                      onFocusModule={onFocusModule}
+                      onHideSection={onHideSection}
+                      onShowSection={onShowSection}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
           </Card>
 
@@ -1274,33 +1253,19 @@ function ResumeEditorView({
                       </div>
                     ),
                     extra: module.removable ? (
-                      <Space
-                        size={4}
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={isHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                         onClick={(event) => {
                           event.stopPropagation()
+                          if (isHidden) {
+                            onShowSection(module.key as ResumeSectionKey)
+                          } else {
+                            onHideSection(module.key as ResumeSectionKey)
+                          }
                         }}
-                      >
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={<ArrowUpOutlined />}
-                          onClick={() => onMoveSection(module.key as ResumeSectionKey, -1)}
-                          disabled={sectionOrder.indexOf(module.key as ResumeSectionKey) === 0}
-                        />
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={<ArrowDownOutlined />}
-                          onClick={() => onMoveSection(module.key as ResumeSectionKey, 1)}
-                          disabled={sectionOrder.indexOf(module.key as ResumeSectionKey) === sectionOrder.length - 1}
-                        />
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={isHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                          onClick={() => (isHidden ? onShowSection(module.key as ResumeSectionKey) : onHideSection(module.key as ResumeSectionKey))}
-                        />
-                      </Space>
+                      />
                     ) : null,
                     children: (
                       <div id={moduleAnchorId(module.key)}>
@@ -1756,6 +1721,59 @@ function renderRepeatableCards<T>(
         添加条目
       </Button>
     </Space>
+  )
+}
+
+function SortableModuleRow({
+  module,
+  isHidden,
+  onFocusModule,
+  onHideSection,
+  onShowSection,
+}: {
+  module: ResumeModuleDefinition
+  isHidden: boolean
+  onFocusModule: (key: ResumeModuleId) => void
+  onHideSection: (key: ResumeSectionKey) => void
+  onShowSection: (key: ResumeSectionKey) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.key })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`resume-editor-module-row${isHidden ? ' resume-editor-module-row--hidden' : ''}`}
+    >
+      <button
+        className="resume-editor-module-row__button"
+        type="button"
+        onClick={() => onFocusModule(module.key)}
+      >
+        <span>
+          {module.title}
+          {isHidden ? <Tag color="default">已隐藏</Tag> : null}
+        </span>
+        <small>{module.description}</small>
+      </button>
+
+      <Space size={4}>
+        <span className="resume-editor-module-row__handle" {...attributes} {...listeners}>
+          <HolderOutlined />
+        </span>
+        <Button
+          size="small"
+          type="text"
+          icon={isHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+          onClick={() => (isHidden ? onShowSection(module.key as ResumeSectionKey) : onHideSection(module.key as ResumeSectionKey))}
+        />
+      </Space>
+    </div>
   )
 }
 
