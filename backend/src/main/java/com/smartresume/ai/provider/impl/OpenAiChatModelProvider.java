@@ -85,7 +85,7 @@ public class OpenAiChatModelProvider implements ChatModelProvider {
             "sk-...",
             "gpt-4o-mini",
             true,
-            List.of("gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo")
+            List.of()
         );
     }
 

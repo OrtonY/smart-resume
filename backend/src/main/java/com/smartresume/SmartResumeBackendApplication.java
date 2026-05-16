@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.smartresume")
+@MapperScan("com.smartresume.**.mapper")
 public class SmartResumeBackendApplication {
 
 	public static void main(String[] args) {
