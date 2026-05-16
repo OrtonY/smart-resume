@@ -6,6 +6,9 @@ import type {
   AiChatRequest,
   AiConfiguration,
   AiConfigurationRequest,
+  ListModelsRequest,
+  ListModelsResponse,
+  VendorMetadata,
 } from '../types'
 
 interface ApiEnvelope<T> {
@@ -41,6 +44,17 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
 
 export function streamAiChat(payload: AiChatRequest, onEvent: (event: AiChatEvent) => void) {
   return streamEvents('/api/ai/chat/stream', payload, onEvent)
+}
+
+export async function getAiVendors() {
+  return requestJson<VendorMetadata[]>('/api/ai/vendors')
+}
+
+export async function listAiModels(payload: ListModelsRequest) {
+  return requestJson<ListModelsResponse>('/api/ai/models', {
+    method: 'POST',
+    body: payload,
+  })
 }
 
 async function requestJson<T>(path: string, options: Omit<RequestInit, 'body'> & { body?: unknown } = {}) {

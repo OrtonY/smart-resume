@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Provider package placement must follow feature-oriented layout; AI module isolation rules"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Existing AI chat architecture context - must not break ChatMemory/streaming patterns"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "New provider/model-list endpoints need consistent error handling"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Frontend AI feature module organization"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "New vendor metadata and model list types must follow type conventions"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Provider abstraction should avoid over-engineering while enabling reuse"}
+{"file": ".trellis/tasks/05-16-ai-model-refactor/prd.md", "reason": "Task requirements and technical approach"}

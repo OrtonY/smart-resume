@@ -6,8 +6,9 @@ import com.smartresume.ai.domain.AiConfigurationEntity;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeContext;
+import com.smartresume.ai.provider.ChatModelProvider;
+import com.smartresume.ai.provider.ChatModelProviderRegistry;
 import com.smartresume.common.exception.AppException;
-import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
@@ -18,13 +19,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.ollama.OllamaChatModel;
-import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaChatOptions;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.retry.RetryUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -40,7 +34,6 @@ public class AiAgentService {
 
     private static final int MAX_MEMORY_MESSAGES = 20;
     private static final Duration CHARACTER_STREAM_DELAY = Duration.ofMillis(12);
-    private static final String OLLAMA_VENDOR = "Ollama";
     private static final String CHAT_SYSTEM_PROMPT = """
         You are a resume editing assistant.
         Answer based on the bound resume JSON context and the conversation memory.
@@ -52,17 +45,20 @@ public class AiAgentService {
     private final AiConfigurationService aiConfigurationService;
     private final AiChatHistoryService aiChatHistoryService;
     private final JdbcChatMemoryRepository chatMemoryRepository;
+    private final ChatModelProviderRegistry chatModelProviderRegistry;
     private final ObjectMapper objectMapper;
 
     public AiAgentService(
         AiConfigurationService aiConfigurationService,
         AiChatHistoryService aiChatHistoryService,
         JdbcChatMemoryRepository chatMemoryRepository,
+        ChatModelProviderRegistry chatModelProviderRegistry,
         ObjectMapper objectMapper
     ) {
         this.aiConfigurationService = aiConfigurationService;
         this.aiChatHistoryService = aiChatHistoryService;
         this.chatMemoryRepository = chatMemoryRepository;
+        this.chatModelProviderRegistry = chatModelProviderRegistry;
         this.objectMapper = objectMapper;
     }
 
@@ -168,34 +164,11 @@ public class AiAgentService {
     }
 
     private ChatModel createChatModel(AiConfigurationEntity configuration) {
-        if (OLLAMA_VENDOR.equalsIgnoreCase(configuration.getVendor())) {
-            return OllamaChatModel.builder()
-                .ollamaApi(OllamaApi.builder()
-                    .baseUrl(configuration.getBaseUrl())
-                    .build())
-                .defaultOptions(OllamaChatOptions.builder()
-                    .model(configuration.getModelName())
-                    .temperature(0.3)
-                    .build())
-                .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
-                .observationRegistry(ObservationRegistry.NOOP)
-                .build();
-        }
-
-        OpenAiApi openAiApi = OpenAiApi.builder()
-            .baseUrl(configuration.getBaseUrl())
-            .apiKey(configuration.getApiKey())
-            .build();
-        OpenAiChatOptions options = OpenAiChatOptions.builder()
-            .model(configuration.getModelName())
-            .temperature(0.3)
-            .build();
-        return OpenAiChatModel.builder()
-            .openAiApi(openAiApi)
-            .defaultOptions(options)
-            .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
-            .observationRegistry(ObservationRegistry.NOOP)
-            .build();
+        String vendor = configuration.getVendor();
+        ChatModelProvider provider = chatModelProviderRegistry.findProvider(vendor)
+            .orElseGet(() -> chatModelProviderRegistry.findProvider("OpenAI")
+                .orElseThrow(() -> new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "No AI provider available")));
+        return provider.createChatModel(configuration);
     }
 
     private String buildSystemPrompt(AiResumeContext resume) {

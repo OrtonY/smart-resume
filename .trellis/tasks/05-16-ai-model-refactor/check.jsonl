@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Verify provider package follows module conventions"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Check streaming/memory patterns not broken by refactor"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Verify new types follow project conventions"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Verify backend-frontend data flow consistency for vendor metadata"}
+{"file": ".trellis/tasks/05-16-ai-model-refactor/prd.md", "reason": "Check acceptance criteria compliance"}
