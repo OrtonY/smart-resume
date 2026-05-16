@@ -9,6 +9,7 @@ import {
   EyeInvisibleOutlined,
   FileAddOutlined,
   HolderOutlined,
+  LockOutlined,
   LogoutOutlined,
   PlusOutlined,
   RollbackOutlined,
@@ -25,9 +26,13 @@ import {
   Input,
   Modal,
   Pagination,
+  Popconfirm,
+  Radio,
   Space,
   Spin,
+  Switch,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
@@ -40,11 +45,14 @@ import { EmptyPreview, ResumePreview } from '../features/resume/components/Resum
 import {
   createShare,
   deleteResume,
+  deleteShare,
   getResume,
+  getShareAccessLogs,
   listDeletedResumes,
   listResumes,
   listShares,
   restoreResume,
+  toggleShare,
   updateResume,
 } from '../features/resume/api/resumeApi'
 import { exportResumeDocx } from '../features/resume/export/docxExport'
@@ -65,6 +73,7 @@ import type {
   ResumePage,
   ResumeSectionKey,
   ResumeSummary,
+  ShareAccessLog,
   ShareLink,
   ShareMode,
   SkillItem,
@@ -390,12 +399,12 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     await loadResumeList()
   }
 
-  async function handleCreateShare(mode: ShareMode) {
+  async function handleCreateShare(mode: ShareMode, password?: string) {
     if (!resumeId) {
       return
     }
 
-    const share = await createShare(resumeId, mode)
+    const share = await createShare(resumeId, mode, password)
     await navigator.clipboard.writeText(`${window.location.origin}${share.sharePath}`)
     void message.success(`${mode === 'LATEST' ? '最新版本' : '快照'}分享链接已复制。`)
   }
@@ -589,6 +598,19 @@ function ResumeListView({
     }
   }, [message])
 
+  const refreshShareLinks = useCallback(async () => {
+    if (!shareDialog) return
+    try {
+      const shares = await listShares(shareDialog.resumeId)
+      setShareLinksByResumeId((current) => ({
+        ...current,
+        [shareDialog.resumeId]: shares,
+      }))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '无法刷新分享链接。')
+    }
+  }, [shareDialog, message])
+
   useEffect(() => {
     const missingResumes = visibleResumes.filter((item) => !previewDetailsByResumeId[item.id])
     if (missingResumes.length === 0) {
@@ -711,6 +733,7 @@ function ResumeListView({
       <ShareLinksModal
         loading={loadingShareResumeId === shareDialog?.resumeId}
         onClose={() => setShareDialog(null)}
+        onRefresh={() => void refreshShareLinks()}
         shareDialog={shareDialog}
         shareLinks={shareDialog ? shareLinksByResumeId[shareDialog.resumeId] ?? [] : []}
       />
@@ -826,15 +849,63 @@ function ResumeVisualCard({
 function ShareLinksModal({
   loading,
   onClose,
+  onRefresh,
   shareDialog,
   shareLinks,
 }: {
   loading: boolean
   onClose: () => void
+  onRefresh: () => void
   shareDialog: ShareDialogState
   shareLinks: ShareLink[]
 }) {
   const { message } = App.useApp()
+  const [expandedShare, setExpandedShare] = useState<string | null>(null)
+  const [accessLogs, setAccessLogs] = useState<ShareAccessLog[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
+  const handleToggleLogs = async (share: ShareLink) => {
+    if (expandedShare === share.shareCode) {
+      setExpandedShare(null)
+      setAccessLogs([])
+      return
+    }
+
+    if (!shareDialog) return
+    setExpandedShare(share.shareCode)
+    setLoadingLogs(true)
+    try {
+      const result = await getShareAccessLogs(shareDialog.resumeId, share.shareCode)
+      setAccessLogs(result.logs)
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '无法加载访问记录')
+      setAccessLogs([])
+    } finally {
+      setLoadingLogs(false)
+    }
+  }
+
+  const handleToggleActive = async (share: ShareLink) => {
+    if (!shareDialog) return
+    try {
+      await toggleShare(shareDialog.resumeId, share.shareCode)
+      void message.success(share.active ? '已禁用分享链接' : '已启用分享链接')
+      onRefresh()
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '操作失败')
+    }
+  }
+
+  const handleDelete = async (share: ShareLink) => {
+    if (!shareDialog) return
+    try {
+      await deleteShare(shareDialog.resumeId, share.shareCode)
+      void message.success('分享链接已删除')
+      onRefresh()
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : '删除失败')
+    }
+  }
 
   return (
     <Modal
@@ -843,6 +914,7 @@ function ShareLinksModal({
       onCancel={onClose}
       footer={null}
       destroyOnHidden
+      width={600}
     >
       {loading ? (
         <div className="resume-list-card__share-loading">
@@ -854,29 +926,88 @@ function ShareLinksModal({
         <div className="share-list">
           {shareLinks.map((share) => {
             const fullUrl = `${window.location.origin}${share.sharePath}`
+            const isExpanded = expandedShare === share.shareCode
 
             return (
-              <div className="share-row" key={share.shareCode}>
-                <Space direction="vertical" size={4}>
-                  <Space wrap>
-                    <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>
-                      {share.shareMode === 'LATEST' ? '最新版' : '快照'}
-                    </Tag>
-                    <Text code>{share.shareCode}</Text>
+              <div className="share-row" key={share.shareCode} style={{ flexDirection: 'column', alignItems: 'stretch', opacity: share.active ? 1 : 0.6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Space direction="vertical" size={4}>
+                    <Space wrap>
+                      <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>
+                        {share.shareMode === 'LATEST' ? '最新版' : '快照'}
+                      </Tag>
+                      {share.hasPassword ? <Tag icon={<LockOutlined />} color="red">密码保护</Tag> : null}
+                      {!share.active ? <Tag color="default">已禁用</Tag> : null}
+                      <Tag>{share.viewCount} 次访问</Tag>
+                    </Space>
+                    <Text copyable={{ text: fullUrl }} style={share.active ? undefined : { textDecoration: 'line-through' }}>{fullUrl}</Text>
+                    <Space size={16}>
+                      <Text type="secondary" style={{ fontSize: 12 }}>创建: {new Date(share.createdAt).toLocaleString()}</Text>
+                      {share.lastAccessedAt ? (
+                        <Text type="secondary" style={{ fontSize: 12 }}>最近访问: {new Date(share.lastAccessedAt).toLocaleString()}</Text>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: 12 }}>暂无访问</Text>
+                      )}
+                    </Space>
                   </Space>
-                  <Text copyable={{ text: fullUrl }}>{fullUrl}</Text>
-                  <Text type="secondary">{new Date(share.createdAt).toLocaleString()}</Text>
-                </Space>
 
-                <Button
-                  icon={<CopyOutlined />}
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(fullUrl)
-                    void message.success('分享链接已复制。')
-                  }}
-                >
-                  复制
-                </Button>
+                  <Space size={4}>
+                    <Button
+                      size="small"
+                      onClick={() => void handleToggleLogs(share)}
+                    >
+                      {isExpanded ? '收起' : '详情'}
+                    </Button>
+                    <Tooltip title={share.active ? '禁用' : '启用'}>
+                      <Button
+                        size="small"
+                        icon={share.active ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                        onClick={() => void handleToggleActive(share)}
+                      />
+                    </Tooltip>
+                    <Popconfirm
+                      title="确定删除此分享链接？"
+                      description="删除后访问记录也会一并清除，无法恢复。"
+                      onConfirm={() => void handleDelete(share)}
+                      okText="删除"
+                      cancelText="取消"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Tooltip title="删除">
+                        <Button size="small" danger icon={<DeleteOutlined />} />
+                      </Tooltip>
+                    </Popconfirm>
+                    <Button
+                      icon={<CopyOutlined />}
+                      size="small"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(fullUrl)
+                        void message.success('分享链接已复制。')
+                      }}
+                    >
+                      复制
+                    </Button>
+                  </Space>
+                </div>
+
+                {isExpanded ? (
+                  <div style={{ marginTop: 12, paddingLeft: 8, borderLeft: '2px solid #f0f0f0' }}>
+                    {loadingLogs ? (
+                      <Spin size="small" />
+                    ) : accessLogs.length === 0 ? (
+                      <Text type="secondary">暂无访问记录</Text>
+                    ) : (
+                      <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                        {accessLogs.map((log) => (
+                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12 }}>
+                            <Text type="secondary">{new Date(log.accessedAt).toLocaleString()}</Text>
+                            <Text code style={{ fontSize: 12 }}>{log.ipAddress}</Text>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
             )
           })}
@@ -1050,7 +1181,7 @@ function ResumeEditorView({
   expandedModules: ResumeModuleId[]
   hiddenSections: ResumeSectionKey[]
   loadingTemplates: boolean
-  onCreateShare: (mode: ShareMode) => Promise<void>
+  onCreateShare: (mode: ShareMode, password?: string) => Promise<void>
   exportingFormat: ExportFormat | null
   onExpandedModulesChange: (keys: string | string[]) => void
   onExport: (format: ExportFormat, template: ResumeTemplateDefinition, previewRoot?: HTMLElement | null) => Promise<void>
@@ -1068,16 +1199,17 @@ function ResumeEditorView({
   const { message } = App.useApp()
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareMode, setShareMode] = useState<ShareMode>('LATEST')
+  const [sharePasswordEnabled, setSharePasswordEnabled] = useState(false)
+  const [sharePassword, setSharePassword] = useState('')
+  const [creatingShare, setCreatingShare] = useState(false)
   const exportPreviewRef = useRef<HTMLDivElement | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
   const personalInfoModule = orderedModuleDefinitions.find((module) => module.key === 'personal-info')
   const sortableModules = orderedModuleDefinitions.filter((module) => module.key !== 'personal-info')
 
-  const shareMenuItems = [
-    { key: 'LATEST', label: '分享最新版' },
-    { key: 'SNAPSHOT', label: '分享快照' },
-  ]
   const exportMenuItems = [
     { key: 'pdf', label: '导出 PDF', icon: <FilePdfOutlined /> },
     { key: 'docx', label: '导出 DOCX', icon: <FileWordOutlined /> },
@@ -1165,9 +1297,12 @@ function ResumeEditorView({
               <Button>修改模板</Button>
             </Link>
             <AiConfigurationButton />
-            <Dropdown menu={{ items: shareMenuItems, onClick: ({ key }) => void onCreateShare(key as ShareMode) }}>
-              <Button icon={<ShareAltOutlined />}>分享</Button>
-            </Dropdown>
+            <Button icon={<ShareAltOutlined />} onClick={() => {
+              setShareModalOpen(true)
+              setShareMode('LATEST')
+              setSharePasswordEnabled(false)
+              setSharePassword('')
+            }}>分享</Button>
             <Dropdown menu={{ items: exportMenuItems, onClick: ({ key }) => void onExport(key as ExportFormat, selectedTemplate, key === 'pdf' ? exportPreviewRef.current : undefined) }}>
               <Button icon={<DownloadOutlined />} loading={Boolean(exportingFormat)} disabled={Boolean(exportingFormat)}>导出</Button>
             </Dropdown>
@@ -1339,6 +1474,65 @@ function ResumeEditorView({
           previewMode="a4-paged"
         />
       </div>
+
+      <Modal
+        open={shareModalOpen}
+        title="创建分享链接"
+        onCancel={() => setShareModalOpen(false)}
+        onOk={async () => {
+          if (sharePasswordEnabled && !sharePassword.trim()) {
+            void message.warning('请输入密码')
+            return
+          }
+          setCreatingShare(true)
+          try {
+            await onCreateShare(shareMode, sharePasswordEnabled ? sharePassword.trim() : undefined)
+            setShareModalOpen(false)
+          } catch (error) {
+            void message.error(error instanceof Error ? error.message : '创建分享失败')
+          } finally {
+            setCreatingShare(false)
+          }
+        }}
+        okText="创建并复制链接"
+        cancelText="取消"
+        confirmLoading={creatingShare}
+        destroyOnHidden
+      >
+        <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 20 }}>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>分享类型</Text>
+            <Radio.Group value={shareMode} onChange={(e) => setShareMode(e.target.value)}>
+              <Radio.Button value="LATEST">最新版本</Radio.Button>
+              <Radio.Button value="SNAPSHOT">当前快照</Radio.Button>
+            </Radio.Group>
+            <div style={{ marginTop: 4 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {shareMode === 'LATEST' ? '链接始终展示简历的最新内容' : '链接展示此刻的简历内容，后续编辑不影响'}
+              </Text>
+            </div>
+          </div>
+
+          <div>
+            <Space style={{ marginBottom: 8 }}>
+              <Text strong>密码保护</Text>
+              <Switch size="small" checked={sharePasswordEnabled} onChange={setSharePasswordEnabled} />
+            </Space>
+            {sharePasswordEnabled ? (
+              <Input.Password
+                placeholder="设置访问密码"
+                value={sharePassword}
+                onChange={(e) => setSharePassword(e.target.value)}
+                autoFocus
+              />
+            ) : (
+              <div>
+                <Text type="secondary" style={{ fontSize: 12 }}>开启后，访问者需输入密码才能查看</Text>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       <AiResumeAssistant draft={draft} />
     </div>
