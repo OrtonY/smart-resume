@@ -47,3 +47,23 @@ export interface AiChatConversation {
   createdAt: string
   updatedAt: string
 }
+
+export interface VendorMetadata {
+  vendor: string
+  defaultBaseUrl: string
+  baseUrlPlaceholder: string
+  apiKeyPlaceholder: string
+  modelNamePlaceholder: string
+  apiKeyRequired: boolean
+  suggestedModels: string[]
+}
+
+export interface ListModelsRequest {
+  vendor: string
+  baseUrl?: string
+  apiKey?: string
+}
+
+export interface ListModelsResponse {
+  models: string[]
+}

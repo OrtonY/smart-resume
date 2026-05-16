@@ -1,14 +1,12 @@
-import { MessageOutlined, RobotOutlined, SettingOutlined } from '@ant-design/icons'
-import { App, Button, Empty, Form, Input, List, Modal, Select, Spin, Tag, Typography } from 'antd'
+import { MessageOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
+import { App, AutoComplete, Button, Empty, Form, Input, List, Modal, Select, Spin, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getAiConfiguration, listAiChatConversations, listAiChatMessages, saveAiConfiguration, streamAiChat } from '../api/aiApi'
-import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, AiVendor } from '../types'
+import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
+import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
 import { normalizeResumeLayout, type ResumeDetail } from '../../resume/types'
 
 const { Text } = Typography
 const { TextArea } = Input
-
-const AI_VENDOR_OPTIONS: AiVendor[] = ['OpenAI', 'Ollama', 'DeepSeek', 'Anthropic', 'Azure OpenAI', 'Other']
 
 type AiChatUiMessage = AiChatMessage & {
   id: string
@@ -326,7 +324,30 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [configured, setConfigured] = useState(false)
-  const isOllama = selectedVendor === 'Ollama'
+  const [vendorMetadataList, setVendorMetadataList] = useState<VendorMetadata[]>([])
+  const [fetchingModels, setFetchingModels] = useState(false)
+  const [fetchedModels, setFetchedModels] = useState<string[] | null>(null)
+
+  const currentVendorMeta = useMemo(
+    () => vendorMetadataList.find((m) => m.vendor === selectedVendor),
+    [vendorMetadataList, selectedVendor],
+  )
+
+  const modelOptions = useMemo(
+    () => fetchedModels ?? currentVendorMeta?.suggestedModels ?? [],
+    [fetchedModels, currentVendorMeta],
+  )
+
+  const vendorOptions = useMemo(() => {
+    if (vendorMetadataList.length > 0) {
+      return vendorMetadataList.map((m) => ({ label: m.vendor, value: m.vendor }))
+    }
+    return [
+      { label: 'OpenAI', value: 'OpenAI' },
+      { label: 'Ollama', value: 'Ollama' },
+      { label: 'DeepSeek', value: 'DeepSeek' },
+    ]
+  }, [vendorMetadataList])
 
   useEffect(() => {
     if (!open) {
@@ -339,13 +360,14 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
         if (!cancelled) {
           setLoading(true)
         }
-        return getAiConfiguration()
+        return Promise.all([getAiConfiguration(), getAiVendors()])
       })
-      .then((configuration) => {
+      .then(([configuration, vendors]) => {
         if (cancelled) {
           return
         }
         setConfigured(configuration.configured)
+        setVendorMetadataList(vendors)
         form.setFieldsValue({
           vendor: configuration.vendor || 'OpenAI',
           baseUrl: configuration.baseUrl,
@@ -366,6 +388,26 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
       cancelled = true
     }
   }, [form, message, open])
+
+  async function handleFetchModels() {
+    const values = form.getFieldsValue()
+    setFetchingModels(true)
+    try {
+      const response = await listAiModels({
+        vendor: values.vendor,
+        baseUrl: values.baseUrl || undefined,
+        apiKey: values.apiKey || undefined,
+      })
+      setFetchedModels(response.models)
+      if (response.models.length === 0) {
+        void message.info('No models found. Check your credentials and base URL.')
+      }
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : 'Failed to fetch models')
+    } finally {
+      setFetchingModels(false)
+    }
+  }
 
   async function handleSave() {
     const values = await form.validateFields()
@@ -394,21 +436,41 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
       <Spin spinning={loading}>
         <Form form={form} layout="vertical" initialValues={{ vendor: 'OpenAI' }}>
           <Form.Item name="vendor" label="AI vendor" rules={[{ required: true, message: 'Select an AI vendor' }]}>
-            <Select options={AI_VENDOR_OPTIONS.map((vendor) => ({ label: vendor, value: vendor }))} />
+            <Select options={vendorOptions} onChange={() => setFetchedModels(null)} />
           </Form.Item>
-          <Form.Item name="baseUrl" label="Base URL" rules={[{ required: true, message: 'Enter Base URL' }]}>
-            <Input placeholder="https://api.openai.com" />
+          <Form.Item name="baseUrl" label="Base URL">
+            <Input placeholder={currentVendorMeta?.baseUrlPlaceholder ?? 'https://api.openai.com'} />
           </Form.Item>
           <Form.Item
             name="apiKey"
             label="API Key"
-            rules={configured || isOllama ? [] : [{ required: true, message: 'API key is required for first setup' }]}
-            extra={configured ? 'Leave blank to keep the existing API key. Ollama does not require an API key.' : 'Ollama can leave this empty.'}
+            rules={configured || currentVendorMeta?.apiKeyRequired === false ? [] : [{ required: true, message: 'API key is required for first setup' }]}
+            extra={configured ? 'Leave blank to keep the existing API key.' : (currentVendorMeta?.apiKeyRequired === false ? 'Not required for this vendor.' : undefined)}
           >
-            <Input.Password autoComplete="off" placeholder={isOllama ? 'Not required for Ollama' : configured ? 'Keep existing API key' : 'sk-...'} />
+            <Input.Password
+              autoComplete="off"
+              placeholder={currentVendorMeta?.apiKeyPlaceholder ?? (configured ? 'Keep existing API key' : 'sk-...')}
+            />
           </Form.Item>
-          <Form.Item name="modelName" label="Model name" rules={[{ required: true, message: 'Enter model name' }]}>
-            <Input placeholder="gpt-4o-mini / llama3.1 / deepseek-r1" />
+          <Form.Item label="Model name" required>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Form.Item name="modelName" noStyle rules={[{ required: true, message: 'Enter model name' }]}>
+                <AutoComplete
+                  options={modelOptions.map((m) => ({ label: m, value: m }))}
+                  placeholder={currentVendorMeta?.modelNamePlaceholder ?? 'gpt-4o-mini'}
+                  filterOption={(inputValue, option) =>
+                    (option?.value ?? '').toLowerCase().includes(inputValue.toLowerCase())
+                  }
+                />
+              </Form.Item>
+              <Button
+                icon={<CloudDownloadOutlined />}
+                loading={fetchingModels}
+                onClick={() => void handleFetchModels()}
+              >
+                Fetch
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Spin>

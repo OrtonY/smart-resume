@@ -4,6 +4,8 @@ import com.smartresume.ai.domain.AiConfigurationEntity;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
 import com.smartresume.ai.mapper.AiConfigurationMapper;
+import com.smartresume.ai.provider.ChatModelProviderRegistry;
+import com.smartresume.ai.provider.VendorMetadata;
 import com.smartresume.common.exception.AppException;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class AiConfigurationService {
 
     private static final long SINGLETON_ID = 1L;
-    private static final String OLLAMA_VENDOR = "Ollama";
 
     private final AiConfigurationMapper aiConfigurationMapper;
+    private final ChatModelProviderRegistry chatModelProviderRegistry;
 
-    public AiConfigurationService(AiConfigurationMapper aiConfigurationMapper) {
+    public AiConfigurationService(
+        AiConfigurationMapper aiConfigurationMapper,
+        ChatModelProviderRegistry chatModelProviderRegistry
+    ) {
         this.aiConfigurationMapper = aiConfigurationMapper;
+        this.chatModelProviderRegistry = chatModelProviderRegistry;
     }
 
     public AiConfigurationResponse getConfiguration() {
@@ -48,17 +54,31 @@ public class AiConfigurationService {
             configuration.setId(SINGLETON_ID);
             configuration.setCreatedAt(now);
         }
-        String apiKey = request.apiKey() == null ? "" : request.apiKey().trim();
+
         String vendor = request.vendor().trim();
-        if (apiKey.isBlank() && !isApiKeyOptional(vendor) && !hasExistingApiKey(configuration)) {
+        String apiKey = request.apiKey() == null ? "" : request.apiKey().trim();
+        String baseUrl = request.baseUrl() == null ? "" : request.baseUrl().trim();
+        String modelName = request.modelName() == null ? "" : request.modelName().trim();
+
+        // Apply provider defaults for empty fields
+        VendorMetadata metadata = chatModelProviderRegistry.findProvider(vendor)
+            .map(p -> p.getMetadata())
+            .orElse(null);
+
+        if (baseUrl.isBlank() && metadata != null) {
+            baseUrl = metadata.defaultBaseUrl();
+        }
+
+        if (apiKey.isBlank() && isApiKeyRequired(vendor, metadata) && !hasExistingApiKey(configuration)) {
             throw new AppException(HttpStatus.BAD_REQUEST, "API key is required");
         }
+
         configuration.setVendor(vendor);
-        configuration.setBaseUrl(request.baseUrl().trim());
-        if (!apiKey.isBlank() || isApiKeyOptional(vendor)) {
+        configuration.setBaseUrl(baseUrl);
+        if (!apiKey.isBlank() || !isApiKeyRequired(vendor, metadata)) {
             configuration.setApiKey(apiKey);
         }
-        configuration.setModelName(request.modelName().trim());
+        configuration.setModelName(modelName);
         configuration.setUpdatedAt(now);
 
         if (exists) {
@@ -69,8 +89,12 @@ public class AiConfigurationService {
         return toResponse(configuration);
     }
 
-    private boolean isApiKeyOptional(String vendor) {
-        return OLLAMA_VENDOR.equalsIgnoreCase(vendor);
+    private boolean isApiKeyRequired(String vendor, VendorMetadata metadata) {
+        if (metadata != null) {
+            return metadata.apiKeyRequired();
+        }
+        // Fallback: Ollama doesn't need API key
+        return !"Ollama".equalsIgnoreCase(vendor);
     }
 
     private boolean hasExistingApiKey(AiConfigurationEntity configuration) {

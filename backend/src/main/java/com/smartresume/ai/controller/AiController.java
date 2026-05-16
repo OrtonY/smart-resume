@@ -6,12 +6,20 @@ import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
+import com.smartresume.ai.dto.AiDtos.ListModelsRequest;
+import com.smartresume.ai.dto.AiDtos.ListModelsResponse;
+import com.smartresume.ai.dto.AiDtos.VendorMetadataResponse;
+import com.smartresume.ai.provider.ChatModelProvider;
+import com.smartresume.ai.provider.ChatModelProviderRegistry;
+import com.smartresume.ai.provider.VendorMetadata;
 import com.smartresume.ai.service.AiAgentService;
 import com.smartresume.ai.service.AiChatHistoryService;
 import com.smartresume.ai.service.AiConfigurationService;
 import com.smartresume.common.api.ApiResponse;
+import com.smartresume.common.exception.AppException;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,15 +37,18 @@ public class AiController {
     private final AiConfigurationService aiConfigurationService;
     private final AiAgentService aiAgentService;
     private final AiChatHistoryService aiChatHistoryService;
+    private final ChatModelProviderRegistry chatModelProviderRegistry;
 
     public AiController(
         AiConfigurationService aiConfigurationService,
         AiAgentService aiAgentService,
-        AiChatHistoryService aiChatHistoryService
+        AiChatHistoryService aiChatHistoryService,
+        ChatModelProviderRegistry chatModelProviderRegistry
     ) {
         this.aiConfigurationService = aiConfigurationService;
         this.aiAgentService = aiAgentService;
         this.aiChatHistoryService = aiChatHistoryService;
+        this.chatModelProviderRegistry = chatModelProviderRegistry;
     }
 
     @GetMapping("/configuration")
@@ -66,5 +77,34 @@ public class AiController {
         @PathVariable String conversationId
     ) {
         return ApiResponse.success(aiChatHistoryService.listHistory(resumeId, conversationId));
+    }
+
+    @GetMapping("/vendors")
+    public ApiResponse<List<VendorMetadataResponse>> listVendors() {
+        List<VendorMetadataResponse> vendors = chatModelProviderRegistry.getAllMetadata().stream()
+            .map(meta -> new VendorMetadataResponse(
+                meta.vendor(),
+                meta.defaultBaseUrl(),
+                meta.baseUrlPlaceholder(),
+                meta.apiKeyPlaceholder(),
+                meta.modelNamePlaceholder(),
+                meta.apiKeyRequired(),
+                meta.suggestedModels()
+            ))
+            .toList();
+        return ApiResponse.success(vendors);
+    }
+
+    @PostMapping("/models")
+    public ApiResponse<ListModelsResponse> listModels(@Valid @RequestBody ListModelsRequest request) {
+        ChatModelProvider provider = chatModelProviderRegistry.findProvider(request.vendor())
+            .orElseGet(() -> chatModelProviderRegistry.findProvider("OpenAI")
+                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Unsupported vendor: " + request.vendor())));
+        try {
+            List<String> models = provider.listModels(request.baseUrl(), request.apiKey());
+            return ApiResponse.success(new ListModelsResponse(models));
+        } catch (Exception e) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Failed to fetch models: " + e.getMessage());
+        }
     }
 }
