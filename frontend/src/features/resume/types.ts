@@ -116,7 +116,22 @@ export interface ShareLink {
   shareMode: ShareMode
   sharePath: string
   targetVersionId: string | null
+  hasPassword: boolean
+  active: boolean
+  viewCount: number
+  lastAccessedAt: string | null
   createdAt: string
+}
+
+export interface ShareAccessLog {
+  id: string
+  accessedAt: string
+  ipAddress: string
+}
+
+export interface ShareAccessLogsPage {
+  logs: ShareAccessLog[]
+  total: number
 }
 
 export interface ExportPlaceholderResponse {

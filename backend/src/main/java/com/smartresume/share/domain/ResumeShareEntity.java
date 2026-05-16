@@ -14,6 +14,7 @@ public class ResumeShareEntity {
     private String shareCode;
     private String shareMode;
     private String targetVersionId;
+    private String passwordHash;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -56,6 +57,14 @@ public class ResumeShareEntity {
 
     public void setTargetVersionId(String targetVersionId) {
         this.targetVersionId = targetVersionId;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public Boolean getActive() {
