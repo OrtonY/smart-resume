@@ -31,6 +31,7 @@ import {
 } from 'antd'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
   createShare,
@@ -1150,6 +1151,7 @@ function ResumeEditorView({
             <Link to={`/app/templates?resumeId=${draft.id}`}>
               <Button>修改模板</Button>
             </Link>
+            <AiConfigurationButton />
             <Button icon={<ShareAltOutlined />} onClick={() => void onCreateShare('LATEST')}>
               分享最新版
             </Button>
@@ -1372,6 +1374,8 @@ function ResumeEditorView({
           previewMode="a4-paged"
         />
       </div>
+
+      <AiResumeAssistant draft={draft} />
     </div>
   )
 }
