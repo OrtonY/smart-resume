@@ -1,5 +1,5 @@
-import { MessageOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Empty, Form, Input, List, Modal, Select, Spin, Tag, Typography } from 'antd'
+import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
+import { App, Button, Empty, Form, Input, List, Modal, Select, Segmented, Spin, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
@@ -35,6 +35,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
   const [loadingConversations, setLoadingConversations] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [streaming, setStreaming] = useState(false)
+  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat')
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
   const dragState = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(null)
 
@@ -45,6 +46,13 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     content: draft.content,
     layout: normalizeResumeLayout(draft.layout),
   }), [draft])
+
+  function handleOpen() {
+    setSelectedConversationId(null)
+    setMessages([])
+    setActiveTab('chat')
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) {
@@ -64,12 +72,6 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
           return
         }
         setConversations(items)
-        setSelectedConversationId((current) => {
-          if (current && items.some((item) => item.conversationId === current)) {
-            return current
-          }
-          return items[0]?.conversationId ?? null
-        })
       })
       .catch((error) => {
         void message.error(error instanceof Error ? error.message : 'Failed to load AI chat conversations')
@@ -181,6 +183,15 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     }
     setSelectedConversationId(null)
     setMessages([])
+    setActiveTab('chat')
+  }
+
+  function selectConversation(conversationId: string) {
+    if (streaming) {
+      return
+    }
+    setSelectedConversationId(conversationId)
+    setActiveTab('chat')
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
@@ -212,7 +223,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     }
     event.currentTarget.releasePointerCapture(event.pointerId)
     if (Math.abs(event.clientX - drag.startX) < 4 && Math.abs(event.clientY - drag.startY) < 4) {
-      setOpen(true)
+      handleOpen()
     }
   }
 
@@ -233,55 +244,63 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
 
       <Modal
         open={open}
-        title="AI resume assistant"
+        title="AI 简历助手"
         onCancel={() => setOpen(false)}
         footer={null}
-        width={720}
+        width={640}
         destroyOnHidden={false}
       >
         <div className="ai-chat-panel">
-          <div className="ai-chat-context">
-            <Tag color="blue">Bound to current resume</Tag>
-            <Text strong>{draft.title}</Text>
+          <div className="ai-chat-toolbar">
+            <Segmented
+              value={activeTab}
+              onChange={(value) => setActiveTab(value as 'chat' | 'history')}
+              options={[
+                { label: <span><MessageOutlined /> 当前对话</span>, value: 'chat' },
+                { label: <span><HistoryOutlined /> 历史记录</span>, value: 'history' },
+              ]}
+            />
+            <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
+              新对话
+            </Button>
           </div>
-          <div className="ai-chat-workspace">
-            <aside className="ai-chat-sidebar">
-              <Button block type="primary" onClick={startNewChat} disabled={streaming}>
-                New chat
-              </Button>
-              <Spin spinning={loadingConversations}>
-                <List
-                  className="ai-chat-conversation-list"
-                  dataSource={conversations}
-                  locale={{ emptyText: 'No chat history yet' }}
-                  renderItem={(item) => (
-                    <List.Item
-                      className={item.conversationId === selectedConversationId ? 'is-active' : ''}
-                      onClick={() => {
-                        if (!streaming) {
-                          setSelectedConversationId(item.conversationId)
-                        }
-                      }}
-                    >
-                      <List.Item.Meta
-                        title={item.title}
-                        description={new Date(item.updatedAt).toLocaleString()}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Spin>
-            </aside>
+
+          <div className="ai-chat-context">
+            <Tag color="blue">已绑定当前简历</Tag>
+            <Text strong>{draft.title}</Text>
+            {selectedConversationId ? <Tag color="default">续聊中</Tag> : <Tag color="green">新对话</Tag>}
+          </div>
+
+          {activeTab === 'history' ? (
+            <Spin spinning={loadingConversations}>
+              <List
+                className="ai-chat-conversation-list"
+                dataSource={conversations}
+                locale={{ emptyText: '暂无历史对话' }}
+                renderItem={(item) => (
+                  <List.Item
+                    className={item.conversationId === selectedConversationId ? 'is-active' : ''}
+                    onClick={() => selectConversation(item.conversationId)}
+                  >
+                    <List.Item.Meta
+                      title={item.title}
+                      description={new Date(item.updatedAt).toLocaleString()}
+                    />
+                  </List.Item>
+                )}
+              />
+            </Spin>
+          ) : (
             <div className="ai-chat-main">
               <Spin spinning={loadingMessages}>
                 <div className="ai-chat-messages">
                   {messages.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Ask AI to review or improve the current resume." />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="向 AI 提问以审阅或优化当前简历。" />
                   ) : null}
                   {messages.map((item) => (
                     <div className={`ai-chat-message ai-chat-message--${item.role}`} key={item.id}>
                       <div className="ai-chat-message__bubble">
-                        {item.content || (item.role === 'assistant' ? 'AI is responding...' : '')}
+                        {item.content || (item.role === 'assistant' ? 'AI 正在回复...' : '')}
                       </div>
                     </div>
                   ))}
@@ -298,7 +317,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
                       void handleSend()
                     }
                   }}
-                  placeholder="Ask AI about the current resume..."
+                  placeholder="向 AI 提问关于当前简历的问题..."
                 />
                 <Button
                   type="primary"
@@ -306,11 +325,11 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
                   loading={streaming}
                   onClick={() => void handleSend()}
                 >
-                  Send
+                  发送
                 </Button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </Modal>
     </>

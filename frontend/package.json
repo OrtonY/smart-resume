@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "antd": "^6.0.0",
     "docx": "^9.6.1",
     "html2canvas": "^1.4.1",
