@@ -239,3 +239,37 @@ Added backend AI configuration, Spring AI streaming chat with backend conversati
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: AI model provider modularization + DeepSeek adapter
+
+**Date**: 2026-05-16
+**Task**: AI model provider modularization + DeepSeek adapter
+**Branch**: `master`
+
+### Summary
+
+Refactored AI model integration from if/else factory to strategy pattern with 3 providers (OpenAI, Ollama, DeepSeek). Added vendor metadata API, dynamic model listing endpoint, and localized frontend config panel with filterable model picker.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2e1d9fa` | (see git log) |
+| `ee00d56` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
