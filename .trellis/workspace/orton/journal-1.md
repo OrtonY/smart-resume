@@ -306,3 +306,36 @@ Implemented three editor UX improvements: @dnd-kit drag-and-drop for module reor
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: Resume pagination split & share preview fix
+
+**Date**: 2026-05-16
+**Task**: Resume pagination split & share preview fix
+**Branch**: `master`
+
+### Summary
+
+Refined pagination algorithm to entry/fragment granularity; fixed public share page to use a4-paged mode and removed workspace back button.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `01cf1d6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
