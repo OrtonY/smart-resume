@@ -1,5 +1,5 @@
 import { MessageOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, AutoComplete, Button, Empty, Form, Input, List, Modal, Select, Spin, Tag, Typography } from 'antd'
+import { App, Button, Empty, Form, Input, List, Modal, Select, Spin, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
@@ -18,7 +18,7 @@ export function AiConfigurationButton() {
   return (
     <>
       <Button icon={<SettingOutlined />} onClick={() => setOpen(true)}>
-        AI Config
+        AI 配置
       </Button>
       <AiConfigurationModal open={open} onClose={() => setOpen(false)} />
     </>
@@ -376,7 +376,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
         })
       })
       .catch((error) => {
-        void message.error(error instanceof Error ? error.message : 'Failed to load AI configuration')
+        void message.error(error instanceof Error ? error.message : '加载 AI 配置失败')
       })
       .finally(() => {
         if (!cancelled) {
@@ -400,10 +400,10 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
       })
       setFetchedModels(response.models)
       if (response.models.length === 0) {
-        void message.info('No models found. Check your credentials and base URL.')
+        void message.info('未找到可用模型，请检查凭据和接口地址。')
       }
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : 'Failed to fetch models')
+      void message.error(error instanceof Error ? error.message : '获取模型列表失败')
     } finally {
       setFetchingModels(false)
     }
@@ -414,10 +414,10 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
     setSaving(true)
     try {
       await saveAiConfiguration(values)
-      void message.success('AI configuration saved')
+      void message.success('AI 配置已保存')
       onClose()
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : 'Failed to save AI configuration')
+      void message.error(error instanceof Error ? error.message : '保存 AI 配置失败')
     } finally {
       setSaving(false)
     }
@@ -426,54 +426,91 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
   return (
     <Modal
       open={open}
-      title="AI configuration"
+      title="AI 配置"
       onCancel={onClose}
       onOk={() => void handleSave()}
-      okText="Save"
+      okText="保存"
       confirmLoading={saving}
       destroyOnHidden
     >
       <Spin spinning={loading}>
         <Form form={form} layout="vertical" initialValues={{ vendor: 'OpenAI' }}>
-          <Form.Item name="vendor" label="AI vendor" rules={[{ required: true, message: 'Select an AI vendor' }]}>
+          <Form.Item name="vendor" label="AI 供应商" rules={[{ required: true, message: '请选择 AI 供应商' }]}>
             <Select options={vendorOptions} onChange={() => setFetchedModels(null)} />
           </Form.Item>
-          <Form.Item name="baseUrl" label="Base URL">
+          <Form.Item name="baseUrl" label="接口地址">
             <Input placeholder={currentVendorMeta?.baseUrlPlaceholder ?? 'https://api.openai.com'} />
           </Form.Item>
           <Form.Item
             name="apiKey"
-            label="API Key"
-            rules={configured || currentVendorMeta?.apiKeyRequired === false ? [] : [{ required: true, message: 'API key is required for first setup' }]}
-            extra={configured ? 'Leave blank to keep the existing API key.' : (currentVendorMeta?.apiKeyRequired === false ? 'Not required for this vendor.' : undefined)}
+            label="API 密钥"
+            rules={configured || currentVendorMeta?.apiKeyRequired === false ? [] : [{ required: true, message: '首次配置需要填写 API 密钥' }]}
+            extra={configured ? '留空则保留已有密钥。' : (currentVendorMeta?.apiKeyRequired === false ? '该供应商无需 API 密钥。' : undefined)}
           >
             <Input.Password
               autoComplete="off"
-              placeholder={currentVendorMeta?.apiKeyPlaceholder ?? (configured ? 'Keep existing API key' : 'sk-...')}
+              placeholder={currentVendorMeta?.apiKeyPlaceholder ?? (configured ? '留空保留已有密钥' : 'sk-...')}
             />
           </Form.Item>
-          <Form.Item label="Model name" required>
+          <Form.Item label="模型名称" required>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Form.Item name="modelName" noStyle rules={[{ required: true, message: 'Enter model name' }]}>
-                <AutoComplete
-                  options={modelOptions.map((m) => ({ label: m, value: m }))}
-                  placeholder={currentVendorMeta?.modelNamePlaceholder ?? 'gpt-4o-mini'}
-                  filterOption={(inputValue, option) =>
-                    (option?.value ?? '').toLowerCase().includes(inputValue.toLowerCase())
-                  }
-                />
+              <Form.Item name="modelName" noStyle rules={[{ required: true, message: '请输入模型名称' }]}>
+                <Input placeholder={currentVendorMeta?.modelNamePlaceholder ?? 'gpt-4o-mini'} />
               </Form.Item>
               <Button
                 icon={<CloudDownloadOutlined />}
                 loading={fetchingModels}
                 onClick={() => void handleFetchModels()}
               >
-                Fetch
+                获取模型
               </Button>
             </div>
+            {modelOptions.length > 0 && (
+              <ModelList models={modelOptions} onSelect={(model) => form.setFieldValue('modelName', model)} />
+            )}
           </Form.Item>
         </Form>
       </Spin>
     </Modal>
+  )
+}
+
+function ModelList({ models, onSelect }: { models: string[]; onSelect: (model: string) => void }) {
+  const [filter, setFilter] = useState('')
+
+  const filtered = useMemo(() => {
+    if (!filter.trim()) return models
+    const keyword = filter.toLowerCase()
+    return models.filter((m) => m.toLowerCase().includes(keyword))
+  }, [models, filter])
+
+  return (
+    <div style={{ marginTop: 8, border: '1px solid #d9d9d9', borderRadius: 6, padding: 8, maxHeight: 180, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Input
+        size="small"
+        placeholder="搜索模型..."
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        allowClear
+        style={{ marginBottom: 6 }}
+      />
+      <div style={{ overflowY: 'auto', flex: 1 }}>
+        {filtered.length === 0 ? (
+          <Text type="secondary" style={{ fontSize: 12 }}>无匹配模型</Text>
+        ) : (
+          filtered.map((model) => (
+            <div
+              key={model}
+              onClick={() => onSelect(model)}
+              style={{ padding: '4px 8px', cursor: 'pointer', borderRadius: 4, fontSize: 13 }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f0f0' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              {model}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   )
 }

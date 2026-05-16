@@ -85,7 +85,7 @@ public class DeepSeekChatModelProvider implements ChatModelProvider {
             "sk-...",
             "deepseek-chat",
             true,
-            List.of("deepseek-chat", "deepseek-reasoner")
+            List.of()
         );
     }
 

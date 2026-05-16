@@ -81,7 +81,7 @@ public class OllamaChatModelProvider implements ChatModelProvider {
             "Not required",
             "llama3.1",
             false,
-            List.of("llama3.1", "llama3", "qwen2.5", "deepseek-r1")
+            List.of()
         );
     }
 
