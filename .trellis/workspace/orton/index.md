@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-05-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~275 | Active |
+| `journal-1.md` | ~308 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-05-16 | Frontend UX: drag-sort, toolbar consolidation, AI chat redesign | `b8562fb` | `master` |
 | 8 | 2026-05-16 | AI model provider modularization + DeepSeek adapter | `2e1d9fa`, `ee00d56` | `master` |
 | 7 | 2026-05-16 | Add AI resume chat assistant | `3a763b1`, `74053cd` | `master` |
 | 6 | 2026-05-15 | Implement PDF and DOCX export | `4ab81b7` | `master` |

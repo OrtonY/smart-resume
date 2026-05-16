@@ -273,3 +273,36 @@ Refactored AI model integration from if/else factory to strategy pattern with 3 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Frontend UX: drag-sort, toolbar consolidation, AI chat redesign
+
+**Date**: 2026-05-16
+**Task**: Frontend UX: drag-sort, toolbar consolidation, AI chat redesign
+**Branch**: `master`
+
+### Summary
+
+Implemented three editor UX improvements: @dnd-kit drag-and-drop for module reordering, Dropdown menus for share/export toolbar consolidation, and a tab-based AI chat modal that defaults to new conversations.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b8562fb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
