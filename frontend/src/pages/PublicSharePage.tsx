@@ -1,7 +1,6 @@
-import { ArrowLeftOutlined } from '@ant-design/icons'
-import { Button, Card, Result, Spin, message } from 'antd'
+import { Card, Result, Spin, message } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare } from '../features/resume/api/resumeApi'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -38,20 +37,12 @@ export function PublicSharePage() {
     <div className="full-page-center">
       {contextHolder}
       <Card className="auth-card" bordered={false} style={{ width: 'min(960px, 100%)' }}>
-        <div style={{ marginBottom: 18 }}>
-          <Link to="/">
-            <Button icon={<ArrowLeftOutlined />} type="text">
-              返回工作区
-            </Button>
-          </Link>
-        </div>
-
         {loading ? (
           <div className="full-page-center" style={{ minHeight: 320 }}>
             <Spin size="large" tip="正在加载分享的简历..." />
           </div>
         ) : resume ? (
-          <ResumePreview resume={resume} templates={templates} />
+          <ResumePreview resume={resume} templates={templates} previewMode="a4-paged" />
         ) : (
           <Result status="404" title="分享链接不可用" subTitle="此公开分享可能已过期或不存在。" />
         )}
