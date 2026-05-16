@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "State management patterns for editor state, auto-save debounce, and local vs server state separation — directly relevant to drag-sort state updates and AI chat tab state"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "AI chat persistence rules and conversation switching constraints — needed to correctly implement the new-conversation-by-default behavior without breaking stream/history contracts"}
+{"file": ".trellis/tasks/05-16-frontend-ux-optimization/prd.md", "reason": "Task PRD with full requirements, acceptance criteria, and technical approach"}
