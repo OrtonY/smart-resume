@@ -167,3 +167,56 @@ Do not use global state for section form fields that belong to one editing scree
 - Verify each field's actual stored shape across all built-in templates before assigning `kind`.
 - Treat unparseable input as opaque: preserve verbatim, surface a read-only fallback, let the user explicitly overwrite.
 - Force `rgba(...)` output for every color edit so the persisted JSON has one canonical shape.
+
+## Scenario: Resume Content Field Addition
+
+### 1. Scope / Trigger
+- Trigger: adding a new field to the resume content model (e.g. `PersonalInfo.age`, `PersonalInfo.headline`) that the user edits in the form and that appears in both the on-screen preview and the DOCX export.
+- Why this needs spec depth: the field flows through three consumers (editor form, preview model, DOCX export) plus the backend DTO, and skipping any one of them produces silent visual drift between preview and export.
+
+### 2. Signatures
+- Frontend type: `frontend/src/features/resume/types.ts` — new field on the relevant interface (e.g. `PersonalInfo`), typed `string` to match sibling fields.
+- Default seed: `createEmptyResumeContent()` in the same file — must include the new field with empty-string default.
+- Editor form: `frontend/src/pages/WorkspacePage.tsx` SectionGrid — antd `Input` bound through `updateDraft`, placeholder mirrors existing fields (Chinese label).
+- Preview model: `frontend/src/features/resume/components/ResumePreview.tsx` — when the field is rendered as a contact-line entry, push `{ label, value }` to the contact array via `createPreviewModel`.
+- DOCX export: `frontend/src/features/resume/export/docxExport.ts` — same logic on the contact line.
+- Backend DTO: `backend/src/main/java/com/smartresume/resume/dto/ResumeDtos.java` — add `String <field>` to the corresponding record. Update `ResumeService.defaultContent()` positional arg.
+
+### 3. Contracts
+- Field type is `string` on both sides (not `number`, `LocalDate`, etc.) for visual consistency with the rest of the form and to keep DTO/JSON shape uniform.
+- Empty string represents "not filled"; nullable on the backend side via Jackson default.
+- Validation/formatting happens at render time, not input time. The editor accepts any string; consumers (preview + DOCX) own the format/validation.
+- Preview and DOCX must use the **same** formatter. If no shared utils module exists, an identical local copy in both files is acceptable but must be kept in lockstep.
+- Backend record field order is positional. Adding a field ⇒ update every `new <Record>(...)` call site (e.g. `defaultContent()`).
+
+### 4. Validation & Error Matrix
+- Field missing from preview but present in editor → preview drifts from form; treat as a bug, not a feature.
+- Field present in preview but missing in DOCX → export silently loses data. Always update both.
+- Backend record updated but `defaultContent()` not updated → compile error (good, surface immediately).
+- Old JSON in `content_json` lacks the new field → Spring Boot Jackson default (`FAIL_ON_UNKNOWN_PROPERTIES=false` and missing-field tolerance) deserializes the field as `null`. Verified by a unit test that round-trips legacy JSON.
+- Render-time validation rejects input → entry is silently skipped (no inline error), consistent with every other personal-info field.
+
+### 5. Good/Base/Bad Cases
+- Good: `age` flows editor → preview → DOCX with one shared validation rule (`formatAge`). Legacy JSON without `age` opens as null.
+- Base: only the rendered output changes; no migration script, no schema bump (`content_json` is opaque text).
+- Bad: adding the field to `types.ts` and the editor only — preview/DOCX silently stay on the old shape; users see their input "vanish" on export.
+
+### 6. Tests Required
+- Frontend `tsc --noEmit` + lint green.
+- Backend Jackson deserialization unit test:
+  - legacy JSON (no new field) → record with that field `null`, other fields intact.
+  - new JSON (with field) → field populated.
+  - round-trip serialize → deserialize stable.
+- Manual: edit the field → reload → value persists; export DOCX → value matches preview.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Type a numeric-looking field as `number` on the frontend just because it's a number — breaks visual parity with sibling string fields and forces InputNumber handling.
+- Validate at input time (block bad input in the form) — diverges from the project-wide "accept anything, render-time validate" convention.
+- Implement the formatter in `ResumePreview.tsx` only and reach for it from `docxExport.ts` via a quick import that creates a circular dependency. Prefer duplicating the small helper if no shared utils module exists yet.
+- Skip the legacy-JSON deserialization test "because the field is just a string" — silent regressions in stored resumes are the most common failure here.
+
+#### Correct
+- Type as `string`, default `''`, validate at render time, fall back to skipping the entry on invalid input.
+- Update all four touch points in one PR: types + editor + preview + DOCX (+ backend DTO + defaultContent).
+- Add a Jackson round-trip test for the new field whenever a backend record gains a property.
