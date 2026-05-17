@@ -1739,6 +1739,11 @@ function renderModuleContent(
             onChange={(event) => updateDraft((next) => { next.content.personalInfo.expectedSalary = event.target.value })}
             placeholder="期望薪资"
           />
+          <Input
+            value={draft.content.personalInfo.age}
+            onChange={(event) => updateDraft((next) => { next.content.personalInfo.age = event.target.value })}
+            placeholder="年龄"
+          />
         </SectionGrid>
       </div>
     )

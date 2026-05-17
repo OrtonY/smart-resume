@@ -378,7 +378,7 @@ public class ResumeService {
 
     private ResumeContentPayload defaultContent() {
         return new ResumeContentPayload(
-            new ResumeDtos.PersonalInfo("", "", "", "", "", "", "", ""),
+            new ResumeDtos.PersonalInfo("", "", "", "", "", "", "", "", ""),
             "",
             List.of(),
             List.of(),

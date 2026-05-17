@@ -221,6 +221,7 @@ function createDocumentChildren(resume: ExportResume, style: TemplateDocxStyle, 
     personalInfo.phone,
     personalInfo.email,
     personalInfo.website,
+    formatAge(personalInfo.age) ?? '',
   ]
     .map((item) => item.trim())
     .filter(Boolean)
@@ -555,4 +556,14 @@ function cssColorToHex(value: string | undefined, fallback: string) {
     .map((part) => Math.max(0, Math.min(255, part)).toString(16).padStart(2, '0'))
     .join('')
     .toUpperCase()
+}
+
+function formatAge(age?: string): string | null {
+  const trimmed = (age ?? '').trim()
+  if (!trimmed) return null
+  const n = Number.parseInt(trimmed, 10)
+  if (!Number.isInteger(n)) return null
+  if (String(n) !== trimmed) return null
+  if (n < 1 || n > 150) return null
+  return `${n}岁`
 }
