@@ -6,6 +6,7 @@ export interface PersonalInfo {
   city: string
   website: string
   expectedSalary: string
+  age: string
   avatar?: string
 }
 
@@ -150,6 +151,7 @@ export function createEmptyResumeContent(): ResumeContent {
       city: '',
       website: '',
       expectedSalary: '',
+      age: '',
       avatar: '',
     },
     personalSummary: '',

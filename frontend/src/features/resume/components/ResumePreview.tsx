@@ -703,6 +703,7 @@ function createPreviewModel(
       { label: "城市", value: content.personalInfo.city },
       { label: "链接", value: content.personalInfo.website },
       { label: "期望薪资", value: content.personalInfo.expectedSalary },
+      { label: "年龄", value: formatAge(content.personalInfo.age) ?? "" },
     ].filter((item) => item.value.trim().length > 0),
     education: content.education.map((item) => ({
       title: item.school || "学校",
@@ -780,6 +781,16 @@ function formatPeriod(startDate?: string, endDate?: string) {
   }
 
   return `${start || "开始时间"} - ${end || "至今"}`;
+}
+
+function formatAge(age?: string): string | null {
+  const trimmed = (age ?? "").trim();
+  if (!trimmed) return null;
+  const n = Number.parseInt(trimmed, 10);
+  if (!Number.isInteger(n)) return null;
+  if (String(n) !== trimmed) return null;
+  if (n < 1 || n > 150) return null;
+  return `${n}岁`;
 }
 
 export function EmptyPreview() {

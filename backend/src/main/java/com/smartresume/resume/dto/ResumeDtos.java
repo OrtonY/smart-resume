@@ -94,6 +94,7 @@ public final class ResumeDtos {
         String city,
         String website,
         String expectedSalary,
+        String age,
         String avatar
     ) {
     }
