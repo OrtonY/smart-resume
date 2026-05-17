@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec overview for compliance check"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality rules — lint, typecheck, build requirements"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type conventions to verify the new field follows project patterns"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend spec overview for compliance check"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality rules — test coverage, build requirements"}
