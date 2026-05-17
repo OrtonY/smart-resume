@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Lint/type-check expectations for the verifier"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component conventions to verify against"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Typing rules to verify against"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Stateful field component conventions"}
