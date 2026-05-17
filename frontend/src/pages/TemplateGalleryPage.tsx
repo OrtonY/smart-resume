@@ -25,6 +25,8 @@ import {
 } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ColorField } from '../features/resume/components/ColorField'
+import { GradientField } from '../features/resume/components/GradientField'
 import { ResumePreview } from '../features/resume/components/ResumePreview'
 import { ResumeTemplatePicker } from '../features/resume/components/ResumeTemplatePicker'
 import {
@@ -64,26 +66,28 @@ const LAYOUT_OPTIONS: Array<{ value: ResumeTemplateLayout; label: string }> = [
   { value: 'editorial', label: '编辑创意' },
 ]
 
-const THEME_FIELDS: Array<{ key: keyof ResumeTemplateTheme; label: string }> = [
-  { key: 'pageBackground', label: 'Page background' },
-  { key: 'borderColor', label: 'Border color' },
-  { key: 'mutedText', label: 'Muted text' },
-  { key: 'accent', label: 'Accent' },
-  { key: 'accentSoft', label: 'Accent soft' },
-  { key: 'accentText', label: 'Accent text' },
-  { key: 'heroBackground', label: 'Hero background' },
-  { key: 'heroText', label: 'Hero text' },
-  { key: 'heroMuted', label: 'Hero muted text' },
-  { key: 'railBackground', label: 'Rail background' },
-  { key: 'panelBackground', label: 'Panel background' },
+type ColorTokenKind = 'color' | 'gradient'
+
+const THEME_FIELDS: Array<{ key: keyof ResumeTemplateTheme; label: string; kind: ColorTokenKind }> = [
+  { key: 'pageBackground', label: '页面背景', kind: 'color' },
+  { key: 'borderColor', label: '边框颜色', kind: 'color' },
+  { key: 'mutedText', label: '弱化文字', kind: 'color' },
+  { key: 'accent', label: '主强调色', kind: 'color' },
+  { key: 'accentSoft', label: '浅强调色', kind: 'color' },
+  { key: 'accentText', label: '强调色上的文字', kind: 'color' },
+  { key: 'heroBackground', label: '头部背景', kind: 'gradient' },
+  { key: 'heroText', label: '头部文字', kind: 'color' },
+  { key: 'heroMuted', label: '头部弱化文字', kind: 'color' },
+  { key: 'railBackground', label: '侧栏背景', kind: 'gradient' },
+  { key: 'panelBackground', label: '面板背景', kind: 'color' },
 ]
 
-const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; label: string }> = [
-  { key: 'canvasBackground', label: 'Canvas background' },
-  { key: 'sheetBackground', label: 'Sheet background' },
-  { key: 'heroBackground', label: 'Preview hero background' },
-  { key: 'asideBackground', label: 'Preview aside background' },
-  { key: 'lineColor', label: 'Preview line color' },
+const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; label: string; kind: ColorTokenKind }> = [
+  { key: 'canvasBackground', label: '画布背景', kind: 'gradient' },
+  { key: 'sheetBackground', label: '纸张背景', kind: 'color' },
+  { key: 'heroBackground', label: '预览头部背景', kind: 'gradient' },
+  { key: 'asideBackground', label: '预览侧栏背景', kind: 'color' },
+  { key: 'lineColor', label: '分隔线颜色', kind: 'color' },
 ]
 
 const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'> = {
@@ -621,7 +625,7 @@ export function TemplateGalleryPage() {
                       children: (
                         <div className="template-editor-grid">
                           <div className="template-editor-field template-editor-field--span-2">
-                            <Text type="secondary">Template key</Text>
+                            <Text type="secondary">模板标识</Text>
                             <Input
                               value={editorDraft.key}
                               disabled={editorMode === 'edit'}
@@ -664,35 +668,79 @@ export function TemplateGalleryPage() {
                     },
                     {
                       key: 'theme',
-                      label: 'Theme tokens',
+                      label: '主题样式',
                       children: (
                         <div className="template-editor-grid">
-                          {THEME_FIELDS.map((field) => (
-                            <div className="template-editor-field" key={field.key}>
-                              <Text type="secondary">{field.label}</Text>
-                              <Input
-                                value={editorDraft.theme[field.key]}
-                                onChange={(event) => updateDraftTheme(field.key, event.target.value)}
+                          {THEME_FIELDS.map((field) => {
+                            const currentValue = editorDraft.theme[field.key]
+                            const savedValue = selectedTemplate?.theme[field.key]
+                            const canReset =
+                              editorMode === 'edit' &&
+                              !!selectedTemplate &&
+                              savedValue !== undefined &&
+                              currentValue !== savedValue
+                            const handleReset = canReset && savedValue !== undefined
+                              ? () => updateDraftTheme(field.key, savedValue)
+                              : undefined
+                            return field.kind === 'gradient' ? (
+                              <GradientField
+                                key={field.key}
+                                label={field.label}
+                                value={currentValue}
+                                onChange={(next) => updateDraftTheme(field.key, next)}
+                                onReset={handleReset}
+                                canReset={canReset}
                               />
-                            </div>
-                          ))}
+                            ) : (
+                              <ColorField
+                                key={field.key}
+                                label={field.label}
+                                value={currentValue}
+                                onChange={(next) => updateDraftTheme(field.key, next)}
+                                onReset={handleReset}
+                                canReset={canReset}
+                              />
+                            )
+                          })}
                         </div>
                       ),
                     },
                     {
                       key: 'preview',
-                      label: 'Preview tokens',
+                      label: '预览样式',
                       children: (
                         <div className="template-editor-grid">
-                          {PREVIEW_FIELDS.map((field) => (
-                            <div className="template-editor-field" key={field.key}>
-                              <Text type="secondary">{field.label}</Text>
-                              <Input
-                                value={editorDraft.preview[field.key]}
-                                onChange={(event) => updateDraftPreview(field.key, event.target.value)}
+                          {PREVIEW_FIELDS.map((field) => {
+                            const currentValue = editorDraft.preview[field.key]
+                            const savedValue = selectedTemplate?.preview[field.key]
+                            const canReset =
+                              editorMode === 'edit' &&
+                              !!selectedTemplate &&
+                              savedValue !== undefined &&
+                              currentValue !== savedValue
+                            const handleReset = canReset && savedValue !== undefined
+                              ? () => updateDraftPreview(field.key, savedValue)
+                              : undefined
+                            return field.kind === 'gradient' ? (
+                              <GradientField
+                                key={field.key}
+                                label={field.label}
+                                value={currentValue}
+                                onChange={(next) => updateDraftPreview(field.key, next)}
+                                onReset={handleReset}
+                                canReset={canReset}
                               />
-                            </div>
-                          ))}
+                            ) : (
+                              <ColorField
+                                key={field.key}
+                                label={field.label}
+                                value={currentValue}
+                                onChange={(next) => updateDraftPreview(field.key, next)}
+                                onReset={handleReset}
+                                canReset={canReset}
+                              />
+                            )
+                          })}
                         </div>
                       ),
                     },
@@ -767,7 +815,7 @@ export function TemplateGalleryPage() {
                   <Tag color="gold">{previewTemplate.category}</Tag>
                   <Tag>{layoutLabel(previewTemplate.layout)}</Tag>
                   <Tag color={previewTemplate.builtIn ? 'blue' : 'green'}>
-                    {previewTemplate.builtIn ? 'Built-in' : 'Custom'}
+                    {previewTemplate.builtIn ? '内置' : '自定义'}
                   </Tag>
                 </Space>
                 <Title level={4} style={{ margin: '10px 0 6px' }}>
@@ -930,11 +978,11 @@ function validateTemplateDraft(template: ManagedResumeTemplateDefinition, mode: 
   }
 
   if (THEME_FIELDS.some((field) => template.theme[field.key].trim().length === 0)) {
-    return 'Theme tokens 不能为空。'
+    return '主题样式不能为空。'
   }
 
   if (PREVIEW_FIELDS.some((field) => template.preview[field.key].trim().length === 0)) {
-    return 'Preview tokens 不能为空。'
+    return '预览样式不能为空。'
   }
 
   return null
