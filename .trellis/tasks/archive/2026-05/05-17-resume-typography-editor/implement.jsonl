@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec overview — conventions and patterns for the React app"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component patterns for the new MarkdownTextArea wrapper"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type conventions for the new InlineNode type and parser API"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Contains the resume content field addition scenario (PR1) and template token visual editor scenario; serves as architectural reference for adding a sibling scenario for inline markdown"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Where to place the new markdown/ subdirectory and components"}
