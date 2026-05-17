@@ -11,6 +11,7 @@ import com.smartresume.resume.domain.ResumeVersionEntity;
 import com.smartresume.resume.domain.table.ResumeEntityTableDef;
 import com.smartresume.resume.dto.ResumeDtos;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
+import com.smartresume.resume.dto.ResumeDtos.ResumeCopyRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
@@ -116,6 +117,26 @@ public class ResumeService {
     public ResumeDetailResponse getResume(String resumeId) {
         ResumeEntity resume = requireResume(resumeId);
         return toDetail(resume, loadContent(resumeId));
+    }
+
+    @Transactional
+    public ResumeDetailResponse copyResume(String sourceResumeId, ResumeCopyRequest request) {
+        ResumeEntity source = requireActiveResume(sourceResumeId);
+        ResumeContentPayload sourceContent = loadContent(sourceResumeId);
+        LocalDateTime now = LocalDateTime.now();
+
+        ResumeEntity copy = new ResumeEntity();
+        copy.setId(UUID.randomUUID().toString());
+        copy.setTitle(request.title());
+        copy.setTemplateKey(source.getTemplateKey());
+        copy.setLayoutJson(toJson(readLayoutOrDefault(source.getLayoutJson())));
+        copy.setDeleted(false);
+        copy.setCreatedAt(now);
+        copy.setUpdatedAt(now);
+        resumeMapper.insert(copy);
+
+        saveSections(copy.getId(), sourceContent, now);
+        return getResume(copy.getId());
     }
 
     @Transactional

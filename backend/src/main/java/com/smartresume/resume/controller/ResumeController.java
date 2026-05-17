@@ -1,6 +1,7 @@
 package com.smartresume.resume.controller;
 
 import com.smartresume.common.api.ApiResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumeCopyRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
@@ -41,6 +42,14 @@ public class ResumeController {
     @PostMapping
     public ApiResponse<ResumeDetailResponse> createResume(@Valid @RequestBody ResumeCreateRequest request) {
         return ApiResponse.success(resumeService.createResume(request), "Resume created");
+    }
+
+    @PostMapping("/{resumeId}/copy")
+    public ApiResponse<ResumeDetailResponse> copyResume(
+        @PathVariable String resumeId,
+        @Valid @RequestBody ResumeCopyRequest request
+    ) {
+        return ApiResponse.success(resumeService.copyResume(resumeId, request), "Resume copied");
     }
 
     @GetMapping("/{resumeId}")

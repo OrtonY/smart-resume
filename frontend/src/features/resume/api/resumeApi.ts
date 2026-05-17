@@ -16,6 +16,13 @@ export function createResume(payload: { title: string; templateKey: string }) {
   })
 }
 
+export function copyResume(resumeId: string, payload: { title: string }) {
+  return request<ResumeDetail>(`/api/resumes/${resumeId}/copy`, {
+    method: 'POST',
+    body: payload,
+  })
+}
+
 export function getResume(resumeId: string) {
   return request<ResumeDetail>(`/api/resumes/${resumeId}`)
 }
