@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend stack overview: TypeScript + Ant Design conventions"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Where new helpers/components belong in the feature folder layout"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component conventions placeholder (read for any non-empty rules)"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Local state patterns - relevant for the new ColorField/GradientField stateful editors"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Typing conventions for the new gradient parser/serializer helpers"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Forbidden patterns / lint expectations"}
