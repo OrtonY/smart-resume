@@ -522,11 +522,6 @@ export function TemplateGalleryPage() {
           <Title level={2} style={{ marginBottom: 8 }}>
             {isResumeTemplateChange ? '修改模板' : '模板目录'}
           </Title>
-          <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-            {isResumeTemplateChange
-              ? '选择模板并应用到当前简历，已有内容会保留，只切换展示样式。'
-              : '先浏览模板样式，在右侧预览确认后再创建新简历。'}
-          </Paragraph>
         </div>
 
         <Card className="glass-card template-gallery-summary" bordered={false}>
@@ -541,11 +536,10 @@ export function TemplateGalleryPage() {
                   当前模板：{linkedTemplateName ?? resume.templateKey}
                 </Tag>
               ) : (
-                <Tag color="purple">点击模板仅切换预览</Tag>
+                <Tag color="success">
+                  {editorMode === 'create' ? '新建模板草稿' : '编辑已有模板'}
+                </Tag>
               )}
-              <Tag color={editorMode === 'create' ? 'gold' : 'success'}>
-                {editorMode === 'create' ? '新建模板草稿' : '编辑已有模板'}
-              </Tag>
             </Space>
           </Space>
         </Card>
@@ -565,6 +559,15 @@ export function TemplateGalleryPage() {
                 <Button icon={<ReloadOutlined />} onClick={() => void loadTemplateCatalog(selectedTemplate?.key)}>
                   刷新目录
                 </Button>
+                <Popconfirm
+                  title="恢复内置模板"
+                  description="会用备份文件覆盖所有内置模板，自定义模板会保留。"
+                  okText="恢复"
+                  cancelText="取消"
+                  onConfirm={() => void handleRestoreBuiltIns()}
+                >
+                  <Button loading={restoringBuiltIns}>从备份恢复内置模板</Button>
+                </Popconfirm>
               </Space>
             }
           >
@@ -577,12 +580,6 @@ export function TemplateGalleryPage() {
                   description={templateError.message}
                 />
               ) : null}
-
-              <Alert
-                type={resume ? 'info' : 'success'}
-                showIcon
-                message={resume ? '可直接把当前选中的模板应用到这份简历。' : '点击模板会更新右侧预览和下方配置区；创建简历需要在右侧手动确认。'}
-              />
 
               <ResumeTemplatePicker
                 templates={templates.length > 0 ? templates : [FALLBACK_MANAGED_TEMPLATE]}
@@ -610,13 +607,6 @@ export function TemplateGalleryPage() {
           >
             {editorDraft ? (
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                <Alert
-                  type="info"
-                  showIcon
-                  message="数据库是模板目录的主数据源。"
-                  description="删除自定义模板不会自动改写已有简历的 templateKey；仍引用这个 key 的简历会退回默认模板，直到重新指定。"
-                />
-
                 <Collapse
                   defaultActiveKey={['basic']}
                   items={[
@@ -760,17 +750,7 @@ export function TemplateGalleryPage() {
                     </Button>
                     {editorMode === 'create' ? (
                       <Button onClick={handleCancelCreate}>取消新建</Button>
-                    ) : (
-                      <Popconfirm
-                        title="恢复内置模板"
-                        description="会用备份文件覆盖所有内置模板，自定义模板会保留。"
-                        okText="恢复"
-                        cancelText="取消"
-                        onConfirm={() => void handleRestoreBuiltIns()}
-                      >
-                        <Button loading={restoringBuiltIns}>从备份恢复内置模板</Button>
-                      </Popconfirm>
-                    )}
+                    ) : null}
                   </Space>
 
                   {editorMode === 'edit' && selectedTemplate && !selectedTemplate.builtIn ? (

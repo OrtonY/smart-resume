@@ -664,9 +664,8 @@ function ResumeListView({
       <div className="workspace-hub">
         <div className="workspace-hub__hero">
           <div className="workspace-hub__copy">
-            <Tag color="gold">Resume Studio</Tag>
-            <h1>选择一份简历开始编辑</h1>
-            <p>列表负责管理，编辑器负责专注写作。进入单份简历后，你会看到模块结构、内容编辑和实时预览三栏工作台。</p>
+            <h1>智慧简历</h1>
+            <p>选择简历开始编辑，实时预览效果。</p>
           </div>
 
           <div className="workspace-hub__actions">
@@ -1391,17 +1390,7 @@ function ResumeEditorView({
           </Space>
         </div>
 
-        <div className="resume-editor-shell__meta">
-          <div>
-            <Text strong>{selectedTemplate.name}</Text>
-            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              {selectedTemplate.summary}
-            </Paragraph>
-          </div>
-          <Tag color="blue">右侧预览常驻</Tag>
-        </div>
-
-        <div className="resume-editor-layout">
+<div className="resume-editor-layout">
           <Card className="glass-card resume-editor-rail" bordered={false}>
             <div className="resume-editor-rail__head">
               <div>
@@ -1704,46 +1693,70 @@ function renderModuleContent(
         </div>
 
         <SectionGrid>
-          <Input
-            value={draft.content.personalInfo.fullName}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.fullName = event.target.value })}
-            placeholder="姓名"
-          />
-          <Input
-            value={draft.content.personalInfo.headline}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.headline = event.target.value })}
-            placeholder="职位 / 头衔"
-          />
-          <Input
-            value={draft.content.personalInfo.phone}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.phone = event.target.value })}
-            placeholder="电话"
-          />
-          <Input
-            value={draft.content.personalInfo.email}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.email = event.target.value })}
-            placeholder="邮箱"
-          />
-          <Input
-            value={draft.content.personalInfo.city}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.city = event.target.value })}
-            placeholder="所在城市"
-          />
-          <Input
-            value={draft.content.personalInfo.website}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.website = event.target.value })}
-            placeholder="个人网站 / 作品集"
-          />
-          <Input
-            value={draft.content.personalInfo.expectedSalary}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.expectedSalary = event.target.value })}
-            placeholder="期望薪资"
-          />
-          <Input
-            value={draft.content.personalInfo.age}
-            onChange={(event) => updateDraft((next) => { next.content.personalInfo.age = event.target.value })}
-            placeholder="年龄"
-          />
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>姓名</Text>
+            <Input
+              value={draft.content.personalInfo.fullName}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.fullName = event.target.value })}
+              placeholder="姓名"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>职位/头衔</Text>
+            <Input
+              value={draft.content.personalInfo.headline}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.headline = event.target.value })}
+              placeholder="职位 / 头衔"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>电话</Text>
+            <Input
+              value={draft.content.personalInfo.phone}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.phone = event.target.value })}
+              placeholder="电话"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>邮箱</Text>
+            <Input
+              value={draft.content.personalInfo.email}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.email = event.target.value })}
+              placeholder="邮箱"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>所在城市</Text>
+            <Input
+              value={draft.content.personalInfo.city}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.city = event.target.value })}
+              placeholder="所在城市"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>个人网站</Text>
+            <Input
+              value={draft.content.personalInfo.website}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.website = event.target.value })}
+              placeholder="个人网站 / 作品集"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>期望薪资</Text>
+            <Input
+              value={draft.content.personalInfo.expectedSalary}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.expectedSalary = event.target.value })}
+              placeholder="期望薪资"
+            />
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>年龄</Text>
+            <Input
+              value={draft.content.personalInfo.age}
+              onChange={(event) => updateDraft((next) => { next.content.personalInfo.age = event.target.value })}
+              placeholder="年龄"
+            />
+          </div>
         </SectionGrid>
       </div>
     )
@@ -1752,12 +1765,15 @@ function renderModuleContent(
   switch (moduleKey) {
     case 'summary':
       return (
-        <MarkdownLongTextArea
-          rows={6}
-          value={draft.content.personalSummary}
-          onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
-          placeholder="用一段短文概括你的优势、方向和关键成果。（支持 **粗体** 和 *斜体*）"
-        />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>个人简介</Text>
+          <MarkdownLongTextArea
+            rows={6}
+            value={draft.content.personalSummary}
+            onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
+            placeholder="用一段短文概括你的优势、方向和关键成果。（支持 **粗体** 和 *斜体*）"
+          />
+        </div>
       )
     case 'education':
       return renderEducationSection(draft.content.education, () => {
@@ -1840,13 +1856,31 @@ function renderEducationSection(
     (index) => `教育经历 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.school} placeholder="学校" onChange={(event) => updateDraft((next) => { next.content.education[index].school = event.target.value })} />
-        <Input value={item.degree} placeholder="学位" onChange={(event) => updateDraft((next) => { next.content.education[index].degree = event.target.value })} />
-        <Input value={item.major} placeholder="专业" onChange={(event) => updateDraft((next) => { next.content.education[index].major = event.target.value })} />
-        <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
-        <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>学校</Text>
+          <Input value={item.school} placeholder="学校" onChange={(event) => updateDraft((next) => { next.content.education[index].school = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>学位</Text>
+          <Input value={item.degree} placeholder="学位" onChange={(event) => updateDraft((next) => { next.content.education[index].degree = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>专业</Text>
+          <Input value={item.major} placeholder="专业" onChange={(event) => updateDraft((next) => { next.content.education[index].major = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
+          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
+          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
+        </div>
         <SectionGridFullWidth>
-          <MarkdownLongTextArea rows={3} value={item.description} placeholder="亮点描述（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>亮点描述</Text>
+            <MarkdownLongTextArea rows={3} value={item.description} placeholder="亮点描述（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+          </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1865,12 +1899,27 @@ function renderWorkSection(
     (index) => `工作经历 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.company} placeholder="公司" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].company = event.target.value })} />
-        <Input value={item.role} placeholder="职位" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
-        <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
-        <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>公司</Text>
+          <Input value={item.company} placeholder="公司" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].company = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>职位</Text>
+          <Input value={item.role} placeholder="职位" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
+          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
+          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
+        </div>
         <SectionGridFullWidth>
-          <MarkdownLongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>工作内容</Text>
+            <MarkdownLongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+          </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1889,12 +1938,27 @@ function renderProjectSection(
     (index) => `项目经历 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.name} placeholder="项目名称" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].name = event.target.value })} />
-        <Input value={item.role} placeholder="角色" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].role = event.target.value })} />
-        <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
-        <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>项目名称</Text>
+          <Input value={item.name} placeholder="项目名称" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].name = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>角色</Text>
+          <Input value={item.role} placeholder="角色" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].role = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
+          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
+          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
+        </div>
         <SectionGridFullWidth>
-          <MarkdownLongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>项目描述</Text>
+            <MarkdownLongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+          </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1913,8 +1977,14 @@ function renderSkillSection(
     (index) => `技能 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.name} placeholder="技能名称" onChange={(event) => updateDraft((next) => { next.content.skills[index].name = event.target.value })} />
-        <Input value={item.level} placeholder="熟练度 / 等级" onChange={(event) => updateDraft((next) => { next.content.skills[index].level = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>技能名称</Text>
+          <Input value={item.name} placeholder="技能名称" onChange={(event) => updateDraft((next) => { next.content.skills[index].name = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>熟练度</Text>
+          <Input value={item.level} placeholder="熟练度 / 等级" onChange={(event) => updateDraft((next) => { next.content.skills[index].level = event.target.value })} />
+        </div>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.skills.splice(index, 1) }),
@@ -1932,11 +2002,23 @@ function renderHonorSection(
     (index) => `奖项 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.title} placeholder="奖项名称" onChange={(event) => updateDraft((next) => { next.content.honors[index].title = event.target.value })} />
-        <Input value={item.issuer} placeholder="颁发机构" onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
-        <Input value={item.awardedAt} placeholder="获奖时间" onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>奖项名称</Text>
+          <Input value={item.title} placeholder="奖项名称" onChange={(event) => updateDraft((next) => { next.content.honors[index].title = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>颁发机构</Text>
+          <Input value={item.issuer} placeholder="颁发机构" onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>获奖时间</Text>
+          <Input value={item.awardedAt} placeholder="获奖时间" onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
+        </div>
         <SectionGridFullWidth>
-          <MarkdownLongTextArea rows={3} value={item.description} placeholder="奖项说明（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>奖项说明</Text>
+            <MarkdownLongTextArea rows={3} value={item.description} placeholder="奖项说明（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+          </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1955,10 +2037,22 @@ function renderCertificateSection(
     (index) => `证书 ${index + 1}`,
     (item, index) => (
       <SectionGrid>
-        <Input value={item.name} placeholder="证书名称" onChange={(event) => updateDraft((next) => { next.content.certificates[index].name = event.target.value })} />
-        <Input value={item.issuer} placeholder="签发机构" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuer = event.target.value })} />
-        <Input value={item.issuedAt} placeholder="签发时间" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuedAt = event.target.value })} />
-        <Input value={item.credentialId} placeholder="证书编号" onChange={(event) => updateDraft((next) => { next.content.certificates[index].credentialId = event.target.value })} />
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>证书名称</Text>
+          <Input value={item.name} placeholder="证书名称" onChange={(event) => updateDraft((next) => { next.content.certificates[index].name = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>签发机构</Text>
+          <Input value={item.issuer} placeholder="签发机构" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuer = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>签发时间</Text>
+          <Input value={item.issuedAt} placeholder="签发时间" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuedAt = event.target.value })} />
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>证书编号</Text>
+          <Input value={item.credentialId} placeholder="证书编号" onChange={(event) => updateDraft((next) => { next.content.certificates[index].credentialId = event.target.value })} />
+        </div>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.certificates.splice(index, 1) }),
