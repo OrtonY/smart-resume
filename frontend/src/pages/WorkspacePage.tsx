@@ -43,6 +43,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
+  copyResume,
   createShare,
   deleteResume,
   deleteShare,
@@ -393,6 +394,12 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     await loadResumeList()
   }
 
+  async function handleCopyResume(targetResumeId: string, title: string) {
+    await copyResume(targetResumeId, { title })
+    void message.success('简历已复制。')
+    await loadResumeList()
+  }
+
   async function handleRestoreResume(targetResumeId: string) {
     await restoreResume(targetResumeId)
     void message.success('简历已恢复。')
@@ -533,6 +540,7 @@ function showSection(sectionKey: ResumeSectionKey) {
     ) : (
       <ResumeListView
         loadingResumeList={loadingResumeList}
+        onCopyResume={handleCopyResume}
         onDeleteResume={handleDeleteResume}
         onPageChange={handlePageChange}
         onLogout={onLogout}
@@ -550,6 +558,7 @@ function showSection(sectionKey: ResumeSectionKey) {
 
 function ResumeListView({
   loadingResumeList,
+  onCopyResume,
   onDeleteResume,
   onPageChange,
   onLogout,
@@ -560,6 +569,7 @@ function ResumeListView({
   templates,
 }: {
   loadingResumeList: boolean
+  onCopyResume: (resumeId: string, title: string) => Promise<void>
   onDeleteResume: (resumeId: string) => Promise<void>
   onPageChange: (page: number) => Promise<void>
   onLogout: () => void
@@ -702,6 +712,7 @@ function ResumeListView({
                   key={item.id}
                   item={item}
                   loadingPreview={loadingPreviewIds.includes(item.id)}
+                  onCopyResume={onCopyResume}
                   onDeleteResume={onDeleteResume}
                   onOpenResume={onOpenResume}
                   onOpenShareDialog={openShareDialog}
@@ -744,6 +755,7 @@ function ResumeListView({
 function ResumeVisualCard({
   item,
   loadingPreview,
+  onCopyResume,
   onDeleteResume,
   onOpenResume,
   onOpenShareDialog,
@@ -755,6 +767,7 @@ function ResumeVisualCard({
 }: {
   item: ResumeSummary
   loadingPreview: boolean
+  onCopyResume?: (resumeId: string, title: string) => Promise<void>
   onDeleteResume?: (resumeId: string) => Promise<void>
   onOpenResume?: (resumeId: string) => void
   onOpenShareDialog?: (resume: ResumeSummary) => Promise<void>
@@ -764,6 +777,38 @@ function ResumeVisualCard({
   status?: 'active' | 'deleted'
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
 }) {
+  const { message: cardMessage } = App.useApp()
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false)
+  const [copyTitle, setCopyTitle] = useState('')
+  const [copying, setCopying] = useState(false)
+
+  const openCopyDialog = () => {
+    setCopyTitle(`${item.title} 副本`)
+    setCopyDialogOpen(true)
+  }
+
+  const closeCopyDialog = () => {
+    if (copying) return
+    setCopyDialogOpen(false)
+  }
+
+  const submitCopy = async () => {
+    if (!onCopyResume) return
+    const trimmed = copyTitle.trim()
+    if (!trimmed) {
+      void cardMessage.warning('请输入简历名称。')
+      return
+    }
+    setCopying(true)
+    try {
+      await onCopyResume(item.id, trimmed)
+      setCopyDialogOpen(false)
+    } catch (error) {
+      void cardMessage.error(error instanceof Error ? error.message : '复制简历失败。')
+    } finally {
+      setCopying(false)
+    }
+  }
   const preview = (
     <div className="resume-list-card__preview">
       {previewDetail ? (
@@ -830,6 +875,15 @@ function ResumeVisualCard({
           </Button>
         ) : null}
 
+        {onCopyResume ? (
+          <Button
+            icon={<CopyOutlined />}
+            onClick={openCopyDialog}
+          >
+            复制
+          </Button>
+        ) : null}
+
         {onDeleteResume ? (
           <Button
             danger
@@ -842,6 +896,31 @@ function ResumeVisualCard({
           </Button>
         ) : null}
       </div>
+
+      {onCopyResume ? (
+        <Modal
+          title="复制简历"
+          open={copyDialogOpen}
+          onCancel={closeCopyDialog}
+          onOk={() => void submitCopy()}
+          okText="复制"
+          cancelText="取消"
+          confirmLoading={copying}
+          destroyOnHidden
+        >
+          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+            <Text>请输入新简历的名称：</Text>
+            <Input
+              autoFocus
+              value={copyTitle}
+              maxLength={200}
+              placeholder="新简历名称"
+              onChange={(event) => setCopyTitle(event.target.value)}
+              onPressEnter={() => void submitCopy()}
+            />
+          </Space>
+        </Modal>
+      ) : null}
     </article>
   )
 }

@@ -48,6 +48,12 @@ public final class ResumeDtos {
     ) {
     }
 
+    public record ResumeCopyRequest(
+        @NotBlank(message = "Resume title is required")
+        String title
+    ) {
+    }
+
     public record ResumeUpdateRequest(
         @NotBlank(message = "Resume title is required")
         String title,
