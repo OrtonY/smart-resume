@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec overview — conventions and patterns for the React app"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type conventions for adding the new age field to PersonalInfo interface"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component patterns for adding Input to the editor form and preview rendering"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend spec overview — conventions for the Spring Boot app"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality rules for the new DTO field and test coverage"}
