@@ -1,12 +1,34 @@
 import { Empty } from "antd";
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
   createTemplateStyleVariables,
   resolveResumeTemplate,
   type ResumeTemplateDefinition,
 } from "../templateCatalog";
+import { parseInlineMarkdown } from "../markdown/parseInlineMarkdown";
+import type { InlineNode } from "../markdown/types";
 import { DEFAULT_RESUME_SECTION_ORDER, normalizeResumeLayout, normalizeResumeSectionOrder, type ResumeDetail, type ResumeSectionKey } from "../types";
+
+function renderInlineNodes(nodes: InlineNode[]): ReactNode {
+  return nodes.map((node, index) => {
+    if (node.type === "text") {
+      return <Fragment key={index}>{node.text}</Fragment>;
+    }
+    return <strong key={index}>{renderInlineNodes(node.children)}</strong>;
+  });
+}
+
+function renderInlineMarkdown(text: string): ReactNode {
+  if (!text) {
+    return null;
+  }
+  const nodes = parseInlineMarkdown(text);
+  if (nodes.length === 0) {
+    return null;
+  }
+  return renderInlineNodes(nodes);
+}
 
 interface ResumePreviewProps {
   resume: Pick<ResumeDetail, "title" | "templateKey" | "content" | "layout">;
@@ -536,7 +558,7 @@ function EditorialPreview({
         <div className="resume-template__hero-panel">
           <h2>个人简介</h2>
           {showSummary ? (
-            <p className="resume-template__paragraph">{model.summary}</p>
+            <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
           ) : (
             <p className="resume-template__paragraph">让结构保持克制，把最强的经历和成果放到最前面。</p>
           )}
@@ -625,7 +647,7 @@ function TimelineSection({
             </div>
             {item.body ? (
               <p className="resume-template__paragraph" data-preview-page-item-fragment>
-                {item.body}
+                {renderInlineMarkdown(item.body)}
               </p>
             ) : null}
           </article>
@@ -742,7 +764,7 @@ function createSectionNodes(model: PreviewModel, hiddenSections: Set<ResumeSecti
   return {
     summary: hiddenSections.has("summary") ? null : (
       <PreviewSection title="个人简介" hidden={!model.summary}>
-        <p className="resume-template__paragraph">{model.summary}</p>
+        <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
       </PreviewSection>
     ),
     workExperience: hiddenSections.has("workExperience") ? null : <TimelineSection title="工作经历" items={model.work} />,

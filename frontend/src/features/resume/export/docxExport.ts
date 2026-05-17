@@ -1,4 +1,6 @@
 import { createExportFilename, downloadBlob } from './fileDownload'
+import { parseInlineMarkdown } from '../markdown/parseInlineMarkdown'
+import type { InlineNode } from '../markdown/types'
 import {
   normalizeResumeLayout,
   normalizeResumeSectionOrder,
@@ -12,6 +14,75 @@ import {
   type WorkExperienceItem,
 } from '../types'
 import type { ResumeTemplateDefinition, ResumeTemplateLayout } from '../templateCatalog'
+
+interface InlineRunBaseStyle {
+  color?: string
+  bold?: boolean
+  italics?: boolean
+}
+
+interface InlineRunFlags {
+  bold?: boolean
+  italics?: boolean
+}
+
+function collectInlineLeafRuns(
+  nodes: InlineNode[],
+  flags: InlineRunFlags,
+  out: Array<{ text: string; bold?: boolean; italics?: boolean }>,
+) {
+  for (const node of nodes) {
+    if (node.type === 'text') {
+      out.push({
+        text: node.text,
+        bold: flags.bold,
+        italics: flags.italics,
+      })
+    } else if (node.type === 'bold') {
+      collectInlineLeafRuns(node.children, { ...flags, bold: true }, out)
+    }
+  }
+}
+
+function inlineMarkdownToTextRuns(
+  text: string,
+  baseStyle: InlineRunBaseStyle,
+  docx: DocxModule,
+): DocxTextRun[] {
+  if (!text) {
+    return []
+  }
+  const inlines = parseInlineMarkdown(text)
+  if (inlines.length === 0) {
+    return []
+  }
+
+  const leaves: Array<{ text: string; bold?: boolean; italics?: boolean }> = []
+  collectInlineLeafRuns(inlines, {}, leaves)
+
+  const runs: DocxTextRun[] = []
+  leaves.forEach((leaf) => {
+    const segments = leaf.text.split('\n')
+    segments.forEach((segment, segmentIndex) => {
+      if (segmentIndex > 0) {
+        runs.push(new docx.TextRun({ break: 1 }))
+      }
+      if (segment.length === 0) {
+        return
+      }
+      runs.push(
+        new docx.TextRun({
+          text: segment,
+          bold: Boolean(baseStyle.bold || leaf.bold),
+          italics: Boolean(baseStyle.italics || leaf.italics),
+          color: baseStyle.color,
+        }),
+      )
+    })
+  })
+
+  return runs
+}
 
 type ExportResume = Pick<ResumeDetail, 'title' | 'content' | 'layout' | 'templateKey'>
 type DocxModule = typeof import('docx')
@@ -373,24 +444,24 @@ function createSection(
   switch (sectionKey) {
     case 'summary':
       return resume.content.personalSummary.trim()
-        ? [sectionHeading(SECTION_TITLES.summary, style, docx), paragraph(resume.content.personalSummary, style, docx)]
+        ? [sectionHeading(SECTION_TITLES.summary, style, docx), markdownParagraph(resume.content.personalSummary, style, docx)]
         : []
     case 'workExperience':
-      return timelineSection(SECTION_TITLES.workExperience, resume.content.workExperience, style, docx, (item) => ({
+      return timelineSection(SECTION_TITLES.workExperience, resume.content.workExperience, style, docx, true, (item) => ({
         title: item.company,
         subtitle: item.role,
         meta: dateRange(item.startDate, item.endDate),
         body: item.description,
       }))
     case 'projectExperience':
-      return timelineSection(SECTION_TITLES.projectExperience, resume.content.projectExperience, style, docx, (item) => ({
+      return timelineSection(SECTION_TITLES.projectExperience, resume.content.projectExperience, style, docx, true, (item) => ({
         title: item.name,
         subtitle: item.role,
         meta: dateRange(item.startDate, item.endDate),
         body: item.description,
       }))
     case 'education':
-      return timelineSection(SECTION_TITLES.education, resume.content.education, style, docx, (item) => ({
+      return timelineSection(SECTION_TITLES.education, resume.content.education, style, docx, true, (item) => ({
         title: item.school,
         subtitle: [item.degree, item.major].filter(Boolean).join(' / '),
         meta: dateRange(item.startDate, item.endDate),
@@ -399,14 +470,14 @@ function createSection(
     case 'skills':
       return skillsSection(resume.content.skills, style, docx)
     case 'honors':
-      return timelineSection(SECTION_TITLES.honors, resume.content.honors, style, docx, (item) => ({
+      return timelineSection(SECTION_TITLES.honors, resume.content.honors, style, docx, true, (item) => ({
         title: item.title,
         subtitle: item.issuer,
         meta: item.awardedAt,
         body: item.description,
       }))
     case 'certificates':
-      return timelineSection(SECTION_TITLES.certificates, resume.content.certificates, style, docx, (item) => ({
+      return timelineSection(SECTION_TITLES.certificates, resume.content.certificates, style, docx, false, (item) => ({
         title: item.name,
         subtitle: item.issuer,
         meta: item.issuedAt,
@@ -442,6 +513,7 @@ function timelineSection<T extends EducationItem | WorkExperienceItem | ProjectE
   items: T[],
   style: TemplateDocxStyle,
   docx: DocxModule,
+  bodySupportsMarkdown: boolean,
   mapItem: (item: T) => { title: string; subtitle?: string; meta?: string; body?: string },
 ) {
   const visibleItems = items
@@ -456,7 +528,11 @@ function timelineSection<T extends EducationItem | WorkExperienceItem | ProjectE
     sectionHeading(title, style, docx),
     ...visibleItems.flatMap((item) => [
       entryHeading(item.title, item.subtitle, item.meta, style, docx),
-      item.body?.trim() ? paragraph(item.body, style, docx) : null,
+      item.body?.trim()
+        ? bodySupportsMarkdown
+          ? markdownParagraph(item.body, style, docx)
+          : paragraph(item.body, style, docx)
+        : null,
     ].filter((node): node is DocxParagraph => Boolean(node))),
   ]
 }
@@ -511,6 +587,14 @@ function paragraph(text: string, style: TemplateDocxStyle, docx: DocxModule) {
         new docx.TextRun({ text: line, color: style.bodyColor }),
       ])
       .filter((run): run is DocxTextRun => Boolean(run)),
+  })
+}
+
+function markdownParagraph(text: string, style: TemplateDocxStyle, docx: DocxModule) {
+  const runs = inlineMarkdownToTextRuns(text, { color: style.bodyColor }, docx)
+  return new docx.Paragraph({
+    spacing: { after: 80 },
+    children: runs.length > 0 ? runs : [new docx.TextRun({ text: '', color: style.bodyColor })],
   })
 }
 
