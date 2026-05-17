@@ -220,3 +220,66 @@ Do not use global state for section form fields that belong to one editing scree
 - Type as `string`, default `''`, validate at render time, fall back to skipping the entry on invalid input.
 - Update all four touch points in one PR: types + editor + preview + DOCX (+ backend DTO + defaultContent).
 - Add a Jackson round-trip test for the new field whenever a backend record gains a property.
+
+## Scenario: Inline Markdown for Resume Description Fields
+
+### 1. Scope / Trigger
+- Trigger: a small markdown subset (`**bold**`, `*italic*`, `***bold-italic***`) is parsed inline for the 5 multi-line description fields and rendered consistently across Web preview, public share page, DOCX export, and PDF export.
+- Why this needs spec depth: the same string passes through four consumers, and each consumer must use the same parser contract or the rendered output drifts (e.g. preview shows bold, DOCX shows literal `**...**`).
+
+### 2. Signatures
+- Whitelisted fields (only these parse markdown):
+  - `personalSummary`
+  - `education[].description`
+  - `workExperience[].description`
+  - `projectExperience[].description`
+  - `honors[].description`
+- Single-line fields (`fullName`, `headline`, `phone`, `email`, `city`, `website`, `expectedSalary`, `age`, `school`, `degree`, `major`, `company`, `role`, `name`, `title`, `issuer`, `awardedAt`, `credentialId`, etc.) MUST NOT parse markdown; they render verbatim.
+- Parser entry: `parseInlineMarkdown(input: string): InlineNode[]` in `frontend/src/features/resume/markdown/parseInlineMarkdown.ts`.
+- Inline node shape:
+  ```ts
+  type InlineNode =
+    | { type: 'text'; text: string }
+    | { type: 'bold'; children: InlineNode[] }
+    | { type: 'italic'; children: InlineNode[] }
+  ```
+- Web rendering: `renderInlineMarkdown(text: string): ReactNode` near the top of `ResumePreview.tsx`. Outputs `<strong>` / `<em>` / text fragments.
+- DOCX rendering: `inlineMarkdownToTextRuns(text, baseStyle, docx)` in `docxExport.ts`. Emits `docx.TextRun[]` with `bold` / `italics` flags propagated per leaf, preserving the surrounding base style (color, font).
+- PDF rendering: inherits from the rendered Web preview DOM via `html2canvas` + `jspdf`. No PDF-specific parser is required.
+- Editor component: `MarkdownTextArea` in `features/resume/components/MarkdownTextArea.tsx` wraps antd `Input.TextArea` and exposes a small floating B / I toolbar that wraps or unwraps the current selection with `**` / `*` (toggle behavior).
+
+### 3. Contracts
+- Storage stays as plain `string` with markdown tokens visible inline. No new DTO field, no migration. Backend `content_json` is opaque text.
+- Parser disables HTML, links, images, code blocks, lists, headings. Encountering any of these node types flattens to plain text (formatting dropped, text content preserved).
+- Empty input returns `[]`. Multi-paragraph input flattens to one inline-node array, paragraph breaks become `\n` text nodes.
+- Nested `***xx***` recursively maps to `bold { italic { text } }` (or `italic { bold { text } }`, both acceptable as long as both styles are applied).
+- All 4 consumers (Web preview, public share page, DOCX, PDF) MUST use the same parser; share page reuses `ResumePreview`, so it inherits Web behavior. PDF captures the rendered preview DOM, so it inherits Web behavior.
+- XSS boundary: HTML pass-through is disabled in the parser, and React renders text nodes via `<Fragment>` (auto-escaped). No additional sanitization is needed.
+
+### 4. Validation & Error Matrix
+- Field listed in the whitelist but rendered without `renderInlineMarkdown` / `inlineMarkdownToTextRuns` in any consumer -> bold/italic vanishes silently in that consumer; treat as a bug.
+- Single-line field accidentally piped through the parser -> user sees `**foo**` ambiguously rendered or stripped; restrict parser usage to the 5 whitelisted fields only.
+- Legacy resumes with literal `**...**` or `*...*` in description fields -> these now render as bold / italic. PRD calls this out as expected behavior. Users wanting literal asterisks must use `\*` / `\*\*`.
+- HTML / link / image / list / heading syntax in input -> parser flattens to plain text; never reaches the DOM as a tag, link, or list bullet.
+
+### 5. Good/Base/Bad Cases
+- Good: user wraps `销售额提升 30%` with `**...**` via the toolbar; preview, share page, DOCX, and PDF all render the segment in bold.
+- Base: legacy description with no markdown tokens renders unchanged across all four consumers.
+- Bad: a new description-style field is added but only Web rendering is wired; export drops the formatting silently.
+- Bad: parser is wired to a single-line field (e.g. `fullName`); user sees `**张三**` parsed as bold and cannot type literal `**` without escaping.
+
+### 6. Tests Required
+- Parser unit tests cover: empty, plain text, single bold, single italic, nested bold-italic, escape preservation, HTML drop, link-target drop, list flatten, heading flatten, mixed-segment input.
+- Frontend `tsc --noEmit` + lint + build green after parser, renderer, and component changes.
+- Manual: edit the 5 whitelisted fields in the workspace, verify bold / italic appear in preview, DOCX export, and PDF export; verify single-line fields stay literal.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Add markdown parsing to a new description-style field without updating all four consumers; preview will diverge from export silently.
+- Pass through HTML or sanitize separately. The parser already drops HTML, and React text nodes are auto-escaped — adding a second sanitizer creates a double-escape bug.
+- Use a different parser library per consumer (e.g. micromark in Web, regex in DOCX). The output drifts as edge cases pile up.
+
+#### Correct
+- Whitelist the field in `parseInlineMarkdown` consumers in lockstep: ResumePreview render path, docxExport TextRun helper, and (transitively) the PDF capture path.
+- Treat the parser as the single source of truth for inline formatting. New formatting (e.g. underline) requires a parser update, not per-consumer regex.
+- Keep the storage type as `string`. Do not introduce a structured AST in backend DTOs.
