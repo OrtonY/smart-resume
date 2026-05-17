@@ -406,3 +406,37 @@ Replaced raw text inputs on TemplateGalleryPage with AntD ColorPicker (10 fields
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: Add age field to resume personal info
+
+**Date**: 2026-05-17
+**Task**: Add age field to resume personal info
+**Branch**: `master`
+
+### Summary
+
+Added age string field to PersonalInfo across frontend types, editor form, preview, DOCX export, and backend DTO. Includes render-time validation (formatAge) and legacy JSON deserialization test. Documented the resume content field addition pattern in spec.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e562a37` | (see git log) |
+| `9a9de91` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
