@@ -507,3 +507,36 @@ Added segment-level bold formatting to 5 resume description fields using markdow
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: Interview module scaffold
+
+**Date**: 2026-05-17
+**Task**: Interview module scaffold
+**Branch**: `master`
+
+### Summary
+
+Implemented the interview module scaffold across backend and frontend, including optional resume binding, multi-interviewer rounds, placeholder interview flow, report placeholders, and Spring AI chat memory mirroring via stable interview conversation ids.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5ecbcfa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
