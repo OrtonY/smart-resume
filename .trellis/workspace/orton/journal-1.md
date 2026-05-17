@@ -440,3 +440,37 @@ Added age string field to PersonalInfo across frontend types, editor form, previ
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Add inline markdown bold for resume description fields
+
+**Date**: 2026-05-17
+**Task**: Add inline markdown bold for resume description fields
+**Branch**: `master`
+
+### Summary
+
+Added segment-level bold formatting to 5 resume description fields using markdown **bold** syntax. Includes mdast-based parser, MarkdownTextArea component with inline B toolbar (focused-visible, click to insert or toggle), and consistent rendering across Web preview, DOCX, and PDF exports. Also fixed missing age field in TemplateGalleryPage DEMO_RESUME.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1960fd4` | (see git log) |
+| `b86b821` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
