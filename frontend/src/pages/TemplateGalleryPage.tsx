@@ -103,6 +103,7 @@ const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'lay
       city: '上海',
       website: 'portfolio.example.com',
       expectedSalary: '',
+      age: '',
       avatar: '',
     },
     personalSummary:

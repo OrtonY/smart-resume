@@ -41,6 +41,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
+import { MarkdownTextArea } from '../features/resume/components/MarkdownTextArea'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
   copyResume,
@@ -82,7 +83,6 @@ import type {
 } from '../features/resume/types'
 
 const { Paragraph, Text } = Typography
-const { TextArea } = Input
 
 interface WorkspacePageProps {
   accessToken: string
@@ -1652,11 +1652,11 @@ function SectionGridFullWidth({ children }: { children: ReactNode }) {
   return <div className="resume-editor-section-grid__full">{children}</div>
 }
 
-function LongTextArea(props: ComponentProps<typeof TextArea>) {
+function MarkdownLongTextArea(props: ComponentProps<typeof MarkdownTextArea>) {
   const { className, ...rest } = props
 
   return (
-    <TextArea
+    <MarkdownTextArea
       {...rest}
       className={['resume-editor-long-textarea', className].filter(Boolean).join(' ')}
       wrap="off"
@@ -1752,11 +1752,11 @@ function renderModuleContent(
   switch (moduleKey) {
     case 'summary':
       return (
-        <LongTextArea
+        <MarkdownLongTextArea
           rows={6}
           value={draft.content.personalSummary}
           onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
-          placeholder="用一段短文概括你的优势、方向和关键成果。"
+          placeholder="用一段短文概括你的优势、方向和关键成果。（支持 **粗体** 和 *斜体*）"
         />
       )
     case 'education':
@@ -1846,7 +1846,7 @@ function renderEducationSection(
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
         <SectionGridFullWidth>
-          <LongTextArea rows={3} value={item.description} placeholder="亮点描述" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+          <MarkdownLongTextArea rows={3} value={item.description} placeholder="亮点描述（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1870,7 +1870,7 @@ function renderWorkSection(
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
         <SectionGridFullWidth>
-          <LongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+          <MarkdownLongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1894,7 +1894,7 @@ function renderProjectSection(
         <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
         <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
         <SectionGridFullWidth>
-          <LongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+          <MarkdownLongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1936,7 +1936,7 @@ function renderHonorSection(
         <Input value={item.issuer} placeholder="颁发机构" onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
         <Input value={item.awardedAt} placeholder="获奖时间" onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
         <SectionGridFullWidth>
-          <LongTextArea rows={3} value={item.description} placeholder="奖项说明" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+          <MarkdownLongTextArea rows={3} value={item.description} placeholder="奖项说明（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
