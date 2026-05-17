@@ -9,6 +9,7 @@ import {
   EyeInvisibleOutlined,
   FileAddOutlined,
   HolderOutlined,
+  MessageOutlined,
   LockOutlined,
   LogoutOutlined,
   PlusOutlined,
@@ -672,6 +673,11 @@ function ResumeListView({
             <Link to="/app/templates">
               <Button type="primary" size="large" icon={<FileAddOutlined />}>
                 模板目录
+              </Button>
+            </Link>
+            <Link to="/app/interviews">
+              <Button size="large" icon={<MessageOutlined />}>
+                面试中心
               </Button>
             </Link>
             <Link to="/app/recycle-bin">
@@ -1373,6 +1379,12 @@ function ResumeEditorView({
           <Space wrap className="resume-editor-shell__actions">
             <Link to={`/app/templates?resumeId=${draft.id}`}>
               <Button>修改模板</Button>
+            </Link>
+            <Link to={`/app/interviews?create=1&resumeId=${draft.id}`}>
+              <Button icon={<MessageOutlined />}>发起面试</Button>
+            </Link>
+            <Link to={`/app/interviews?resumeId=${draft.id}`}>
+              <Button>相关面试</Button>
             </Link>
             <AiConfigurationButton />
             <Button icon={<ShareAltOutlined />} onClick={() => {

@@ -1748,10 +1748,215 @@ a {
   color: var(--text-secondary);
 }
 
+.interview-center,
+.interview-detail {
+  min-height: calc(100vh - 36px);
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.7)),
+    radial-gradient(circle at top right, rgba(255, 140, 66, 0.12), transparent 26%);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+}
+
+.interview-filter-card .ant-card-body {
+  padding: 16px;
+}
+
+.interview-card-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.interview-card {
+  display: grid;
+  gap: 12px;
+  min-height: 260px;
+  padding: 18px;
+  border: 1px solid rgba(20, 33, 61, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 255, 0.86)),
+    linear-gradient(135deg, rgba(255, 140, 66, 0.08), transparent 56%);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.interview-card:hover,
+.interview-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(49, 87, 164, 0.24);
+  box-shadow: 0 18px 34px rgba(49, 87, 164, 0.12);
+  outline: none;
+}
+
+.interview-card strong {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.interview-card p {
+  display: -webkit-box;
+  min-height: 72px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.interview-card__head,
+.interview-card__meta,
+.interview-detail__topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.interview-card__meta {
+  justify-content: flex-start;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.interview-card__meta span {
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(49, 87, 164, 0.08);
+}
+
+.interview-detail {
+  grid-template-rows: auto 1fr;
+  height: calc(100vh - 36px);
+  overflow: hidden;
+}
+
+.interview-detail__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  min-height: 0;
+}
+
+.interview-detail__main,
+.interview-report-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.interview-detail__main .ant-card-body,
+.interview-report-panel .ant-card-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.interview-detail__jd {
+  max-height: 96px;
+  margin: 0;
+  overflow: auto;
+  color: var(--text-secondary);
+}
+
+.interview-message-list {
+  display: grid;
+  gap: 14px;
+  min-height: 260px;
+  margin: 18px 0;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.interview-message {
+  display: grid;
+  gap: 6px;
+  max-width: 78%;
+}
+
+.interview-message--candidate {
+  justify-self: end;
+}
+
+.interview-message__role {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.interview-message--candidate .interview-message__role {
+  justify-content: flex-end;
+}
+
+.interview-message__bubble {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.interview-message--candidate .interview-message__bubble {
+  color: #ffffff;
+  background: #3157a4;
+}
+
+.interview-message__bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.interview-message__bubble span {
+  display: block;
+  margin-top: 8px;
+  opacity: 0.72;
+  font-size: 11px;
+}
+
+.interview-composer {
+  display: grid;
+  gap: 10px;
+}
+
+.interview-composer .ant-btn {
+  justify-self: end;
+}
+
+.interview-report-panel pre {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  white-space: pre-wrap;
+  border-radius: 14px;
+  background: rgba(20, 33, 61, 0.04);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
 @media (max-width: 1280px) {
   .resume-editor-layout,
   .workspace-columns,
-  .template-gallery-layout {
+  .template-gallery-layout,
+  .interview-detail__layout {
     grid-template-columns: 1fr;
   }
 
@@ -1762,10 +1967,15 @@ a {
   .resume-editor-stack__card,
   .resume-editor-preview,
   .resume-editor-preview__sticky,
-  .template-gallery-preview {
+  .template-gallery-preview,
+  .interview-detail {
     height: auto;
     min-height: 0;
     overflow: visible;
+  }
+
+  .interview-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .resume-editor-rail,
@@ -1811,7 +2021,9 @@ a {
   }
 
   .workspace-hub,
-  .workspace-frame {
+  .workspace-frame,
+  .interview-center,
+  .interview-detail {
     min-height: 100vh;
     border-radius: 0;
   }
@@ -1825,6 +2037,11 @@ a {
   }
 
   .workspace-hub {
+    padding: 20px 16px;
+  }
+
+  .interview-center,
+  .interview-detail {
     padding: 20px 16px;
   }
 
@@ -1856,6 +2073,14 @@ a {
 
   .resume-list-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .interview-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-message {
+    max-width: 100%;
   }
 
   .resume-list-card--empty {

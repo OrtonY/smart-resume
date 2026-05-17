@@ -1,6 +1,7 @@
 import { Spin } from 'antd'
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { InterviewPage } from '../../pages/InterviewPage'
 import { PublicSharePage } from '../../pages/PublicSharePage'
 import { SetupPage } from '../../pages/SetupPage'
 import { TemplateGalleryPage } from '../../pages/TemplateGalleryPage'
@@ -62,6 +63,8 @@ export function AppRouter() {
         ) : (
           <>
             <Route path="/app/templates" element={<TemplateGalleryPage />} />
+            <Route path="/app/interviews/:interviewId" element={<InterviewPage onLogout={handleLogout} />} />
+            <Route path="/app/interviews" element={<InterviewPage onLogout={handleLogout} />} />
             <Route path="/app/recycle-bin" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="/app/resumes/:resumeId" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
             <Route path="/app" element={<WorkspacePage accessToken={accessToken} onLogout={handleLogout} />} />
