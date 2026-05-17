@@ -1699,6 +1699,41 @@ a {
   grid-column: span 2;
 }
 
+.template-editor-field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.template-editor-gradient {
+  display: grid;
+  gap: 12px;
+}
+
+.template-editor-gradient__preview {
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.template-editor-gradient__stops {
+  display: grid;
+  gap: 8px;
+}
+
+.template-editor-gradient__row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-editor-gradient__row-label {
+  white-space: nowrap;
+}
+
 .template-editor-toolbar {
   display: flex;
   flex-wrap: wrap;
