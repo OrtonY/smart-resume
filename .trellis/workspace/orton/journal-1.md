@@ -372,3 +372,37 @@ Enhanced share links with optional password protection (BCrypt + HMAC token), pe
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: 模板编辑器可视化与中文化
+
+**Date**: 2026-05-17
+**Task**: 模板编辑器可视化与中文化
+**Branch**: `master`
+
+### Summary
+
+Replaced raw text inputs on TemplateGalleryPage with AntD ColorPicker (10 fields) and a custom 2-stop linear-gradient editor (4 fields). Localized residual English (Theme tokens, Preview tokens, Template key, Built-in/Custom) to Chinese. Added per-field reset and unparseable-value fallback. Spec scenario added to state-management.md capturing kind classification rule, rgba canonicalization, and no-coerce fallback discipline.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dcae9af` | (see git log) |
+| `fd494e3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
