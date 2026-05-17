@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
+- **Total Sessions**: 14
 - **Last Active**: 2026-05-17
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~442 | Active |
+| `journal-1.md` | ~476 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-05-17 | Add inline markdown bold for resume description fields | `1960fd4`, `b86b821` | `master` |
 | 13 | 2026-05-17 | Add age field to resume personal info | `e562a37`, `9a9de91` | `master` |
 | 12 | 2026-05-17 | 模板编辑器可视化与中文化 | `dcae9af`, `fd494e3` | `master` |
 | 11 | 2026-05-17 | Share feature: password protection, access analytics, and management | `3946c63` | `master` |
