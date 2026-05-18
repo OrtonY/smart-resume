@@ -540,3 +540,36 @@ Implemented the interview module scaffold across backend and frontend, including
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: Resume scoring flow in editor
+
+**Date**: 2026-05-18
+**Task**: Resume scoring flow in editor
+**Branch**: `master`
+
+### Summary
+
+Added editor-side resume scoring with optional JD input, a mock backend scoring contract/service, persistence of the latest score in local storage, and spec coverage for the cross-layer API.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0d8ab94` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

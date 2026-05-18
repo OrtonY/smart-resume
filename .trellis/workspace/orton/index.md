@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
-- **Last Active**: 2026-05-17
+- **Total Sessions**: 17
+- **Last Active**: 2026-05-18
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~542 | Active |
+| `journal-1.md` | ~575 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-05-18 | Resume scoring flow in editor | `0d8ab94` | `master` |
 | 16 | 2026-05-17 | Interview module scaffold | `5ecbcfa` | `master` |
 | 15 | 2026-05-17 | 前端UI优化：品牌重命名与精简 | `331fbf6` | `master` |
 | 14 | 2026-05-17 | Add inline markdown bold for resume description fields | `1960fd4`, `b86b821` | `master` |
