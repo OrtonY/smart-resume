@@ -1299,6 +1299,16 @@ function ResumeEditorView({
     { key: 'pdf', label: '导出 PDF', icon: <FilePdfOutlined /> },
     { key: 'docx', label: '导出 DOCX', icon: <FileWordOutlined /> },
   ]
+  const interviewMenuItems = [
+    {
+      key: 'create',
+      label: <Link to={`/app/interviews?create=1&resumeId=${draft.id}`}>发起面试</Link>,
+    },
+    {
+      key: 'related',
+      label: <Link to={`/app/interviews?resumeId=${draft.id}`}>相关面试</Link>,
+    },
+  ]
 
   const handleAvatarPickerOpen = useCallback(() => {
     document.getElementById(AVATAR_INPUT_ID)?.click()
@@ -1381,12 +1391,9 @@ function ResumeEditorView({
             <Link to={`/app/templates?resumeId=${draft.id}`}>
               <Button>修改模板</Button>
             </Link>
-            <Link to={`/app/interviews?create=1&resumeId=${draft.id}`}>
-              <Button icon={<MessageOutlined />}>发起面试</Button>
-            </Link>
-            <Link to={`/app/interviews?resumeId=${draft.id}`}>
-              <Button>相关面试</Button>
-            </Link>
+            <Dropdown menu={{ items: interviewMenuItems }}>
+              <Button icon={<MessageOutlined />}>面试</Button>
+            </Dropdown>
             <ResumeScoreButton draft={draft} />
             <AiConfigurationButton />
             <Button icon={<ShareAltOutlined />} onClick={() => {
