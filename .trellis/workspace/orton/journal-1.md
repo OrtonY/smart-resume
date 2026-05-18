@@ -573,3 +573,36 @@ Added editor-side resume scoring with optional JD input, a mock backend scoring 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: Merge interview actions in resume editor
+
+**Date**: 2026-05-18
+**Task**: Merge interview actions in resume editor
+**Branch**: `master`
+
+### Summary
+
+Merged resume editor interview actions into one dropdown button while preserving create and related interview routes.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0f93263` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
