@@ -2,12 +2,13 @@
 
 > Cross-layer contract for the resume scoring flow in the editor.
 
-## Scenario: Resume scoring with optional JD and mock backend response
+## Scenario: Resume scoring backed by the shared AI invocation layer
 
 ### 1. Scope / Trigger
 
-- Trigger: the resume editor adds a structured scoring flow that spans UI, API, service, and future AI integration.
-- Why this needs code-spec depth: the request/response contract must stay stable while the backend implementation moves from mock scoring to real AI scoring later.
+- Trigger: the resume editor adds a structured scoring flow that spans UI, API, service, and AI integration.
+- Why this needs code-spec depth: the request/response contract must stay stable across the mock → AI migration, and the AI implementation must follow the shared invocation policy defined in [ai-chat-service.md](./ai-chat-service.md).
+- Current implementation: backed by real AI through `AiChatService.callStructured` (see [ai-chat-service.md](./ai-chat-service.md)). The earlier mock path has been removed.
 
 ### 2. Signatures
 
@@ -41,15 +42,15 @@
       - `layout: ResumeLayoutPayload`
 - Response body:
   - `score: number`
-    - integer percentage-like score
-    - current mock implementation clamps to `35..96`
+    - integer percentage-like score, expected range `0..100`
   - `summary: string`
   - `strengths: string[]`
   - `suggestionGroups: { title: string; suggestions: string[] }[]`
   - `jobDescriptionProvided: boolean`
   - `generatedAt: string`
     - ISO-8601 timestamp
-  - `mode: "mock" | "live"`
+  - `mode: "ai"`
+    - constant since the mock path was removed; reserved as an enum-shaped field for future variants (e.g. `"ai-cached"`)
 - Ownership:
   - backend DTO naming is the source of truth for cross-layer field names
   - frontend must not reshape the response into ad hoc JSX-only objects before state storage
@@ -63,9 +64,9 @@
 
 - Missing `resume` -> request validation error
 - Blank `jobDescription` -> accepted, treated as not provided
-- Partially filled resume sections -> accepted; scoring service derives suggestions from available content
-- Backend still on mock mode -> return `mode = "mock"` and usable scoring payload, not a "not implemented" error
-- Future real AI integration unavailable -> preserve the same response shape; callers should not need a new UI contract
+- Partially filled resume sections -> accepted; the scoring prompt derives suggestions from available content
+- AI provider parse failure -> `AiChatService.callStructured` retries once silently; if the retry also fails, the service throws and the controller maps it to a 5xx error. **Do NOT** fall back to a mock score.
+- AI provider unavailable / configuration missing -> propagate as a service error with the existing error envelope; frontend should display the error rather than render a fabricated score.
 - Local storage unavailable or JSON malformed -> frontend falls back to in-memory modal state and still allows fresh scoring
 
 ### 5. Good/Base/Bad Cases
@@ -90,7 +91,9 @@
   - assertion points:
     - `AiResumeScoringServiceTest` covers JD provided and JD omitted cases
     - response always contains non-empty summary, strengths, and suggestion groups
-    - mock mode returns a bounded numeric score
+    - response always has `mode = "ai"`
+    - each call uses a freshly generated `conversationId` via `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)`
+    - parse-failure path: assert the service throws after the single retry exhausts; assert NO mock-shaped payload is returned
 
 ### 7. Wrong vs Correct
 
@@ -98,10 +101,11 @@
 
 - Create a second resume-to-AI context mapper just for scoring, letting chat and scoring drift over time.
 - Return only a single markdown blob from the backend and let the modal split sections heuristically.
-- Gate the mock endpoint behind AI vendor configuration even though no real provider call is made.
+- Call `ChatModel` / `ChatClient` directly from `AiResumeScoringService` and skip `AiChatService.callStructured` — loses memory persistence, vendor branching, and the retry-once policy.
+- Catch the structured-output exception and synthesise a mock-shaped response so the UI "still works" — silently hides AI regressions in production.
 
 #### Correct
 
 - Reuse one `AiResumeContext` mapping path for both AI chat and scoring.
 - Keep scoring as a normal JSON request/response flow with explicit DTOs.
-- Return a fully usable mock response now, then swap only the service internals when real AI scoring is introduced later.
+- Build an `AiInvocationRequest` with a fresh `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)` id and invoke `aiChatService.callStructured(req, AiResumeScoreResponse.class)`; let exceptions bubble.
