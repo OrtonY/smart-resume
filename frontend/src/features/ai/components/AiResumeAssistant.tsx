@@ -1,16 +1,45 @@
 import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Empty, Form, Input, List, Modal, Select, Segmented, Spin, Tag, Typography } from 'antd'
-import { type UIEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { App, Button, Card, Empty, Form, Input, List, Modal, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
-import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
+import type {
+  AiChatConversation,
+  AiChatMessage,
+  AiConfigurationRequest,
+  AiResumeContext,
+  AiResumeSuggestion,
+  AiResumeSuggestionPlan,
+  VendorMetadata,
+} from '../types'
 import type { ResumeDetail } from '../../resume/types'
 import { toAiResumeContext } from '../resumeContext'
 
 const { Text } = Typography
 const { TextArea } = Input
 
+type SuggestionStatus = 'pending' | 'applied' | 'dismissed'
+
 type AiChatUiMessage = AiChatMessage & {
   id: string
+  suggestions?: AiResumeSuggestion[]
+}
+
+const SECTION_LABELS: Record<string, string> = {
+  personalInfo: '个人信息',
+  personalSummary: '个人总结',
+  education: '教育经历',
+  workExperience: '工作经历',
+  projectExperience: '项目经历',
+  skills: '技能',
+  honors: '荣誉奖项',
+  certificates: '证书',
+}
+
+function truncate(text: string, max: number) {
+  if (!text) {
+    return ''
+  }
+  return text.length > max ? `${text.slice(0, max)}...` : text
 }
 
 export function AiConfigurationButton() {
@@ -26,13 +55,19 @@ export function AiConfigurationButton() {
   )
 }
 
-export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
+interface AiResumeAssistantProps {
+  draft: ResumeDetail
+  onApplyPatch: (patch: AiResumeSuggestion) => void
+}
+
+export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProps) {
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [conversations, setConversations] = useState<AiChatConversation[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<AiChatUiMessage[]>([])
+  const [suggestionStatus, setSuggestionStatus] = useState<Record<string, SuggestionStatus>>({})
   const [loadingConversations, setLoadingConversations] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -64,6 +99,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
   function handleOpen() {
     setSelectedConversationId(null)
     setMessages([])
+    setSuggestionStatus({})
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
     lastMessageCountRef.current = 0
@@ -120,11 +156,13 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
         if (cancelled) {
           return
         }
+        // Historical messages never carry suggestions — cards must not be rebuilt for old messages.
         setMessages(history.map((item, index) => ({
           id: `${selectedConversationId}-${index}-${item.role}`,
           role: item.role,
           content: item.content,
         })))
+        setSuggestionStatus({})
       })
       .catch((error) => {
         void message.error(error instanceof Error ? error.message : 'Failed to load AI chat history')
@@ -160,17 +198,132 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     return () => window.cancelAnimationFrame(frame)
   }, [activeTab, messages, open])
 
+  const handleApplySuggestion = useCallback(
+    (suggestion: AiResumeSuggestion) => {
+      const status = suggestionStatus[suggestion.id] ?? 'pending'
+      if (status !== 'pending') {
+        return
+      }
+      setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'applied' }))
+      onApplyPatch(suggestion)
+    },
+    [onApplyPatch, suggestionStatus],
+  )
+
+  const handleSkipSuggestion = useCallback(
+    (suggestion: AiResumeSuggestion) => {
+      const status = suggestionStatus[suggestion.id] ?? 'pending'
+      if (status !== 'pending') {
+        return
+      }
+      setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'dismissed' }))
+    },
+    [suggestionStatus],
+  )
+
+  const handleUndoSkipSuggestion = useCallback(
+    (suggestion: AiResumeSuggestion) => {
+      if (suggestionStatus[suggestion.id] !== 'dismissed') {
+        return
+      }
+      setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'pending' }))
+    },
+    [suggestionStatus],
+  )
+
+  const handleApplyAllSuggestions = useCallback(
+    (suggestions: AiResumeSuggestion[]) => {
+      const pending = suggestions.filter((s) => (suggestionStatus[s.id] ?? 'pending') === 'pending')
+      if (pending.length === 0) {
+        return
+      }
+      setSuggestionStatus((prev) => {
+        const next = { ...prev }
+        pending.forEach((s) => { next[s.id] = 'applied' })
+        return next
+      })
+      pending.forEach((s) => onApplyPatch(s))
+    },
+    [onApplyPatch, suggestionStatus],
+  )
+
+  const handleSkipAllSuggestions = useCallback(
+    (suggestions: AiResumeSuggestion[]) => {
+      const pending = suggestions.filter((s) => (suggestionStatus[s.id] ?? 'pending') === 'pending')
+      if (pending.length === 0) {
+        return
+      }
+      setSuggestionStatus((prev) => {
+        const next = { ...prev }
+        pending.forEach((s) => { next[s.id] = 'dismissed' })
+        return next
+      })
+    },
+    [suggestionStatus],
+  )
+
   async function handleSend() {
-    const content = input.trim()
-    if (!content || streaming) {
+    const trimmed = input.trim()
+    if (!trimmed || streaming) {
       return
     }
 
-    const userMessage: AiChatUiMessage = { id: crypto.randomUUID(), role: 'user', content }
+    // Settle previous round suggestions before sending the next message.
+    const dismissedFromPrevRound: AiResumeSuggestion[] = []
+    let baseMessages = messages
+    let lastRoundIdx = -1
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const candidate = messages[i]
+      if (candidate.role === 'assistant' && candidate.suggestions && candidate.suggestions.length > 0) {
+        lastRoundIdx = i
+        break
+      }
+    }
+
+    if (lastRoundIdx >= 0) {
+      const prev = messages[lastRoundIdx]
+      const kept: AiResumeSuggestion[] = [];
+      (prev.suggestions ?? []).forEach((s) => {
+        const status = suggestionStatus[s.id] ?? 'pending'
+        if (status === 'applied') {
+          kept.push(s)
+        } else if (status === 'dismissed') {
+          dismissedFromPrevRound.push(s)
+        }
+        // pending → drop (vanish on next send)
+      })
+      baseMessages = messages.map((m, idx) => (idx === lastRoundIdx ? { ...m, suggestions: kept } : m))
+    }
+
+    let augmentedContent = trimmed
+    if (dismissedFromPrevRound.length > 0) {
+      const lines = dismissedFromPrevRound.map((s) => {
+        const indexPart = typeof s.index === 'number' ? `#${s.index}` : ''
+        return `- ${s.section}${indexPart}.${s.field}: ${s.rationale}`
+      })
+      augmentedContent = `${trimmed}\n\n[系统提示：用户在上一轮主动跳过了以下建议，请不要再重复提出：\n${lines.join('\n')}\n]`
+    }
+
+    // Clear status entries that are no longer attached to a visible card.
+    setSuggestionStatus((prev) => {
+      const next = { ...prev }
+      if (lastRoundIdx >= 0) {
+        const prevSuggestions = messages[lastRoundIdx].suggestions ?? []
+        prevSuggestions.forEach((s) => {
+          const status = next[s.id] ?? 'pending'
+          if (status !== 'applied') {
+            delete next[s.id]
+          }
+        })
+      }
+      return next
+    })
+
+    const userMessage: AiChatUiMessage = { id: crypto.randomUUID(), role: 'user', content: augmentedContent }
     const assistantId = crypto.randomUUID()
     const assistantMessage: AiChatUiMessage = { id: assistantId, role: 'assistant', content: '' }
 
-    setMessages((current) => [...current, userMessage, assistantMessage])
+    setMessages([...baseMessages, userMessage, assistantMessage])
     setInput('')
     shouldAutoScrollRef.current = true
     setStreaming(true)
@@ -178,7 +331,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
 
     try {
       await streamAiChat({
-        message: content,
+        message: augmentedContent,
         conversationId: selectedConversationId ?? undefined,
         resume: resumeContext,
       }, (event) => {
@@ -191,9 +344,37 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
         if (event.conversationId && event.conversationId !== selectedConversationId) {
           activeConversationId = event.conversationId
         }
-        setMessages((current) => current.map((item) => (
-          item.id === assistantId ? { ...item, content: item.content + event.content } : item
-        )))
+        if (event.type === 'suggestion') {
+          let plan: AiResumeSuggestionPlan
+          try {
+            plan = JSON.parse(event.content) as AiResumeSuggestionPlan
+          } catch (error) {
+            console.warn('Failed to parse AI suggestion plan', error)
+            return
+          }
+          const list = Array.isArray(plan?.suggestions) ? plan.suggestions : []
+          if (list.length === 0) {
+            return
+          }
+          setMessages((current) => current.map((item) => (
+            item.id === assistantId ? { ...item, suggestions: list } : item
+          )))
+          setSuggestionStatus((prev) => {
+            const next = { ...prev }
+            list.forEach((s) => {
+              if (!next[s.id]) {
+                next[s.id] = 'pending'
+              }
+            })
+            return next
+          })
+          return
+        }
+        if (event.type === 'message') {
+          setMessages((current) => current.map((item) => (
+            item.id === assistantId ? { ...item, content: item.content + event.content } : item
+          )))
+        }
       })
       await refreshConversations(activeConversationId)
     } catch (error) {
@@ -220,6 +401,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     }
     setSelectedConversationId(null)
     setMessages([])
+    setSuggestionStatus({})
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
     lastMessageCountRef.current = 0
@@ -230,6 +412,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
       return
     }
     setSelectedConversationId(conversationId)
+    setSuggestionStatus({})
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
   }
@@ -342,6 +525,17 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
                       <div className="ai-chat-message__bubble">
                         {item.content || (item.role === 'assistant' ? 'AI 正在回复...' : '')}
                       </div>
+                      {item.role === 'assistant' && item.suggestions && item.suggestions.length > 0 ? (
+                        <SuggestionList
+                          suggestions={item.suggestions}
+                          statusMap={suggestionStatus}
+                          onApply={handleApplySuggestion}
+                          onSkip={handleSkipSuggestion}
+                          onUndoSkip={handleUndoSkipSuggestion}
+                          onApplyAll={handleApplyAllSuggestions}
+                          onSkipAll={handleSkipAllSuggestions}
+                        />
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -373,6 +567,116 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
         </div>
       </Modal>
     </>
+  )
+}
+
+interface SuggestionListProps {
+  suggestions: AiResumeSuggestion[]
+  statusMap: Record<string, SuggestionStatus>
+  onApply: (suggestion: AiResumeSuggestion) => void
+  onSkip: (suggestion: AiResumeSuggestion) => void
+  onUndoSkip: (suggestion: AiResumeSuggestion) => void
+  onApplyAll: (suggestions: AiResumeSuggestion[]) => void
+  onSkipAll: (suggestions: AiResumeSuggestion[]) => void
+}
+
+function SuggestionList({
+  suggestions,
+  statusMap,
+  onApply,
+  onSkip,
+  onUndoSkip,
+  onApplyAll,
+  onSkipAll,
+}: SuggestionListProps) {
+  const hasPending = suggestions.some((s) => (statusMap[s.id] ?? 'pending') === 'pending')
+
+  return (
+    <div className="ai-chat-suggestion-list" style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text strong>AI 建议（{suggestions.length}）</Text>
+        <Space size={6}>
+          <Button size="small" type="primary" disabled={!hasPending} onClick={() => onApplyAll(suggestions)}>
+            全部应用
+          </Button>
+          <Button size="small" disabled={!hasPending} onClick={() => onSkipAll(suggestions)}>
+            全部跳过
+          </Button>
+        </Space>
+      </div>
+      {suggestions.map((suggestion) => (
+        <SuggestionCard
+          key={suggestion.id}
+          suggestion={suggestion}
+          status={statusMap[suggestion.id] ?? 'pending'}
+          onApply={() => onApply(suggestion)}
+          onSkip={() => onSkip(suggestion)}
+          onUndoSkip={() => onUndoSkip(suggestion)}
+        />
+      ))}
+    </div>
+  )
+}
+
+interface SuggestionCardProps {
+  suggestion: AiResumeSuggestion
+  status: SuggestionStatus
+  onApply: () => void
+  onSkip: () => void
+  onUndoSkip: () => void
+}
+
+function SuggestionCard({ suggestion, status, onApply, onSkip, onUndoSkip }: SuggestionCardProps) {
+  const sectionLabel = SECTION_LABELS[suggestion.section] ?? suggestion.section
+  const indexPart = typeof suggestion.index === 'number' ? ` · 第 ${suggestion.index + 1} 项` : ''
+  const currentSummary = suggestion.currentValue ? truncate(suggestion.currentValue, 50) : ''
+  const dimmed = status === 'dismissed'
+
+  return (
+    <Card
+      size="small"
+      className={`ai-chat-suggestion-card ai-chat-suggestion-card--${status}`}
+      style={{ opacity: dimmed ? 0.6 : 1 }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <Space size={4} wrap>
+          <Tag color="blue">{sectionLabel}{indexPart}</Tag>
+          <Tag color="default">{suggestion.field}</Tag>
+          {status === 'applied' ? <Tag color="success">已应用</Tag> : null}
+          {status === 'dismissed' ? <Tag color="default">已跳过</Tag> : null}
+        </Space>
+        <Space size={4}>
+          {status === 'pending' ? (
+            <>
+              <Button size="small" type="primary" onClick={onApply}>应用</Button>
+              <Button size="small" onClick={onSkip}>跳过</Button>
+            </>
+          ) : null}
+          {status === 'applied' ? (
+            <Button size="small" type="primary" disabled>已应用</Button>
+          ) : null}
+          {status === 'dismissed' ? (
+            <Button size="small" onClick={onUndoSkip}>撤销跳过</Button>
+          ) : null}
+        </Space>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+        {currentSummary ? (
+          <div>
+            <Text type="secondary" style={{ fontSize: 12 }}>当前内容：</Text>
+            <Text delete style={{ marginLeft: 4 }}>{currentSummary}</Text>
+          </div>
+        ) : null}
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>建议改为：</Text>
+          <Text style={{ marginLeft: 4 }}>{suggestion.suggestedValue}</Text>
+        </div>
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>理由：</Text>
+          <Text style={{ marginLeft: 4 }}>{suggestion.rationale}</Text>
+        </div>
+      </div>
+    </Card>
   )
 }
 

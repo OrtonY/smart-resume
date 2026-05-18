@@ -36,9 +36,34 @@ export interface AiChatRequest {
 }
 
 export interface AiChatEvent {
-  type: 'message' | 'error' | 'done'
+  type: 'message' | 'error' | 'done' | 'suggestion'
   content: string
   conversationId?: string
+}
+
+export type AiResumeSuggestionSection =
+  | 'personalInfo'
+  | 'personalSummary'
+  | 'education'
+  | 'workExperience'
+  | 'projectExperience'
+  | 'skills'
+  | 'honors'
+  | 'certificates'
+
+export interface AiResumeSuggestion {
+  id: string
+  section: AiResumeSuggestionSection
+  index?: number
+  field: string
+  currentValue?: string
+  suggestedValue: string
+  rationale: string
+}
+
+export interface AiResumeSuggestionPlan {
+  suggestions: AiResumeSuggestion[]
+  summary?: string
 }
 
 export interface AiChatConversation {

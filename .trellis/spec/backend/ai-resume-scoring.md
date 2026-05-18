@@ -109,3 +109,9 @@
 - Reuse one `AiResumeContext` mapping path for both AI chat and scoring.
 - Keep scoring as a normal JSON request/response flow with explicit DTOs.
 - Build an `AiInvocationRequest` with a fresh `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)` id and invoke `aiChatService.callStructured(req, AiResumeScoreResponse.class)`; let exceptions bubble.
+
+---
+
+## Technical Notes
+
+- The frontend strips `personalInfo.avatar` from the `AiResumeContext` before sending requests to save context tokens and reduce latency. The backend should not assume `avatar` is present in the resume context payload.
