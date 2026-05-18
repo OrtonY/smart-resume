@@ -20,7 +20,9 @@ At the current bootstrap stage, these documents define the initial engineering b
 |-------|-------------|--------|
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | Bootstrap baseline |
 | [Database Guidelines](./database-guidelines.md) | PostgreSQL schema, persistence, migrations | Bootstrap baseline |
-| [AI Resume Scoring](./ai-resume-scoring.md) | Resume scoring API and mock response contract | Active |
+| [AI Chat Service](./ai-chat-service.md) | Shared AI invocation layer (stream/call/callStructured), conversation id format, retry policy | Active |
+| [AI Chat History](./ai-chat-history.md) | Resume chat memory persistence, conversation id rules per feature | Active |
+| [AI Resume Scoring](./ai-resume-scoring.md) | Resume scoring API and AI-backed response contract | Active |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To refine |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To refine |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To refine |
