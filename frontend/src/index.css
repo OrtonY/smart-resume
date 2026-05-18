@@ -1661,9 +1661,128 @@ a {
   flex: 1;
 }
 
+.resume-score-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-score-panel__intro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(49, 87, 164, 0.08);
+}
+
+.resume-score-panel__composer {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-score-panel__collapsed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.resume-score-panel__collapsed-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.resume-score-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-score-result {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-score-result__hero,
+.resume-score-result__strengths,
+.resume-score-group {
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 255, 0.8)),
+    radial-gradient(circle at top right, rgba(255, 140, 66, 0.1), transparent 28%);
+}
+
+.resume-score-result__hero {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.resume-score-result__summary {
+  display: grid;
+  gap: 10px;
+}
+
+.resume-score-result__summary .ant-typography {
+  margin-bottom: 0;
+}
+
+.resume-score-result__strengths {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-score-result__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resume-score-result__groups {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-score-group {
+  display: grid;
+  gap: 10px;
+}
+
+.resume-score-group ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.resume-score-empty {
+  padding: 12px 0 4px;
+}
+
 @media (max-width: 720px) {
   .ai-chat-toolbar {
     flex-wrap: wrap;
+  }
+
+  .resume-score-panel__actions,
+  .resume-score-result__hero {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-score-panel__collapsed {
+    align-items: stretch;
   }
 }
 

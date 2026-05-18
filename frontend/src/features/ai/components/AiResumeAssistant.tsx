@@ -3,7 +3,8 @@ import { App, Button, Empty, Form, Input, List, Modal, Select, Segmented, Spin, 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
-import { normalizeResumeLayout, type ResumeDetail } from '../../resume/types'
+import type { ResumeDetail } from '../../resume/types'
+import { toAiResumeContext } from '../resumeContext'
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -39,13 +40,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
   const dragState = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(null)
 
-  const resumeContext = useMemo<AiResumeContext>(() => ({
-    id: draft.id,
-    title: draft.title,
-    templateKey: draft.templateKey,
-    content: draft.content,
-    layout: normalizeResumeLayout(draft.layout),
-  }), [draft])
+  const resumeContext = useMemo<AiResumeContext>(() => toAiResumeContext(draft), [draft])
 
   function handleOpen() {
     setSelectedConversationId(null)

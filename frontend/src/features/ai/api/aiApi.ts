@@ -4,6 +4,8 @@ import type {
   AiChatMessage,
   AiChatEvent,
   AiChatRequest,
+  AiResumeScoreRequest,
+  AiResumeScoreResponse,
   AiConfiguration,
   AiConfigurationRequest,
   ListModelsRequest,
@@ -26,6 +28,13 @@ export async function getAiConfiguration() {
 export async function saveAiConfiguration(payload: AiConfigurationRequest) {
   return requestJson<AiConfiguration>('/api/ai/configuration', {
     method: 'PUT',
+    body: payload,
+  })
+}
+
+export async function scoreAiResume(payload: AiResumeScoreRequest) {
+  return requestJson<AiResumeScoreResponse>('/api/ai/resume-score', {
+    method: 'POST',
     body: payload,
   })
 }

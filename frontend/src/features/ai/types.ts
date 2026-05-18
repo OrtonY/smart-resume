@@ -48,6 +48,26 @@ export interface AiChatConversation {
   updatedAt: string
 }
 
+export interface AiResumeScoreRequest {
+  jobDescription?: string
+  resume: AiResumeContext
+}
+
+export interface AiResumeScoreSuggestionGroup {
+  title: string
+  suggestions: string[]
+}
+
+export interface AiResumeScoreResponse {
+  score: number
+  summary: string
+  strengths: string[]
+  suggestionGroups: AiResumeScoreSuggestionGroup[]
+  jobDescriptionProvided: boolean
+  generatedAt: string
+  mode: 'mock' | 'live'
+}
+
 export interface VendorMetadata {
   vendor: string
   defaultBaseUrl: string
