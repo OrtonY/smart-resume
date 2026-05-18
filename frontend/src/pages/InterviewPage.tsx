@@ -26,7 +26,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   continueInterview,
@@ -443,6 +443,51 @@ function InterviewDetailView({
   onUpdateMessageDraft: (value: string) => void
   submittingMessage: boolean
 }) {
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const shouldAutoScrollRef = useRef(true)
+  const lastMessageCountRef = useRef(0)
+
+  function isNearBottom(target: HTMLDivElement) {
+    return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
+  }
+
+  function scrollMessagesToBottom(behavior: ScrollBehavior = 'auto') {
+    const target = messagesContainerRef.current
+    if (!target) {
+      return
+    }
+    target.scrollTo({ top: target.scrollHeight, behavior })
+  }
+
+  function handleMessageListScroll(event: UIEvent<HTMLDivElement>) {
+    shouldAutoScrollRef.current = isNearBottom(event.currentTarget)
+  }
+
+  useEffect(() => {
+    const messageCount = detail?.messages.length ?? 0
+    const hasNewMessage = messageCount > lastMessageCountRef.current
+    lastMessageCountRef.current = messageCount
+
+    if (!shouldAutoScrollRef.current) {
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom(hasNewMessage ? 'smooth' : 'auto')
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [detail])
+
+  useEffect(() => {
+    shouldAutoScrollRef.current = true
+    lastMessageCountRef.current = 0
+    const frame = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom('auto')
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [detail?.id])
+
   if (loading) {
     return (
       <div className="workspace-layout">
@@ -512,7 +557,7 @@ function InterviewDetailView({
               <Paragraph className="interview-detail__jd">{detail.jobDescription}</Paragraph>
             </Space>
 
-            <div className="interview-message-list">
+            <div className="interview-message-list" ref={messagesContainerRef} onScroll={handleMessageListScroll}>
               {detail.messages.map((item) => (
                 <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
                   <div className="interview-message__role">

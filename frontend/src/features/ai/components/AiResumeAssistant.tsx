@@ -1,6 +1,6 @@
 import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
 import { App, Button, Empty, Form, Input, List, Modal, Select, Segmented, Spin, Tag, Typography } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type UIEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import type { AiChatConversation, AiChatMessage, AiConfigurationRequest, AiResumeContext, VendorMetadata } from '../types'
 import type { ResumeDetail } from '../../resume/types'
@@ -39,13 +39,34 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat')
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
   const dragState = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const shouldAutoScrollRef = useRef(true)
+  const lastMessageCountRef = useRef(0)
 
   const resumeContext = useMemo<AiResumeContext>(() => toAiResumeContext(draft), [draft])
+
+  function isNearBottom(target: HTMLDivElement) {
+    return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
+  }
+
+  function scrollMessagesToBottom(behavior: ScrollBehavior = 'auto') {
+    const target = messagesContainerRef.current
+    if (!target) {
+      return
+    }
+    target.scrollTo({ top: target.scrollHeight, behavior })
+  }
+
+  function handleMessagesScroll(event: UIEvent<HTMLDivElement>) {
+    shouldAutoScrollRef.current = isNearBottom(event.currentTarget)
+  }
 
   function handleOpen() {
     setSelectedConversationId(null)
     setMessages([])
     setActiveTab('chat')
+    shouldAutoScrollRef.current = true
+    lastMessageCountRef.current = 0
     setOpen(true)
   }
 
@@ -119,6 +140,26 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     }
   }, [draft.id, message, open, selectedConversationId, streaming])
 
+  useEffect(() => {
+    if (!open || activeTab !== 'chat') {
+      return
+    }
+
+    const shouldFollow = shouldAutoScrollRef.current
+    const hasNewMessage = messages.length > lastMessageCountRef.current
+    lastMessageCountRef.current = messages.length
+
+    if (!shouldFollow) {
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom(hasNewMessage ? 'smooth' : 'auto')
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [activeTab, messages, open])
+
   async function handleSend() {
     const content = input.trim()
     if (!content || streaming) {
@@ -131,6 +172,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
 
     setMessages((current) => [...current, userMessage, assistantMessage])
     setInput('')
+    shouldAutoScrollRef.current = true
     setStreaming(true)
     let activeConversationId = selectedConversationId
 
@@ -179,6 +221,8 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     setSelectedConversationId(null)
     setMessages([])
     setActiveTab('chat')
+    shouldAutoScrollRef.current = true
+    lastMessageCountRef.current = 0
   }
 
   function selectConversation(conversationId: string) {
@@ -187,6 +231,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
     }
     setSelectedConversationId(conversationId)
     setActiveTab('chat')
+    shouldAutoScrollRef.current = true
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
@@ -288,7 +333,7 @@ export function AiResumeAssistant({ draft }: { draft: ResumeDetail }) {
           ) : (
             <div className="ai-chat-main">
               <Spin spinning={loadingMessages}>
-                <div className="ai-chat-messages">
+                <div className="ai-chat-messages" ref={messagesContainerRef} onScroll={handleMessagesScroll}>
                   {messages.length === 0 ? (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="向 AI 提问以审阅或优化当前简历。" />
                   ) : null}
