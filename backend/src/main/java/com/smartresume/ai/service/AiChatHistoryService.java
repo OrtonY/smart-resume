@@ -5,6 +5,8 @@ import com.smartresume.ai.domain.AiChatConversationEntity;
 import com.smartresume.ai.dto.AiDtos.AiChatConversation;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.mapper.AiChatConversationMapper;
+import com.smartresume.ai.memory.AiConversationIdGenerator;
+import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.common.exception.AppException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,7 +59,7 @@ public class AiChatHistoryService {
 
         LocalDateTime now = LocalDateTime.now();
         AiChatConversationEntity conversation = new AiChatConversationEntity();
-        conversation.setConversationId("resume-" + resumeId + "-" + UUID.randomUUID());
+        conversation.setConversationId(AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_CHAT));
         conversation.setResumeId(resumeId);
         conversation.setTitle(toTitle(firstMessage));
         conversation.setCreatedAt(now);
