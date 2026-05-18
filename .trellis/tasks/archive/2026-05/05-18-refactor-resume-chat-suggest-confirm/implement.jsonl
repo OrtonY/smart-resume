@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "AiChatService shared invocation layer — stream/callStructured contracts, retry policy, vendor branching, conversation id format"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Chat memory persistence rules, conversation id generation, MessageChatMemoryAdvisor usage"}
+{"file": ".trellis/spec/backend/ai-resume-scoring.md", "reason": "Reference for AiResumeSuggestion DTO shape alignment with scoring response; callStructured usage pattern"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Error envelope conventions for SSE error events and service exceptions"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "State management patterns for draft mutator, auto-save flow, component state machines"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component structure conventions for new suggestion card components"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "TypeScript typing conventions for new AiChatEvent extension and patch DTO"}
+{"file": ".trellis/tasks/05-18-refactor-resume-chat-suggest-confirm/prd.md", "reason": "Full requirements, decisions, acceptance criteria, and implementation plan"}
