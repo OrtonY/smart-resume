@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Verify stream event types, callStructured retry policy, mock fallback prohibition"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Verify conversation id format, memory persistence rules"}
+{"file": ".trellis/spec/backend/ai-resume-scoring.md", "reason": "Verify DTO alignment between scoring and new suggestion patch shape"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Code quality bar for unit tests, naming, package structure"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality bar for lint, build, component tests"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "Custom hook patterns for suggestion state machine and apply logic"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type safety conventions for new event types and patch DTOs"}
+{"file": ".trellis/tasks/05-18-refactor-resume-chat-suggest-confirm/prd.md", "reason": "Acceptance criteria and definition of done to check against"}
