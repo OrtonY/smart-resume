@@ -606,3 +606,36 @@ Merged resume editor interview actions into one dropdown button while preserving
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: Fix chat auto-scroll follow
+
+**Date**: 2026-05-18
+**Task**: Fix chat auto-scroll follow
+**Branch**: `master`
+
+### Summary
+
+Implemented auto-scroll follow behavior for AI resume chat and interview chat message lists; added near-bottom detection to avoid forcing scroll when users read older messages; verified with frontend lint and build.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9042640` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

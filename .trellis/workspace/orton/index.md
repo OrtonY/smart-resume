@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 18
+- **Total Sessions**: 19
 - **Last Active**: 2026-05-18
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~608 | Active |
+| `journal-1.md` | ~641 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 19 | 2026-05-18 | Fix chat auto-scroll follow | `9042640` | `master` |
 | 18 | 2026-05-18 | Merge interview actions in resume editor | `0f93263` | `master` |
 | 17 | 2026-05-18 | Resume scoring flow in editor | `0d8ab94` | `master` |
 | 16 | 2026-05-17 | Interview module scaffold | `5ecbcfa` | `master` |
