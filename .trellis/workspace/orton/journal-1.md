@@ -674,3 +674,37 @@ Extracted AiChatService as the shared AI invocation layer (stream / call / callS
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 重构简历对话：聚焦+建议-确认-应用闭环
+
+**Date**: 2026-05-18
+**Task**: 重构简历对话：聚焦+建议-确认-应用闭环
+**Branch**: `master`
+
+### Summary
+
+把自由 AI 对话重构为受控的「智慧简历 AI」：system prompt 收紧身份/范围/默认形态；SSE 末尾追加 type=suggestion 事件（哨兵协议 + 兜底）；新增 AiResumeSuggestion/Plan DTO 通用包；前端建议卡片状态机 + Apply/Skip + 全部应用/跳过 + dismissed 摘要回传；WorkspacePage section+field 分发到 setDraft 自动保存。修复：extractContent null 守护、persistenceSanitizer 阻止哨兵入 chat memory、skipNextHistoryReloadRef 防止历史重载吞掉当前轮 suggestions。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1f13bf1` | (see git log) |
+| `bae22b8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
