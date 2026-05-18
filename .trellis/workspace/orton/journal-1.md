@@ -639,3 +639,38 @@ Implemented auto-scroll follow behavior for AI resume chat and interview chat me
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: Refactor AI conversation decoupling and migrate resume scoring to real AI
+
+**Date**: 2026-05-18
+**Task**: Refactor AI conversation decoupling and migrate resume scoring to real AI
+**Branch**: `master`
+
+### Summary
+
+Extracted AiChatService as the shared AI invocation layer (stream / call / callStructured) with AiInvocationRequest, AiFeatureType enum, and AiConversationIdGenerator that produces a uniform {resumeId}_{featureCode}_{timestamp} id format. AiAgentService keeps only resume-chat specific concerns (system prompt assembly, 12ms char-level SSE delay) and now delegates to AiChatService.stream. AiChatHistoryService uses the new generator for resume-chat ids. AiResumeScoringService migrated from mock scoring to real AI via callStructured + BeanOutputConverter, response mode is now "ai", parse failures retry once then surface as service errors with no mock fallback. Vendor branching handles OpenAI/DeepSeek native JSON schema vs Ollama soft-constraint prompt injection. Added unit tests (AiChatServiceImplTest covers happy/error/retry/no-fallback paths; AiResumeScoringServiceTest updated for AI mode). Added reactor-test dep to backend/pom.xml. Documented the contract in three specs: new .trellis/spec/backend/ai-chat-service.md, refreshed ai-resume-scoring.md (mode=ai, retry policy, no mock fallback) and ai-chat-history.md (unified id generator), index updated.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c1fc157` | (see git log) |
+| `a9049db` | (see git log) |
+| `7ad042c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 19
+- **Total Sessions**: 20
 - **Last Active**: 2026-05-18
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~641 | Active |
+| `journal-1.md` | ~676 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 20 | 2026-05-18 | Refactor AI conversation decoupling and migrate resume scoring to real AI | `c1fc157`, `a9049db`, `7ad042c` | `master` |
 | 19 | 2026-05-18 | Fix chat auto-scroll follow | `9042640` | `master` |
 | 18 | 2026-05-18 | Merge interview actions in resume editor | `0f93263` | `master` |
 | 17 | 2026-05-18 | Resume scoring flow in editor | `0d8ab94` | `master` |
