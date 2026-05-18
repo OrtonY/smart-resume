@@ -29,8 +29,12 @@ package com.smartresume.ai.dto;
 public record AiInvocationRequest(
     String systemPrompt,
     String userMessage,
-    String conversationId    // required, generated via AiConversationIdGenerator
-) {}
+    String conversationId,                          // required, generated via AiConversationIdGenerator
+    UnaryOperator<String> persistenceSanitizer      // optional; null = persist verbatim
+) {
+    // 3-arg convenience constructor leaves persistenceSanitizer null
+    public AiInvocationRequest(String systemPrompt, String userMessage, String conversationId) { ... }
+}
 ```
 
 ```java

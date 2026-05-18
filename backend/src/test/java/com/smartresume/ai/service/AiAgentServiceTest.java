@@ -3,6 +3,7 @@ package com.smartresume.ai.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,6 +25,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
@@ -194,6 +196,42 @@ class AiAgentServiceTest {
         JsonNode plan = readJson(suggestionEvent.content());
         assertThat(plan.get("suggestions").size()).isEqualTo(0);
         assertThat(findEvent(events, "done")).isNotNull();
+    }
+
+    /**
+     * Bug fix: assistant text persisted to chat memory must NOT carry the raw
+     * {@code <<<SUGGESTIONS_JSON>>>{...}} sentinel block. Otherwise history reads and the
+     * next prompt replay leak the JSON to the user / pollute model attention.
+     *
+     * The agent must pass a non-null {@code persistenceSanitizer} on the {@code AiInvocationRequest}
+     * it hands to {@code AiChatService.stream(...)}, and applying that sanitizer to a sample
+     * sentinel-laden output must yield only the visible diagnostic text.
+     */
+    @Test
+    void invocationRequestCarriesSentinelStrippingPersistenceSanitizer() {
+        when(aiChatService.stream(any(AiInvocationRequest.class)))
+            .thenReturn(Flux.just(new AiChatEvent(
+                "message",
+                "诊断文本\n<<<SUGGESTIONS_JSON>>>{\"suggestions\":[]}",
+                "conv-test-1"
+            )));
+
+        AiChatRequest request = new AiChatRequest("帮我看看简历", null, sampleResumeContext());
+        aiAgentService.streamChat(request).collectList().block();
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService).stream(captor.capture());
+        AiInvocationRequest captured = captor.getValue();
+
+        assertThat(captured.persistenceSanitizer()).isNotNull();
+        String sanitized = captured.persistenceSanitizer()
+            .apply("诊断文本\n\n<<<SUGGESTIONS_JSON>>>{\"suggestions\":[]}");
+        assertThat(sanitized).isEqualTo("诊断文本");
+
+        // And exposing the helper directly for sanity.
+        assertThat(AiAgentService.stripSuggestionSentinel(
+            "诊断文本\n\n<<<SUGGESTIONS_JSON>>>{\"suggestions\":[]}"
+        )).isEqualTo("诊断文本");
     }
 
     /**
