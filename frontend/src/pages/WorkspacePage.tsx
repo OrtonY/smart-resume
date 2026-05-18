@@ -42,6 +42,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
+import type { AiResumeSuggestion } from '../features/ai/types'
 import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
 import { MarkdownTextArea } from '../features/resume/components/MarkdownTextArea'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
@@ -470,6 +471,49 @@ function showSection(sectionKey: ResumeSectionKey) {
   })
 }
 
+  const handleApplyPatch = useCallback((patch: AiResumeSuggestion) => {
+    updateDraft((next) => {
+      const { section, field, suggestedValue, index } = patch
+      switch (section) {
+        case 'personalSummary': {
+          next.content.personalSummary = suggestedValue
+          return
+        }
+        case 'personalInfo': {
+          const target = next.content.personalInfo as unknown as Record<string, string>
+          if (!(field in target)) {
+            console.warn('[AI patch] unknown personalInfo field:', field)
+            return
+          }
+          target[field] = suggestedValue
+          return
+        }
+        case 'education':
+        case 'workExperience':
+        case 'projectExperience':
+        case 'skills':
+        case 'honors':
+        case 'certificates': {
+          const list = next.content[section] as unknown as Array<Record<string, string>>
+          if (typeof index !== 'number' || index < 0 || index >= list.length) {
+            console.warn('[AI patch] index out of range for', section, index)
+            return
+          }
+          const target = list[index]
+          if (!(field in target)) {
+            console.warn('[AI patch] unknown field for', section, field)
+            return
+          }
+          target[field] = suggestedValue
+          return
+        }
+        default: {
+          console.warn('[AI patch] unknown section:', section)
+        }
+      }
+    })
+  }, [updateDraft])
+
   function focusModule(moduleKey: ResumeModuleId) {
     if (moduleKey !== 'personal-info') {
       setExpandedModules((current) => (current.includes(moduleKey) ? current : [...current, moduleKey]))
@@ -500,6 +544,7 @@ function showSection(sectionKey: ResumeSectionKey) {
         expandedModules={expandedModules}
         hiddenSections={hiddenSections}
         loadingTemplates={loadingTemplates}
+        onApplyPatch={handleApplyPatch}
         onCreateShare={handleCreateShare}
         exportingFormat={exportingFormat}
         onExport={handleExport}
@@ -1246,6 +1291,7 @@ function ResumeEditorView({
   expandedModules,
   hiddenSections,
   loadingTemplates,
+  onApplyPatch,
   onCreateShare,
   exportingFormat,
   onExpandedModulesChange,
@@ -1266,6 +1312,7 @@ function ResumeEditorView({
   expandedModules: ResumeModuleId[]
   hiddenSections: ResumeSectionKey[]
   loadingTemplates: boolean
+  onApplyPatch: (patch: AiResumeSuggestion) => void
   onCreateShare: (mode: ShareMode, password?: string) => Promise<void>
   exportingFormat: ExportFormat | null
   onExpandedModulesChange: (keys: string | string[]) => void
@@ -1623,7 +1670,7 @@ function ResumeEditorView({
         </div>
       </Modal>
 
-      <AiResumeAssistant draft={draft} />
+      <AiResumeAssistant draft={draft} onApplyPatch={onApplyPatch} />
     </div>
   )
 }
