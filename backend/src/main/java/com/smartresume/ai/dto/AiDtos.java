@@ -39,6 +39,14 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiResumeScoreRequest(
+        String jobDescription,
+        @NotNull(message = "Resume context is required")
+        @Valid
+        AiResumeContext resume
+    ) {
+    }
+
     public record AiResumeContext(
         @NotBlank(message = "Resume id is required")
         String id,
@@ -65,6 +73,23 @@ public final class AiDtos {
     }
 
     public record AiChatEvent(String type, String content, String conversationId) {
+    }
+
+    public record AiResumeScoreSuggestionGroup(
+        String title,
+        List<String> suggestions
+    ) {
+    }
+
+    public record AiResumeScoreResponse(
+        int score,
+        String summary,
+        List<String> strengths,
+        List<AiResumeScoreSuggestionGroup> suggestionGroups,
+        boolean jobDescriptionProvided,
+        String generatedAt,
+        String mode
+    ) {
     }
 
     // --- Vendor metadata and model listing DTOs ---

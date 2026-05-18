@@ -42,6 +42,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
+import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
 import { MarkdownTextArea } from '../features/resume/components/MarkdownTextArea'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
@@ -1386,6 +1387,7 @@ function ResumeEditorView({
             <Link to={`/app/interviews?resumeId=${draft.id}`}>
               <Button>相关面试</Button>
             </Link>
+            <ResumeScoreButton draft={draft} />
             <AiConfigurationButton />
             <Button icon={<ShareAltOutlined />} onClick={() => {
               setShareModalOpen(true)

@@ -6,6 +6,8 @@ import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
+import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
+import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.ListModelsRequest;
 import com.smartresume.ai.dto.AiDtos.ListModelsResponse;
 import com.smartresume.ai.dto.AiDtos.VendorMetadataResponse;
@@ -15,6 +17,7 @@ import com.smartresume.ai.provider.VendorMetadata;
 import com.smartresume.ai.service.AiAgentService;
 import com.smartresume.ai.service.AiChatHistoryService;
 import com.smartresume.ai.service.AiConfigurationService;
+import com.smartresume.ai.service.AiResumeScoringService;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.common.exception.AppException;
 import jakarta.validation.Valid;
@@ -37,17 +40,20 @@ public class AiController {
     private final AiConfigurationService aiConfigurationService;
     private final AiAgentService aiAgentService;
     private final AiChatHistoryService aiChatHistoryService;
+    private final AiResumeScoringService aiResumeScoringService;
     private final ChatModelProviderRegistry chatModelProviderRegistry;
 
     public AiController(
         AiConfigurationService aiConfigurationService,
         AiAgentService aiAgentService,
         AiChatHistoryService aiChatHistoryService,
+        AiResumeScoringService aiResumeScoringService,
         ChatModelProviderRegistry chatModelProviderRegistry
     ) {
         this.aiConfigurationService = aiConfigurationService;
         this.aiAgentService = aiAgentService;
         this.aiChatHistoryService = aiChatHistoryService;
+        this.aiResumeScoringService = aiResumeScoringService;
         this.chatModelProviderRegistry = chatModelProviderRegistry;
     }
 
@@ -64,6 +70,11 @@ public class AiController {
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<AiChatEvent> streamChat(@Valid @RequestBody AiChatRequest request) {
         return aiAgentService.streamChat(request);
+    }
+
+    @PostMapping("/resume-score")
+    public ApiResponse<AiResumeScoreResponse> scoreResume(@Valid @RequestBody AiResumeScoreRequest request) {
+        return ApiResponse.success(aiResumeScoringService.scoreResume(request), "Resume scored");
     }
 
     @GetMapping("/resumes/{resumeId}/chat/conversations")
