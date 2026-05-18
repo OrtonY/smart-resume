@@ -77,6 +77,12 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
+  // After a streaming round completes we call refreshConversations(...), which sets
+  // selectedConversationId to the newly-created backend conversation. The history-reload
+  // useEffect listens on selectedConversationId and would then overwrite the in-memory
+  // assistant message (with its suggestions) with the historical version that has no
+  // suggestions, making the cards vanish. Skip that one immediate reload.
+  const skipNextHistoryReloadRef = useRef(false)
 
   const resumeContext = useMemo<AiResumeContext>(() => toAiResumeContext(draft), [draft])
 
@@ -141,6 +147,11 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
 
   useEffect(() => {
     if (!open || !selectedConversationId || streaming) {
+      return
+    }
+
+    if (skipNextHistoryReloadRef.current) {
+      skipNextHistoryReloadRef.current = false
       return
     }
 
@@ -376,6 +387,10 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           )))
         }
       })
+      // Skip the immediate history reload that selectedConversationId change would trigger,
+      // so the in-memory assistant message (with suggestions) is not overwritten by the
+      // historical version that has no suggestions attached.
+      skipNextHistoryReloadRef.current = true
       await refreshConversations(activeConversationId)
     } catch (error) {
       void message.error(error instanceof Error ? error.message : 'AI chat failed')

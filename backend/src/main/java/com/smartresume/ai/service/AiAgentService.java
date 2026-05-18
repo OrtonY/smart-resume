@@ -92,7 +92,8 @@ public class AiAgentService {
             AiInvocationRequest invocationRequest = new AiInvocationRequest(
                 systemPrompt,
                 request.message(),
-                conversationId
+                conversationId,
+                AiAgentService::stripSuggestionSentinel
             );
 
             // Approach B: collect full upstream text, strip sentinel, then emit characters + suggestion event.
@@ -131,16 +132,14 @@ public class AiAgentService {
     }
 
     private Flux<AiChatEvent> buildResponseFlux(String fullText, String conversationId) {
-        String visibleText;
+        String visibleText = stripSuggestionSentinel(fullText);
         String suggestionJson;
 
         int sentinelIndex = fullText.indexOf(SUGGESTIONS_SENTINEL);
         if (sentinelIndex >= 0) {
-            visibleText = fullText.substring(0, sentinelIndex).stripTrailing();
             String rawJson = fullText.substring(sentinelIndex + SUGGESTIONS_SENTINEL.length()).strip();
             suggestionJson = parseSuggestionJson(rawJson, conversationId);
         } else {
-            visibleText = fullText;
             log.warn("No suggestion sentinel found in AI response (conversationId={})", conversationId);
             suggestionJson = EMPTY_SUGGESTIONS_JSON;
         }
@@ -156,6 +155,23 @@ public class AiAgentService {
         AiChatEvent doneEvent = new AiChatEvent("done", "", conversationId);
 
         return textFlux.concatWithValues(suggestionEvent, doneEvent);
+    }
+
+    /**
+     * Strips the trailing {@code <<<SUGGESTIONS_JSON>>>{...}} sentinel block from an AI response.
+     * Used both when emitting the visible stream to the client and when sanitizing assistant
+     * messages before they are persisted to chat memory, so subsequent prompts replayed by
+     * {@code MessageChatMemoryAdvisor} never carry the raw sentinel.
+     */
+    static String stripSuggestionSentinel(String fullText) {
+        if (fullText == null) {
+            return "";
+        }
+        int sentinelIndex = fullText.indexOf(SUGGESTIONS_SENTINEL);
+        if (sentinelIndex < 0) {
+            return fullText;
+        }
+        return fullText.substring(0, sentinelIndex).stripTrailing();
     }
 
     private String parseSuggestionJson(String rawJson, String conversationId) {

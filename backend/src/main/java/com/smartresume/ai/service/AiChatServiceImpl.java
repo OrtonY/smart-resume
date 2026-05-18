@@ -81,7 +81,10 @@ public class AiChatServiceImpl implements AiChatService {
                 )
                 .doOnComplete(() -> {
                     if (!assistantText.isEmpty()) {
-                        chatMemory.add(conversationId, new AssistantMessage(assistantText.toString()));
+                        String persisted = sanitizeForPersistence(assistantText.toString(), request);
+                        if (persisted != null && !persisted.isEmpty()) {
+                            chatMemory.add(conversationId, new AssistantMessage(persisted));
+                        }
                     }
                 })
                 .concatWithValues(new AiChatEvent("done", "", conversationId));
@@ -102,8 +105,18 @@ public class AiChatServiceImpl implements AiChatService {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "AI provider returned an empty response.");
         }
 
-        chatMemory.add(conversationId, new AssistantMessage(content));
+        String persisted = sanitizeForPersistence(content, request);
+        if (persisted != null && !persisted.isEmpty()) {
+            chatMemory.add(conversationId, new AssistantMessage(persisted));
+        }
         return content;
+    }
+
+    private String sanitizeForPersistence(String text, AiInvocationRequest request) {
+        if (request.persistenceSanitizer() == null) {
+            return text;
+        }
+        return request.persistenceSanitizer().apply(text);
     }
 
     @Override
@@ -177,6 +190,7 @@ public class AiChatServiceImpl implements AiChatService {
         if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
             return "";
         }
-        return response.getResult().getOutput().getText();
+        String text = response.getResult().getOutput().getText();
+        return text != null ? text : "";
     }
 }

@@ -3,6 +3,10 @@ package com.smartresume.ai.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartresume.ai.domain.AiConfigurationEntity;
@@ -15,9 +19,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -125,6 +131,52 @@ class AiChatServiceImplTest {
             .assertNext(event -> assertThat(event.type()).isEqualTo("error"))
             .assertNext(event -> assertThat(event.type()).isEqualTo("done"))
             .verifyComplete();
+    }
+
+    @Test
+    void streamAppliesPersistenceSanitizerBeforeWritingMemory() {
+        stubChatModel();
+
+        String rawOutput = "诊断文本\n\n<<<SUGGESTIONS_JSON>>>{\"suggestions\":[]}";
+        when(chatModel.stream(any(Prompt.class))).thenReturn(
+            Flux.just(chatResponse(rawOutput))
+        );
+
+        AiInvocationRequest request = new AiInvocationRequest(
+            "You are a test assistant.",
+            "Hi",
+            "conv-sanitizer-1",
+            text -> {
+                int idx = text.indexOf("<<<SUGGESTIONS_JSON>>>");
+                return idx < 0 ? text : text.substring(0, idx).stripTrailing();
+            }
+        );
+
+        StepVerifier.create(aiChatService.stream(request))
+            .assertNext(event -> {
+                assertThat(event.type()).isEqualTo("message");
+                assertThat(event.content()).isEqualTo(rawOutput);
+            })
+            .assertNext(event -> assertThat(event.type()).isEqualTo("done"))
+            .verifyComplete();
+
+        // Verify that chatMemoryRepository.saveAll was called and the persisted messages
+        // do NOT contain the sentinel. MessageWindowChatMemory calls saveAll with the
+        // full windowed message list including the sanitized assistant message.
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(chatMemoryRepository, atLeast(1)).saveAll(eq("conv-sanitizer-1"), messagesCaptor.capture());
+
+        // The last saveAll invocation should contain the assistant message without sentinel.
+        List<List<Message>> allCalls = messagesCaptor.getAllValues();
+        List<Message> lastSaved = allCalls.get(allCalls.size() - 1);
+        boolean hasAssistantWithoutSentinel = lastSaved.stream()
+            .filter(m -> m instanceof AssistantMessage)
+            .map(Message::getText)
+            .anyMatch(text -> !text.contains("<<<SUGGESTIONS_JSON>>>"));
+        assertThat(hasAssistantWithoutSentinel)
+            .as("Persisted assistant message must not contain the sentinel")
+            .isTrue();
     }
 
     // --- call() tests ---
