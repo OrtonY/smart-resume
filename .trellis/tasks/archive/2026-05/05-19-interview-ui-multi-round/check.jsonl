@@ -1,0 +1,11 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "校验 V13 migration 命名/语法/回填正确性"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "后端单元测试、覆盖率、Lint 标准"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "校验异常路径处理是否完备"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "校验关键日志是否记录"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "回归确认跨轮 AI 上下文未被破坏"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端组件测试、Lint、typecheck 标准"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "校验 Tab / 骨架气泡 / overlay 组件落地是否符合规范"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "校验 roundIndex 类型字段、Tab activeKey 类型安全"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "校验 loading / activeKey 状态管理符合规范"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "校验前后端 roundIndex 契约一致"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "校验是否复用了现有 overlay / activeRoundIndex / Spin 等已有资产"}

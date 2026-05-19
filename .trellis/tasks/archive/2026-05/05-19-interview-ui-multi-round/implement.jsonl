@@ -1,0 +1,13 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Flyway V13 migration 与 round_index 列新增 + 回填脚本需要遵循项目 DB 约定"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Entity / DTO / Service / Migration 落位规范"}
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "InterviewService 多轮对话与 AI 上下文模式参考，nextRound 与 stream 改动需保持一致"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "跨轮共享 aiConversationId 的历史上下文模式，确保后端改动不破坏既有对话连贯性"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "回填脚本与 next-round 失败场景的异常处理规范"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "回填脚本与轮次相关写入日志规范"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Tab 组件 / 骨架气泡 / overlay 组件落位"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Tab 切换、骨架气泡、icon 按钮组组件设计规范"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "useInterviewTimer 已存在，next-round loading state 可能复用 hook 模式"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Tab activeKey、next-round loading、流式首字节状态管理"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "InterviewMessage 类型新增 roundIndex 字段需遵循类型规范"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "round_index 跨前后端契约，DTO 字段命名与序列化要前后端一致"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "复用现有 interview-creating-overlay、existing Spin、activeRoundIndex 等已有结构，避免重复造轮子"}
