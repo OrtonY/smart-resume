@@ -1,0 +1,10 @@
+{"file":".trellis/spec/guides/index.md","reason":"Quality review should verify cross-layer consistency between backend prompts and frontend behavior."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Check that AI integration reuses existing AiChatService patterns rather than reinventing."}
+{"file":".trellis/spec/backend/index.md","reason":"Verify backend changes follow agreed stack conventions and domain boundaries."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Backend quality standards for the interview service refactoring."}
+{"file":".trellis/spec/backend/ai-chat-service.md","reason":"Verify AI integration follows the established AiChatService contract correctly."}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Review error handling in AI calls — retries, fallbacks, user-facing error messages."}
+{"file":".trellis/spec/frontend/index.md","reason":"Verify frontend changes follow app structure and feature boundaries."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Frontend quality standards for timer component and UI changes."}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"Review new timer component against component conventions."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Review DTO changes and type discipline in updated interview interfaces."}
