@@ -5,8 +5,10 @@ import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewPageResponse;
+import com.smartresume.interview.service.InterviewReportService;
 import com.smartresume.interview.service.InterviewService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,15 +16,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/interviews")
 public class InterviewController {
 
     private final InterviewService interviewService;
+    private final InterviewReportService interviewReportService;
 
-    public InterviewController(InterviewService interviewService) {
+    public InterviewController(InterviewService interviewService, InterviewReportService interviewReportService) {
         this.interviewService = interviewService;
+        this.interviewReportService = interviewReportService;
     }
 
     @GetMapping
@@ -72,5 +77,16 @@ public class InterviewController {
     @PostMapping("/{interviewId}/end")
     public ApiResponse<InterviewDetailResponse> endInterview(@PathVariable String interviewId) {
         return ApiResponse.success(interviewService.endInterview(interviewId), "Interview ended");
+    }
+
+    @GetMapping(value = "/{interviewId}/report/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeReportEvents(@PathVariable String interviewId) {
+        return interviewReportService.subscribe(interviewId);
+    }
+
+    @PostMapping("/{interviewId}/report/regenerate")
+    public ApiResponse<Void> regenerateReport(@PathVariable String interviewId) {
+        interviewReportService.generateReportAsync(interviewId);
+        return ApiResponse.success(null, "Report regeneration started");
     }
 }

@@ -2071,6 +2071,63 @@ a {
   font-family: inherit;
 }
 
+.interview-report-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.report-score-overview {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.report-score-circle {
+  margin-bottom: 12px;
+}
+
+.report-score-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.report-summary {
+  max-width: 500px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+}
+
+.report-section {
+  margin-bottom: 20px;
+}
+
+.report-skills {
+  display: grid;
+  gap: 8px;
+}
+
+.report-skill-item {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-skill-label {
+  font-size: 13px;
+}
+
+.report-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.report-question-detail > div {
+  margin-bottom: 8px;
+}
+
 @media (max-width: 1280px) {
   .resume-editor-layout,
   .workspace-columns,
