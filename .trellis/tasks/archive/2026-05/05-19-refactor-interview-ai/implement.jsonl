@@ -1,0 +1,14 @@
+{"file":".trellis/spec/guides/index.md","reason":"Cross-layer thinking for a feature spanning backend AI service, frontend UI, and shared DTOs."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Interview AI refactoring touches backend prompts, frontend timer, and shared DTOs — need cross-layer consistency."}
+{"file":".trellis/spec/backend/index.md","reason":"Backend stack baseline for Spring Boot + Spring AI integration into interview service."}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"Module layout conventions for adding AI prompt templates and interview service changes."}
+{"file":".trellis/spec/backend/ai-chat-service.md","reason":"Core AI service contract — stream/call/callStructured patterns to reuse in interview module."}
+{"file":".trellis/spec/backend/ai-chat-history.md","reason":"Chat memory and conversation ID conventions for interview context management."}
+{"file":".trellis/spec/backend/ai-resume-chat.md","reason":"Reference implementation of AI chat integration — prompt construction, streaming, memory patterns to follow."}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Error handling patterns for AI call failures and retry logic in interview flow."}
+{"file":".trellis/spec/frontend/index.md","reason":"Frontend stack baseline for React + Ant Design + TypeScript interview page changes."}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"Feature-first layout for interview feature files (timer component, hooks)."}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"Component patterns for the new InterviewTimer component and UI restructuring."}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"Custom hook conventions for timer logic (useInterviewTimer) and visibility change handling."}
+{"file":".trellis/spec/frontend/state-management.md","reason":"State management patterns for timer state, interview progress tracking, and page lifecycle."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Type safety for updated DTOs (resumeId required, JD optional) and AI response types."}
