@@ -807,3 +807,36 @@ Implemented full-stack AI interview report: async per-round evaluation with stru
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: Interview multi-round UI
+
+**Date**: 2026-05-19
+**Task**: Interview multi-round UI
+**Branch**: `master`
+
+### Summary
+
+Add round_index column + multi-round UI: compact topbar, round tabs, thinking bubble, response-aware next-round overlay, and optimistic-message render fix.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `627b335` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
