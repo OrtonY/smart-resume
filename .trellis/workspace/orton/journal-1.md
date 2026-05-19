@@ -708,3 +708,36 @@ Extracted AiChatService as the shared AI invocation layer (stream / call / callS
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: Interview module AI integration
+
+**Date**: 2026-05-19
+**Task**: Interview module AI integration
+**Branch**: `master`
+
+### Summary
+
+Replaced placeholder interview responses with AI-powered questioning via AiChatService. Added role-specific prompts (HR/Leader/项目深挖/场景题/行为面试), difficulty-based question depth, per-round question counting (12-18), frontend timer with visibility-change pause, and at-least-one validation for resume/JD.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0b5a114` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
