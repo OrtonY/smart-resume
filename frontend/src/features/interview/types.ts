@@ -28,12 +28,15 @@ export interface InterviewPage {
   totalPages: number
 }
 
+export type InterviewMessageStatus = 'NORMAL' | 'ABORTED'
+
 export interface InterviewMessage {
   id: string
   role: InterviewMessageRole
   content: string
   sortOrder: number
   createdAt: string
+  status?: InterviewMessageStatus
 }
 
 export interface InterviewDetail extends InterviewSummary {

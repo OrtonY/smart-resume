@@ -5,7 +5,9 @@ export function useInterviewTimer(isActive: boolean) {
   const intervalRef = useRef<number | null>(null)
   const isActiveRef = useRef(isActive)
 
-  isActiveRef.current = isActive
+  useEffect(() => {
+    isActiveRef.current = isActive
+  }, [isActive])
 
   const startTimer = useCallback(() => {
     if (intervalRef.current !== null) return

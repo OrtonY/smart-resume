@@ -7,7 +7,9 @@ import {
   PlusOutlined,
   PoweroffOutlined,
   ProfileOutlined,
+  ReloadOutlined,
   SendOutlined,
+  StopOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import {
@@ -35,10 +37,14 @@ import {
   getInterview,
   listInterviews,
   nextInterviewRound,
-  submitInterviewMessage,
+  regenerateStreamInterviewMessage,
+  streamInterviewMessage,
 } from '../features/interview/api/interviewApi'
+import { FileTextOutlined } from '@ant-design/icons'
 import { useInterviewTimer } from '../features/interview/hooks/useInterviewTimer'
 import { InterviewReportPanel } from '../features/interview/components/InterviewReportPanel'
+import { MarkdownMessage } from '../lib/markdown/MarkdownMessage'
+import { MarkdownComposer } from '../lib/markdown/MarkdownComposer'
 import {
   INTERVIEW_DIFFICULTY_OPTIONS,
   INTERVIEW_STATUS_OPTIONS,
@@ -83,7 +89,10 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   const [creating, setCreating] = useState(false)
   const [createOpen, setCreateOpen] = useState(searchParams.get('create') === '1')
   const [submittingMessage, setSubmittingMessage] = useState(false)
+  const [streaming, setStreaming] = useState(false)
+  const [streamingContent, setStreamingContent] = useState('')
   const [messageDraft, setMessageDraft] = useState('')
+  const abortControllerRef = useRef<AbortController | null>(null)
   const [form] = Form.useForm<CreateFormValues>()
 
   const page = Number(searchParams.get('page') ?? '1')
@@ -238,21 +247,87 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   }
 
   async function handleSubmitMessage() {
-    if (!detail) return
+    if (!detail || streaming) return
     const trimmed = messageDraft.trim()
     if (!trimmed) {
       void message.warning('请输入回答内容。')
       return
     }
     setSubmittingMessage(true)
+    setStreaming(true)
+    setStreamingContent('')
+    setMessageDraft('')
+
+    const optimisticCandidate = {
+      id: `temp-${Date.now()}`,
+      role: 'CANDIDATE' as const,
+      content: trimmed,
+      sortOrder: (detail.messages.at(-1)?.sortOrder ?? 0) + 1,
+      createdAt: new Date().toISOString(),
+    }
+    setDetail((prev) => prev ? { ...prev, messages: [...prev.messages, optimisticCandidate] } : prev)
+
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     try {
-      const next = await submitInterviewMessage(detail.id, trimmed)
-      setDetail(next)
-      setMessageDraft('')
+      await streamInterviewMessage(detail.id, trimmed, (event) => {
+        if (event.type === 'message' && event.content) {
+          setStreamingContent((prev) => prev + event.content)
+        }
+      }, { signal: controller.signal })
+      const refreshed = await getInterview(detail.id)
+      setDetail(refreshed)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '发送失败。')
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        const refreshed = await getInterview(detail.id)
+        setDetail(refreshed)
+      } else {
+        void message.error(error instanceof Error ? error.message : '发送失败。')
+        setDetail((prev) => {
+          if (!prev) return prev
+          return { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticCandidate.id) }
+        })
+      }
     } finally {
+      abortControllerRef.current = null
       setSubmittingMessage(false)
+      setStreaming(false)
+      setStreamingContent('')
+    }
+  }
+
+  function handleStopStreaming() {
+    abortControllerRef.current?.abort()
+  }
+
+  async function handleRegenerate() {
+    if (!detail || streaming) return
+    setStreaming(true)
+    setStreamingContent('')
+
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    try {
+      await regenerateStreamInterviewMessage(detail.id, (event) => {
+        if (event.type === 'message' && event.content) {
+          setStreamingContent((prev) => prev + event.content)
+        }
+      }, { signal: controller.signal })
+      const refreshed = await getInterview(detail.id)
+      setDetail(refreshed)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        const refreshed = await getInterview(detail.id)
+        setDetail(refreshed)
+      } else {
+        void message.error(error instanceof Error ? error.message : '重新生成失败。')
+      }
+    } finally {
+      abortControllerRef.current = null
+      setStreaming(false)
+      setStreamingContent('')
     }
   }
 
@@ -262,14 +337,19 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         detail={detail}
         loading={loadingDetail}
         messageDraft={messageDraft}
+        streaming={streaming}
+        streamingContent={streamingContent}
         onBack={() => navigate('/app/interviews')}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
         onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束。')}
         onLogout={onLogout}
         onNextRound={() => detail && void refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。')}
         onSubmitMessage={() => void handleSubmitMessage()}
+        onStopStreaming={handleStopStreaming}
+        onRegenerate={() => void handleRegenerate()}
         onUpdateMessageDraft={setMessageDraft}
         submittingMessage={submittingMessage}
+        setDetail={setDetail}
       />
     )
   }
@@ -438,6 +518,13 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           </Space>
         </Form>
       </Drawer>
+
+      {creating && (
+        <div className="interview-creating-overlay">
+          <Spin size="large" />
+          <p>AI 正在准备面试题目，请稍候...</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -446,31 +533,42 @@ function InterviewDetailView({
   detail,
   loading,
   messageDraft,
+  streaming,
+  streamingContent,
   onBack,
   onContinue,
   onEnd,
   onLogout,
   onNextRound,
   onSubmitMessage,
+  onStopStreaming,
+  onRegenerate,
   onUpdateMessageDraft,
   submittingMessage,
+  setDetail,
 }: {
   detail: InterviewDetail | null
   loading: boolean
   messageDraft: string
+  streaming: boolean
+  streamingContent: string
   onBack: () => void
   onContinue: () => void
   onEnd: () => void
   onLogout: () => void
   onNextRound: () => void
   onSubmitMessage: () => void
+  onStopStreaming: () => void
+  onRegenerate: () => void
   onUpdateMessageDraft: (value: string) => void
   submittingMessage: boolean
+  setDetail: React.Dispatch<React.SetStateAction<InterviewDetail | null>>
 }) {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
   const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS')
+  const [reportDrawerOpen, setReportDrawerOpen] = useState(false)
 
   function isNearBottom(target: HTMLDivElement) {
     return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
@@ -512,6 +610,16 @@ function InterviewDetailView({
     })
     return () => window.cancelAnimationFrame(frame)
   }, [detail?.id])
+
+  useEffect(() => {
+    if (!streaming || !streamingContent || !shouldAutoScrollRef.current) {
+      return
+    }
+    const frame = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom('auto')
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [streaming, streamingContent])
 
   if (loading) {
     return (
@@ -562,6 +670,15 @@ function InterviewDetailView({
                 <Button danger icon={<PoweroffOutlined />}>结束面试</Button>
               </Popconfirm>
             ) : null}
+            {(detail.status === 'ENDED' || detail.reportStatus === 'READY' || detail.reportStatus === 'GENERATING' || detail.reportStatus === 'FAILED') && (
+              <Button
+                type="primary"
+                icon={<FileTextOutlined />}
+                onClick={() => setReportDrawerOpen(true)}
+              >
+                查看报告
+              </Button>
+            )}
             <Button onClick={onLogout}>锁定</Button>
           </Space>
         </div>
@@ -583,40 +700,97 @@ function InterviewDetailView({
             </Space>
 
             <div className="interview-message-list" ref={messagesContainerRef} onScroll={handleMessageListScroll}>
-              {detail.messages.map((item) => (
-                <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
+              {detail.messages.map((item, index) => {
+                const isLastInterviewerMessage =
+                  item.role === 'INTERVIEWER' &&
+                  index === detail.messages.length - 1 &&
+                  item.status === 'ABORTED'
+                return (
+                  <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
+                    <div className="interview-message__role">
+                      <MessageOutlined />
+                      {item.role === 'CANDIDATE' ? '候选人' : '面试官'}
+                      {item.status === 'ABORTED' ? (
+                        <Tag color="warning" style={{ marginLeft: 8 }}>回复中断</Tag>
+                      ) : null}
+                    </div>
+                    <div className="interview-message__bubble">
+                      <MarkdownMessage content={item.content} />
+                      <span>{new Date(item.createdAt).toLocaleString()}</span>
+                      {isLastInterviewerMessage && canMessage && !streaming ? (
+                        <div style={{ marginTop: 8 }}>
+                          <Button
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            onClick={onRegenerate}
+                          >
+                            重新生成
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
+              {streaming && (
+                <div className="interview-message interview-message--interviewer">
                   <div className="interview-message__role">
                     <MessageOutlined />
-                    {item.role === 'CANDIDATE' ? '候选人' : '面试官'}
+                    面试官
                   </div>
                   <div className="interview-message__bubble">
-                    <p>{item.content}</p>
-                    <span>{new Date(item.createdAt).toLocaleString()}</span>
+                    {streamingContent ? (
+                      <MarkdownMessage content={streamingContent} streaming />
+                    ) : (
+                      <Spin size="small" />
+                    )}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="interview-composer">
-              <Input.TextArea
-                rows={4}
+              <MarkdownComposer
                 value={messageDraft}
-                disabled={!canMessage}
+                onChange={onUpdateMessageDraft}
+                onSubmit={canMessage ? onSubmitMessage : undefined}
                 placeholder={canMessage ? '输入你的回答...' : '当前状态不能继续回答。'}
-                onChange={(event) => onUpdateMessageDraft(event.target.value)}
-              />
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                loading={submittingMessage}
                 disabled={!canMessage}
-                onClick={onSubmitMessage}
-              >
-                发送回答
-              </Button>
+                autoSize={{ minRows: 3, maxRows: 8 }}
+              />
+              {streaming ? (
+                <Button
+                  danger
+                  icon={<StopOutlined />}
+                  onClick={onStopStreaming}
+                >
+                  停止
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  loading={submittingMessage}
+                  disabled={!canMessage}
+                  onClick={onSubmitMessage}
+                >
+                  发送回答
+                </Button>
+              )}
             </div>
           </Card>
 
+        </div>
+      </div>
+
+      <Drawer
+        title="面试报告"
+        open={reportDrawerOpen}
+        width="50%"
+        onClose={() => setReportDrawerOpen(false)}
+        destroyOnHidden
+      >
+        {detail && (
           <InterviewReportPanel
             interviewId={detail.id}
             interviewEnded={detail.status === 'ENDED'}
@@ -626,10 +800,13 @@ function InterviewDetailView({
               setDetail((prev) =>
                 prev ? { ...prev, reportStatus: newStatus, reportContent: newContent } : prev,
               )
+              if (newStatus === 'READY' && detail) {
+                void getInterview(detail.id).then(setDetail)
+              }
             }}
           />
-        </div>
-      </div>
+        )}
+      </Drawer>
     </div>
   )
 }

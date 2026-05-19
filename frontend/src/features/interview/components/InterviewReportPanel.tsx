@@ -1,6 +1,6 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Collapse, Empty, Progress, Spin, Tag, Typography } from 'antd'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { regenerateReport } from '../api/interviewApi'
 import type {
   InterviewReport as InterviewReportData,
@@ -25,27 +25,26 @@ export function InterviewReportPanel({
   reportContent,
   onStatusChange,
 }: InterviewReportPanelProps) {
-  const [status, setStatus] = useState<InterviewReportStatus>(reportStatus)
-  const [report, setReport] = useState<InterviewReportData | null>(() => parseReport(reportContent))
+  const [streamStatus, setStreamStatus] = useState<InterviewReportStatus | null>(null)
+  const [streamReport, setStreamReport] = useState<InterviewReportData | null>(null)
   const [regenerating, setRegenerating] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
 
-  useEffect(() => {
-    setStatus(reportStatus)
-    setReport(parseReport(reportContent))
-  }, [reportStatus, reportContent])
+  const propReport = useMemo(() => parseReport(reportContent), [reportContent])
+  const activeStatus = streamStatus ?? reportStatus
+  const activeReport = streamReport ?? propReport
 
   useEffect(() => {
-    if (status !== 'GENERATING' && status !== 'PENDING') return
+    if (!interviewEnded || activeStatus !== 'GENERATING') return
 
     const es = new EventSource(`/api/interviews/${interviewId}/report/events`)
     eventSourceRef.current = es
 
     es.addEventListener('report-status', (event) => {
       const data: ReportStatusEvent = JSON.parse(event.data)
-      setStatus(data.reportStatus)
+      setStreamStatus(data.reportStatus)
       if (data.reportContent) {
-        setReport(parseReport(data.reportContent))
+        setStreamReport(parseReport(data.reportContent))
       }
       onStatusChange?.(data.reportStatus, data.reportContent)
       if (data.reportStatus === 'READY' || data.reportStatus === 'FAILED') {
@@ -60,11 +59,12 @@ export function InterviewReportPanel({
     return () => {
       es.close()
     }
-  }, [interviewId, status, onStatusChange])
+  }, [interviewId, activeStatus, interviewEnded, onStatusChange])
 
   const handleRegenerate = useCallback(async () => {
     setRegenerating(true)
-    setStatus('GENERATING')
+    setStreamStatus('GENERATING')
+    setStreamReport(null)
     try {
       await regenerateReport(interviewId)
     } finally {
@@ -72,7 +72,7 @@ export function InterviewReportPanel({
     }
   }, [interviewId])
 
-  if (status === 'PENDING') {
+  if (activeStatus === 'PENDING') {
     return (
       <Card className="glass-card interview-report-panel" bordered={false}>
         <Title level={4}>面试报告</Title>
@@ -91,7 +91,7 @@ export function InterviewReportPanel({
     )
   }
 
-  if (status === 'GENERATING') {
+  if (activeStatus === 'GENERATING') {
     return (
       <Card className="glass-card interview-report-panel" bordered={false}>
         <Title level={4}>面试报告</Title>
@@ -103,7 +103,7 @@ export function InterviewReportPanel({
     )
   }
 
-  if (status === 'FAILED') {
+  if (activeStatus === 'FAILED') {
     return (
       <Card className="glass-card interview-report-panel" bordered={false}>
         <Title level={4}>面试报告</Title>
@@ -121,7 +121,7 @@ export function InterviewReportPanel({
     )
   }
 
-  if (!report) {
+  if (!activeReport) {
     return (
       <Card className="glass-card interview-report-panel" bordered={false}>
         <Title level={4}>面试报告</Title>
@@ -134,11 +134,11 @@ export function InterviewReportPanel({
     <Card className="glass-card interview-report-panel" bordered={false}>
       <Title level={4}>面试报告</Title>
       <div className="interview-report-content">
-        <ScoreOverview report={report} />
-        <SkillAssessmentSection assessment={report.skillAssessment} />
-        <StrengthsAndImprovements strengths={report.strengths} improvements={report.improvements} />
-        <RoundsSection rounds={report.rounds} />
-        <LearningResourcesSection resources={report.learningResources} />
+        <ScoreOverview report={activeReport} />
+        <SkillAssessmentSection assessment={activeReport.skillAssessment} />
+        <StrengthsAndImprovements strengths={activeReport.strengths} improvements={activeReport.improvements} />
+        <RoundsSection rounds={activeReport.rounds} />
+        <LearningResourcesSection resources={activeReport.learningResources} />
       </div>
     </Card>
   )

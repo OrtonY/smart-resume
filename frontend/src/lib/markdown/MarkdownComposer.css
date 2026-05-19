@@ -1,0 +1,39 @@
+.markdown-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.markdown-composer__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.markdown-composer__textarea.ant-input {
+  border: none;
+  box-shadow: none;
+  resize: vertical;
+}
+
+.markdown-composer__textarea.ant-input:focus,
+.markdown-composer__textarea.ant-input-focused {
+  border: none;
+  box-shadow: none;
+}
+
+.markdown-composer__preview {
+  padding: 8px 12px;
+  min-height: 80px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.markdown-composer__preview-empty {
+  color: #bfbfbf;
+}

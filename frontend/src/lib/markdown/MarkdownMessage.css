@@ -1,0 +1,86 @@
+.markdown-message {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.markdown-message p {
+  margin: 0 0 0.5em;
+}
+
+.markdown-message p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-message pre {
+  margin: 0.5em 0;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-message code {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.875em;
+}
+
+.markdown-message :not(pre) > code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+
+.markdown-message ul,
+.markdown-message ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.markdown-message li {
+  margin: 0.25em 0;
+}
+
+.markdown-message table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  width: 100%;
+}
+
+.markdown-message th,
+.markdown-message td {
+  border: 1px solid #d9d9d9;
+  padding: 0.4em 0.8em;
+  text-align: left;
+}
+
+.markdown-message th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.markdown-message blockquote {
+  margin: 0.5em 0;
+  padding: 0.25em 1em;
+  border-left: 3px solid #d9d9d9;
+  color: #666;
+}
+
+.markdown-message a {
+  color: #1677ff;
+  text-decoration: none;
+}
+
+.markdown-message a:hover {
+  text-decoration: underline;
+}
+
+.markdown-message h1,
+.markdown-message h2,
+.markdown-message h3,
+.markdown-message h4 {
+  margin: 0.75em 0 0.25em;
+  font-weight: 600;
+}
+
+.markdown-message h1 { font-size: 1.25em; }
+.markdown-message h2 { font-size: 1.15em; }
+.markdown-message h3 { font-size: 1.05em; }
+.markdown-message h4 { font-size: 1em; }

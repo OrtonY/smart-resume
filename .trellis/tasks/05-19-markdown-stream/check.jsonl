@@ -1,0 +1,13 @@
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "校验后端 SSE 端点、Service 改动、Flyway 迁移是否符合代码规范与禁用模式"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "校验 SSE 异常分支（IOException/ABORTED 落库）是否符合统一错误处理规范"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "校验 interview_messages.status 字段命名/默认值/索引/Flyway 版本号是否合规"}
+{"file": ".trellis/spec/backend/ai-resume-chat.md", "reason": "校验面试 SSE 事件协议是否与既有 AI 简历助手协议一致（A3 决策）"}
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "校验是否正确复用共享 AI 调用层而非重复实现 stream 逻辑"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "校验流式生命周期日志覆盖度与字段结构"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "校验前端组件、hook、SSE 解析改动是否符合代码规范"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "校验 MarkdownMessage / MarkdownComposer 的 props 设计、组合方式是否合规"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "校验 SSE 事件类型、ABORTED 状态枚举、Markdown 渲染节点的类型定义是否严格"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "校验 InterviewPage 在途消息状态、流式中断/恢复的状态流是否符合规范"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "校验 streamEvents 公共化与面试流式 hook 是否符合 hook 设计原则"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "校验 streamEvents 抽离与 MarkdownMessage 在 AI/面试两处复用的合理性"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "校验前后端契约（SSE schema、ABORTED 字段命名）一致性"}

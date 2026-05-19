@@ -15,6 +15,7 @@ public class InterviewMessageEntity {
     private String content;
     private Integer sortOrder;
     private LocalDateTime createdAt;
+    private String status;
 
     public String getId() {
         return id;
@@ -62,5 +63,13 @@ public class InterviewMessageEntity {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

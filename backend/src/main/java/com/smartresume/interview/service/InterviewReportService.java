@@ -93,9 +93,7 @@ public class InterviewReportService {
         List<InterviewSessionEntity> stuckSessions = interviewSessionMapper.selectListByQuery(query);
         for (InterviewSessionEntity session : stuckSessions) {
             log.warn("Resetting stuck GENERATING report to FAILED for interview session {}", session.getId());
-            session.setReportStatus(REPORT_FAILED);
-            session.setUpdatedAt(LocalDateTime.now());
-            interviewSessionMapper.update(session);
+            updateReportStatus(session.getId(), REPORT_FAILED, null);
         }
         if (!stuckSessions.isEmpty()) {
             log.warn("Reset {} stuck GENERATING report(s) to FAILED on startup", stuckSessions.size());
@@ -136,28 +134,31 @@ public class InterviewReportService {
             return;
         }
 
-        session.setReportStatus(REPORT_GENERATING);
-        session.setUpdatedAt(LocalDateTime.now());
-        interviewSessionMapper.update(session);
+        updateReportStatus(interviewId, REPORT_GENERATING, null);
         broadcastStatus(interviewId, REPORT_GENERATING, null);
 
         try {
             InterviewReport report = generateReport(session);
             String reportJson = objectMapper.writeValueAsString(report);
 
-            session.setReportStatus(REPORT_READY);
-            session.setReportContent(reportJson);
-            session.setUpdatedAt(LocalDateTime.now());
-            interviewSessionMapper.update(session);
+            updateReportStatus(interviewId, REPORT_READY, reportJson);
             broadcastStatus(interviewId, REPORT_READY, reportJson);
             log.info("Report generation completed for interview {}", interviewId);
         } catch (Exception e) {
             log.error("Report generation failed for interview {}: {}", interviewId, e.getMessage(), e);
-            session.setReportStatus(REPORT_FAILED);
-            session.setUpdatedAt(LocalDateTime.now());
-            interviewSessionMapper.update(session);
+            updateReportStatus(interviewId, REPORT_FAILED, null);
             broadcastStatus(interviewId, REPORT_FAILED, null);
         }
+    }
+
+    private void updateReportStatus(String interviewId, String reportStatus, String reportContent) {
+        InterviewSessionEntity partial = new InterviewSessionEntity();
+        partial.setId(interviewId);
+        partial.setReportStatus(reportStatus);
+        partial.setReportContent(reportContent);
+        partial.setUpdatedAt(LocalDateTime.now());
+        QueryWrapper where = QueryWrapper.create().where("id = ?", interviewId);
+        interviewSessionMapper.updateByQuery(partial, where);
     }
 
     private InterviewReport generateReport(InterviewSessionEntity session) {

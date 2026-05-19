@@ -1552,15 +1552,23 @@ a {
 }
 
 .ai-chat-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.ai-chat-context,
-.ai-chat-composer {
+.ai-chat-context {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.ai-chat-composer {
+  display: grid;
+  gap: 10px;
 }
 
 .ai-chat-context {
@@ -1579,9 +1587,22 @@ a {
 }
 
 .ai-chat-main {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   min-width: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ai-chat-main > .ant-spin,
+.ai-chat-main > .ant-spin > .ant-spin-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .ai-chat-conversation-list .ant-list-item {
@@ -1606,8 +1627,8 @@ a {
   display: grid;
   align-content: start;
   gap: 12px;
-  min-height: 280px;
-  max-height: min(52vh, 520px);
+  min-height: 200px;
+  flex: 1;
   overflow: auto;
   padding: 14px;
   border: 1px solid rgba(20, 33, 61, 0.08);
@@ -1653,12 +1674,8 @@ a {
   justify-content: flex-start;
 }
 
-.ai-chat-composer {
-  align-items: flex-end;
-}
-
-.ai-chat-composer .ant-input {
-  flex: 1;
+.ai-chat-composer .ant-btn {
+  justify-self: end;
 }
 
 .resume-score-panel {
@@ -1960,14 +1977,36 @@ a {
 .interview-detail {
   grid-template-rows: auto 1fr;
   height: calc(100vh - 36px);
+  min-height: 0;
   overflow: hidden;
 }
 
 .interview-detail__layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   min-height: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.interview-creating-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.interview-creating-overlay p {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-secondary);
 }
 
 .interview-detail__main,
@@ -1976,9 +2015,22 @@ a {
   overflow: hidden;
 }
 
-.interview-detail__main .ant-card-body,
+.interview-detail__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.interview-detail__main .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .interview-report-panel .ant-card-body {
-  height: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1993,8 +2045,10 @@ a {
 
 .interview-message-list {
   display: grid;
+  align-content: start;
   gap: 14px;
-  min-height: 260px;
+  flex: 1 1 auto;
+  min-height: 0;
   margin: 18px 0;
   padding: 16px;
   overflow: auto;
@@ -2131,8 +2185,7 @@ a {
 @media (max-width: 1280px) {
   .resume-editor-layout,
   .workspace-columns,
-  .template-gallery-layout,
-  .interview-detail__layout {
+  .template-gallery-layout {
     grid-template-columns: 1fr;
   }
 

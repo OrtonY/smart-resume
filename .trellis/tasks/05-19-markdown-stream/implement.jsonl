@@ -1,0 +1,16 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "面试流式接口必须复用既有 AI 调用层 (stream/call/callStructured)，了解 conversation id 格式与重试策略"}
+{"file": ".trellis/spec/backend/ai-resume-chat.md", "reason": "AI 简历助手已有 SSE 事件协议是面试 SSE 的复用模板（A3 决策），需对齐 event 名/payload 字段/异常事件约定"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "面试消息落库（A4 候选人立即落库 + AI 流结束整体落库）需了解会话历史持久化规范与 conversation id 规则"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "interview_messages 表需新增 status 字段（A5 ABORTED 标记）+ Flyway 迁移规范"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "新增 stream 端点与 SseEmitter 实现需放在正确的模块/包路径下"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "SSE 流式异常分支（IOException/ClientAbortException）要按统一错误处理规范输出 event: error"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "流式生命周期（开始/chunk/done/abort）需结构化日志便于排查"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "后端代码风格、禁用模式、测试规范"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "新增 MarkdownMessage / MarkdownComposer 共享组件需符合 props 约定与组合模式"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "抽离 streamEvents 公共 hook、面试流式订阅 hook 的规范"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "InterviewPage 需新增「在途消息」状态（流式 buffer），需符合本地/服务端状态划分原则"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "SSE 事件 payload、ABORTED 状态枚举、Markdown 节点 props 的类型规范"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "shared/sse/streamEvents.ts 等公共代码放置位置；feature 与 shared 的边界"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端代码风格、禁用模式（如 raw HTML 注入）、测试规范"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "把 aiApi.ts#streamEvents 抽到 shared/、把两处 chat bubble 切换到 MarkdownMessage 时，需遵循复用判断框架"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "面试流式涉及前后端契约（SSE 事件 schema + ABORTED 状态字段），跨层一致性必读"}

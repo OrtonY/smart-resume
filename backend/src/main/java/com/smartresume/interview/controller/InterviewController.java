@@ -1,5 +1,6 @@
 package com.smartresume.interview.controller;
 
+import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/api/interviews")
@@ -72,6 +74,19 @@ public class InterviewController {
         @Valid @RequestBody InterviewMessageRequest request
     ) {
         return ApiResponse.success(interviewService.submitMessage(interviewId, request), "Interview message saved");
+    }
+
+    @PostMapping(value = "/{interviewId}/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<AiChatEvent> streamMessage(
+        @PathVariable String interviewId,
+        @Valid @RequestBody InterviewMessageRequest request
+    ) {
+        return interviewService.streamMessage(interviewId, request);
+    }
+
+    @PostMapping(value = "/{interviewId}/messages/regenerate-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<AiChatEvent> regenerateStreamMessage(@PathVariable String interviewId) {
+        return interviewService.regenerateStreamMessage(interviewId);
     }
 
     @PostMapping("/{interviewId}/end")

@@ -1,4 +1,5 @@
 import { clearAccessToken, getAccessToken } from '../../../lib/auth/tokenStorage'
+import { streamEvents } from '../../../lib/sse/streamEvents'
 import type {
   AiChatConversation,
   AiChatMessage,
@@ -52,7 +53,7 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
 }
 
 export function streamAiChat(payload: AiChatRequest, onEvent: (event: AiChatEvent) => void) {
-  return streamEvents('/api/ai/chat/stream', payload, onEvent)
+  return streamEvents<AiChatEvent>('/api/ai/chat/stream', payload, onEvent)
 }
 
 export async function getAiVendors() {
@@ -82,72 +83,6 @@ async function requestJson<T>(path: string, options: Omit<RequestInit, 'body'> &
   }
 
   return payload.data
-}
-
-async function streamEvents(
-  path: string,
-  body: unknown,
-  onEvent: (event: AiChatEvent) => void,
-) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: buildHeaders({
-      Accept: 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    }),
-    body: JSON.stringify(body),
-  })
-
-  if (!response.ok || !response.body) {
-    if (response.status === 401) {
-      clearAccessToken()
-    }
-    throw new Error('AI stream failed')
-  }
-
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) {
-      break
-    }
-
-    buffer += decoder.decode(value, { stream: true })
-
-    while (true) {
-      const eventEnd = buffer.indexOf('\n\n')
-      if (eventEnd < 0) {
-        break
-      }
-
-      const rawEvent = buffer.slice(0, eventEnd)
-      buffer = buffer.slice(eventEnd + 2)
-      const dataLine = rawEvent
-        .split('\n')
-        .map((line) => line.trim())
-        .find((line) => line.startsWith('data:'))
-
-      if (!dataLine) {
-        continue
-      }
-
-      const data = dataLine.slice(5).trim()
-      if (!data) {
-        continue
-      }
-
-      let event: AiChatEvent
-      try {
-        event = JSON.parse(data) as AiChatEvent
-      } catch {
-        event = { type: 'message', content: data }
-      }
-      onEvent(event)
-    }
-  }
 }
 
 function buildHeaders(headers?: HeadersInit) {
