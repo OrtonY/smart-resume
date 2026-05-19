@@ -1,7 +1,13 @@
 package com.smartresume.interview.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import com.smartresume.ai.dto.AiInvocationRequest;
+import com.smartresume.ai.service.AiChatService;
+import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
@@ -17,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 class InterviewServiceTest {
@@ -32,6 +39,9 @@ class InterviewServiceTest {
 
     @Autowired
     private JdbcChatMemoryRepository chatMemoryRepository;
+
+    @MockitoBean
+    private AiChatService aiChatService;
 
     @BeforeEach
     void setUpSchema() {
@@ -53,7 +63,7 @@ class InterviewServiceTest {
                 resume_id varchar(64) null,
                 title varchar(200) not null,
                 ai_conversation_id varchar(128) not null unique,
-                job_description text not null,
+                job_description text,
                 difficulty varchar(20) not null,
                 interviewer_roles_json text not null,
                 active_round_index integer not null default 0,
@@ -87,10 +97,15 @@ class InterviewServiceTest {
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");
         jdbcTemplate.update("delete from resumes");
+
+        when(aiChatService.call(any(AiInvocationRequest.class)))
+            .thenReturn("你好，我是本轮面试官。请先做一个简短的自我介绍。")
+            .thenReturn("请详细描述一下你在订单系统优化中的具体贡献。")
+            .thenReturn("好的，现在进入下一轮面试。请介绍一下你最有挑战性的项目。");
     }
 
     @Test
-    void createsInterviewAndDrivesLifecycleWithPlaceholderMessagesAndReport() {
+    void createsInterviewAndDrivesLifecycleWithAiMessages() {
         String resumeId = createResume("Java 后端简历");
 
         InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
@@ -123,7 +138,6 @@ class InterviewServiceTest {
         InterviewDetailResponse secondRound = interviewService.nextRound(created.id());
         assertThat(secondRound.activeRoundIndex()).isEqualTo(1);
         assertThat(secondRound.messages()).hasSize(4);
-        assertThat(secondRound.messages().get(3).content()).contains("第 2 轮「项目深挖」");
         assertThat(chatMemoryRepository.findByConversationId(created.aiConversationId())).hasSize(4);
 
         InterviewDetailResponse paused = interviewService.pauseInterview(created.id());
@@ -134,13 +148,65 @@ class InterviewServiceTest {
 
         InterviewDetailResponse ended = interviewService.endInterview(created.id());
         assertThat(ended.status()).isEqualTo("ENDED");
-        assertThat(ended.reportStatus()).isEqualTo("READY");
-        assertThat(ended.reportContent()).contains("占位面试报告");
+        assertThat(ended.reportStatus()).isEqualTo("PENDING");
         assertThat(ended.endedAt()).isNotNull();
 
         InterviewPageResponse filtered = interviewService.listInterviews(resumeId, "ENDED", "后端", 1, 6);
         assertThat(filtered.total()).isEqualTo(1);
         assertThat(filtered.items().getFirst().id()).isEqualTo(created.id());
+    }
+
+    @Test
+    void createsInterviewWithoutJobDescription() {
+        when(aiChatService.call(any(AiInvocationRequest.class)))
+            .thenReturn("你好，我看了你的简历，请先做一个自我介绍。");
+
+        String resumeId = createResume("前端简历");
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            "前端面试",
+            null,
+            "EASY",
+            List.of("HR")
+        ));
+
+        assertThat(created.jobDescription()).isNull();
+        assertThat(created.messages()).hasSize(1);
+        assertThat(created.messages().getFirst().role()).isEqualTo("INTERVIEWER");
+    }
+
+    @Test
+    void createsInterviewWithoutResume() {
+        when(aiChatService.call(any(AiInvocationRequest.class)))
+            .thenReturn("你好，根据 JD 描述，请先做一个自我介绍。");
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            null,
+            "纯 JD 面试",
+            "负责 Spring Boot 微服务开发",
+            "MEDIUM",
+            List.of("Leader")
+        ));
+
+        assertThat(created.resumeId()).isNull();
+        assertThat(created.resumeTitle()).isNull();
+        assertThat(created.jobDescription()).isEqualTo("负责 Spring Boot 微服务开发");
+        assertThat(created.messages()).hasSize(1);
+        assertThat(created.messages().getFirst().role()).isEqualTo("INTERVIEWER");
+    }
+
+    @Test
+    void throwsWhenBothResumeAndJobDescriptionMissing() {
+        assertThatThrownBy(() -> interviewService.createInterview(new InterviewCreateRequest(
+            null,
+            "无效面试",
+            null,
+            "EASY",
+            List.of("HR")
+        )))
+            .isInstanceOf(AppException.class)
+            .hasMessageContaining("简历和 JD 至少填写一个");
     }
 
     private String createResume(String title) {

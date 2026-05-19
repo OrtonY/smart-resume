@@ -1,8 +1,8 @@
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
+  ClockCircleOutlined,
   MessageOutlined,
-  PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
   PoweroffOutlined,
@@ -35,9 +35,9 @@ import {
   getInterview,
   listInterviews,
   nextInterviewRound,
-  pauseInterview,
   submitInterviewMessage,
 } from '../features/interview/api/interviewApi'
+import { useInterviewTimer } from '../features/interview/hooks/useInterviewTimer'
 import {
   INTERVIEW_DIFFICULTY_OPTIONS,
   INTERVIEW_STATUS_OPTIONS,
@@ -64,7 +64,7 @@ interface InterviewPageProps {
 type CreateFormValues = {
   resumeId?: string
   title: string
-  jobDescription: string
+  jobDescription?: string
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
 }
@@ -210,7 +210,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       const payload: InterviewCreatePayload = {
         resumeId: values.resumeId || null,
         title: values.title.trim(),
-        jobDescription: values.jobDescription.trim(),
+        jobDescription: values.jobDescription?.trim() || null,
         difficulty: values.difficulty,
         interviewerRoles: values.interviewerRoles.map((role) => role.trim()).filter(Boolean),
       }
@@ -263,10 +263,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         messageDraft={messageDraft}
         onBack={() => navigate('/app/interviews')}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
-        onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束，报告已生成。')}
+        onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束。')}
         onLogout={onLogout}
         onNextRound={() => detail && void refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。')}
-        onPause={() => detail && void refreshAfterAction(() => pauseInterview(detail.id), '面试已暂停。')}
         onSubmitMessage={() => void handleSubmitMessage()}
         onUpdateMessageDraft={setMessageDraft}
         submittingMessage={submittingMessage}
@@ -385,14 +384,40 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           initialValues={{ difficulty: 'MEDIUM', resumeId: filterResumeId }}
           onFinish={(values) => void handleCreate(values)}
         >
-          <Form.Item name="resumeId" label="关联简历（可选）">
-            <Select allowClear placeholder="不绑定简历" options={resumeOptions} />
+          <Form.Item
+            name="resumeId"
+            label="关联简历（可选）"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value || form.getFieldValue('jobDescription')?.trim()) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('简历和 JD 至少填写一个'))
+                },
+              },
+            ]}
+          >
+            <Select allowClear placeholder="选择简历" options={resumeOptions} />
           </Form.Item>
           <Form.Item name="title" label="面试标题" rules={[{ required: true, message: '请输入面试标题' }]}>
             <Input maxLength={200} placeholder="例如：Java 后端 Leader 面" />
           </Form.Item>
-          <Form.Item name="jobDescription" label="面试 JD" rules={[{ required: true, message: '请输入面试 JD' }]}>
-            <Input.TextArea rows={8} placeholder="粘贴或输入岗位 JD、职责和要求" />
+          <Form.Item
+            name="jobDescription"
+            label="面试 JD（可选）"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value?.trim() || form.getFieldValue('resumeId')) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('简历和 JD 至少填写一个'))
+                },
+              },
+            ]}
+          >
+            <Input.TextArea rows={8} placeholder="粘贴或输入岗位 JD、职责和要求（不填则纯基于简历出题）" />
           </Form.Item>
           <Form.Item name="difficulty" label="面试难度" rules={[{ required: true, message: '请选择面试难度' }]}>
             <Select options={INTERVIEW_DIFFICULTY_OPTIONS} />
@@ -425,7 +450,6 @@ function InterviewDetailView({
   onEnd,
   onLogout,
   onNextRound,
-  onPause,
   onSubmitMessage,
   onUpdateMessageDraft,
   submittingMessage,
@@ -438,7 +462,6 @@ function InterviewDetailView({
   onEnd: () => void
   onLogout: () => void
   onNextRound: () => void
-  onPause: () => void
   onSubmitMessage: () => void
   onUpdateMessageDraft: (value: string) => void
   submittingMessage: boolean
@@ -446,6 +469,7 @@ function InterviewDetailView({
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
+  const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS')
 
   function isNearBottom(target: HTMLDivElement) {
     return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
@@ -520,12 +544,12 @@ function InterviewDetailView({
             <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回面试中心</Button>
             <Tag color={statusColor(detail.status)}>{interviewStatusLabel(detail.status)}</Tag>
             <Tag color="purple">{interviewReportStatusLabel(detail.reportStatus)}</Tag>
-            {detail.resumeTitle ? <Tag icon={<ProfileOutlined />}>{detail.resumeTitle}</Tag> : <Tag>未绑定简历</Tag>}
+            {detail.resumeTitle ? <Tag icon={<ProfileOutlined />}>{detail.resumeTitle}</Tag> : null}
           </Space>
           <Space wrap>
-            {detail.status === 'IN_PROGRESS' ? (
-              <Button icon={<PauseCircleOutlined />} onClick={onPause}>暂停</Button>
-            ) : null}
+            <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 14, padding: '4px 10px' }}>
+              {timerDisplay}
+            </Tag>
             {detail.status === 'PAUSED' ? (
               <Button type="primary" icon={<PlayCircleOutlined />} onClick={onContinue}>继续</Button>
             ) : null}
@@ -533,7 +557,7 @@ function InterviewDetailView({
               <Button icon={<ArrowRightOutlined />} onClick={onNextRound}>下一轮面试官</Button>
             ) : null}
             {detail.status !== 'ENDED' ? (
-              <Popconfirm title="结束后将生成占位报告，确定结束面试？" onConfirm={onEnd} okText="结束" cancelText="取消">
+              <Popconfirm title="确定结束面试？" onConfirm={onEnd} okText="结束" cancelText="取消">
                 <Button danger icon={<PoweroffOutlined />}>结束面试</Button>
               </Popconfirm>
             ) : null}
@@ -577,7 +601,7 @@ function InterviewDetailView({
                 rows={4}
                 value={messageDraft}
                 disabled={!canMessage}
-                placeholder={canMessage ? '输入你的回答，提交后会生成一条占位追问。' : '当前状态不能继续回答。'}
+                placeholder={canMessage ? '输入你的回答...' : '当前状态不能继续回答。'}
                 onChange={(event) => onUpdateMessageDraft(event.target.value)}
               />
               <Button
@@ -597,7 +621,7 @@ function InterviewDetailView({
             {detail.reportStatus === 'READY' && detail.reportContent ? (
               <pre>{detail.reportContent}</pre>
             ) : (
-              <Empty description="结束面试后生成占位报告。" />
+              <Empty description="面试报告功能开发中，敬请期待。" />
             )}
           </Card>
         </div>
