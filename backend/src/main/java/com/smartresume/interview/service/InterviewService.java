@@ -457,6 +457,7 @@ public class InterviewService {
         message.setRole(role);
         message.setContent(content);
         message.setSortOrder(sortOrder);
+        message.setRoundIndex(currentRoundIndex(session));
         message.setCreatedAt(createdAt);
         message.setStatus("NORMAL");
         interviewMessageMapper.insert(message);
@@ -474,6 +475,7 @@ public class InterviewService {
         message.setRole(role);
         message.setContent(content);
         message.setSortOrder(sortOrder);
+        message.setRoundIndex(currentRoundIndex(session));
         message.setCreatedAt(createdAt);
         message.setStatus(status);
         interviewMessageMapper.insert(message);
@@ -494,6 +496,7 @@ public class InterviewService {
                 message.getRole(),
                 message.getContent(),
                 message.getSortOrder() == null ? 0 : message.getSortOrder(),
+                message.getRoundIndex() == null ? 0 : message.getRoundIndex(),
                 message.getCreatedAt(),
                 message.getStatus()
             ))
@@ -533,28 +536,12 @@ public class InterviewService {
 
     private int countQuestionsInCurrentRound(List<InterviewMessageEntity> allMessages, Integer activeRoundIndex) {
         int roundIndex = activeRoundIndex == null ? 0 : activeRoundIndex;
-
-        if (allMessages.isEmpty()) {
-            return 0;
-        }
-
-        // Find the start index of the current round in the message list.
-        // Round boundaries: the first message is always round 0's opener.
-        // Subsequent round openers are INTERVIEWER messages preceded by another INTERVIEWER message
-        // (because submitMessage always ends with an INTERVIEWER response, then nextRound adds another).
-        int currentRound = 0;
-        int roundStartIndex = 0;
-
-        for (int i = 1; i < allMessages.size() && currentRound < roundIndex; i++) {
-            if ("INTERVIEWER".equals(allMessages.get(i).getRole())
-                && "INTERVIEWER".equals(allMessages.get(i - 1).getRole())) {
-                currentRound++;
-                roundStartIndex = i;
-            }
-        }
-
-        return (int) allMessages.subList(roundStartIndex, allMessages.size()).stream()
+        return (int) allMessages.stream()
             .filter(msg -> "INTERVIEWER".equals(msg.getRole()))
+            .filter(msg -> {
+                Integer messageRound = msg.getRoundIndex();
+                return messageRound != null && messageRound == roundIndex;
+            })
             .count();
     }
 

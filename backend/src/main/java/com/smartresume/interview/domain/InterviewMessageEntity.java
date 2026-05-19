@@ -14,6 +14,7 @@ public class InterviewMessageEntity {
     private String role;
     private String content;
     private Integer sortOrder;
+    private Integer roundIndex;
     private LocalDateTime createdAt;
     private String status;
 
@@ -55,6 +56,14 @@ public class InterviewMessageEntity {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Integer getRoundIndex() {
+        return roundIndex;
+    }
+
+    public void setRoundIndex(Integer roundIndex) {
+        this.roundIndex = roundIndex;
     }
 
     public LocalDateTime getCreatedAt() {

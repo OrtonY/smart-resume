@@ -35,6 +35,7 @@ export interface InterviewMessage {
   role: InterviewMessageRole
   content: string
   sortOrder: number
+  roundIndex: number
   createdAt: string
   status?: InterviewMessageStatus
 }

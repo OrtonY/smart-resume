@@ -60,6 +60,7 @@ public final class InterviewDtos {
         String role,
         String content,
         int sortOrder,
+        int roundIndex,
         LocalDateTime createdAt,
         String status
     ) {
