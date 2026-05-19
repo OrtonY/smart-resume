@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.dto.AiInvocationRequest;
+import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.domain.InterviewMessageEntity;
@@ -31,6 +32,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 @Service
 public class InterviewService {
@@ -214,6 +216,155 @@ public class InterviewService {
         return getInterview(session.getId());
     }
 
+    public Flux<AiChatEvent> streamMessage(String interviewId, InterviewMessageRequest request) {
+        InterviewSessionEntity session = requireSession(interviewId);
+        requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews accept new messages");
+
+        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId());
+        int nextOrder = currentMessages.stream()
+            .map(InterviewMessageEntity::getSortOrder)
+            .filter(Objects::nonNull)
+            .max(Integer::compareTo)
+            .orElse(0) + 1;
+        LocalDateTime now = LocalDateTime.now();
+
+        persistMessage(session, "CANDIDATE", request.content().trim(), nextOrder, now);
+
+        int questionCount = countQuestionsInCurrentRound(currentMessages, session.getActiveRoundIndex());
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+
+        List<String> roles = readInterviewerRoles(session);
+        int roundIndex = currentRoundIndex(session);
+        String currentRole = roles.get(roundIndex);
+        String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
+
+        String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
+            currentRole, session.getDifficulty(), resumeJson,
+            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND
+        );
+
+        AiInvocationRequest invocationRequest = new AiInvocationRequest(
+            systemPrompt, request.content().trim(), session.getAiConversationId()
+        );
+
+        StringBuilder assistantText = new StringBuilder();
+        boolean[] completed = { false };
+
+        return aiChatService.stream(invocationRequest)
+            .doOnNext(event -> {
+                if ("message".equals(event.type())) {
+                    assistantText.append(event.content());
+                }
+            })
+            .doOnComplete(() -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                if (!assistantText.isEmpty()) {
+                    persistMessage(session, "INTERVIEWER", assistantText.toString(), nextOrder + 1, LocalDateTime.now());
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            })
+            .doOnCancel(() -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                if (!assistantText.isEmpty()) {
+                    persistMessageWithStatus(session, "INTERVIEWER", assistantText.toString(), nextOrder + 1, LocalDateTime.now(), "ABORTED");
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            })
+            .doOnError(err -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                log.error("Stream error for interview {}: {}", session.getId(), err.getMessage());
+                if (!assistantText.isEmpty()) {
+                    persistMessageWithStatus(session, "INTERVIEWER", assistantText.toString(), nextOrder + 1, LocalDateTime.now(), "ABORTED");
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            });
+    }
+
+    public Flux<AiChatEvent> regenerateStreamMessage(String interviewId) {
+        InterviewSessionEntity session = requireSession(interviewId);
+        requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews can regenerate messages");
+
+        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId());
+        InterviewMessageEntity lastCandidate = null;
+        for (int i = currentMessages.size() - 1; i >= 0; i--) {
+            if ("CANDIDATE".equals(currentMessages.get(i).getRole())) {
+                lastCandidate = currentMessages.get(i);
+                break;
+            }
+        }
+        if (lastCandidate == null) {
+            throw new AppException(HttpStatus.CONFLICT, "No candidate message to regenerate from");
+        }
+
+        int nextOrder = currentMessages.stream()
+            .map(InterviewMessageEntity::getSortOrder)
+            .filter(Objects::nonNull)
+            .max(Integer::compareTo)
+            .orElse(0) + 1;
+
+        int questionCount = countQuestionsInCurrentRound(currentMessages, session.getActiveRoundIndex());
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+
+        List<String> roles = readInterviewerRoles(session);
+        int roundIndex = currentRoundIndex(session);
+        String currentRole = roles.get(roundIndex);
+        String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
+
+        String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
+            currentRole, session.getDifficulty(), resumeJson,
+            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND
+        );
+
+        AiInvocationRequest invocationRequest = new AiInvocationRequest(
+            systemPrompt, lastCandidate.getContent(), session.getAiConversationId()
+        );
+
+        StringBuilder assistantText = new StringBuilder();
+        boolean[] completed = { false };
+        final int assistantOrder = nextOrder;
+
+        return aiChatService.stream(invocationRequest)
+            .doOnNext(event -> {
+                if ("message".equals(event.type())) {
+                    assistantText.append(event.content());
+                }
+            })
+            .doOnComplete(() -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                if (!assistantText.isEmpty()) {
+                    persistMessage(session, "INTERVIEWER", assistantText.toString(), assistantOrder, LocalDateTime.now());
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            })
+            .doOnCancel(() -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                if (!assistantText.isEmpty()) {
+                    persistMessageWithStatus(session, "INTERVIEWER", assistantText.toString(), assistantOrder, LocalDateTime.now(), "ABORTED");
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            })
+            .doOnError(err -> {
+                if (completed[0]) return;
+                completed[0] = true;
+                log.error("Regenerate stream error for interview {}: {}", session.getId(), err.getMessage());
+                if (!assistantText.isEmpty()) {
+                    persistMessageWithStatus(session, "INTERVIEWER", assistantText.toString(), assistantOrder, LocalDateTime.now(), "ABORTED");
+                    session.setUpdatedAt(LocalDateTime.now());
+                    interviewSessionMapper.update(session);
+                }
+            });
+    }
+
     @Transactional
     public InterviewDetailResponse endInterview(String interviewId) {
         InterviewSessionEntity session = requireSession(interviewId);
@@ -307,8 +458,25 @@ public class InterviewService {
         message.setContent(content);
         message.setSortOrder(sortOrder);
         message.setCreatedAt(createdAt);
+        message.setStatus("NORMAL");
         interviewMessageMapper.insert(message);
         appendChatMemoryMessage(session.getAiConversationId(), role, content);
+    }
+
+    private void persistMessage(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt) {
+        persistMessageWithStatus(session, role, content, sortOrder, createdAt, "NORMAL");
+    }
+
+    private void persistMessageWithStatus(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt, String status) {
+        InterviewMessageEntity message = new InterviewMessageEntity();
+        message.setId(UUID.randomUUID().toString());
+        message.setSessionId(session.getId());
+        message.setRole(role);
+        message.setContent(content);
+        message.setSortOrder(sortOrder);
+        message.setCreatedAt(createdAt);
+        message.setStatus(status);
+        interviewMessageMapper.insert(message);
     }
 
     private List<InterviewMessageEntity> listMessageEntities(String sessionId) {
@@ -326,7 +494,8 @@ public class InterviewService {
                 message.getRole(),
                 message.getContent(),
                 message.getSortOrder() == null ? 0 : message.getSortOrder(),
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                message.getStatus()
             ))
             .toList();
     }

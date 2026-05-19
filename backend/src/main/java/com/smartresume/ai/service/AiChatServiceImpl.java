@@ -60,7 +60,7 @@ public class AiChatServiceImpl implements AiChatService {
 
             return chatModel.stream(prompt)
                 .map(this::extractContent)
-                .filter(content -> content != null && !content.isBlank())
+                .filter(content -> content != null && !content.isEmpty())
                 .concatMap(content -> {
                     assistantText.append(content);
                     return Flux.just(new AiChatEvent("message", content, conversationId));

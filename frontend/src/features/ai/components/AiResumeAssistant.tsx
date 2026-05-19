@@ -2,6 +2,8 @@ import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingO
 import { App, Button, Card, Empty, Form, Input, List, Modal, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
+import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
+import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
   AiChatConversation,
   AiChatMessage,
@@ -15,7 +17,6 @@ import type { ResumeDetail } from '../../resume/types'
 import { toAiResumeContext } from '../resumeContext'
 
 const { Text } = Typography
-const { TextArea } = Input
 
 type SuggestionStatus = 'pending' | 'applied' | 'dismissed'
 
@@ -485,8 +486,17 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         title="AI 简历助手"
         onCancel={() => setOpen(false)}
         footer={null}
-        width={640}
+        width={900}
         destroyOnHidden={false}
+        centered
+        styles={{
+          body: {
+            height: 'calc(100vh - 140px)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          },
+        }}
       >
         <div className="ai-chat-panel">
           <div className="ai-chat-toolbar">
@@ -535,10 +545,16 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                   {messages.length === 0 ? (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="向 AI 提问以审阅或优化当前简历。" />
                   ) : null}
-                  {messages.map((item) => (
+                  {messages.map((item) => {
+                    const isStreamingThis = streaming && item.role === 'assistant' && item.id === messages[messages.length - 1]?.id
+                    return (
                     <div className={`ai-chat-message ai-chat-message--${item.role}`} key={item.id}>
                       <div className="ai-chat-message__bubble">
-                        {item.content || (item.role === 'assistant' ? 'AI 正在回复...' : '')}
+                        {item.content ? (
+                          <MarkdownMessage content={item.content} streaming={isStreamingThis} />
+                        ) : (
+                          item.role === 'assistant' ? 'AI 正在回复...' : ''
+                        )}
                       </div>
                       {item.role === 'assistant' && item.suggestions && item.suggestions.length > 0 ? (
                         <SuggestionList
@@ -552,21 +568,18 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                         />
                       ) : null}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </Spin>
               <div className="ai-chat-composer">
-                <TextArea
-                  rows={3}
+                <MarkdownComposer
                   value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onPressEnter={(event) => {
-                    if (!event.shiftKey) {
-                      event.preventDefault()
-                      void handleSend()
-                    }
-                  }}
+                  onChange={setInput}
+                  onSubmit={() => void handleSend()}
                   placeholder="向 AI 提问关于当前简历的问题..."
+                  disabled={streaming}
+                  autoSize={{ minRows: 3, maxRows: 10 }}
                 />
                 <Button
                   type="primary"

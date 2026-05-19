@@ -58,6 +58,8 @@ public final class AiConversationIdGenerator {
 
 - `AiInvocationRequest.conversationId` — required, non-null, non-blank. Callers MUST obtain it through `AiConversationIdGenerator.generate(...)`, never hand-roll.
 - All three methods write to `spring_ai_chat_memory` unconditionally so every interaction is auditable.
+- **No double-write of the user turn.** `AiChatServiceImpl.buildPromptWithMemory` already calls `chatMemory.add(conversationId, userMessage)` before invoking the provider. A feature module that mirrors AI turns into its own domain table (e.g. `interview_messages`) MUST persist DB-only for the user message and MUST NOT also call `chatMemoryRepository.saveAll(...)` / `chatMemory.add(...)` for that same turn. The convention in `InterviewService` is to keep two helpers: `appendMessage` (DB + chat memory, used by non-streaming code paths that bypass `AiChatService`) and `persistMessage` (DB only, used inside `streamMessage`/anything else that delegates to `aiChatService.stream/call`). Failing to split these results in duplicate user messages in `spring_ai_chat_memory`, which then replay into the next prompt and confuse the model.
+- **Persisting the assistant turn from a stream consumer.** When a feature's controller exposes its own SSE endpoint that delegates to `aiChatService.stream(...)`, accumulate the `message`-typed event content into a `StringBuilder` and persist the full assistant text in `doOnComplete`. Do not persist per chunk. The shared service still writes the assistant turn to `spring_ai_chat_memory` on its own — the feature's `doOnComplete` is responsible only for the feature's domain table (e.g. `interview_messages`).
 - `stream()` — server-sent character-level deltas; consumers (`AiAgentService`) may apply UI delay (resume chat uses 12ms/char).
 - `call()` — synchronous free-text return; for prose-style outputs (e.g. future interview-report prose).
 - `callStructured(request, T.class)` — synchronous structured return using Spring AI `BeanOutputConverter<T>`. Internal policy:
@@ -82,6 +84,7 @@ public final class AiConversationIdGenerator {
 - **Base**: resume scoring uses `callStructured` per request, generates a new conversation id every call (no continuity), surfaces parse errors to the user.
 - **Bad**: a feature writes its own `ChatClient.prompt().call()` path and constructs an ad hoc conversation id like `"interview-" + UUID.randomUUID()`, bypassing `AiChatService` — memory rows become unjoinable, vendor branching diverges, and retry policy is lost.
 - **Bad**: a feature catches the second parse failure and falls back to mock content. Truthful errors are mandatory; silent fallback hides production AI regressions.
+- **Bad**: a feature calls `aiChatService.stream(req)` AND also writes the user message to `chatMemoryRepository` / `chatMemory.add(...)` in its own code. This double-writes the user turn into `spring_ai_chat_memory`, causing the model to see the same user message twice on the next prompt replay.
 
 ### 6. Tests Required
 

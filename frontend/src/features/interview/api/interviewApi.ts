@@ -1,5 +1,12 @@
 import { request } from '../../../lib/http/apiClient'
+import { streamEvents, type SseEvent } from '../../../lib/sse/streamEvents'
 import type { InterviewCreatePayload, InterviewDetail, InterviewListQuery, InterviewPage } from '../types'
+
+export interface InterviewStreamEvent extends SseEvent {
+  type: 'message' | 'done' | 'error'
+  content?: string
+  conversationId?: string
+}
 
 export function listInterviews(query: InterviewListQuery = {}) {
   const params = new URLSearchParams()
@@ -45,6 +52,33 @@ export function submitInterviewMessage(interviewId: string, content: string) {
     method: 'POST',
     body: { content },
   })
+}
+
+export function streamInterviewMessage(
+  interviewId: string,
+  content: string,
+  onEvent: (event: InterviewStreamEvent) => void,
+  options?: { signal?: AbortSignal },
+) {
+  return streamEvents<InterviewStreamEvent>(
+    `/api/interviews/${interviewId}/messages/stream`,
+    { content },
+    onEvent,
+    options,
+  )
+}
+
+export function regenerateStreamInterviewMessage(
+  interviewId: string,
+  onEvent: (event: InterviewStreamEvent) => void,
+  options?: { signal?: AbortSignal },
+) {
+  return streamEvents<InterviewStreamEvent>(
+    `/api/interviews/${interviewId}/messages/regenerate-stream`,
+    {},
+    onEvent,
+    options,
+  )
 }
 
 export function endInterview(interviewId: string) {
