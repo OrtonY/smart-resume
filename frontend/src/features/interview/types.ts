@@ -1,6 +1,6 @@
 export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
 export type InterviewStatus = 'IN_PROGRESS' | 'PAUSED' | 'ENDED'
-export type InterviewReportStatus = 'PENDING' | 'GENERATING' | 'READY'
+export type InterviewReportStatus = 'PENDING' | 'GENERATING' | 'READY' | 'FAILED'
 export type InterviewMessageRole = 'INTERVIEWER' | 'CANDIDATE' | 'SYSTEM'
 
 export interface InterviewSummary {
@@ -85,7 +85,54 @@ export function interviewReportStatusLabel(status: InterviewReportStatus) {
       return '报告已生成'
     case 'GENERATING':
       return '报告生成中'
+    case 'FAILED':
+      return '生成失败'
     default:
       return '待生成'
   }
+}
+
+export interface QuestionEvaluation {
+  question: string
+  candidateAnswer: string
+  score: number
+  feedback: string
+  referenceAnswer: string
+}
+
+export interface RoundEvaluation {
+  role: string
+  roundScore: number
+  summary: string
+  questions: QuestionEvaluation[]
+}
+
+export interface SkillAssessment {
+  technicalAbility: number
+  communication: number
+  problemSolving: number
+  professionalism: number
+}
+
+export interface LearningResource {
+  topic: string
+  reason: string
+  suggestions: string[]
+}
+
+export interface InterviewReport {
+  overallScore: number
+  summary: string
+  strengths: string[]
+  improvements: string[]
+  skillAssessment: SkillAssessment
+  rounds: RoundEvaluation[]
+  learningResources: LearningResource[]
+  generatedAt: string
+}
+
+export interface ReportStatusEvent {
+  interviewId: string
+  reportStatus: InterviewReportStatus
+  reportContent: string | null
 }

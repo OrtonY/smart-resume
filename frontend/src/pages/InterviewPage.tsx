@@ -38,6 +38,7 @@ import {
   submitInterviewMessage,
 } from '../features/interview/api/interviewApi'
 import { useInterviewTimer } from '../features/interview/hooks/useInterviewTimer'
+import { InterviewReportPanel } from '../features/interview/components/InterviewReportPanel'
 import {
   INTERVIEW_DIFFICULTY_OPTIONS,
   INTERVIEW_STATUS_OPTIONS,
@@ -616,14 +617,17 @@ function InterviewDetailView({
             </div>
           </Card>
 
-          <Card className="glass-card interview-report-panel" bordered={false}>
-            <Title level={4}>面试报告</Title>
-            {detail.reportStatus === 'READY' && detail.reportContent ? (
-              <pre>{detail.reportContent}</pre>
-            ) : (
-              <Empty description="面试报告功能开发中，敬请期待。" />
-            )}
-          </Card>
+          <InterviewReportPanel
+            interviewId={detail.id}
+            interviewEnded={detail.status === 'ENDED'}
+            reportStatus={detail.reportStatus}
+            reportContent={detail.reportContent}
+            onStatusChange={(newStatus, newContent) => {
+              setDetail((prev) =>
+                prev ? { ...prev, reportStatus: newStatus, reportContent: newContent } : prev,
+              )
+            }}
+          />
         </div>
       </div>
     </div>

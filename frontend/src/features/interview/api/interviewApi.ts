@@ -52,3 +52,9 @@ export function endInterview(interviewId: string) {
     method: 'POST',
   })
 }
+
+export function regenerateReport(interviewId: string) {
+  return request<void>(`/api/interviews/${interviewId}/report/regenerate`, {
+    method: 'POST',
+  })
+}

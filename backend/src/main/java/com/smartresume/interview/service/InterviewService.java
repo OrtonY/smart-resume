@@ -52,6 +52,7 @@ public class InterviewService {
     private final ObjectMapper objectMapper;
     private final JdbcChatMemoryRepository chatMemoryRepository;
     private final AiChatService aiChatService;
+    private final InterviewReportService interviewReportService;
 
     public InterviewService(
         InterviewSessionMapper interviewSessionMapper,
@@ -59,7 +60,8 @@ public class InterviewService {
         ResumeMapper resumeMapper,
         ObjectMapper objectMapper,
         JdbcChatMemoryRepository chatMemoryRepository,
-        AiChatService aiChatService
+        AiChatService aiChatService,
+        InterviewReportService interviewReportService
     ) {
         this.interviewSessionMapper = interviewSessionMapper;
         this.interviewMessageMapper = interviewMessageMapper;
@@ -67,6 +69,7 @@ public class InterviewService {
         this.objectMapper = objectMapper;
         this.chatMemoryRepository = chatMemoryRepository;
         this.aiChatService = aiChatService;
+        this.interviewReportService = interviewReportService;
     }
 
     public InterviewPageResponse listInterviews(String resumeId, String status, String keyword, int page, int pageSize) {
@@ -227,6 +230,9 @@ public class InterviewService {
         session.setEndedAt(now);
         session.setUpdatedAt(now);
         interviewSessionMapper.update(session);
+
+        interviewReportService.generateReportAsync(session.getId());
+
         return getInterview(session.getId());
     }
 
