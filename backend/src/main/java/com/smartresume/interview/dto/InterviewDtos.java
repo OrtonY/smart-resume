@@ -14,7 +14,6 @@ public final class InterviewDtos {
         String resumeId,
         @NotBlank(message = "Interview title is required")
         String title,
-        @NotBlank(message = "Job description is required")
         String jobDescription,
         @NotBlank(message = "Interview difficulty is required")
         String difficulty,

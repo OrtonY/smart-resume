@@ -44,7 +44,7 @@ export interface InterviewDetail extends InterviewSummary {
 export interface InterviewCreatePayload {
   resumeId?: string | null
   title: string
-  jobDescription: string
+  jobDescription?: string | null
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
 }
