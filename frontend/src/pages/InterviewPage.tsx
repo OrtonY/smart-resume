@@ -6,11 +6,9 @@ import {
   PlayCircleOutlined,
   PlusOutlined,
   PoweroffOutlined,
-  ProfileOutlined,
   ReloadOutlined,
   SendOutlined,
   StopOutlined,
-  TeamOutlined,
 } from '@ant-design/icons'
 import {
   App,
@@ -61,7 +59,7 @@ import {
 import { listResumes } from '../features/resume/api/resumeApi'
 import type { ResumeSummary } from '../features/resume/types'
 
-const { Paragraph, Text, Title } = Typography
+const { Text } = Typography
 const INTERVIEWS_PER_PAGE = 6
 
 interface InterviewPageProps {
@@ -263,6 +261,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       role: 'CANDIDATE' as const,
       content: trimmed,
       sortOrder: (detail.messages.at(-1)?.sortOrder ?? 0) + 1,
+      roundIndex: detail.activeRoundIndex,
       createdAt: new Date().toISOString(),
     }
     setDetail((prev) => prev ? { ...prev, messages: [...prev.messages, optimisticCandidate] } : prev)
@@ -343,7 +342,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
         onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束。')}
         onLogout={onLogout}
-        onNextRound={() => detail && void refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。')}
+        onNextRound={() => detail ? refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。') : Promise.resolve()}
         onSubmitMessage={() => void handleSubmitMessage()}
         onStopStreaming={handleStopStreaming}
         onRegenerate={() => void handleRegenerate()}
@@ -556,7 +555,7 @@ function InterviewDetailView({
   onContinue: () => void
   onEnd: () => void
   onLogout: () => void
-  onNextRound: () => void
+  onNextRound: () => Promise<void>
   onSubmitMessage: () => void
   onStopStreaming: () => void
   onRegenerate: () => void
@@ -569,6 +568,21 @@ function InterviewDetailView({
   const lastMessageCountRef = useRef(0)
   const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS')
   const [reportDrawerOpen, setReportDrawerOpen] = useState(false)
+  const [activeRoundTab, setActiveRoundTab] = useState<number>(detail?.activeRoundIndex ?? 0)
+  const [nextRoundLoading, setNextRoundLoading] = useState(false)
+
+  useEffect(() => {
+    if (detail) {
+      setActiveRoundTab(detail.activeRoundIndex)
+    }
+  }, [detail?.activeRoundIndex])
+
+  const isViewingCurrentRound = detail ? activeRoundTab === detail.activeRoundIndex : true
+
+  const filteredMessages = useMemo(() => {
+    if (!detail) return []
+    return detail.messages.filter((msg) => msg.roundIndex === activeRoundTab)
+  }, [detail, activeRoundTab])
 
   function isNearBottom(target: HTMLDivElement) {
     return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
@@ -587,7 +601,7 @@ function InterviewDetailView({
   }
 
   useEffect(() => {
-    const messageCount = detail?.messages.length ?? 0
+    const messageCount = filteredMessages.length
     const hasNewMessage = messageCount > lastMessageCountRef.current
     lastMessageCountRef.current = messageCount
 
@@ -600,7 +614,7 @@ function InterviewDetailView({
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [detail])
+  }, [filteredMessages])
 
   useEffect(() => {
     shouldAutoScrollRef.current = true
@@ -609,17 +623,26 @@ function InterviewDetailView({
       scrollMessagesToBottom('auto')
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [detail?.id])
+  }, [detail?.id, activeRoundTab])
 
   useEffect(() => {
-    if (!streaming || !streamingContent || !shouldAutoScrollRef.current) {
+    if (!streaming || !streamingContent || !shouldAutoScrollRef.current || !isViewingCurrentRound) {
       return
     }
     const frame = window.requestAnimationFrame(() => {
       scrollMessagesToBottom('auto')
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [streaming, streamingContent])
+  }, [streaming, streamingContent, isViewingCurrentRound])
+
+  async function handleNextRound() {
+    setNextRoundLoading(true)
+    try {
+      await onNextRound()
+    } finally {
+      setNextRoundLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -642,68 +665,76 @@ function InterviewDetailView({
     )
   }
 
-  const canMessage = detail.status === 'IN_PROGRESS'
+  const canMessage = detail.status === 'IN_PROGRESS' && isViewingCurrentRound
   const hasNextRound = detail.status === 'IN_PROGRESS' && detail.activeRoundIndex < detail.interviewerRoles.length - 1
 
   return (
     <div className="workspace-layout">
       <div className="interview-detail">
         <div className="interview-detail__topbar">
-          <Space wrap>
-            <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回面试中心</Button>
-            <Tag color={statusColor(detail.status)}>{interviewStatusLabel(detail.status)}</Tag>
-            <Tag color="purple">{interviewReportStatusLabel(detail.reportStatus)}</Tag>
-            {detail.resumeTitle ? <Tag icon={<ProfileOutlined />}>{detail.resumeTitle}</Tag> : null}
+          <Space align="center">
+            <Button icon={<ArrowLeftOutlined />} type="text" onClick={onBack} />
+            <strong style={{ fontSize: 16 }}>{detail.title}</strong>
+            <Tag color="blue">第 {detail.activeRoundIndex + 1} / {detail.interviewerRoles.length} 轮</Tag>
+            <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty)}</Tag>
           </Space>
-          <Space wrap>
-            <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 14, padding: '4px 10px' }}>
+          <Space align="center">
+            <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 13, padding: '2px 8px' }}>
               {timerDisplay}
             </Tag>
             {detail.status === 'PAUSED' ? (
-              <Button type="primary" icon={<PlayCircleOutlined />} onClick={onContinue}>继续</Button>
+              <Button type="text" icon={<PlayCircleOutlined />} title="继续面试" onClick={onContinue} />
             ) : null}
             {hasNextRound ? (
-              <Button icon={<ArrowRightOutlined />} onClick={onNextRound}>下一轮面试官</Button>
+              <Button
+                type="primary"
+                ghost
+                icon={<ArrowRightOutlined />}
+                title="下一轮面试官"
+                onClick={() => void handleNextRound()}
+              >
+                下一轮
+              </Button>
             ) : null}
             {detail.status !== 'ENDED' ? (
               <Popconfirm title="确定结束面试？" onConfirm={onEnd} okText="结束" cancelText="取消">
-                <Button danger icon={<PoweroffOutlined />}>结束面试</Button>
+                <Button type="primary" ghost danger icon={<PoweroffOutlined />} title="结束面试">
+                  结束
+                </Button>
               </Popconfirm>
             ) : null}
             {(detail.status === 'ENDED' || detail.reportStatus === 'READY' || detail.reportStatus === 'GENERATING' || detail.reportStatus === 'FAILED') && (
               <Button
-                type="primary"
+                type="text"
                 icon={<FileTextOutlined />}
+                title="查看报告"
                 onClick={() => setReportDrawerOpen(true)}
-              >
-                查看报告
-              </Button>
+              />
             )}
-            <Button onClick={onLogout}>锁定</Button>
           </Space>
+        </div>
+
+        <div className="interview-round-tabs" role="tablist">
+          {detail.interviewerRoles.map((role, index) => (
+            <button
+              key={`round-${index}`}
+              role="tab"
+              aria-selected={activeRoundTab === index}
+              className={`interview-round-tab${activeRoundTab === index ? ' interview-round-tab--active' : ''}`}
+              onClick={() => setActiveRoundTab(index)}
+            >
+              第 {index + 1} 轮 · {role}
+            </button>
+          ))}
         </div>
 
         <div className="interview-detail__layout">
           <Card className="glass-card interview-detail__main" bordered={false}>
-            <Space direction="vertical" size={10} style={{ width: '100%' }}>
-              <Title level={2}>{detail.title}</Title>
-              <Space wrap>
-                {detail.interviewerRoles.map((role, index) => (
-                  <Tag icon={<TeamOutlined />} key={`${role}-${index}`}>
-                    {index === detail.activeRoundIndex ? `当前第 ${index + 1} 轮 · ${role}` : `第 ${index + 1} 轮 · ${role}`}
-                  </Tag>
-                ))}
-                <Tag>{interviewDifficultyLabel(detail.difficulty)}</Tag>
-                <Text type="secondary">创建于 {new Date(detail.createdAt).toLocaleString()}</Text>
-              </Space>
-              <Paragraph className="interview-detail__jd">{detail.jobDescription}</Paragraph>
-            </Space>
-
             <div className="interview-message-list" ref={messagesContainerRef} onScroll={handleMessageListScroll}>
-              {detail.messages.map((item, index) => {
+              {filteredMessages.map((item, index) => {
                 const isLastInterviewerMessage =
                   item.role === 'INTERVIEWER' &&
-                  index === detail.messages.length - 1 &&
+                  index === filteredMessages.length - 1 &&
                   item.status === 'ABORTED'
                 return (
                   <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
@@ -732,7 +763,7 @@ function InterviewDetailView({
                   </div>
                 )
               })}
-              {streaming && (
+              {streaming && isViewingCurrentRound && (
                 <div className="interview-message interview-message--interviewer">
                   <div className="interview-message__role">
                     <MessageOutlined />
@@ -742,46 +773,78 @@ function InterviewDetailView({
                     {streamingContent ? (
                       <MarkdownMessage content={streamingContent} streaming />
                     ) : (
-                      <Spin size="small" />
+                      <div className="interview-thinking-bubble">
+                        <div className="interview-thinking-bubble__dots">
+                          <div className="interview-thinking-bubble__dot" />
+                          <div className="interview-thinking-bubble__dot" />
+                          <div className="interview-thinking-bubble__dot" />
+                        </div>
+                        <span>思考中...</span>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="interview-composer">
-              <MarkdownComposer
-                value={messageDraft}
-                onChange={onUpdateMessageDraft}
-                onSubmit={canMessage ? onSubmitMessage : undefined}
-                placeholder={canMessage ? '输入你的回答...' : '当前状态不能继续回答。'}
-                disabled={!canMessage}
-                autoSize={{ minRows: 3, maxRows: 8 }}
-              />
-              {streaming ? (
-                <Button
-                  danger
-                  icon={<StopOutlined />}
-                  onClick={onStopStreaming}
-                >
-                  停止
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  loading={submittingMessage}
-                  disabled={!canMessage}
-                  onClick={onSubmitMessage}
-                >
+            {canMessage ? (
+              <div className="interview-composer">
+                <MarkdownComposer
+                  value={messageDraft}
+                  onChange={onUpdateMessageDraft}
+                  onSubmit={onSubmitMessage}
+                  placeholder="输入你的回答..."
+                  disabled={false}
+                  autoSize={{ minRows: 3, maxRows: 8 }}
+                />
+                {streaming ? (
+                  <Button
+                    danger
+                    icon={<StopOutlined />}
+                    onClick={onStopStreaming}
+                  >
+                    停止
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    loading={submittingMessage}
+                    onClick={onSubmitMessage}
+                  >
+                    发送回答
+                  </Button>
+                )}
+              </div>
+            ) : !isViewingCurrentRound ? (
+              <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
+                正在查看历史轮次（只读）
+              </div>
+            ) : (
+              <div className="interview-composer">
+                <MarkdownComposer
+                  value={messageDraft}
+                  onChange={onUpdateMessageDraft}
+                  onSubmit={undefined}
+                  placeholder="当前状态不能继续回答。"
+                  disabled
+                  autoSize={{ minRows: 3, maxRows: 8 }}
+                />
+                <Button type="primary" icon={<SendOutlined />} disabled>
                   发送回答
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
           </Card>
-
         </div>
       </div>
+
+      {nextRoundLoading && (
+        <div className="interview-next-round-overlay">
+          <Spin size="large" />
+          <p>AI 面试官准备中...</p>
+        </div>
+      )}
 
       <Drawer
         title="面试报告"
@@ -819,5 +882,16 @@ function statusColor(status: InterviewStatus) {
       return 'orange'
     default:
       return 'green'
+  }
+}
+
+function difficultyColor(difficulty: InterviewDifficulty) {
+  switch (difficulty) {
+    case 'EASY':
+      return 'green'
+    case 'HARD':
+      return 'gold'
+    default:
+      return 'orange'
   }
 }

@@ -1975,7 +1975,9 @@ a {
 }
 
 .interview-detail {
-  grid-template-rows: auto 1fr;
+  gap: 6px;
+  padding: 18px 24px;
+  grid-template-rows: auto auto 1fr;
   height: calc(100vh - 36px);
   min-height: 0;
   overflow: hidden;
@@ -1984,7 +1986,7 @@ a {
 .interview-detail__layout {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 0;
   min-height: 0;
   overflow: hidden;
   flex: 1;
@@ -2027,6 +2029,7 @@ a {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding: 12px 16px;
   overflow: hidden;
 }
 
@@ -2110,6 +2113,112 @@ a {
 
 .interview-composer .ant-btn {
   justify-self: end;
+}
+
+.interview-round-tabs {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  padding: 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid rgba(20, 33, 61, 0.08);
+  scrollbar-width: thin;
+}
+
+.interview-round-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.interview-round-tabs::-webkit-scrollbar-thumb {
+  background: rgba(49, 87, 164, 0.2);
+  border-radius: 2px;
+}
+
+.interview-round-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 150ms, border-color 150ms;
+}
+
+.interview-round-tab:hover {
+  color: var(--text-primary);
+}
+
+.interview-round-tab--active {
+  color: #3157a4;
+  border-bottom-color: #3157a4;
+  font-weight: 500;
+}
+
+.interview-thinking-bubble {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.interview-thinking-bubble__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.interview-thinking-bubble__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3157a4;
+  animation: thinking-pulse 1.4s ease-in-out infinite;
+}
+
+.interview-thinking-bubble__dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.interview-thinking-bubble__dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes thinking-pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.interview-next-round-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.interview-next-round-overlay p {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-secondary);
 }
 
 .interview-report-panel pre {
