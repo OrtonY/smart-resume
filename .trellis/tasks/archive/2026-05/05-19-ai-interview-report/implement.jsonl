@@ -1,0 +1,12 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Core AI invocation layer - must use callStructured correctly with AiConversationIdGenerator"}
+{"file": ".trellis/spec/backend/ai-resume-scoring.md", "reason": "Reference pattern for structured AI output - same callStructured approach needed for report"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Where to place new service/DTO/controller files in backend"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend coding standards and conventions"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Error handling patterns for async report generation failures"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Database migration conventions if schema changes needed"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Frontend component patterns for the report UI"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Where to place new frontend components and API files"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "TypeScript type definitions for report JSON structure"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "State management for SSE events and report data"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer data flow between backend JSON and frontend rendering"}
+{"file": ".trellis/tasks/05-19-ai-interview-report/prd.md", "reason": "Task requirements and report JSON structure specification"}

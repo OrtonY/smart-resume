@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Verify correct AiChatService usage - no direct ChatModel calls, proper conversationId generation"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Check backend code quality and conventions"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify error handling in async report generation"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Check frontend code quality"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Verify TypeScript types match backend JSON structure"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Check for code reuse opportunities with existing scoring patterns"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Verify cross-layer data consistency between backend and frontend"}
+{"file": ".trellis/tasks/05-19-ai-interview-report/prd.md", "reason": "Verify implementation matches acceptance criteria"}
