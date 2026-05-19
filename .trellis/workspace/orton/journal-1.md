@@ -774,3 +774,36 @@ Implemented full-stack AI interview report: async per-round evaluation with stru
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: Markdown 渲染 + 面试 SSE 流式 + 输入框/报告抽屉 UI 修复
+
+**Date**: 2026-05-19
+**Task**: Markdown 渲染 + 面试 SSE 流式 + 输入框/报告抽屉 UI 修复
+**Branch**: `master`
+
+### Summary
+
+完成会话界面 Markdown 渲染、面试官回复 SSE 流式输出、ABORTED 状态落库；修复面试详情页输入框未固定底部（.interview-detail__main flex 改为 1）、面试报告抽屉宽度改为 50% 视口。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `309bc34` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
