@@ -23,6 +23,7 @@ interface MarkdownComposerProps {
   rows?: number
   autoSize?: { minRows?: number; maxRows?: number }
   hidePreview?: boolean
+  submitOnEnter?: boolean
 }
 
 type Mode = 'edit' | 'preview'
@@ -36,6 +37,7 @@ export function MarkdownComposer({
   rows,
   autoSize,
   hidePreview,
+  submitOnEnter = false,
 }: MarkdownComposerProps) {
   const [mode, setMode] = useState<Mode>('edit')
   const textAreaRef = useRef<TextAreaRef>(null)
@@ -186,7 +188,7 @@ export function MarkdownComposer({
           rows={rows}
           autoSize={autoSize}
           onPressEnter={(e) => {
-            if (!e.shiftKey && onSubmit) {
+            if (submitOnEnter && !e.shiftKey && onSubmit) {
               e.preventDefault()
               onSubmit()
             }

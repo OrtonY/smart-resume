@@ -40,6 +40,44 @@ export async function streamEvents<T extends SseEvent>(
     throw new Error('Stream request failed')
   }
 
+  await readSseResponse(response, onEvent)
+}
+
+export async function streamGetEvents<T>(
+  path: string,
+  onEvent: (event: T) => void,
+  options?: StreamEventsOptions,
+) {
+  const headers = new Headers({
+    Accept: 'text/event-stream',
+    'Cache-Control': 'no-cache',
+  })
+  const token = getAccessToken()
+  if (token) {
+    headers.set('X-Access-Token', token)
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    headers,
+    signal: options?.signal,
+  })
+
+  if (!response.ok || !response.body) {
+    if (response.status === 401) {
+      clearAccessToken()
+    }
+    throw new Error('Stream request failed')
+  }
+
+  await readSseResponse(response, onEvent)
+}
+
+async function readSseResponse<T>(response: Response, onEvent: (event: T) => void) {
+  if (!response.body) {
+    throw new Error('Stream request failed')
+  }
+
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''

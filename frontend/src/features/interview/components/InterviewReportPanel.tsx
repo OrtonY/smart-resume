@@ -2,7 +2,7 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Collapse, Empty, Progress, Spin, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
-import { regenerateReport } from '../api/interviewApi'
+import { regenerateReport, streamReportEvents } from '../api/interviewApi'
 import type {
   InterviewReport as InterviewReportData,
   InterviewReportStatus,
@@ -29,38 +29,39 @@ export function InterviewReportPanel({
   const [streamStatus, setStreamStatus] = useState<InterviewReportStatus | null>(null)
   const [streamReport, setStreamReport] = useState<InterviewReportData | null>(null)
   const [regenerating, setRegenerating] = useState(false)
-  const eventSourceRef = useRef<EventSource | null>(null)
+  const onStatusChangeRef = useRef(onStatusChange)
 
   const propReport = useMemo(() => parseReport(reportContent), [reportContent])
   const activeStatus = streamStatus ?? reportStatus
   const activeReport = streamReport ?? propReport
 
   useEffect(() => {
+    onStatusChangeRef.current = onStatusChange
+  }, [onStatusChange])
+
+  useEffect(() => {
     if (!interviewEnded || activeStatus !== 'GENERATING') return
 
-    const es = new EventSource(`/api/interviews/${interviewId}/report/events`)
-    eventSourceRef.current = es
-
-    es.addEventListener('report-status', (event) => {
-      const data: ReportStatusEvent = JSON.parse(event.data)
+    const controller = new AbortController()
+    void streamReportEvents(interviewId, (data: ReportStatusEvent) => {
       setStreamStatus(data.reportStatus)
       if (data.reportContent) {
         setStreamReport(parseReport(data.reportContent))
       }
-      onStatusChange?.(data.reportStatus, data.reportContent)
+      onStatusChangeRef.current?.(data.reportStatus, data.reportContent)
       if (data.reportStatus === 'READY' || data.reportStatus === 'FAILED') {
-        es.close()
+        controller.abort()
+      }
+    }, { signal: controller.signal }).catch((error) => {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        console.warn('Report event stream failed', error)
       }
     })
 
-    es.onerror = () => {
-      es.close()
-    }
-
     return () => {
-      es.close()
+      controller.abort()
     }
-  }, [interviewId, activeStatus, interviewEnded, onStatusChange])
+  }, [interviewId, activeStatus, interviewEnded])
 
   const handleRegenerate = useCallback(async () => {
     setRegenerating(true)
@@ -198,18 +199,22 @@ function StrengthsAndImprovements({
 }) {
   return (
     <div className="report-section">
-      <div className="report-two-col">
+      <div className="report-stacked-list">
         <div>
           <Title level={5}>亮点</Title>
-          {strengths.map((s, i) => (
-            <Tag key={i} color="green" style={{ marginBottom: 4 }}>{s}</Tag>
-          ))}
+          <div className="report-tag-list">
+            {strengths.map((s, i) => (
+              <Tag key={i} color="green">{s}</Tag>
+            ))}
+          </div>
         </div>
         <div>
           <Title level={5}>改进建议</Title>
-          {improvements.map((s, i) => (
-            <Tag key={i} color="orange" style={{ marginBottom: 4 }}>{s}</Tag>
-          ))}
+          <div className="report-tag-list">
+            {improvements.map((s, i) => (
+              <Tag key={i} color="orange">{s}</Tag>
+            ))}
+          </div>
         </div>
       </div>
     </div>

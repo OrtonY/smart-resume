@@ -714,6 +714,7 @@ function ResumeListView({
                 面试中心
               </Button>
             </Link>
+            <AiConfigurationButton />
             <Link to="/app/recycle-bin">
               <Button icon={<InboxOutlined />}>
                 回收桶
@@ -1419,7 +1420,6 @@ function ResumeEditorView({
               <Button icon={<MessageOutlined />}>面试</Button>
             </Dropdown>
             <ResumeScoreButton draft={draft} />
-            <AiConfigurationButton />
             <Button icon={<ShareAltOutlined />} onClick={() => {
               setShareModalOpen(true)
               setShareMode('LATEST')
