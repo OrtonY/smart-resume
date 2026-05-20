@@ -1,0 +1,14 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Multi-round context isolation requires changing conversationId format and ChatMemory window size — must follow shared AI invocation conventions"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Per-round conversationId design must comply with conversation id rules per feature"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "New DB migration for total_elapsed_seconds + last_resumed_at fields and interview_round_topics table"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "New service for tech-topic extraction needs correct module placement"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "AI tech-topic extraction failure must not block round transition — needs proper error handling pattern"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Tech-topic extraction failure should log warn — follow structured logging conventions"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "General backend quality standards"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Topbar refactor (remove back button, add pause button) requires component composition conventions"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "useInterviewTimer hook refactor — initial value from backend, pause/resume logic"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Timer state syncing with server-side total_elapsed_seconds + last_resumed_at"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "New API fields totalElapsedSeconds + lastResumedAt require type contracts"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "General frontend quality standards"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Timer persistence and round-context isolation involve backend-frontend coordination — cross-layer alignment is critical"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Reuse existing pause/continue API and AiChatService patterns rather than inventing new ones"}
