@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-05-20
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~909 | Active |
+| `journal-1.md` | ~942 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-05-20 | Interview center layout fix + resume markdown editor unification | `d8f12c7` | `master` |
 | 27 | 2026-05-20 | Unify frontend layout and styles | `cd6a7a1` | `master` |
 | 26 | 2026-05-20 | Remove DOCX export and lock built-in templates | `06f46c3`, `732f344` | `master` |
 | 25 | 2026-05-19 | Interview multi-round UI | `627b335` | `master` |
