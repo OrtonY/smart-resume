@@ -840,3 +840,37 @@ Add round_index column + multi-round UI: compact topbar, round tabs, thinking bu
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: Remove DOCX export and lock built-in templates
+
+**Date**: 2026-05-20
+**Task**: Remove DOCX export and lock built-in templates
+**Branch**: `master`
+
+### Summary
+
+Removed DOCX export feature (deleted docxExport.ts, narrowed types, simplified export button to direct PDF). Locked built-in templates: frontend shows read-only Result for builtIn templates, removed restore-from-backup UI, backend rejects update on builtIn templates with 403. Fixed pre-existing bug where re-clicking the selected custom template cleared the editor.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `06f46c3` | (see git log) |
+| `732f344` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
