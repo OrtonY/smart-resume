@@ -411,7 +411,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
             <Empty description="还没有面试记录。" />
           </Card>
         ) : (
-          <Space direction="vertical" size={18} style={{ width: '100%' }}>
+          <>
             <div className="interview-card-grid">
               {interviewPage.items.map((item) => (
                 <button
@@ -447,7 +447,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
                 />
               </div>
             ) : null}
-          </Space>
+          </>
         )}
       </div>
 

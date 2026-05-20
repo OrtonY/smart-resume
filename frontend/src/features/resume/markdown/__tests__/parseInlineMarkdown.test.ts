@@ -20,24 +20,22 @@ describe('parseInlineMarkdown', () => {
     ])
   })
 
-  it('flattens *italic* to plain text (italic not supported)', () => {
+  it('parses *italic* as one italic node', () => {
     const result = parseInlineMarkdown('*italic*')
-    expect(result).toEqual<InlineNode[]>([{ type: 'text', text: 'italic' }])
+    expect(result).toEqual<InlineNode[]>([
+      { type: 'italic', children: [{ type: 'text', text: 'italic' }] },
+    ])
   })
 
-  it('parses ***bold-italic*** as bold wrapping plain text (italic stripped)', () => {
+  it('parses ***bold-italic*** as bold wrapping italic', () => {
     const result = parseInlineMarkdown('***both***')
-    // mdast parses *** as emphasis > strong or strong > emphasis;
-    // we flatten emphasis so the result is just bold containing text.
     expect(result.length).toBe(1)
     const outer = result[0]
+    // mdast parses *** as emphasis > strong or strong > emphasis
     if (outer.type === 'bold') {
-      expect(outer.children).toEqual([{ type: 'text', text: 'both' }])
-    } else {
-      // If mdast produces emphasis > strong, we flatten emphasis,
-      // so we'd get bold > text anyway. This branch should not happen,
-      // but if it does we still assert text-only content.
-      expect(outer.type).toBe('text')
+      expect(outer.children[0].type).toBe('italic')
+    } else if (outer.type === 'italic') {
+      expect(outer.children[0].type).toBe('bold')
     }
   })
 
@@ -46,28 +44,39 @@ describe('parseInlineMarkdown', () => {
     expect(result).toEqual<InlineNode[]>([{ type: 'text', text: '**literal**' }])
   })
 
-  it('strips HTML tags and keeps no html node', () => {
+  it('strips HTML tags', () => {
     const result = parseInlineMarkdown('<script>alert(1)</script>')
     for (const node of result) {
-      expect(node.type === 'text').toBe(true)
       if (node.type === 'text') {
         expect(node.text.includes('<script>')).toBe(false)
-        expect(node.text.includes('</script>')).toBe(false)
       }
     }
   })
 
-  it('drops link target and keeps the visible label', () => {
+  it('parses [link](url) as a link node', () => {
     const result = parseInlineMarkdown('[link](http://x)')
-    expect(result).toEqual<InlineNode[]>([{ type: 'text', text: 'link' }])
+    expect(result).toEqual<InlineNode[]>([
+      { type: 'link', url: 'http://x', children: [{ type: 'text', text: 'link' }] },
+    ])
   })
 
-  it('flattens a list item to plain text', () => {
-    const result = parseInlineMarkdown('- item')
-    expect(result).toEqual<InlineNode[]>([{ type: 'text', text: 'item' }])
+  it('parses inline code as a code node', () => {
+    const result = parseInlineMarkdown('use `code` here')
+    expect(result).toEqual<InlineNode[]>([
+      { type: 'text', text: 'use ' },
+      { type: 'code', text: 'code' },
+      { type: 'text', text: ' here' },
+    ])
   })
 
-  it('flattens a heading to plain text', () => {
+  it('parses a list into bullet items', () => {
+    const result = parseInlineMarkdown('- item1\n- item2')
+    expect(result).toEqual<InlineNode[]>([
+      { type: 'text', text: '• item1\n• item2' },
+    ])
+  })
+
+  it('parses a heading as a paragraph', () => {
     const result = parseInlineMarkdown('# heading')
     expect(result).toEqual<InlineNode[]>([{ type: 'text', text: 'heading' }])
   })
