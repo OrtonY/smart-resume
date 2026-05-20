@@ -33,7 +33,6 @@ import {
   createResumeTemplate,
   deleteResumeTemplate,
   listManagedResumeTemplates,
-  restoreBuiltInTemplatesFromBackup,
   updateResumeTemplate,
 } from '../features/resume/api/templateCatalogApi'
 import { createResume, getResume, updateResume } from '../features/resume/api/resumeApi'
@@ -194,7 +193,6 @@ export function TemplateGalleryPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>('edit')
   const [editorDraft, setEditorDraft] = useState<ManagedResumeTemplateDefinition | null>(null)
   const [savingTemplate, setSavingTemplate] = useState(false)
-  const [restoringBuiltIns, setRestoringBuiltIns] = useState(false)
   const [applyingTemplateKey, setApplyingTemplateKey] = useState<string | null>(null)
   const [deletingTemplateKey, setDeletingTemplateKey] = useState<string | null>(null)
   const [creatingResumeTemplateKey, setCreatingResumeTemplateKey] = useState<string | null>(null)
@@ -322,6 +320,9 @@ export function TemplateGalleryPage() {
   }, [resume?.templateKey, selectionTouched])
 
   function handleTemplateSelect(nextTemplateKey: string) {
+    if (nextTemplateKey === selectedTemplateKey && editorMode === 'edit') {
+      return
+    }
     setSelectionTouched(true)
     setEditorMode('edit')
     setSelectedTemplateKey(nextTemplateKey)
@@ -404,20 +405,6 @@ export function TemplateGalleryPage() {
       void message.error(error instanceof Error ? error.message : '模板删除失败')
     } finally {
       setDeletingTemplateKey(null)
-    }
-  }
-
-  async function handleRestoreBuiltIns() {
-    setRestoringBuiltIns(true)
-    try {
-      const restored = await restoreBuiltInTemplatesFromBackup()
-      syncTemplates(restored, selectedTemplate?.key ?? resume?.templateKey)
-      setEditorMode('edit')
-      void message.success('内置模板已从备份恢复。')
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '恢复内置模板失败')
-    } finally {
-      setRestoringBuiltIns(false)
     }
   }
 
@@ -559,15 +546,6 @@ export function TemplateGalleryPage() {
                 <Button icon={<ReloadOutlined />} onClick={() => void loadTemplateCatalog(selectedTemplate?.key)}>
                   刷新目录
                 </Button>
-                <Popconfirm
-                  title="恢复内置模板"
-                  description="会用备份文件覆盖所有内置模板，自定义模板会保留。"
-                  okText="恢复"
-                  cancelText="取消"
-                  onConfirm={() => void handleRestoreBuiltIns()}
-                >
-                  <Button loading={restoringBuiltIns}>从备份恢复内置模板</Button>
-                </Popconfirm>
               </Space>
             }
           >
@@ -605,7 +583,9 @@ export function TemplateGalleryPage() {
               ) : null
             }
           >
-            {editorDraft ? (
+            {editorMode === 'edit' && selectedTemplate?.builtIn ? (
+              <Result status="info" title="内置模板不可编辑" subTitle="内置模板为只读，如需自定义请点击「新建模板」基于当前模板创建副本。" />
+            ) : editorDraft ? (
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
                 <Collapse
                   defaultActiveKey={['basic']}
