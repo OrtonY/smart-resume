@@ -940,3 +940,36 @@ Fixed interview center flex layout (consistent 1-row/2-row display, scrollable J
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: Interview conversation optimization
+
+**Date**: 2026-05-20
+**Task**: Interview conversation optimization
+**Branch**: `master`
+
+### Summary
+
+Optimized interview round context isolation, timer persistence, regenerated-message controls, and structured topic extraction prompts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0c9d58e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
