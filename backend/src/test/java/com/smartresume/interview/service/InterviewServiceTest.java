@@ -3,6 +3,8 @@ package com.smartresume.interview.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartresume.ai.dto.AiInvocationRequest;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -70,6 +73,8 @@ class InterviewServiceTest {
                 status varchar(30) not null,
                 report_status varchar(30) not null,
                 report_content text null,
+                total_elapsed_seconds integer not null default 0,
+                last_resumed_at timestamp null,
                 created_at timestamp not null,
                 updated_at timestamp not null,
                 ended_at timestamp null
@@ -82,7 +87,17 @@ class InterviewServiceTest {
                 role varchar(30) not null,
                 content text not null,
                 sort_order integer not null,
-                created_at timestamp not null
+                round_index integer null,
+                created_at timestamp not null,
+                status varchar(30) null
+            )
+            """);
+        jdbcTemplate.execute("""
+            create table if not exists interview_round_topics (
+                id varchar(36) primary key,
+                session_id varchar(36) not null,
+                round_index int not null,
+                topics_json text not null default '[]'
             )
             """);
         jdbcTemplate.execute("""
@@ -94,6 +109,7 @@ class InterviewServiceTest {
             )
             """);
         jdbcTemplate.update("delete from SPRING_AI_CHAT_MEMORY");
+        jdbcTemplate.update("delete from interview_round_topics");
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");
         jdbcTemplate.update("delete from resumes");
@@ -102,6 +118,8 @@ class InterviewServiceTest {
             .thenReturn("你好，我是本轮面试官。请先做一个简短的自我介绍。")
             .thenReturn("请详细描述一下你在订单系统优化中的具体贡献。")
             .thenReturn("好的，现在进入下一轮面试。请介绍一下你最有挑战性的项目。");
+        when(aiChatService.callStructured(any(AiInvocationRequest.class), any()))
+            .thenReturn(null);
     }
 
     @Test
@@ -123,8 +141,12 @@ class InterviewServiceTest {
         assertThat(created.activeRoundIndex()).isZero();
         assertThat(created.status()).isEqualTo("IN_PROGRESS");
         assertThat(created.reportStatus()).isEqualTo("PENDING");
+        assertThat(created.totalElapsedSeconds()).isZero();
+        assertThat(created.lastResumedAt()).isNotNull();
         assertThat(created.messages()).hasSize(1);
         assertThat(created.messages().getFirst().role()).isEqualTo("INTERVIEWER");
+
+        String round0ConversationId = "interview-" + created.id() + "-round-0";
 
         InterviewDetailResponse answered = interviewService.submitMessage(
             created.id(),
@@ -133,18 +155,24 @@ class InterviewServiceTest {
         assertThat(answered.messages()).hasSize(3);
         assertThat(answered.messages().get(1).role()).isEqualTo("CANDIDATE");
         assertThat(answered.messages().get(2).role()).isEqualTo("INTERVIEWER");
-        assertThat(chatMemoryRepository.findByConversationId(created.aiConversationId())).hasSize(3);
+        assertThat(chatMemoryRepository.findByConversationId(round0ConversationId)).hasSize(3);
 
         InterviewDetailResponse secondRound = interviewService.nextRound(created.id());
         assertThat(secondRound.activeRoundIndex()).isEqualTo(1);
         assertThat(secondRound.messages()).hasSize(4);
-        assertThat(chatMemoryRepository.findByConversationId(created.aiConversationId())).hasSize(4);
+        // Round 0 memory stays at 3, round 1 gets 1 new opening message
+        assertThat(chatMemoryRepository.findByConversationId(round0ConversationId)).hasSize(3);
+        String round1ConversationId = "interview-" + created.id() + "-round-1";
+        assertThat(chatMemoryRepository.findByConversationId(round1ConversationId)).hasSize(1);
 
         InterviewDetailResponse paused = interviewService.pauseInterview(created.id());
         assertThat(paused.status()).isEqualTo("PAUSED");
+        assertThat(paused.lastResumedAt()).isNull();
+        assertThat(paused.totalElapsedSeconds()).isGreaterThanOrEqualTo(0);
 
         InterviewDetailResponse continued = interviewService.continueInterview(created.id());
         assertThat(continued.status()).isEqualTo("IN_PROGRESS");
+        assertThat(continued.lastResumedAt()).isNotNull();
 
         InterviewDetailResponse ended = interviewService.endInterview(created.id());
         assertThat(ended.status()).isEqualTo("ENDED");
@@ -207,6 +235,47 @@ class InterviewServiceTest {
         )))
             .isInstanceOf(AppException.class)
             .hasMessageContaining("简历和 JD 至少填写一个");
+    }
+
+    @Test
+    void topicExtractionPromptOnlyCountsExplicitlyAnsweredTechQuestions() {
+        when(aiChatService.call(any(AiInvocationRequest.class)))
+            .thenReturn("你好，请先做一个自我介绍。")
+            .thenReturn("请详细描述你在订单系统中的具体贡献。")
+            .thenReturn("好的，进入下一轮。");
+
+        String resumeId = createResume("Java 后端简历");
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            "Java 后端一面",
+            "负责 Spring Boot 服务开发和 Redis 缓存优化",
+            "MEDIUM",
+            List.of("Leader", "项目深挖")
+        ));
+        interviewService.submitMessage(
+            created.id(),
+            new InterviewMessageRequest("我在自我介绍中提到 Spring Boot 和 Redis，但还没有被问到具体技术问题。")
+        );
+
+        interviewService.nextRound(created.id());
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService, atLeastOnce()).callStructured(captor.capture(), any());
+
+        AiInvocationRequest extractionRequest = captor.getAllValues().stream()
+            .filter(request -> request.conversationId().contains("-extract-0"))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(extractionRequest.systemPrompt())
+            .contains("面试官明确提问且候选人已经回答");
+        assertThat(extractionRequest.userMessage())
+            .contains("只有当 INTERVIEWER 明确针对某个技术栈提出问题，并且后续 CANDIDATE 对该技术栈给出了回答")
+            .contains("如果技术栈只出现在候选人的自我介绍、项目介绍、简历/JD 信息、或候选人单方面提及中，不要记录")
+            .contains("如果 INTERVIEWER 只是要求“自我介绍”“介绍项目”“描述贡献”“展开讲讲经历”，即使候选人回答中提到了技术栈，也不要记录")
+            .contains("格式必须是：{\"topics\":[\"Spring Boot\",\"Redis\"]}")
+            .contains("CANDIDATE: 我在自我介绍中提到 Spring Boot 和 Redis");
     }
 
     private String createResume(String title) {

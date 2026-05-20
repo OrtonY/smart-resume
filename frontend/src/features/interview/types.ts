@@ -43,6 +43,8 @@ export interface InterviewMessage {
 export interface InterviewDetail extends InterviewSummary {
   reportContent: string | null
   messages: InterviewMessage[]
+  totalElapsedSeconds: number
+  lastResumedAt: string | null
 }
 
 export interface InterviewCreatePayload {

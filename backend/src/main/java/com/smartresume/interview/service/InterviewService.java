@@ -9,6 +9,7 @@ import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.domain.InterviewMessageEntity;
+import com.smartresume.interview.domain.InterviewRoundTopicEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
@@ -17,6 +18,7 @@ import com.smartresume.interview.dto.InterviewDtos.InterviewMessageResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewPageResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewSummaryResponse;
 import com.smartresume.interview.mapper.InterviewMessageMapper;
+import com.smartresume.interview.mapper.InterviewRoundTopicMapper;
 import com.smartresume.interview.mapper.InterviewSessionMapper;
 import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.mapper.ResumeMapper;
@@ -50,15 +52,20 @@ public class InterviewService {
 
     private final InterviewSessionMapper interviewSessionMapper;
     private final InterviewMessageMapper interviewMessageMapper;
+    private final InterviewRoundTopicMapper interviewRoundTopicMapper;
     private final ResumeMapper resumeMapper;
     private final ObjectMapper objectMapper;
     private final JdbcChatMemoryRepository chatMemoryRepository;
     private final AiChatService aiChatService;
     private final InterviewReportService interviewReportService;
 
+    private record RoundTopicExtractionResult(List<String> topics) {
+    }
+
     public InterviewService(
         InterviewSessionMapper interviewSessionMapper,
         InterviewMessageMapper interviewMessageMapper,
+        InterviewRoundTopicMapper interviewRoundTopicMapper,
         ResumeMapper resumeMapper,
         ObjectMapper objectMapper,
         JdbcChatMemoryRepository chatMemoryRepository,
@@ -67,6 +74,7 @@ public class InterviewService {
     ) {
         this.interviewSessionMapper = interviewSessionMapper;
         this.interviewMessageMapper = interviewMessageMapper;
+        this.interviewRoundTopicMapper = interviewRoundTopicMapper;
         this.resumeMapper = resumeMapper;
         this.objectMapper = objectMapper;
         this.chatMemoryRepository = chatMemoryRepository;
@@ -128,6 +136,8 @@ public class InterviewService {
         session.setActiveRoundIndex(0);
         session.setStatus(STATUS_IN_PROGRESS);
         session.setReportStatus(REPORT_PENDING);
+        session.setTotalElapsedSeconds(0);
+        session.setLastResumedAt(now);
         session.setCreatedAt(now);
         session.setUpdatedAt(now);
         interviewSessionMapper.insert(session);
@@ -146,9 +156,11 @@ public class InterviewService {
     public InterviewDetailResponse pauseInterview(String interviewId) {
         InterviewSessionEntity session = requireSession(interviewId);
         requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews can be paused");
+        LocalDateTime now = LocalDateTime.now();
+        accumulateElapsedTime(session, now);
         session.setStatus(STATUS_PAUSED);
-        session.setUpdatedAt(LocalDateTime.now());
-        interviewSessionMapper.update(session);
+        session.setUpdatedAt(now);
+        updateSessionWithNulls(session);
         return getInterview(session.getId());
     }
 
@@ -156,8 +168,10 @@ public class InterviewService {
     public InterviewDetailResponse continueInterview(String interviewId) {
         InterviewSessionEntity session = requireSession(interviewId);
         requireStatus(session, STATUS_PAUSED, "Only paused interviews can be continued");
+        LocalDateTime now = LocalDateTime.now();
         session.setStatus(STATUS_IN_PROGRESS);
-        session.setUpdatedAt(LocalDateTime.now());
+        session.setLastResumedAt(now);
+        session.setUpdatedAt(now);
         interviewSessionMapper.update(session);
         return getInterview(session.getId());
     }
@@ -184,9 +198,26 @@ public class InterviewService {
         session.setUpdatedAt(now);
         interviewSessionMapper.update(session);
 
+        // Extract tech topics from current round (best-effort)
+        try {
+            List<String> topics = extractRoundTopics(session, currentIndex);
+            if (!topics.isEmpty()) {
+                InterviewRoundTopicEntity topicEntity = new InterviewRoundTopicEntity();
+                topicEntity.setId(UUID.randomUUID().toString());
+                topicEntity.setSessionId(session.getId());
+                topicEntity.setRoundIndex(currentIndex);
+                topicEntity.setTopicsJson(toJson(topics));
+                interviewRoundTopicMapper.insert(topicEntity);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract tech topics for session {} round {}: {}",
+                session.getId(), currentIndex, e.getMessage());
+        }
+
         ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), currentIndex + 1);
         String roundOpeningMessage = generateAiResponse(session, resume,
-            "你是新一轮的面试官，请做简短自我介绍并提出第一个面试问题。", 0);
+            "你是新一轮的面试官，请做简短自我介绍并提出第一个面试问题。", 0, previousRoundTopics);
         appendMessage(session, "INTERVIEWER", roundOpeningMessage, nextOrder, now.plusNanos(1));
         return getInterview(session.getId());
     }
@@ -238,13 +269,16 @@ public class InterviewService {
         String currentRole = roles.get(roundIndex);
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
             currentRole, session.getDifficulty(), resumeJson,
-            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND
+            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND,
+            previousRoundTopics
         );
 
+        String conversationId = buildRoundConversationId(session.getId(), roundIndex);
         AiInvocationRequest invocationRequest = new AiInvocationRequest(
-            systemPrompt, request.content().trim(), session.getAiConversationId()
+            systemPrompt, request.content().trim(), conversationId
         );
 
         StringBuilder assistantText = new StringBuilder();
@@ -316,13 +350,16 @@ public class InterviewService {
         String currentRole = roles.get(roundIndex);
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
             currentRole, session.getDifficulty(), resumeJson,
-            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND
+            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND,
+            previousRoundTopics
         );
 
+        String conversationId = buildRoundConversationId(session.getId(), roundIndex);
         AiInvocationRequest invocationRequest = new AiInvocationRequest(
-            systemPrompt, lastCandidate.getContent(), session.getAiConversationId()
+            systemPrompt, lastCandidate.getContent(), conversationId
         );
 
         StringBuilder assistantText = new StringBuilder();
@@ -376,11 +413,12 @@ public class InterviewService {
         }
 
         LocalDateTime now = LocalDateTime.now();
+        accumulateElapsedTime(session, now);
         session.setStatus(STATUS_ENDED);
         session.setReportStatus(REPORT_PENDING);
         session.setEndedAt(now);
         session.setUpdatedAt(now);
-        interviewSessionMapper.update(session);
+        updateSessionWithNulls(session);
 
         interviewReportService.generateReportAsync(session.getId());
 
@@ -410,6 +448,19 @@ public class InterviewService {
         if (!expectedStatus.equals(session.getStatus())) {
             throw new AppException(HttpStatus.CONFLICT, message);
         }
+    }
+
+    private void accumulateElapsedTime(InterviewSessionEntity session, LocalDateTime now) {
+        if (session.getLastResumedAt() != null) {
+            long secondsElapsed = java.time.Duration.between(session.getLastResumedAt(), now).getSeconds();
+            int current = session.getTotalElapsedSeconds() == null ? 0 : session.getTotalElapsedSeconds();
+            session.setTotalElapsedSeconds(current + (int) Math.max(0, secondsElapsed));
+        }
+        session.setLastResumedAt(null);
+    }
+
+    private void updateSessionWithNulls(InterviewSessionEntity session) {
+        interviewSessionMapper.update(session, false);
     }
 
     private String normalizeDifficulty(String difficulty) {
@@ -461,7 +512,7 @@ public class InterviewService {
         message.setCreatedAt(createdAt);
         message.setStatus("NORMAL");
         interviewMessageMapper.insert(message);
-        appendChatMemoryMessage(session.getAiConversationId(), role, content);
+        appendChatMemoryMessage(buildRoundConversationId(session.getId(), currentRoundIndex(session)), role, content);
     }
 
     private void persistMessage(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt) {
@@ -504,6 +555,10 @@ public class InterviewService {
     }
 
     private String generateAiResponse(InterviewSessionEntity session, ResumeEntity resume, String userMessage, int currentQuestionCount) {
+        return generateAiResponse(session, resume, userMessage, currentQuestionCount, List.of());
+    }
+
+    private String generateAiResponse(InterviewSessionEntity session, ResumeEntity resume, String userMessage, int currentQuestionCount, List<String> previousRoundTopics) {
         List<String> roles = readInterviewerRoles(session);
         int roundIndex = currentRoundIndex(session);
         String currentRole = roles.get(roundIndex);
@@ -516,20 +571,22 @@ public class InterviewService {
             resumeJson,
             session.getJobDescription(),
             currentQuestionCount,
-            MAX_QUESTIONS_PER_ROUND
+            MAX_QUESTIONS_PER_ROUND,
+            previousRoundTopics
         );
 
+        String conversationId = buildRoundConversationId(session.getId(), roundIndex);
         AiInvocationRequest invocationRequest = new AiInvocationRequest(
             systemPrompt,
             userMessage,
-            session.getAiConversationId()
+            conversationId
         );
 
         try {
             return aiChatService.call(invocationRequest);
         } catch (Exception e) {
             log.error("AI call failed for interview session {} (conversationId={}): {}",
-                session.getId(), session.getAiConversationId(), e.getMessage());
+                session.getId(), conversationId, e.getMessage());
             throw new AppException(HttpStatus.SERVICE_UNAVAILABLE, "AI 服务暂时不可用，请稍后重试");
         }
     }
@@ -567,6 +624,7 @@ public class InterviewService {
 
     private InterviewDetailResponse toDetail(InterviewSessionEntity session, List<InterviewMessageResponse> messages) {
         ResumeEntity resume = session.getResumeId() == null ? null : resumeMapper.selectOneById(session.getResumeId());
+        long totalElapsed = session.getTotalElapsedSeconds() == null ? 0L : session.getTotalElapsedSeconds();
         return new InterviewDetailResponse(
             session.getId(),
             session.getResumeId(),
@@ -581,6 +639,8 @@ public class InterviewService {
             session.getReportStatus(),
             session.getReportContent(),
             messages,
+            totalElapsed,
+            session.getLastResumedAt(),
             session.getCreatedAt(),
             session.getUpdatedAt(),
             session.getEndedAt()
@@ -615,6 +675,96 @@ public class InterviewService {
         }
         int index = session.getActiveRoundIndex() == null ? 0 : session.getActiveRoundIndex();
         return Math.min(Math.max(index, 0), roles.size() - 1);
+    }
+
+    private String buildRoundConversationId(String sessionId, int roundIndex) {
+        return "interview-" + sessionId + "-round-" + roundIndex;
+    }
+
+    private List<String> extractRoundTopics(InterviewSessionEntity session, int roundIndex) {
+        List<InterviewMessageEntity> allMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> roundMessages = allMessages.stream()
+            .filter(msg -> msg.getRoundIndex() != null && msg.getRoundIndex() == roundIndex)
+            .toList();
+
+        if (roundMessages.isEmpty()) {
+            return List.of();
+        }
+
+        StringBuilder conversation = new StringBuilder();
+        for (InterviewMessageEntity msg : roundMessages) {
+            conversation.append(msg.getRole()).append(": ").append(msg.getContent()).append("\n");
+        }
+
+        String extractionPrompt = """
+            请从以下面试对话中提取“已经完成提问并得到候选人回答”的具体技术栈关键词（如 Spring Boot, Redis, MySQL, Docker 等）。
+
+            严格判定规则：
+            1. 只有当 INTERVIEWER 明确针对某个技术栈提出问题，并且后续 CANDIDATE 对该技术栈给出了回答，才记录该技术栈。
+            2. 如果技术栈只出现在候选人的自我介绍、项目介绍、简历/JD 信息、或候选人单方面提及中，不要记录。
+            3. 如果 INTERVIEWER 只是要求“自我介绍”“介绍项目”“描述贡献”“展开讲讲经历”，即使候选人回答中提到了技术栈，也不要记录。
+            4. 如果 INTERVIEWER 提到了某技术栈但候选人尚未回答，不要记录。
+            5. 只返回 JSON 对象，不要其他文字。格式必须是：{"topics":["Spring Boot","Redis"]}。
+            6. 如果没有符合条件的技术栈问题，返回：{"topics":[]}。
+
+            对话内容：
+            %s
+            """.formatted(conversation);
+
+        String extractConversationId = "interview-" + session.getId() + "-extract-" + roundIndex;
+        AiInvocationRequest extractionRequest = new AiInvocationRequest(
+            "你是一个严格的面试问题技术栈提取助手。只有“面试官明确提问且候选人已经回答”的技术栈才可进入结果；只返回JSON对象。",
+            extractionPrompt,
+            extractConversationId
+        );
+
+        try {
+            RoundTopicExtractionResult response = aiChatService.callStructured(
+                extractionRequest,
+                RoundTopicExtractionResult.class
+            );
+            return normalizeExtractedTopics(response == null ? null : response.topics());
+        } catch (Exception e) {
+            log.warn("AI topic extraction failed for session {} round {}: {}",
+                session.getId(), roundIndex, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private List<String> normalizeExtractedTopics(List<String> topics) {
+        if (topics == null || topics.isEmpty()) {
+            return List.of();
+        }
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String topic : topics) {
+            if (topic == null) {
+                continue;
+            }
+            String trimmed = topic.trim();
+            if (!trimmed.isEmpty()) {
+                normalized.add(trimmed);
+            }
+        }
+        return new ArrayList<>(normalized);
+    }
+
+    private List<String> getPreviousRoundTopics(String sessionId, int currentRoundIndex) {
+        QueryWrapper query = QueryWrapper.create()
+            .where("session_id = ?", sessionId)
+            .and("round_index < ?", currentRoundIndex);
+        List<InterviewRoundTopicEntity> entities = interviewRoundTopicMapper.selectListByQuery(query);
+
+        Set<String> allTopics = new LinkedHashSet<>();
+        for (InterviewRoundTopicEntity entity : entities) {
+            try {
+                List<String> topics = objectMapper.readValue(entity.getTopicsJson(), new TypeReference<List<String>>() {});
+                allTopics.addAll(topics);
+            } catch (Exception e) {
+                log.warn("Failed to parse topics_json for session {} round {}: {}",
+                    sessionId, entity.getRoundIndex(), e.getMessage());
+            }
+        }
+        return new ArrayList<>(allTopics);
     }
 
     private void appendChatMemoryMessage(String conversationId, String role, String content) {

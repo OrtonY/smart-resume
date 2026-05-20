@@ -32,7 +32,7 @@ import java.util.List;
 public class AiChatServiceImpl implements AiChatService {
 
     private static final Logger log = LoggerFactory.getLogger(AiChatServiceImpl.class);
-    private static final int MAX_MEMORY_MESSAGES = 20;
+    private static final int MAX_MEMORY_MESSAGES = 100;
     private static final int MAX_STRUCTURED_RETRIES = 1;
 
     private final AiConfigurationService aiConfigurationService;

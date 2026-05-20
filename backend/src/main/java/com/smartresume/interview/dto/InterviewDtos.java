@@ -80,6 +80,8 @@ public final class InterviewDtos {
         String reportStatus,
         String reportContent,
         List<InterviewMessageResponse> messages,
+        long totalElapsedSeconds,
+        LocalDateTime lastResumedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime endedAt

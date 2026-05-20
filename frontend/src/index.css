@@ -2097,6 +2097,17 @@ a {
   align-items: center;
   color: var(--text-secondary);
   font-size: 12px;
+  line-height: 1.5;
+}
+
+.interview-message__role .ant-tag {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .interview-message--candidate .interview-message__role {
@@ -2125,6 +2136,43 @@ a {
   margin-top: 8px;
   opacity: 0.72;
   font-size: 11px;
+}
+
+.interview-message__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.interview-regenerate-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 13px;
+  border-color: rgba(49, 87, 164, 0.22);
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.08);
+  box-shadow: none;
+  color: #3157a4;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.interview-regenerate-button.ant-btn > span {
+  display: inline-block;
+  transform: translateY(-2px);
+  line-height: 1;
+}
+
+.interview-regenerate-button.ant-btn:hover,
+.interview-regenerate-button.ant-btn:focus-visible {
+  border-color: rgba(49, 87, 164, 0.38);
+  background: rgba(49, 87, 164, 0.14);
+  color: #24457f;
 }
 
 .interview-composer {

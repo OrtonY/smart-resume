@@ -3,10 +3,10 @@ import {
   ArrowRightOutlined,
   ClockCircleOutlined,
   MessageOutlined,
+  PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
   PoweroffOutlined,
-  ReloadOutlined,
   SendOutlined,
   StopOutlined,
 } from '@ant-design/icons'
@@ -36,6 +36,7 @@ import {
   getInterview,
   listInterviews,
   nextInterviewRound,
+  pauseInterview,
   regenerateStreamInterviewMessage,
   streamInterviewMessage,
 } from '../features/interview/api/interviewApi'
@@ -76,6 +77,7 @@ type CreateFormValues = {
 }
 
 export function InterviewPage({ onLogout }: InterviewPageProps) {
+  void onLogout
   const navigate = useNavigate()
   const { interviewId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -240,8 +242,10 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       const next = await action()
       setDetail(next)
       void message.success(successText)
+      return next
     } catch (error) {
       void message.error(error instanceof Error ? error.message : '操作失败。')
+      return null
     }
   }
 
@@ -334,16 +338,17 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   if (interviewId) {
     return (
       <InterviewDetailView
+        key={detail?.id ?? 'loading'}
         detail={detail}
         loading={loadingDetail}
         messageDraft={messageDraft}
         streaming={streaming}
         streamingContent={streamingContent}
         onBack={() => navigate('/app/interviews')}
+        onPause={() => detail && void refreshAfterAction(() => pauseInterview(detail.id), '面试已暂停。').then(() => navigate('/app/interviews'))}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
         onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束。')}
-        onLogout={onLogout}
-        onNextRound={() => detail ? refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。') : Promise.resolve()}
+        onNextRound={() => detail ? refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。') : Promise.resolve(null)}
         onSubmitMessage={() => void handleSubmitMessage()}
         onStopStreaming={handleStopStreaming}
         onRegenerate={() => void handleRegenerate()}
@@ -535,9 +540,9 @@ function InterviewDetailView({
   streaming,
   streamingContent,
   onBack,
+  onPause,
   onContinue,
   onEnd,
-  onLogout,
   onNextRound,
   onSubmitMessage,
   onStopStreaming,
@@ -552,10 +557,10 @@ function InterviewDetailView({
   streaming: boolean
   streamingContent: string
   onBack: () => void
+  onPause: () => void
   onContinue: () => void
   onEnd: () => void
-  onLogout: () => void
-  onNextRound: () => Promise<void>
+  onNextRound: () => Promise<InterviewDetail | null>
   onSubmitMessage: () => void
   onStopStreaming: () => void
   onRegenerate: () => void
@@ -566,16 +571,24 @@ function InterviewDetailView({
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
-  const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS')
+
+  const initialTimerSeconds = useMemo(() => {
+    if (!detail) return 0
+    const base = detail.totalElapsedSeconds ?? 0
+    if (detail.status === 'IN_PROGRESS' && detail.lastResumedAt) {
+      const resumedAt = new Date(detail.lastResumedAt).getTime()
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is intentional for computing elapsed offset
+      const diff = Math.floor((Date.now() - resumedAt) / 1000)
+      return base + Math.max(0, diff)
+    }
+    return base
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.id, detail?.totalElapsedSeconds, detail?.lastResumedAt, detail?.status])
+
+  const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS', initialTimerSeconds)
   const [reportDrawerOpen, setReportDrawerOpen] = useState(false)
   const [activeRoundTab, setActiveRoundTab] = useState<number>(detail?.activeRoundIndex ?? 0)
   const [nextRoundLoading, setNextRoundLoading] = useState(false)
-
-  useEffect(() => {
-    if (detail) {
-      setActiveRoundTab(detail.activeRoundIndex)
-    }
-  }, [detail?.activeRoundIndex])
 
   const isViewingCurrentRound = detail ? activeRoundTab === detail.activeRoundIndex : true
 
@@ -638,7 +651,10 @@ function InterviewDetailView({
   async function handleNextRound() {
     setNextRoundLoading(true)
     try {
-      await onNextRound()
+      const next = await onNextRound()
+      if (next) {
+        setActiveRoundTab(next.activeRoundIndex)
+      }
     } finally {
       setNextRoundLoading(false)
     }
@@ -673,7 +689,6 @@ function InterviewDetailView({
       <div className="interview-detail">
         <div className="interview-detail__topbar">
           <Space align="center">
-            <Button icon={<ArrowLeftOutlined />} type="text" onClick={onBack} />
             <strong style={{ fontSize: 16 }}>{detail.title}</strong>
             <Tag color="blue">第 {detail.activeRoundIndex + 1} / {detail.interviewerRoles.length} 轮</Tag>
             <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty)}</Tag>
@@ -683,7 +698,9 @@ function InterviewDetailView({
               {timerDisplay}
             </Tag>
             {detail.status === 'PAUSED' ? (
-              <Button type="text" icon={<PlayCircleOutlined />} title="继续面试" onClick={onContinue} />
+              <Button onClick={onContinue}>
+                继续面试
+              </Button>
             ) : null}
             {hasNextRound ? (
               <Button
@@ -694,6 +711,15 @@ function InterviewDetailView({
                 onClick={() => void handleNextRound()}
               >
                 下一轮
+              </Button>
+            ) : null}
+            {detail.status === 'IN_PROGRESS' ? (
+              <Button
+                icon={<PauseCircleOutlined />}
+                title="暂停面试"
+                onClick={onPause}
+              >
+                暂停
               </Button>
             ) : null}
             {detail.status !== 'ENDED' ? (
@@ -749,10 +775,10 @@ function InterviewDetailView({
                       <MarkdownMessage content={item.content} />
                       <span>{new Date(item.createdAt).toLocaleString()}</span>
                       {isLastInterviewerMessage && canMessage && !streaming ? (
-                        <div style={{ marginTop: 8 }}>
+                        <div className="interview-message__actions">
                           <Button
+                            className="interview-regenerate-button"
                             size="small"
-                            icon={<ReloadOutlined />}
                             onClick={onRegenerate}
                           >
                             重新生成

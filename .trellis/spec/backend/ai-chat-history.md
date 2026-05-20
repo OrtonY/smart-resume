@@ -35,5 +35,5 @@ The frontend sends only the current user message and bound resume context; Sprin
 * Loading unbounded history into the prompt context.
 * Letting SSE endpoint exceptions fall through to the global JSON exception handler; emit an SSE `error` event instead.
 * Collapsing all chats for the same resume into a single conversation id, which prevents users from choosing and continuing distinct histories.
-* Inventing a fresh conversation-id scheme inside a feature (e.g. `"interview-" + uuid`) — use `AiConversationIdGenerator` so the audit format stays uniform across features.
+* Inventing a fresh conversation-id scheme inside a feature (e.g. `"interview-" + uuid`) — use `AiConversationIdGenerator` so the audit format stays uniform across features. **Exception**: interview uses per-round conversationIds (`"interview-{sessionId}-round-{roundIndex}"`) for context isolation between rounds — this is an accepted deviation.
 * Exposing scoring / interview / report conversation ids in the resume-chat history list — they share the underlying table but are not user-selectable threads.
