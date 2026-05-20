@@ -94,6 +94,8 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   const [streamingContent, setStreamingContent] = useState('')
   const [messageDraft, setMessageDraft] = useState('')
   const abortControllerRef = useRef<AbortController | null>(null)
+  const autoContinueInterviewIdRef = useRef<string | null>(null)
+  const skipAutoContinueAfterPauseRef = useRef<string | null>(null)
   const [form] = Form.useForm<CreateFormValues>()
 
   const page = Number(searchParams.get('page') ?? '1')
@@ -177,6 +179,13 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   }, [loadDetail])
 
   useEffect(() => {
+    if (!interviewId) {
+      autoContinueInterviewIdRef.current = null
+      skipAutoContinueAfterPauseRef.current = null
+    }
+  }, [interviewId])
+
+  useEffect(() => {
     if (searchParams.get('create') === '1') {
       const timeoutId = window.setTimeout(() => {
         setCreateOpen(true)
@@ -237,7 +246,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
     }
   }
 
-  async function refreshAfterAction(action: () => Promise<InterviewDetail>, successText: string) {
+  const refreshAfterAction = useCallback(async (action: () => Promise<InterviewDetail>, successText: string) => {
     try {
       const next = await action()
       setDetail(next)
@@ -247,7 +256,29 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       void message.error(error instanceof Error ? error.message : '操作失败。')
       return null
     }
-  }
+  }, [message])
+
+  useEffect(() => {
+    if (!detail || loadingDetail || detail.status !== 'PAUSED') {
+      return
+    }
+    if (skipAutoContinueAfterPauseRef.current === detail.id) {
+      return
+    }
+    if (autoContinueInterviewIdRef.current === detail.id) {
+      return
+    }
+
+    autoContinueInterviewIdRef.current = detail.id
+    void refreshAfterAction(
+      () => continueInterview(detail.id),
+      '面试已自动继续。',
+    ).then((updated) => {
+      if (!updated) {
+        autoContinueInterviewIdRef.current = null
+      }
+    })
+  }, [detail, loadingDetail, refreshAfterAction])
 
   async function handleSubmitMessage() {
     if (!detail || streaming) return
@@ -345,9 +376,22 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         streaming={streaming}
         streamingContent={streamingContent}
         onBack={() => navigate('/app/interviews')}
-        onPause={() => detail && void refreshAfterAction(() => pauseInterview(detail.id), '面试已暂停。').then(() => navigate('/app/interviews'))}
+        onPause={() => {
+          if (!detail) {
+            return
+          }
+          skipAutoContinueAfterPauseRef.current = detail.id
+          void refreshAfterAction(() => pauseInterview(detail.id), '面试已暂停。').then(() => navigate('/app/interviews'))
+        }}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
-        onEnd={() => detail && void refreshAfterAction(() => endInterview(detail.id), '面试已结束。')}
+        onEnd={() => detail && void refreshAfterAction(
+          () => endInterview(detail.id),
+          '面试已结束，报告正在生成，请稍后查看。',
+        ).then((updated) => {
+          if (updated) {
+            navigate('/app/interviews')
+          }
+        })}
         onNextRound={() => detail ? refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。') : Promise.resolve(null)}
         onSubmitMessage={() => void handleSubmitMessage()}
         onStopStreaming={handleStopStreaming}
@@ -737,6 +781,11 @@ function InterviewDetailView({
                 查看报告
               </Button>
             )}
+            {detail.status === 'ENDED' ? (
+              <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+                返回面试中心
+              </Button>
+            ) : null}
           </Space>
         </div>
 

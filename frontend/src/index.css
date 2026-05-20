@@ -2356,6 +2356,18 @@ a {
   gap: 16px;
 }
 
+.report-stacked-list {
+  display: grid;
+  gap: 16px;
+}
+
+.report-tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
 .report-question-detail > div {
   margin-bottom: 8px;
 }

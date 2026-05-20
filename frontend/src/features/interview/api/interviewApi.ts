@@ -1,6 +1,12 @@
 import { request } from '../../../lib/http/apiClient'
-import { streamEvents, type SseEvent } from '../../../lib/sse/streamEvents'
-import type { InterviewCreatePayload, InterviewDetail, InterviewListQuery, InterviewPage } from '../types'
+import { streamEvents, streamGetEvents, type SseEvent } from '../../../lib/sse/streamEvents'
+import type {
+  InterviewCreatePayload,
+  InterviewDetail,
+  InterviewListQuery,
+  InterviewPage,
+  ReportStatusEvent,
+} from '../types'
 
 export interface InterviewStreamEvent extends SseEvent {
   type: 'message' | 'done' | 'error'
@@ -91,4 +97,16 @@ export function regenerateReport(interviewId: string) {
   return request<void>(`/api/interviews/${interviewId}/report/regenerate`, {
     method: 'POST',
   })
+}
+
+export function streamReportEvents(
+  interviewId: string,
+  onEvent: (event: ReportStatusEvent) => void,
+  options?: { signal?: AbortSignal },
+) {
+  return streamGetEvents<ReportStatusEvent>(
+    `/api/interviews/${interviewId}/report/events`,
+    onEvent,
+    options,
+  )
 }
