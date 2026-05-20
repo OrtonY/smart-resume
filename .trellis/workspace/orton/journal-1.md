@@ -973,3 +973,36 @@ Optimized interview round context isolation, timer persistence, regenerated-mess
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: Home and interview AI UX polish
+
+**Date**: 2026-05-20
+**Task**: Home and interview AI UX polish
+**Branch**: `master`
+
+### Summary
+
+Moved AI configuration to the home page, improved interview completion and paused-session behavior, made chat sending button-only with Enter for newlines, adjusted report layout, and fixed authenticated report SSE streaming.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d9bfd07` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
