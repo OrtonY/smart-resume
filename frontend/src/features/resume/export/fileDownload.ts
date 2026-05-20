@@ -12,7 +12,7 @@ export function downloadBlob(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
 }
 
-export function createExportFilename(title: string, extension: 'pdf' | 'docx') {
+export function createExportFilename(title: string, extension: 'pdf') {
   const normalizedTitle = title.trim() || 'resume'
   const safeTitle = normalizedTitle
     .replace(/[\\/:*?"<>|]/g, '-')

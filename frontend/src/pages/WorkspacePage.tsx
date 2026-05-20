@@ -3,8 +3,6 @@ import {
   CopyOutlined,
   DeleteOutlined,
   DownloadOutlined,
-  FilePdfOutlined,
-  FileWordOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
   FileAddOutlined,
@@ -60,12 +58,10 @@ import {
   toggleShare,
   updateResume,
 } from '../features/resume/api/resumeApi'
-import { exportResumeDocx } from '../features/resume/export/docxExport'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
   resolveResumeTemplate,
-  type ResumeTemplateDefinition,
 } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
 import type {
@@ -93,7 +89,6 @@ interface WorkspacePageProps {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
-type ExportFormat = 'pdf' | 'docx'
 type ResumeModuleId = 'personal-info' | ResumeSectionKey
 type ShareDialogState = {
   resumeId: string
@@ -204,7 +199,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
   const [loadingResumeList, setLoadingResumeList] = useState(true)
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
-  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
   const deferredDraft = useDeferredValue(draft)
@@ -419,29 +414,23 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     void message.success(`${mode === 'LATEST' ? '最新版本' : '快照'}分享链接已复制。`)
   }
 
-  async function handleExport(format: ExportFormat, template: ResumeTemplateDefinition, previewRoot?: HTMLElement | null) {
-    if (!resumeId || !draft || exportingFormat) {
+  async function handleExportPdf(previewRoot?: HTMLElement | null) {
+    if (!resumeId || !draft || exportingPdf) {
       return
     }
 
-    setExportingFormat(format)
+    setExportingPdf(true)
     try {
-      if (format === 'pdf') {
-        if (!previewRoot) {
-          throw new Error('未找到可导出的简历预览。')
-        }
-
-        await exportResumePdf(previewRoot, draft.title)
-        void message.success('PDF 已开始下载。')
-        return
+      if (!previewRoot) {
+        throw new Error('未找到可导出的简历预览。')
       }
 
-      await exportResumeDocx(draft, template)
-      void message.success('DOCX 已开始下载。')
+      await exportResumePdf(previewRoot, draft.title)
+      void message.success('PDF 已开始下载。')
     } catch (error) {
       void message.error(error instanceof Error ? error.message : '导出失败，请重试。')
     } finally {
-      setExportingFormat(null)
+      setExportingPdf(false)
     }
   }
 
@@ -546,8 +535,8 @@ function showSection(sectionKey: ResumeSectionKey) {
         loadingTemplates={loadingTemplates}
         onApplyPatch={handleApplyPatch}
         onCreateShare={handleCreateShare}
-        exportingFormat={exportingFormat}
-        onExport={handleExport}
+        exportingPdf={exportingPdf}
+        onExportPdf={handleExportPdf}
         onExpandedModulesChange={handleExpandedModulesChange}
         onFocusModule={focusModule}
         onHideSection={hideSection}
@@ -1293,9 +1282,9 @@ function ResumeEditorView({
   loadingTemplates,
   onApplyPatch,
   onCreateShare,
-  exportingFormat,
+  exportingPdf,
   onExpandedModulesChange,
-  onExport,
+  onExportPdf,
   onFocusModule,
   onHideSection,
   onLogout,
@@ -1314,9 +1303,9 @@ function ResumeEditorView({
   loadingTemplates: boolean
   onApplyPatch: (patch: AiResumeSuggestion) => void
   onCreateShare: (mode: ShareMode, password?: string) => Promise<void>
-  exportingFormat: ExportFormat | null
+  exportingPdf: boolean
   onExpandedModulesChange: (keys: string | string[]) => void
-  onExport: (format: ExportFormat, template: ResumeTemplateDefinition, previewRoot?: HTMLElement | null) => Promise<void>
+  onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onLogout: () => void
@@ -1342,10 +1331,6 @@ function ResumeEditorView({
   const personalInfoModule = orderedModuleDefinitions.find((module) => module.key === 'personal-info')
   const sortableModules = orderedModuleDefinitions.filter((module) => module.key !== 'personal-info')
 
-  const exportMenuItems = [
-    { key: 'pdf', label: '导出 PDF', icon: <FilePdfOutlined /> },
-    { key: 'docx', label: '导出 DOCX', icon: <FileWordOutlined /> },
-  ]
   const interviewMenuItems = [
     {
       key: 'create',
@@ -1449,9 +1434,7 @@ function ResumeEditorView({
               setSharePasswordEnabled(false)
               setSharePassword('')
             }}>分享</Button>
-            <Dropdown menu={{ items: exportMenuItems, onClick: ({ key }) => void onExport(key as ExportFormat, selectedTemplate, key === 'pdf' ? exportPreviewRef.current : undefined) }}>
-              <Button icon={<DownloadOutlined />} loading={Boolean(exportingFormat)} disabled={Boolean(exportingFormat)}>导出</Button>
-            </Dropdown>
+            <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>导出 PDF</Button>
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
               锁定
             </Button>

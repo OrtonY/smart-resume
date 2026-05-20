@@ -62,14 +62,6 @@ export async function deleteResumeTemplate(templateKey: string) {
   })
 }
 
-export async function restoreBuiltInTemplatesFromBackup() {
-  const payload = await request<unknown>('/api/templates/restore-from-backup', {
-    method: 'POST',
-  })
-
-  return normalizeManagedTemplateCatalog(payload)
-}
-
 async function loadManifestTemplateCatalog() {
   try {
     const response = await fetch(TEMPLATE_MANIFEST_PATH, { headers: { Accept: 'application/json' } })
