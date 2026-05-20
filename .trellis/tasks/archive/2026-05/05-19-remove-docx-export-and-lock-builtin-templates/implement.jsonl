@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec index — points to the conventions sub-agent must follow when editing TSX/TS files."}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type-safety patterns — relevant when narrowing ExportFormat from 'pdf' | 'docx' to 'pdf' and removing dead type branches."}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component conventions — needed when modifying WorkspacePage export button (Dropdown → Button) and TemplateGalleryPage conditional rendering for builtIn templates."}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "State conventions — needed when removing restoringBuiltIns state and adjusting editor state guards based on selectedTemplate.builtIn."}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend spec index — points to the Java/Spring conventions sub-agent must follow when editing TemplateCatalogService."}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Error-handling conventions — relevant for choosing the right exception type when rejecting builtIn template updates/deletes (403 vs 400 vs custom)."}
+{"file": ".trellis/spec/guides/index.md", "reason": "Shared thinking guides — required reading per trellis-before-dev workflow."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer changes — DOCX removal touches package.json + TS source + UI; builtin lock touches frontend UI + backend service. Helps catch missed call sites."}
