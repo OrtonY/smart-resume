@@ -1,5 +1,6 @@
 package com.smartresume.interview.service;
 
+import java.util.List;
 import java.util.Map;
 
 public class InterviewPromptBuilder {
@@ -85,6 +86,19 @@ public class InterviewPromptBuilder {
         int currentQuestionCount,
         int maxQuestions
     ) {
+        return buildSystemPrompt(role, difficulty, resumeJson, jobDescription,
+            currentQuestionCount, maxQuestions, List.of());
+    }
+
+    public static String buildSystemPrompt(
+        String role,
+        String difficulty,
+        String resumeJson,
+        String jobDescription,
+        int currentQuestionCount,
+        int maxQuestions,
+        List<String> previousRoundTopics
+    ) {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("# 角色设定\n\n");
@@ -105,6 +119,14 @@ public class InterviewPromptBuilder {
             prompt.append("# 目标岗位 JD\n\n");
             prompt.append(jobDescription);
             prompt.append("\n\n");
+        }
+
+        if (previousRoundTopics != null && !previousRoundTopics.isEmpty()) {
+            prompt.append("# 已问过的技术栈（避免重复）\n\n");
+            prompt.append("以下技术栈已在前面轮次中被详细询问过，请避免重复提问：");
+            prompt.append(String.join(", ", previousRoundTopics));
+            prompt.append("。\n");
+            prompt.append("注意：项目经历相关问题不受此限制。\n\n");
         }
 
         prompt.append(buildOutputRules());

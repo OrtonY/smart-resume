@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export function useInterviewTimer(isActive: boolean) {
-  const [elapsed, setElapsed] = useState(0)
+export function useInterviewTimer(isActive: boolean, initialSeconds = 0) {
+  const [elapsed, setElapsed] = useState(initialSeconds)
   const intervalRef = useRef<number | null>(null)
   const isActiveRef = useRef(isActive)
 
   useEffect(() => {
     isActiveRef.current = isActive
   }, [isActive])
+
+  // Sync elapsed when initialSeconds changes (e.g. detail loaded from backend)
+  useEffect(() => {
+    setElapsed(initialSeconds) // eslint-disable-line react-hooks/set-state-in-effect -- intentional sync from prop
+  }, [initialSeconds])
 
   const startTimer = useCallback(() => {
     if (intervalRef.current !== null) return

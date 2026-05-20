@@ -20,6 +20,8 @@ public class InterviewSessionEntity {
     private String status;
     private String reportStatus;
     private String reportContent;
+    private Integer totalElapsedSeconds;
+    private LocalDateTime lastResumedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime endedAt;
@@ -110,6 +112,22 @@ public class InterviewSessionEntity {
 
     public void setReportContent(String reportContent) {
         this.reportContent = reportContent;
+    }
+
+    public Integer getTotalElapsedSeconds() {
+        return totalElapsedSeconds;
+    }
+
+    public void setTotalElapsedSeconds(Integer totalElapsedSeconds) {
+        this.totalElapsedSeconds = totalElapsedSeconds;
+    }
+
+    public LocalDateTime getLastResumedAt() {
+        return lastResumedAt;
+    }
+
+    public void setLastResumedAt(LocalDateTime lastResumedAt) {
+        this.lastResumedAt = lastResumedAt;
     }
 
     public LocalDateTime getCreatedAt() {

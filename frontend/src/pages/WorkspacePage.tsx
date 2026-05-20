@@ -540,7 +540,6 @@ function showSection(sectionKey: ResumeSectionKey) {
         onExpandedModulesChange={handleExpandedModulesChange}
         onFocusModule={focusModule}
         onHideSection={hideSection}
-        onLogout={onLogout}
         onDragEnd={handleDragEnd}
         onShowSection={showSection}
         onUpdateDraft={updateDraft}
@@ -566,7 +565,6 @@ function showSection(sectionKey: ResumeSectionKey) {
       <RecycleBinView
         loadingResumeList={loadingResumeList}
         onPageChange={handlePageChange}
-        onLogout={onLogout}
         onRestoreResume={handleRestoreResume}
         resumePage={resumePage}
         resumeList={resumeList}
@@ -1140,7 +1138,6 @@ function ShareLinksModal({
 function RecycleBinView({
   loadingResumeList,
   onPageChange,
-  onLogout,
   onRestoreResume,
   resumePage,
   resumeList,
@@ -1149,7 +1146,6 @@ function RecycleBinView({
 }: {
   loadingResumeList: boolean
   onPageChange: (page: number) => Promise<void>
-  onLogout: () => void
   onRestoreResume: (resumeId: string) => Promise<void>
   resumePage: ResumePage | null
   resumeList: ResumeSummary[]
@@ -1285,7 +1281,6 @@ function ResumeEditorView({
   onExportPdf,
   onFocusModule,
   onHideSection,
-  onLogout,
   onDragEnd,
   onShowSection,
   onUpdateDraft,
@@ -1306,7 +1301,6 @@ function ResumeEditorView({
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
-  onLogout: () => void
   onDragEnd: (event: DragEndEvent) => void
   onShowSection: (sectionKey: ResumeSectionKey) => void
   onUpdateDraft: (mutator: (next: ResumeDetail) => void) => void
