@@ -1,6 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Collapse, Empty, Progress, Spin, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { regenerateReport } from '../api/interviewApi'
 import type {
   InterviewReport as InterviewReportData,
@@ -225,7 +226,7 @@ function RoundsSection({ rounds }: { rounds: InterviewReportData['rounds'] }) {
     ),
     children: (
       <div>
-        <Paragraph>{round.summary}</Paragraph>
+        <MarkdownMessage content={round.summary} />
         <Collapse
           size="small"
           items={round.questions.map((q, qi) => ({
@@ -238,9 +239,9 @@ function RoundsSection({ rounds }: { rounds: InterviewReportData['rounds'] }) {
             ),
             children: (
               <div className="report-question-detail">
-                <div><Text strong>候选人回答：</Text><Text>{q.candidateAnswer}</Text></div>
-                <div><Text strong>评价：</Text><Text>{q.feedback}</Text></div>
-                <div><Text strong>参考答案：</Text><Text>{q.referenceAnswer}</Text></div>
+                <div><Text strong>候选人回答：</Text><MarkdownMessage content={q.candidateAnswer} /></div>
+                <div><Text strong>评价：</Text><MarkdownMessage content={q.feedback} /></div>
+                <div><Text strong>参考答案：</Text><MarkdownMessage content={q.referenceAnswer} /></div>
               </div>
             ),
           }))}

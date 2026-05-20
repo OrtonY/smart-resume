@@ -18,6 +18,7 @@ import {
   Empty,
   Form,
   Input,
+  Modal,
   Pagination,
   Popconfirm,
   Select,
@@ -365,12 +366,11 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
 
           <div className="workspace-hub__actions">
             <Link to="/app">
-              <Button size="large" icon={<ArrowLeftOutlined />}>返回首页</Button>
+              <Button icon={<ArrowLeftOutlined />}>返回首页</Button>
             </Link>
-            <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreateDrawer}>
+            <Button icon={<PlusOutlined />} onClick={openCreateDrawer}>
               新建面试
             </Button>
-            <Button size="large" onClick={onLogout}>锁定工作区</Button>
           </div>
         </div>
 
@@ -705,11 +705,11 @@ function InterviewDetailView({
             ) : null}
             {(detail.status === 'ENDED' || detail.reportStatus === 'READY' || detail.reportStatus === 'GENERATING' || detail.reportStatus === 'FAILED') && (
               <Button
-                type="text"
                 icon={<FileTextOutlined />}
-                title="查看报告"
                 onClick={() => setReportDrawerOpen(true)}
-              />
+              >
+                查看报告
+              </Button>
             )}
           </Space>
         </div>
@@ -846,12 +846,14 @@ function InterviewDetailView({
         </div>
       )}
 
-      <Drawer
+      <Modal
         title="面试报告"
         open={reportDrawerOpen}
-        width="50%"
-        onClose={() => setReportDrawerOpen(false)}
+        width="66%"
+        onCancel={() => setReportDrawerOpen(false)}
+        footer={null}
         destroyOnHidden
+        className="interview-report-modal"
       >
         {detail && (
           <InterviewReportPanel
@@ -869,7 +871,7 @@ function InterviewDetailView({
             }}
           />
         )}
-      </Drawer>
+      </Modal>
     </div>
   )
 }

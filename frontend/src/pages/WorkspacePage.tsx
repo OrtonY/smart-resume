@@ -700,23 +700,24 @@ function ResumeListView({
       <div className="workspace-hub">
         <div className="workspace-hub__hero">
           <div className="workspace-hub__copy">
+            <Tag color="blue">Smart Resume</Tag>
             <h1>智慧简历</h1>
             <p>选择简历开始编辑，实时预览效果。</p>
           </div>
 
           <div className="workspace-hub__actions">
             <Link to="/app/templates">
-              <Button type="primary" size="large" icon={<FileAddOutlined />}>
+              <Button icon={<FileAddOutlined />}>
                 模板目录
               </Button>
             </Link>
             <Link to="/app/interviews">
-              <Button size="large" icon={<MessageOutlined />}>
+              <Button icon={<MessageOutlined />}>
                 面试中心
               </Button>
             </Link>
             <Link to="/app/recycle-bin">
-              <Button size="large" icon={<InboxOutlined />}>
+              <Button icon={<InboxOutlined />}>
                 回收桶
               </Button>
             </Link>
@@ -1211,13 +1212,10 @@ function RecycleBinView({
 
           <div className="workspace-hub__actions">
             <Link to="/app">
-              <Button type="primary" size="large" icon={<ArrowLeftOutlined />}>
+              <Button icon={<ArrowLeftOutlined />}>
                 返回首页
               </Button>
             </Link>
-            <Button icon={<LogoutOutlined />} onClick={onLogout}>
-              锁定工作区
-            </Button>
           </div>
         </div>
 
@@ -1435,9 +1433,6 @@ function ResumeEditorView({
               setSharePassword('')
             }}>分享</Button>
             <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>导出 PDF</Button>
-            <Button icon={<LogoutOutlined />} onClick={onLogout}>
-              锁定
-            </Button>
           </Space>
         </div>
 

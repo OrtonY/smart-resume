@@ -501,11 +501,11 @@ export function TemplateGalleryPage() {
     <div className="template-gallery-page">
       <div className="template-gallery-page__head">
         <div>
-          <Space wrap>
-            <Button icon={<ArrowLeftOutlined />} type="text" onClick={() => navigate('/app')}>
+          <div className="template-gallery-page__nav">
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/app')}>
               返回工作区
             </Button>
-          </Space>
+          </div>
           <Title level={2} style={{ marginBottom: 8 }}>
             {isResumeTemplateChange ? '修改模板' : '模板目录'}
           </Title>
