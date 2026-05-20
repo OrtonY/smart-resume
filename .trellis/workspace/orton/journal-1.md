@@ -874,3 +874,36 @@ Removed DOCX export feature (deleted docxExport.ts, narrowed types, simplified e
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: Unify frontend layout and styles
+
+**Date**: 2026-05-20
+**Task**: Unify frontend layout and styles
+**Branch**: `master`
+
+### Summary
+
+Unified button styles, added Smart Resume tag, replaced report Drawer with centered Modal, added markdown rendering to report rounds, tightened markdown spacing, removed lock-workspace from non-homepage views.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cd6a7a1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
