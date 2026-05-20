@@ -22,6 +22,7 @@ interface MarkdownComposerProps {
   disabled?: boolean
   rows?: number
   autoSize?: { minRows?: number; maxRows?: number }
+  hidePreview?: boolean
 }
 
 type Mode = 'edit' | 'preview'
@@ -34,6 +35,7 @@ export function MarkdownComposer({
   disabled,
   rows,
   autoSize,
+  hidePreview,
 }: MarkdownComposerProps) {
   const [mode, setMode] = useState<Mode>('edit')
   const textAreaRef = useRef<TextAreaRef>(null)
@@ -161,15 +163,17 @@ export function MarkdownComposer({
             />
           </Tooltip>
         </Space>
-        <Segmented
-          size="small"
-          value={mode}
-          onChange={(v) => setMode(v as Mode)}
-          options={[
-            { label: '编辑', value: 'edit' },
-            { label: '预览', value: 'preview' },
-          ]}
-        />
+        {!hidePreview && (
+          <Segmented
+            size="small"
+            value={mode}
+            onChange={(v) => setMode(v as Mode)}
+            options={[
+              { label: '编辑', value: 'edit' },
+              { label: '预览', value: 'preview' },
+            ]}
+          />
+        )}
       </div>
       {mode === 'edit' ? (
         <TextArea

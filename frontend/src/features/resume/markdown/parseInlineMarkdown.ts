@@ -1,98 +1,108 @@
 import { fromMarkdown } from 'mdast-util-from-markdown'
-import type { InlineNode } from './types'
+import type { BlockNode, InlineNode } from './types'
 
 interface MdastNode {
   type: string
   value?: string
   children?: MdastNode[]
+  url?: string
+  ordered?: boolean
 }
 
 /**
- * Parse a string with a strict subset of markdown into InlineNode[].
+ * Parse a string with markdown into BlockNode[].
  *
- * Supports: bold (`**...**`).
- * Disallows: HTML, links, images, code, lists, headings, italic — these node types
- * are flattened to plain text (their text content preserved, formatting dropped).
- *
- * Multiple paragraphs are flattened to a single inline node array, joined by `\n`.
- * Empty input returns `[]`.
+ * Supports: bold, italic, inline code, links, lists, code blocks.
+ * Disallows: HTML, images.
+ */
+export function parseMarkdownBlocks(input: string): BlockNode[] {
+  if (!input) return []
+  const tree = fromMarkdown(input) as MdastNode
+  return collectBlocks(tree)
+}
+
+/**
+ * Parse a string with markdown into InlineNode[] (legacy flat API).
+ * Multiple paragraphs are joined by `\n`.
  */
 export function parseInlineMarkdown(input: string): InlineNode[] {
-  if (!input) {
-    return []
-  }
-
-  const tree = fromMarkdown(input) as MdastNode
-  const paragraphs: InlineNode[][] = []
-  collectParagraphInlines(tree, paragraphs)
-
-  if (paragraphs.length === 0) {
-    return []
-  }
-
-  // Flatten multiple paragraphs into a single inline list, separated by '\n'.
+  if (!input) return []
+  const blocks = parseMarkdownBlocks(input)
   const flattened: InlineNode[] = []
-  paragraphs.forEach((paragraphNodes, index) => {
+  blocks.forEach((block, index) => {
     if (index > 0) {
       flattened.push({ type: 'text', text: '\n' })
     }
-    flattened.push(...paragraphNodes)
+    if (block.type === 'paragraph') {
+      flattened.push(...block.children)
+    } else if (block.type === 'codeBlock') {
+      flattened.push({ type: 'code', text: block.value })
+    } else if (block.type === 'list') {
+      block.items.forEach((item, i) => {
+        if (i > 0) flattened.push({ type: 'text', text: '\n' })
+        const prefix = block.ordered ? `${i + 1}. ` : '• '
+        flattened.push({ type: 'text', text: prefix })
+        item.forEach((subBlock) => {
+          if (subBlock.type === 'paragraph') {
+            flattened.push(...subBlock.children)
+          }
+        })
+      })
+    }
   })
-
   return mergeAdjacentText(flattened)
 }
 
-function collectParagraphInlines(node: MdastNode, paragraphs: InlineNode[][]): void {
-  if (!node) {
-    return
-  }
+function collectBlocks(node: MdastNode): BlockNode[] {
+  if (!node) return []
+  const blocks: BlockNode[] = []
 
   switch (node.type) {
     case 'root': {
       for (const child of node.children ?? []) {
-        collectParagraphInlines(child, paragraphs)
+        blocks.push(...collectBlocks(child))
       }
-      return
+      return blocks
     }
     case 'paragraph':
     case 'heading': {
       const inlines = walkInlines(node.children ?? [])
       if (inlines.length > 0) {
-        paragraphs.push(inlines)
+        blocks.push({ type: 'paragraph', children: inlines })
       }
-      return
+      return blocks
     }
     case 'list': {
+      const items: BlockNode[][] = []
       for (const item of node.children ?? []) {
-        collectParagraphInlines(item, paragraphs)
+        items.push(collectBlocks(item))
       }
-      return
+      blocks.push({ type: 'list', ordered: node.ordered ?? false, items })
+      return blocks
     }
     case 'listItem':
     case 'blockquote': {
       for (const child of node.children ?? []) {
-        collectParagraphInlines(child, paragraphs)
+        blocks.push(...collectBlocks(child))
       }
-      return
-    }
-    case 'thematicBreak': {
-      return
+      return blocks
     }
     case 'code': {
       const value = node.value ?? ''
       if (value) {
-        paragraphs.push([{ type: 'text', text: value }])
+        blocks.push({ type: 'codeBlock', value })
       }
-      return
+      return blocks
     }
+    case 'thematicBreak':
     case 'html': {
-      return
+      return blocks
     }
     default: {
-      const inlines = walkInlines(node.children ?? [])
-      if (inlines.length > 0) {
-        paragraphs.push(inlines)
+      for (const child of node.children ?? []) {
+        blocks.push(...collectBlocks(child))
       }
+      return blocks
     }
   }
 }
@@ -100,8 +110,7 @@ function collectParagraphInlines(node: MdastNode, paragraphs: InlineNode[][]): v
 function walkInlines(children: MdastNode[]): InlineNode[] {
   const result: InlineNode[] = []
   for (const child of children) {
-    const nodes = walkInlineNode(child)
-    result.push(...nodes)
+    result.push(...walkInlineNode(child))
   }
   return mergeAdjacentText(result)
 }
@@ -119,25 +128,26 @@ function walkInlineNode(node: MdastNode): InlineNode[] {
       return [{ type: 'bold', children: inner }]
     }
     case 'emphasis': {
-      // Italic is not supported — flatten to plain text children.
-      return walkInlines(node.children ?? [])
-    }
-    case 'break': {
-      return [{ type: 'text', text: '\n' }]
+      const inner = walkInlines(node.children ?? [])
+      if (inner.length === 0) return []
+      return [{ type: 'italic', children: inner }]
     }
     case 'inlineCode': {
       const value = node.value ?? ''
       if (!value) return []
-      return [{ type: 'text', text: value }]
+      return [{ type: 'code', text: value }]
     }
     case 'link':
     case 'linkReference': {
-      return walkInlines(node.children ?? [])
+      const inner = walkInlines(node.children ?? [])
+      if (inner.length === 0) return []
+      return [{ type: 'link', url: node.url ?? '', children: inner }]
+    }
+    case 'break': {
+      return [{ type: 'text', text: '\n' }]
     }
     case 'image':
-    case 'imageReference': {
-      return []
-    }
+    case 'imageReference':
     case 'html': {
       return []
     }

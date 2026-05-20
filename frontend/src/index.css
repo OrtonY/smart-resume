@@ -1888,7 +1888,21 @@ a {
   color: var(--text-secondary);
 }
 
-.interview-center,
+.interview-center {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: calc(100vh - 36px);
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.7)),
+    radial-gradient(circle at top right, rgba(255, 140, 66, 0.12), transparent 26%);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+}
+
 .interview-detail {
   min-height: calc(100vh - 36px);
   display: grid;
@@ -1909,6 +1923,8 @@ a {
 
 .interview-card-grid {
   display: grid;
+  flex: 1;
+  align-content: start;
   gap: 14px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1947,13 +1963,10 @@ a {
 }
 
 .interview-card p {
-  display: -webkit-box;
-  min-height: 72px;
+  max-height: 72px;
   margin: 0;
-  overflow: hidden;
+  overflow-y: auto;
   color: var(--text-secondary);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }
 
 .interview-card__head,
@@ -1976,6 +1989,10 @@ a {
   padding: 4px 8px;
   border-radius: 8px;
   background: rgba(49, 87, 164, 0.08);
+}
+
+.interview-center > .resume-list-pagination {
+  margin-top: auto;
 }
 
 .interview-detail {

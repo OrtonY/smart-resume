@@ -34,7 +34,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -42,7 +42,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import type { AiResumeSuggestion } from '../features/ai/types'
 import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
-import { MarkdownTextArea } from '../features/resume/components/MarkdownTextArea'
+import { MarkdownComposer } from '../lib/markdown/MarkdownComposer'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
   copyResume,
@@ -1687,18 +1687,6 @@ function SectionGridFullWidth({ children }: { children: ReactNode }) {
   return <div className="resume-editor-section-grid__full">{children}</div>
 }
 
-function MarkdownLongTextArea(props: ComponentProps<typeof MarkdownTextArea>) {
-  const { className, ...rest } = props
-
-  return (
-    <MarkdownTextArea
-      {...rest}
-      className={['resume-editor-long-textarea', className].filter(Boolean).join(' ')}
-      wrap="off"
-    />
-  )
-}
-
 function renderModuleContent(
   moduleKey: ResumeModuleId,
   draft: ResumeDetail,
@@ -1813,11 +1801,12 @@ function renderModuleContent(
       return (
         <div>
           <Text type="secondary" style={{ fontSize: 12 }}>个人简介</Text>
-          <MarkdownLongTextArea
-            rows={6}
+          <MarkdownComposer
+            hidePreview
+            autoSize={{ minRows: 6, maxRows: 12 }}
             value={draft.content.personalSummary}
-            onChange={(event) => updateDraft((next) => { next.content.personalSummary = event.target.value })}
-            placeholder="用一段短文概括你的优势、方向和关键成果。（支持 **粗体** 和 *斜体*）"
+            onChange={(val) => updateDraft((next) => { next.content.personalSummary = val })}
+            placeholder="用一段短文概括你的优势、方向和关键成果。（支持 Markdown 格式）"
           />
         </div>
       )
@@ -1925,7 +1914,7 @@ function renderEducationSection(
         <SectionGridFullWidth>
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>亮点描述</Text>
-            <MarkdownLongTextArea rows={3} value={item.description} placeholder="亮点描述（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.education[index].description = event.target.value })} />
+            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder="亮点描述（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.education[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
@@ -1964,7 +1953,7 @@ function renderWorkSection(
         <SectionGridFullWidth>
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>工作内容</Text>
-            <MarkdownLongTextArea rows={4} value={item.description} placeholder="工作内容、范围和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].description = event.target.value })} />
+            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder="工作内容、范围和成果（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.workExperience[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
@@ -2003,7 +1992,7 @@ function renderProjectSection(
         <SectionGridFullWidth>
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>项目描述</Text>
-            <MarkdownLongTextArea rows={4} value={item.description} placeholder="项目描述、技术栈和成果（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].description = event.target.value })} />
+            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder="项目描述、技术栈和成果（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.projectExperience[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
@@ -2063,7 +2052,7 @@ function renderHonorSection(
         <SectionGridFullWidth>
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>奖项说明</Text>
-            <MarkdownLongTextArea rows={3} value={item.description} placeholder="奖项说明（支持 **粗体** 和 *斜体*）" onChange={(event) => updateDraft((next) => { next.content.honors[index].description = event.target.value })} />
+            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder="奖项说明（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.honors[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
