@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 30
+- **Total Sessions**: 31
 - **Last Active**: 2026-05-20
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1008 | Active |
+| `journal-1.md` | ~1041 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 31 | 2026-05-20 | Add Apache 2.0 open-source metadata | `ced803f` | `master` |
 | 30 | 2026-05-20 | Home and interview AI UX polish | `d9bfd07` | `master` |
 | 29 | 2026-05-20 | Interview conversation optimization | `0c9d58e` | `master` |
 | 28 | 2026-05-20 | Interview center layout fix + resume markdown editor unification | `d8f12c7` | `master` |

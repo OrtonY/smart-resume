@@ -1006,3 +1006,36 @@ Moved AI configuration to the home page, improved interview completion and pause
 ### Next Steps
 
 - None - task complete
+
+
+## Session 31: Add Apache 2.0 open-source metadata
+
+**Date**: 2026-05-20
+**Task**: Add Apache 2.0 open-source metadata
+**Branch**: `master`
+
+### Summary
+
+Added Apache 2.0 LICENSE and NOTICE files, updated bilingual README license sections, corrected the documented Node.js prerequisite, and archived the completed open-source metadata task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ced803f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
