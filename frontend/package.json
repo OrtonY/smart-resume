@@ -15,7 +15,6 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "antd": "^6.0.0",
-    "docx": "^9.6.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "mdast-util-from-markdown": "^2.0.3",

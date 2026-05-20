@@ -66,6 +66,9 @@ public class TemplateCatalogService {
     public TemplateCatalogResponse updateTemplate(String templateKey, TemplateUpdateRequest request) {
         validateLayout(request.layout());
         ResumeTemplateEntity entity = requireActiveTemplate(templateKey);
+        if (Boolean.TRUE.equals(entity.getBuiltIn())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Built-in templates cannot be modified");
+        }
         applyEditableFields(entity, request.name(), request.summary(), request.category(), request.layout(), request.theme(), request.preview(), LocalDateTime.now());
         resumeTemplateMapper.update(entity);
         return toResponse(entity);
