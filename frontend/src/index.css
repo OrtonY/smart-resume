@@ -666,6 +666,11 @@ a {
   margin-bottom: 18px;
 }
 
+.template-gallery-page__nav {
+  margin-bottom: 12px;
+  display: inline-block;
+}
+
 .workspace-columns,
 .template-gallery-layout {
   display: grid;
@@ -1655,8 +1660,7 @@ a {
 .ai-chat-message__bubble {
   padding: 12px 14px;
   border-radius: 18px;
-  white-space: pre-wrap;
-  line-height: 1.65;
+  line-height: 1.4;
   border: 1px solid rgba(20, 33, 61, 0.08);
 }
 
@@ -2289,6 +2293,26 @@ a {
 
 .report-question-detail > div {
   margin-bottom: 8px;
+}
+
+.interview-report-modal {
+  top: 0;
+  padding: 0;
+  max-width: 66%;
+  margin: 0 auto;
+}
+
+.interview-report-modal .ant-modal-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+}
+
+.interview-report-modal .ant-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 @media (max-width: 1280px) {
