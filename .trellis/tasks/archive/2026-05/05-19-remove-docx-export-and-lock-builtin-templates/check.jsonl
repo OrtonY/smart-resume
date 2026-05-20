@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality bar — used by check sub-agent to verify no dead code/unused imports remain after DOCX and restore-button removal."}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type-safety check — verify ExportFormat narrowing has no leftover 'docx' branches and no any/as casts were introduced."}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality bar — verify the new builtIn guards in TemplateCatalogService follow project patterns (exception type, logging, message format)."}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify the rejected-update/delete responses match project's standard ApiResponse error shape and HTTP status conventions."}
+{"file": ".trellis/spec/guides/index.md", "reason": "Shared thinking guides — required reading per trellis check workflow."}
