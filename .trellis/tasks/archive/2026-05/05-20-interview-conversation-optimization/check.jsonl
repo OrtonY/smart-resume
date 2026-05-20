@@ -1,0 +1,13 @@
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Verify per-round conversationId format and memory window size align with shared AI invocation contract"}
+{"file": ".trellis/spec/backend/ai-chat-history.md", "reason": "Verify conversation id rules per feature are followed for the new round-scoped memory"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Verify DB migration follows naming/versioning conventions and column types are consistent"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify AI extraction failure path is handled gracefully without blocking the round flow"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Verify logging levels and structure match guidelines for the extraction failure path"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Verify backend quality standards are met"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Verify topbar component composition follows guidelines"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "Verify useInterviewTimer changes follow custom hook conventions"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Verify timer state syncing follows state-management patterns"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Verify new API field types are correctly declared and validated"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Verify frontend quality standards are met"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Verify timer + round-context changes maintain cross-layer consistency"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Verify existing pause/continue API and AiChatService are reused properly"}
