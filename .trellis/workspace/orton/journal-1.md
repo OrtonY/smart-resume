@@ -907,3 +907,36 @@ Unified button styles, added Smart Resume tag, replaced report Drawer with cente
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: Interview center layout fix + resume markdown editor unification
+
+**Date**: 2026-05-20
+**Task**: Interview center layout fix + resume markdown editor unification
+**Branch**: `master`
+
+### Summary
+
+Fixed interview center flex layout (consistent 1-row/2-row display, scrollable JD). Unified resume editor to MarkdownComposer with full toolbar. Extended inline markdown parser to support italic, code, links in preview.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d8f12c7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
