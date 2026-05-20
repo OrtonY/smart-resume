@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 26
+- **Total Sessions**: 27
 - **Last Active**: 2026-05-20
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~876 | Active |
+| `journal-1.md` | ~909 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 27 | 2026-05-20 | Unify frontend layout and styles | `cd6a7a1` | `master` |
 | 26 | 2026-05-20 | Remove DOCX export and lock built-in templates | `06f46c3`, `732f344` | `master` |
 | 25 | 2026-05-19 | Interview multi-round UI | `627b335` | `master` |
 | 24 | 2026-05-19 | Markdown 渲染 + 面试 SSE 流式 + 输入框/报告抽屉 UI 修复 | `309bc34` | `master` |
