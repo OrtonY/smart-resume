@@ -12,6 +12,7 @@ public final class InterviewDtos {
 
     public record InterviewCreateRequest(
         String resumeId,
+        String targetCompany,
         @NotBlank(message = "Interview title is required")
         String title,
         String jobDescription,
@@ -35,8 +36,11 @@ public final class InterviewDtos {
         String aiConversationId,
         String title,
         String jobDescription,
+        String targetCompany,
         String difficulty,
         List<String> interviewerRoles,
+        List<String> companyContextSummary,
+        String companyContextStatus,
         int activeRoundIndex,
         String status,
         String reportStatus,
@@ -73,8 +77,11 @@ public final class InterviewDtos {
         String aiConversationId,
         String title,
         String jobDescription,
+        String targetCompany,
         String difficulty,
         List<String> interviewerRoles,
+        List<String> companyContextSummary,
+        String companyContextStatus,
         int activeRoundIndex,
         String status,
         String reportStatus,

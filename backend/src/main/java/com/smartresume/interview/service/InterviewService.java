@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
+import com.smartresume.ai.memory.AiConversationIdGenerator;
+import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.domain.InterviewMessageEntity;
@@ -45,7 +47,9 @@ public class InterviewService {
     private static final String STATUS_PAUSED = "PAUSED";
     private static final String STATUS_ENDED = "ENDED";
     private static final String REPORT_PENDING = "PENDING";
-    private static final String REPORT_READY = "READY";
+    private static final String COMPANY_CONTEXT_NOT_REQUESTED = "NOT_REQUESTED";
+    private static final String COMPANY_CONTEXT_READY = "READY";
+    private static final String COMPANY_CONTEXT_FAILED = "FAILED";
     private static final Set<String> DIFFICULTIES = Set.of("EASY", "MEDIUM", "HARD");
     private static final Set<String> STATUSES = Set.of(STATUS_IN_PROGRESS, STATUS_PAUSED, STATUS_ENDED);
     private static final int MAX_QUESTIONS_PER_ROUND = 18;
@@ -60,6 +64,9 @@ public class InterviewService {
     private final InterviewReportService interviewReportService;
 
     private record RoundTopicExtractionResult(List<String> topics) {
+    }
+
+    private record CompanyContextSummaryResult(List<String> summary) {
     }
 
     public InterviewService(
@@ -82,18 +89,22 @@ public class InterviewService {
         this.interviewReportService = interviewReportService;
     }
 
-    public InterviewPageResponse listInterviews(String resumeId, String status, String keyword, int page, int pageSize) {
+    public InterviewPageResponse listInterviews(String resumeId, String status, String targetCompany, String keyword, int page, int pageSize) {
         int safePage = Math.max(1, page);
         int safePageSize = Math.max(1, pageSize);
         String normalizedStatus = normalizeOptionalStatus(status);
+        String normalizedTargetCompany = normalizeOptionalText(targetCompany);
         String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
 
         List<InterviewSessionEntity> filtered = interviewSessionMapper.selectAll().stream()
             .filter(session -> resumeId == null || resumeId.isBlank() || resumeId.equals(session.getResumeId()))
             .filter(session -> normalizedStatus == null || normalizedStatus.equals(session.getStatus()))
+            .filter(session -> normalizedTargetCompany == null
+                || containsIgnoreCase(session.getTargetCompany(), normalizedTargetCompany))
             .filter(session -> normalizedKeyword.isBlank()
-                || session.getTitle().toLowerCase(Locale.ROOT).contains(normalizedKeyword)
-                || (session.getJobDescription() != null && session.getJobDescription().toLowerCase(Locale.ROOT).contains(normalizedKeyword)))
+                || containsIgnoreCase(session.getTitle(), normalizedKeyword)
+                || containsIgnoreCase(session.getJobDescription(), normalizedKeyword)
+                || containsIgnoreCase(session.getTargetCompany(), normalizedKeyword))
             .sorted(Comparator.comparing(InterviewSessionEntity::getUpdatedAt).reversed())
             .toList();
 
@@ -117,6 +128,7 @@ public class InterviewService {
     public InterviewDetailResponse createInterview(InterviewCreateRequest request) {
         String resumeId = normalizeOptionalText(request.resumeId());
         String jobDescription = normalizeOptionalText(request.jobDescription());
+        String targetCompany = normalizeOptionalText(request.targetCompany());
 
         if (resumeId == null && jobDescription == null) {
             throw new AppException(HttpStatus.BAD_REQUEST, "简历和 JD 至少填写一个");
@@ -131,8 +143,11 @@ public class InterviewService {
         session.setTitle(request.title().trim());
         session.setAiConversationId("interview-" + session.getId());
         session.setJobDescription(jobDescription);
+        session.setTargetCompany(targetCompany);
         session.setDifficulty(normalizeDifficulty(request.difficulty()));
         session.setInterviewerRolesJson(toJson(normalizeInterviewerRoles(request.interviewerRoles())));
+        session.setCompanyContextSummaryJson(toJson(List.of()));
+        session.setCompanyContextStatus(targetCompany == null ? COMPANY_CONTEXT_NOT_REQUESTED : COMPANY_CONTEXT_FAILED);
         session.setActiveRoundIndex(0);
         session.setStatus(STATUS_IN_PROGRESS);
         session.setReportStatus(REPORT_PENDING);
@@ -140,6 +155,15 @@ public class InterviewService {
         session.setLastResumedAt(now);
         session.setCreatedAt(now);
         session.setUpdatedAt(now);
+
+        if (targetCompany != null) {
+            List<String> companyContextSummary = extractCompanyContextSummary(targetCompany, session, resume);
+            session.setCompanyContextSummaryJson(toJson(companyContextSummary));
+            session.setCompanyContextStatus(
+                companyContextSummary.isEmpty() ? COMPANY_CONTEXT_FAILED : COMPANY_CONTEXT_READY
+            );
+        }
+
         interviewSessionMapper.insert(session);
 
         String openingMessage = generateAiResponse(session, resume, "请开始第一轮面试，先做简短自我介绍然后提出第一个面试问题。", 0);
@@ -271,8 +295,14 @@ public class InterviewService {
 
         List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
-            currentRole, session.getDifficulty(), resumeJson,
-            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND,
+            currentRole,
+            session.getDifficulty(),
+            resumeJson,
+            session.getJobDescription(),
+            companyContextEnabled(session) ? session.getTargetCompany() : null,
+            companyContextEnabled(session) ? readCompanyContextSummary(session) : List.of(),
+            questionCount,
+            MAX_QUESTIONS_PER_ROUND,
             previousRoundTopics
         );
 
@@ -352,8 +382,14 @@ public class InterviewService {
 
         List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
-            currentRole, session.getDifficulty(), resumeJson,
-            session.getJobDescription(), questionCount, MAX_QUESTIONS_PER_ROUND,
+            currentRole,
+            session.getDifficulty(),
+            resumeJson,
+            session.getJobDescription(),
+            companyContextEnabled(session) ? session.getTargetCompany() : null,
+            companyContextEnabled(session) ? readCompanyContextSummary(session) : List.of(),
+            questionCount,
+            MAX_QUESTIONS_PER_ROUND,
             previousRoundTopics
         );
 
@@ -501,6 +537,29 @@ public class InterviewService {
         return value.trim();
     }
 
+    private boolean containsIgnoreCase(String value, String expectedPart) {
+        return value != null && expectedPart != null
+            && value.toLowerCase(Locale.ROOT).contains(expectedPart.toLowerCase(Locale.ROOT));
+    }
+
+    private boolean companyContextEnabled(InterviewSessionEntity session) {
+        return COMPANY_CONTEXT_READY.equals(normalizeCompanyContextStatus(session.getCompanyContextStatus()))
+            && session.getTargetCompany() != null
+            && !readCompanyContextSummary(session).isEmpty();
+    }
+
+    private String normalizeCompanyContextStatus(String status) {
+        String normalized = normalizeOptionalText(status);
+        if (normalized == null) {
+            return COMPANY_CONTEXT_NOT_REQUESTED;
+        }
+        normalized = normalized.toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case COMPANY_CONTEXT_READY, COMPANY_CONTEXT_FAILED, COMPANY_CONTEXT_NOT_REQUESTED -> normalized;
+            default -> COMPANY_CONTEXT_NOT_REQUESTED;
+        };
+    }
+
     private void appendMessage(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt) {
         InterviewMessageEntity message = new InterviewMessageEntity();
         message.setId(UUID.randomUUID().toString());
@@ -570,6 +629,8 @@ public class InterviewService {
             session.getDifficulty(),
             resumeJson,
             session.getJobDescription(),
+            companyContextEnabled(session) ? session.getTargetCompany() : null,
+            companyContextEnabled(session) ? readCompanyContextSummary(session) : List.of(),
             currentQuestionCount,
             MAX_QUESTIONS_PER_ROUND,
             previousRoundTopics
@@ -611,8 +672,11 @@ public class InterviewService {
             session.getAiConversationId(),
             session.getTitle(),
             session.getJobDescription(),
+            session.getTargetCompany(),
             session.getDifficulty(),
             readInterviewerRoles(session),
+            readCompanyContextSummary(session),
+            normalizeCompanyContextStatus(session.getCompanyContextStatus()),
             currentRoundIndex(session),
             session.getStatus(),
             session.getReportStatus(),
@@ -632,8 +696,11 @@ public class InterviewService {
             session.getAiConversationId(),
             session.getTitle(),
             session.getJobDescription(),
+            session.getTargetCompany(),
             session.getDifficulty(),
             readInterviewerRoles(session),
+            readCompanyContextSummary(session),
+            normalizeCompanyContextStatus(session.getCompanyContextStatus()),
             currentRoundIndex(session),
             session.getStatus(),
             session.getReportStatus(),
@@ -665,6 +732,20 @@ public class InterviewService {
             });
         } catch (Exception exception) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse interviewer roles");
+        }
+    }
+
+    private List<String> readCompanyContextSummary(InterviewSessionEntity session) {
+        String json = session.getCompanyContextSummaryJson();
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            List<String> values = objectMapper.readValue(json, new TypeReference<List<String>>() {
+            });
+            return normalizeCompanyContextSummary(values);
+        } catch (Exception exception) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse company context summary");
         }
     }
 
@@ -731,6 +812,38 @@ public class InterviewService {
         }
     }
 
+    private List<String> extractCompanyContextSummary(String targetCompany, InterviewSessionEntity session, ResumeEntity resume) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("请围绕目标公司生成 2 到 3 条适合用于面试上下文注入的摘要。要求：\n");
+        prompt.append("1. 只输出 JSON 对象，格式必须是 {\"summary\":[\"...\",\"...\"]}。\n");
+        prompt.append("2. 重点提炼公司主营业务、行业特点、技术或组织特征，便于面试官偶尔结合业务场景提问。\n");
+        prompt.append("3. 摘要要稳健，不要编造具体营收、最新组织变化或无法确认的细节。\n");
+        prompt.append("4. 每条摘要控制在 18 到 36 个中文字符左右，避免空泛口号。\n");
+        prompt.append("5. 如果把握不足，也尽量给出行业层面的稳妥描述；若仍无法判断，返回 {\"summary\":[]}。\n");
+        prompt.append("目标公司：").append(targetCompany).append("\n");
+        if (session.getJobDescription() != null && !session.getJobDescription().isBlank()) {
+            prompt.append("岗位 JD：").append(session.getJobDescription()).append("\n");
+        }
+        if (resume != null && resume.getLayoutJson() != null && !resume.getLayoutJson().isBlank()) {
+            prompt.append("候选人简历（供判断匹配场景参考）：").append(resume.getLayoutJson()).append("\n");
+        }
+
+        AiInvocationRequest request = new AiInvocationRequest(
+            "你是一名谨慎的公司背景提炼助手。请输出适合技术面试上下文注入的精炼摘要，只返回 JSON。",
+            prompt.toString(),
+            AiConversationIdGenerator.generate(session.getId(), AiFeatureType.INTERVIEW)
+        );
+
+        try {
+            CompanyContextSummaryResult response = aiChatService.callStructured(request, CompanyContextSummaryResult.class);
+            return normalizeCompanyContextSummary(response == null ? null : response.summary());
+        } catch (Exception exception) {
+            log.warn("Failed to extract company context for session {} company {}: {}",
+                session.getId(), targetCompany, exception.getMessage());
+            return List.of();
+        }
+    }
+
     private List<String> normalizeExtractedTopics(List<String> topics) {
         if (topics == null || topics.isEmpty()) {
             return List.of();
@@ -743,6 +856,26 @@ public class InterviewService {
             String trimmed = topic.trim();
             if (!trimmed.isEmpty()) {
                 normalized.add(trimmed);
+            }
+        }
+        return new ArrayList<>(normalized);
+    }
+
+    private List<String> normalizeCompanyContextSummary(List<String> summary) {
+        if (summary == null || summary.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        for (String item : summary) {
+            if (item == null) {
+                continue;
+            }
+            String trimmed = item.trim();
+            if (!trimmed.isEmpty()) {
+                normalized.add(trimmed);
+            }
+            if (normalized.size() >= 3) {
+                break;
             }
         }
         return new ArrayList<>(normalized);
