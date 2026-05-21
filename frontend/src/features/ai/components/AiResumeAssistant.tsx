@@ -821,6 +821,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
       onCancel={onClose}
       onOk={() => void handleSave()}
       okText="保存"
+      cancelText="取消"
       confirmLoading={saving}
       destroyOnHidden
     >
