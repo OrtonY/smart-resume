@@ -1039,3 +1039,37 @@ Added Apache 2.0 LICENSE and NOTICE files, updated bilingual README license sect
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: Interview company context and modal UX
+
+**Date**: 2026-05-21
+**Task**: Interview company context and modal UX
+**Branch**: `master`
+
+### Summary
+
+Added interview company-context persistence and polished the interview creation/detail UI, including modal scrolling, interviewer ordering, and discoverable company hover details.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1847311` | (see git log) |
+| `04997b6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
