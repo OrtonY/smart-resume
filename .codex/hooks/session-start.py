@@ -97,6 +97,16 @@ Trellis SessionStart 已注入：workflow、当前任务状态、开发者身份
 Then continue directly with the user's request. This notice is one-shot: do not repeat it after the first assistant reply in the same session.
 </first-reply-notice>"""
 
+GIT_BRANCH_POLICY_NOTICE = """<git-branch-policy>
+Branch workflow rules for this repository:
+- `develop` is the long-lived development baseline.
+- Start each requirement from a new branch created off `develop`.
+- Never make a normal development commit directly on `master` or `develop`.
+- Merge completed task branches back into `develop`, then delete the task branch.
+- Merge `develop` into `master` only for releases.
+- Never delete `develop`.
+</git-branch-policy>"""
+
 SUB_AGENT_NOTICE = """<sub-agent-notice>
 SUB-AGENT NOTICE - READ FIRST IF SPAWNED VIA spawn_agent
 
@@ -384,6 +394,8 @@ Read and follow all instructions below carefully.
 
 """)
     output.write(FIRST_REPLY_NOTICE)
+    output.write("\n\n")
+    output.write(GIT_BRANCH_POLICY_NOTICE)
     output.write("\n\n")
 
     output.write("<current-state>\n")

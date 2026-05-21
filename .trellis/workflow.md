@@ -153,6 +153,7 @@ Phase 3: Finish  → distill lessons + wrap-up
 No active task. **A Direct answer** — pure Q&A / explanation / lookup / chat; no file writes + one-line answer + repo reads ≤ 2 files → AI judges, no override needed.
 **B Create a task** — any implementation / code change / build / refactor work. Entry sequence: (1) `python ./.trellis/scripts/task.py create "<title>"` to create the task (status=planning, breadcrumb switches to [workflow-state:planning] for brainstorm + jsonl phase guidance) → (2) load `trellis-brainstorm` skill to discuss requirements with the user and iterate on prd.md → (3) once prd is done and jsonl is curated, run `task.py start <task-dir>` to enter [workflow-state:in_progress] for the implementation skeleton. **"It looks small" is NOT grounds for downgrading B to A or C**.
 **C Inline change** (per-turn only, escape hatch for B) — the user's CURRENT message MUST contain one of: "skip trellis" / "no task" / "just do it" / "don't create a task" / "跳过 trellis" / "别走流程" / "小修一下" / "直接改" / "先别建任务" → briefly acknowledge ("ok, skipping trellis flow this turn"), then inline. **Without seeing one of these phrases you must NOT inline on your own**; do not invent an override the user never said.
+**Git branch policy (required)**: `develop` is the long-lived development branch. Start every new requirement from a fresh branch created off `develop`. Never make a normal development commit directly on `master` or `develop`. Merge task branches back into `develop`, then delete them. Merge `develop` into `master` only for releases. Never delete `develop`.
 [/workflow-state:no_task]
 
 ### Phase 1: Plan
@@ -169,6 +170,7 @@ No active task. **A Direct answer** — pure Q&A / explanation / lookup / chat; 
 Load the `trellis-brainstorm` skill and iterate on prd.md with the user.
 Phase 1.3 (required, once): before `task.py start`, you MUST curate `implement.jsonl` and `check.jsonl` — list the spec / research files sub-agents need so they get the right context injected. You may skip only if the jsonl already has agent-curated entries (the seed `_example` row alone doesn't count).
 Then run `task.py start <task-dir>` to flip status to in_progress.
+Git branch policy (required): while planning, stay on `develop` or a task branch created from `develop`. Do not do normal development commits on `master` or `develop`.
 [/workflow-state:planning]
 
 <!-- Per-turn breadcrumb: shown throughout Phase 1 when codex.dispatch_mode=inline.
@@ -181,6 +183,7 @@ Then run `task.py start <task-dir>` to flip status to in_progress.
 Load the `trellis-brainstorm` skill and iterate on prd.md with the user.
 Phase 1.3 jsonl curation is **skipped** in inline dispatch mode — the main session loads `trellis-before-dev` directly in Phase 2 and reads spec context itself, so there is no sub-agent to inject jsonl into.
 Then run `task.py start <task-dir>` to flip status to in_progress.
+Git branch policy (required): while planning, stay on `develop` or a task branch created from `develop`. Do not do normal development commits on `master` or `develop`.
 [/workflow-state:planning-inline]
 
 ### Phase 2: Execute
@@ -200,6 +203,7 @@ Then run `task.py start <task-dir>` to flip status to in_progress.
 **Sub-agent self-exemption**: if you are already running as `trellis-implement`, implement directly from the loaded task context and do NOT spawn another `trellis-implement`; if you are already running as `trellis-check`, review/fix directly and do NOT spawn another `trellis-check`. The default dispatch rule applies to the main session only.
 **Sub-agent dispatch protocol (all platforms, all sub-agents)**: When you spawn `trellis-implement` / `trellis-check` / `trellis-research`, your dispatch prompt **MUST** start with one line: `Active task: <task path from \`task.py current\`>`. No exceptions. On class-2 platforms (codex / copilot / gemini / qoder) the sub-agent depends on this line because there is no hook to inject task context. On class-1 platforms (claude / cursor / opencode / kiro / codebuddy / droid) the line is normally redundant — the hook injects context directly — but it serves as a critical fallback when the hook fails (Windows + Claude Code PreToolUse silent skip, `--continue` resume, fork distribution, hooks disabled, etc.). For `trellis-research`, the line tells the sub-agent which `{task_dir}/research/` to write into.
 **Inline override** (per-turn only, escape hatch for sub-agent dispatch): the user's CURRENT message MUST explicitly contain one of: "do it inline" / "no sub-agent" / "你直接改" / "别派 sub-agent" / "main session 写就行" / "不用 sub-agent". **Without seeing one of these phrases you must NOT inline on your own**; do not invent an override the user never said.
+**Git branch policy (required)**: implementation must happen on a task branch created from `develop`, not directly on `master` or `develop`. Merge completed task branches back into `develop`, delete the task branch afterwards, and merge `develop` into `master` only for releases. Never delete `develop`.
 [/workflow-state:in_progress]
 
 <!-- Per-turn breadcrumb: shown while status='in_progress' when
@@ -211,6 +215,7 @@ Then run `task.py start <task-dir>` to flip status to in_progress.
 **Flow** (inline mode): main session loads `trellis-before-dev` → main session edits code → main session loads `trellis-check` → run lint / type-check / tests → fix → `trellis-update-spec` → commit (Phase 3.4) → `/trellis:finish-work`.
 **Main-session default (inline dispatch_mode)**: the main agent edits code directly. Do NOT dispatch `trellis-implement` / `trellis-check` sub-agents. Load the `trellis-before-dev` skill before writing code; load the `trellis-check` skill before reporting completion.
 Phase 3.4 commit (required, once): after `trellis-update-spec`, or whenever implementation is verifiably complete, the main agent **drives the commit** — state the commit plan in user-facing text, then run `git commit` — BEFORE suggesting `/trellis:finish-work`. `/finish-work` refuses to run on a dirty working tree (paths outside `.trellis/workspace/` and `.trellis/tasks/`).
+Git branch policy (required): implementation must happen on a task branch created from `develop`, not directly on `master` or `develop`. Merge completed task branches back into `develop`, delete the task branch afterwards, and merge `develop` into `master` only for releases. Never delete `develop`.
 [/workflow-state:in_progress-inline]
 
 ### Phase 3: Finish

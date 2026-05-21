@@ -82,6 +82,16 @@ terminal with no parent agent, use the workflow guidance below normally.
 # re-read after the first time). Once a task is created the breadcrumb status
 # flips and this notice stops appearing automatically. Sub-agents are warded
 # off by the <sub-agent-notice> above plus the explicit exemption below.
+GIT_BRANCH_POLICY_NOTICE = """<git-branch-policy>
+Repository branch rules:
+- `develop` is the default long-lived development branch.
+- Every new requirement must start from a new branch created off `develop`.
+- Never make a normal development commit directly on `master` or `develop`.
+- Merge task branches back into `develop`, then delete them.
+- Merge `develop` into `master` only for releases.
+- Never delete `develop`.
+</git-branch-policy>"""
+
 CODEX_NO_TASK_BOOTSTRAP_NOTICE = """<trellis-bootstrap>
 You are running in a Trellis-managed Codex session and there is no active task yet.
 If you have not already loaded Trellis context this session, read the `trellis-start` skill once:
@@ -362,6 +372,7 @@ def main() -> int:
         parts: list[str] = [CODEX_SUB_AGENT_NOTICE]
         if task is None:
             parts.append(CODEX_NO_TASK_BOOTSTRAP_NOTICE)
+        parts.append(GIT_BRANCH_POLICY_NOTICE)
         parts.append(_codex_mode_banner(config))
         parts.append(breadcrumb)
         breadcrumb = "\n\n".join(parts)

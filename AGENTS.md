@@ -1,3 +1,14 @@
+## Git Branch Policy
+
+- `develop` is the default long-lived branch for everyday development.
+- Start every new requirement from a dedicated branch created off `develop`.
+- Recommended task-branch prefixes: `feature/*`, `fix/*`, `chore/*`, or `codex/*`.
+- Never make a normal development commit directly on `master` or `develop`.
+- Merge completed task branches back into `develop`, then delete the task branch.
+- Merge `develop` into `master` only when preparing a release.
+- Never delete `develop`.
+- If the current branch does not follow these rules, fix the branch setup before editing, committing, or merging.
+
 <!-- TRELLIS:START -->
 # Trellis Instructions
 
