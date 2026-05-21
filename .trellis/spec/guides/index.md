@@ -21,6 +21,7 @@ These guides help you **ask the right questions before coding**.
 
 | Guide | Purpose | When to Use |
 |-------|---------|-------------|
+| [Git Branching Workflow Guide](./git-branching-workflow.md) | Keep development on `develop` and protect release flow | When creating branches, merging work, or preparing a release |
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
 
@@ -61,6 +62,15 @@ grep -r "value_to_change" .
 This single habit prevents most "forgot to update X" bugs.
 
 ---
+
+### When to Think About Git Branching
+
+- [ ] You're starting a new requirement or bugfix
+- [ ] You're about to merge into `develop` or `master`
+- [ ] You're unsure whether the current branch is allowed
+- [ ] You're preparing a release
+
+→ Read [Git Branching Workflow Guide](./git-branching-workflow.md)
 
 ## How to Use This Directory
 

@@ -74,6 +74,16 @@ If you are the main interactive Codex session and the user is typing at the
 terminal with no parent agent, use the workflow guidance below normally.
 </sub-agent-notice>"""
 
+GIT_BRANCH_POLICY_NOTICE = """<git-branch-policy>
+Repository branch rules:
+- `develop` is the default long-lived development branch.
+- Every new requirement must start from a new branch created off `develop`.
+- Never make a normal development commit directly on `master` or `develop`.
+- Merge task branches back into `develop`, then delete them.
+- Merge `develop` into `master` only for releases.
+- Never delete `develop`.
+</git-branch-policy>"""
+
 
 # Bootstrap notice for Codex while the session has no active task. Replaces the
 # heavyweight SessionStart context injection — instead of pushing 9.5 KB of
@@ -365,6 +375,8 @@ def main() -> int:
         parts.append(_codex_mode_banner(config))
         parts.append(breadcrumb)
         breadcrumb = "\n\n".join(parts)
+    elif platform == "claude":
+        breadcrumb = "\n\n".join([GIT_BRANCH_POLICY_NOTICE, breadcrumb])
 
     # Gemini CLI 0.40.x rejects "UserPromptSubmit" — its per-turn event is
     # named "BeforeAgent". Other platforms (Claude/Cursor/Qoder/CodeBuddy/
