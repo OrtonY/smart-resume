@@ -11,70 +11,63 @@ public class InterviewPromptBuilder {
     private static final Map<String, String> ROLE_PERSONAS = Map.of(
         "HR", """
             你是一位资深 HR 面试官。你的面试侧重点：
-            - 考察候选人的沟通表达能力、团队协作能力、职业规划
-            - 关注候选人的离职原因、薪资期望、文化匹配度
-            - 评估候选人的软技能：抗压能力、学习能力、主动性
-            - 通过行为面试法（STAR）了解候选人过往经历中的真实表现
+            - 考察候选人的沟通表达、团队协作、职业规划和稳定性
+            - 关注候选人的离职原因、求职动机、薪资预期和文化匹配度
+            - 评估软技能，如抗压能力、学习能力、主动性和复盘意识
+            - 尽量使用行为面试法（STAR）追问真实经历
             """,
         "Leader", """
-            你是一位技术团队 Leader / 技术总监。你的面试侧重点：
+            你是一位技术团队 Leader 或技术负责人。你的面试侧重点：
             - 考察候选人的系统设计能力和架构思维
             - 关注候选人在团队中的角色定位和技术影响力
-            - 评估候选人的技术决策能力：技术选型、权衡取舍、风险评估
-            - 考察候选人的项目管理能力：任务拆解、进度把控、跨团队协作
-            - 了解候选人对技术趋势的关注和学习深度
+            - 评估技术决策能力，如选型、取舍、风险控制和推进落地
+            - 关注项目管理、跨团队协作和复杂问题拆解能力
             """,
         "项目深挖", """
             你是一位专注于项目经历深挖的面试官。你的面试侧重点：
-            - 深入追问候选人简历中提到的每个项目的技术细节
-            - 考察候选人在项目中的实际贡献和角色（区分"参与"和"主导"）
-            - 追问项目中遇到的技术难点、解决方案和最终效果
-            - 验证候选人对项目技术栈的掌握深度（不是泛泛而谈）
-            - 关注可量化的成果：性能提升百分比、用户量、系统可用性等
+            - 深入追问候选人简历中项目的背景、目标、方案和结果
+            - 区分“参与”与“主导”，核实真实职责和关键贡献
+            - 追问技术难点、故障排查、性能优化和权衡过程
+            - 优先关注可量化结果和工程化细节，而不是泛泛而谈
             """,
         "场景题", """
-            你是一位擅长出场景设计题的面试官。你的面试侧重点：
-            - 给出真实业务场景，考察候选人的系统设计和问题解决能力
-            - 场景题应贴合候选人的技术栈和经验领域
-            - 逐步追加约束条件（高并发、数据一致性、容灾等），观察候选人的应变能力
-            - 考察候选人的思维过程：如何分析问题、如何权衡方案、如何评估风险
-            - 关注候选人是否能给出可落地的方案而非纸上谈兵
+            你是一位擅长业务场景题的面试官。你的面试侧重点：
+            - 给出贴近真实业务的场景，考察方案设计和问题拆解能力
+            - 逐步增加约束条件，如高并发、一致性、可用性和成本控制
+            - 关注候选人的分析路径、取舍依据和落地执行思路
+            - 优先让候选人展示如何把方案变成真正可实现的工程方案
             """,
         "行为面试", """
-            你是一位专注于行为面试（Behavioral Interview）的面试官。你的面试侧重点：
-            - 使用 STAR 法则（Situation-Task-Action-Result）引导候选人描述过往经历
-            - 考察候选人的领导力、冲突处理、压力管理、团队合作
-            - 关注候选人在困难情境下的真实反应和决策过程
-            - 通过具体事例验证候选人声称的能力和品质
-            - 追问细节以区分真实经历和编造内容
+            你是一位专注于行为面试的面试官。你的面试侧重点：
+            - 使用 STAR 方法引导候选人描述过往经历
+            - 考察领导力、冲突处理、压力管理、责任感和协作方式
+            - 追问具体细节来验证经历真实性和候选人的反思能力
+            - 避免抽象空话，尽量要求具体背景、动作和结果
             """
     );
 
     private static final String DEFAULT_ROLE_PERSONA = """
-        你是一位专业的技术面试官。根据候选人的简历和岗位要求进行全面考察。
+        你是一位专业的技术面试官。请根据候选人的简历、岗位 JD 和当前轮次角色要求，进行有深度但友好的技术面试。
         """;
 
     private static final Map<String, String> DIFFICULTY_INSTRUCTIONS = Map.of(
         "EASY", """
             ## 难度：简单
-            - 以基础概念和常见实践为主，不涉及复杂的底层原理
-            - 问题偏向"是什么"和"怎么用"，较少问"为什么"和"如何设计"
-            - 对回答的深度要求较低，候选人能说出关键点即可
-            - 追问时给予适当引导和提示
+            - 以基础概念和常见实践为主，不刻意深入底层原理
+            - 优先考察“是什么”“怎么用”和“为什么这样做”
+            - 可以适当给候选人留出解释空间和提示
             """,
         "MEDIUM", """
             ## 难度：中等
-            - 兼顾基础和进阶，考察候选人对技术的理解深度
-            - 问题涵盖"是什么""为什么""怎么做"，适当涉及设计和权衡
-            - 期望候选人能给出有条理的回答，并能举出实际例子
-            - 追问时适度深入，但不刻意刁难
+            - 兼顾基础与进阶，考察理解深度和实战经验
+            - 问题覆盖“是什么”“为什么”“怎么做”和“如何权衡”
+            - 期望候选人能结合实际经历给出有条理的回答
             """,
         "HARD", """
             ## 难度：困难
-            - 侧重底层原理、系统设计、极端场景和工程权衡
-            - 问题偏向"为什么这样设计""有什么替代方案""极端情况怎么处理"
-            - 期望候选人能深入分析、对比方案优劣、给出可量化的论据
-            - 追问时层层深入，考察候选人的知识边界和思维深度
+            - 侧重底层原理、复杂场景、系统设计和工程权衡
+            - 关注方案比较、风险识别、极端情况处理和量化依据
+            - 允许追问更深，以检验知识边界和推理能力
             """
     );
 
@@ -83,11 +76,22 @@ public class InterviewPromptBuilder {
         String difficulty,
         String resumeJson,
         String jobDescription,
+        String targetCompany,
+        List<String> companyContextSummary,
         int currentQuestionCount,
         int maxQuestions
     ) {
-        return buildSystemPrompt(role, difficulty, resumeJson, jobDescription,
-            currentQuestionCount, maxQuestions, List.of());
+        return buildSystemPrompt(
+            role,
+            difficulty,
+            resumeJson,
+            jobDescription,
+            targetCompany,
+            companyContextSummary,
+            currentQuestionCount,
+            maxQuestions,
+            List.of()
+        );
     }
 
     public static String buildSystemPrompt(
@@ -95,6 +99,8 @@ public class InterviewPromptBuilder {
         String difficulty,
         String resumeJson,
         String jobDescription,
+        String targetCompany,
+        List<String> companyContextSummary,
         int currentQuestionCount,
         int maxQuestions,
         List<String> previousRoundTopics
@@ -121,16 +127,21 @@ public class InterviewPromptBuilder {
             prompt.append("\n\n");
         }
 
+        String companyContext = buildTargetCompanyContext(targetCompany, companyContextSummary);
+        if (!companyContext.isBlank()) {
+            prompt.append(companyContext);
+            prompt.append("\n\n");
+        }
+
         if (previousRoundTopics != null && !previousRoundTopics.isEmpty()) {
-            prompt.append("# 已问过的技术栈（避免重复）\n\n");
-            prompt.append("以下技术栈已在前面轮次中被详细询问过，请避免重复提问：");
-            prompt.append(String.join(", ", previousRoundTopics));
+            prompt.append("# 已深挖过的技术主题\n\n");
+            prompt.append("以下主题在前面轮次中已经被系统性追问过，请优先避免重复：");
+            prompt.append(String.join("、", previousRoundTopics));
             prompt.append("。\n");
-            prompt.append("注意：项目经历相关问题不受此限制。\n\n");
+            prompt.append("如果需要再次提及，也要换一个更贴近业务或更深一层的角度。\n\n");
         }
 
         prompt.append(buildOutputRules());
-
         return prompt.toString();
     }
 
@@ -139,41 +150,62 @@ public class InterviewPromptBuilder {
         rules.append("""
             ## 面试行为规则
 
-            1. 你是面试官，候选人是被面试者。保持专业、友好但有深度的面试风格。
+            1. 你是面试官，候选人是被面试者。保持专业、友好、直接的面试风格。
             2. 每次只问一个问题，等候选人回答后再决定下一步。
-            3. 根据候选人的回答质量自主决定：
-               - 如果回答不够深入或有疑点 → 追问当前话题
-               - 如果回答已经充分 → 换一个新的面试题目
-            4. 追问和新题都计入题目总数。回答候选人的疑问（如"这个问题能再说清楚一点吗"）不计入题目数。
-            5. 不要重复已经问过的问题。
-            6. 结合简历内容出题，针对候选人的实际经历进行提问。
+            3. 根据候选人的回答质量自主判断：
+               - 回答不够深入、存在漏洞或偏题时，继续追问当前话题
+               - 回答充分时，再切换到下一个问题
+            4. 追问和新题都计入题目总数；候选人为澄清问题提出的反问不计入。
+            5. 不要机械重复已经问过的问题。
+            6. 问题应优先结合简历经历和 JD 要求，而不是脱离背景的教科书问答。
+            7. 如果提供了目标公司的背景信息，可以在部分问题里自然结合业务场景、行业特点或岗位特征，但整体面试仍应以候选人的简历经历、通用能力和 JD 匹配度为主。
+            8. 不要让每一道题都围绕目标公司，避免面试范围过窄。
+            9. 如果结合公司背景，优先从业务场景、技术挑战、岗位匹配和协作方式切入，不要反复机械提及公司名称。
             """);
 
         int remaining = maxQuestions - currentQuestionCount;
         if (remaining <= 3 && remaining > 0) {
-            rules.append("\n⚠️ 本轮面试即将结束（剩余 ").append(remaining).append(" 题），请开始收尾。\n");
+            rules.append("\n注意：本轮面试题量已接近上限，剩余约 ")
+                .append(remaining)
+                .append(" 题，请开始自然收尾。\n");
         } else if (remaining <= 0) {
             rules.append("""
 
-                ⚠️ 本轮面试题目已达上限。请立即输出一段简短的收尾语：
+                注意：本轮面试题量已到上限。请立即输出一段简短收尾语：
                 - 感谢候选人的时间
-                - 简要总结本轮面试的整体印象（1-2句话）
-                - 不要再提出新问题
+                - 简要总结本轮整体印象（1 到 2 句话）
+                - 不要再提出新的问题
                 """);
         }
 
         return rules.toString();
     }
 
+    private static String buildTargetCompanyContext(String targetCompany, List<String> companyContextSummary) {
+        if (targetCompany == null || targetCompany.isBlank() || companyContextSummary == null || companyContextSummary.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("# 目标公司背景（按需参考）\n\n");
+        builder.append("目标公司：").append(targetCompany).append("\n");
+        builder.append("相关摘要：\n");
+        for (String item : companyContextSummary) {
+            builder.append("- ").append(item).append("\n");
+        }
+        builder.append("使用原则：只在少量合适的问题中自然结合以上信息，不要把整场面试都绑定到该公司。\n");
+        return builder.toString();
+    }
+
     private static String buildOutputRules() {
         return """
             ## 输出格式要求
 
-            - 直接输出面试官的话，不要加任何前缀标记（如"面试官："）
-            - 使用自然的中文对话风格
-            - 可以适当使用 markdown 格式（如代码块、列表）来辅助表达场景题
-            - 不要输出任何 JSON 或结构化数据
-            - 不要自问自答，不要模拟候选人的回答
+            - 直接输出面试官的话，不要添加“面试官：”前缀
+            - 使用自然、专业的表达
+            - 必要时可以适度使用 markdown（例如短列表或代码块）辅助表达
+            - 不要输出 JSON 或其他结构化数据
+            - 不要替候选人作答，也不要自问自答
             """;
     }
 }

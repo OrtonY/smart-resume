@@ -14,8 +14,11 @@ public class InterviewSessionEntity {
     private String title;
     private String aiConversationId;
     private String jobDescription;
+    private String targetCompany;
     private String difficulty;
     private String interviewerRolesJson;
+    private String companyContextSummaryJson;
+    private String companyContextStatus;
     private Integer activeRoundIndex;
     private String status;
     private String reportStatus;
@@ -66,6 +69,14 @@ public class InterviewSessionEntity {
         this.jobDescription = jobDescription;
     }
 
+    public String getTargetCompany() {
+        return targetCompany;
+    }
+
+    public void setTargetCompany(String targetCompany) {
+        this.targetCompany = targetCompany;
+    }
+
     public String getDifficulty() {
         return difficulty;
     }
@@ -80,6 +91,22 @@ public class InterviewSessionEntity {
 
     public void setInterviewerRolesJson(String interviewerRolesJson) {
         this.interviewerRolesJson = interviewerRolesJson;
+    }
+
+    public String getCompanyContextSummaryJson() {
+        return companyContextSummaryJson;
+    }
+
+    public void setCompanyContextSummaryJson(String companyContextSummaryJson) {
+        this.companyContextSummaryJson = companyContextSummaryJson;
+    }
+
+    public String getCompanyContextStatus() {
+        return companyContextStatus;
+    }
+
+    public void setCompanyContextStatus(String companyContextStatus) {
+        this.companyContextStatus = companyContextStatus;
     }
 
     public Integer getActiveRoundIndex() {

@@ -36,11 +36,12 @@ public class InterviewController {
     public ApiResponse<InterviewPageResponse> listInterviews(
         @RequestParam(required = false) String resumeId,
         @RequestParam(required = false) String status,
+        @RequestParam(required = false) String targetCompany,
         @RequestParam(required = false) String keyword,
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "6") int pageSize
     ) {
-        return ApiResponse.success(interviewService.listInterviews(resumeId, status, keyword, page, pageSize));
+        return ApiResponse.success(interviewService.listInterviews(resumeId, status, targetCompany, keyword, page, pageSize));
     }
 
     @PostMapping
