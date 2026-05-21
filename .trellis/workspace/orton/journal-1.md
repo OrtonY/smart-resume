@@ -1073,3 +1073,36 @@ Added interview company-context persistence and polished the interview creation/
 ### Next Steps
 
 - None - task complete
+
+
+## Session 33: Optimize project readmes
+
+**Date**: 2026-05-21
+**Task**: Optimize project readmes
+**Branch**: `master`
+
+### Summary
+
+Refreshed the English and Chinese project READMEs, rewrote the frontend README, and integrated all docs screenshots into the root documentation tour.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `db60f6c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
