@@ -79,7 +79,10 @@ Repository branch rules:
 - `develop` is the default long-lived development branch.
 - Every new requirement must start from a new branch created off `develop`.
 - Never make a normal development commit directly on `master` or `develop`.
-- Merge task branches back into `develop`, then delete them.
+- Never merge locally into `develop` — push the task branch and open a PR instead.
+- PRs targeting `develop` use rebase merge (linear history required).
+- After PR merges, sync local develop: `git checkout develop && git pull --rebase`.
+- Delete the local task branch after PR merge.
 - Merge `develop` into `master` only for releases.
 - Never delete `develop`.
 </git-branch-policy>"""

@@ -78,7 +78,10 @@ Branch workflow rules for this repository:
 - `develop` is the long-lived development baseline.
 - Start each requirement from a new branch created off `develop`.
 - Never make a normal development commit directly on `master` or `develop`.
-- Merge completed task branches back into `develop`, then delete the task branch.
+- Never merge locally into `develop` — push the task branch and open a PR instead.
+- PRs targeting `develop` use rebase merge (linear history required).
+- After PR merges, sync local develop: `git checkout develop && git pull --rebase`.
+- Delete the local task branch after PR merge.
 - Merge `develop` into `master` only for releases.
 - Never delete `develop`.
 </git-branch-policy>"""
@@ -790,11 +793,15 @@ When the user sends the first message, follow <task-status> and the workflow gui
 If a task is READY, execute its Next required action without asking whether to continue.
 </ready>""")
 
+    context_text = output.getvalue()
     result = {
+        # Claude Code / Qoder / CodeBuddy / Droid / Gemini / Copilot format
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": output.getvalue(),
-        }
+            "additionalContext": context_text,
+        },
+        # Cursor sessionStart format (top-level snake_case per Cursor docs)
+        "additional_context": context_text,
     }
 
     # Output JSON - stdout is already configured for UTF-8
