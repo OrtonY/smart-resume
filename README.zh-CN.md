@@ -2,22 +2,83 @@
 
 [English](./README.md)
 
-Smart Resume 是一个用于创建、编辑、分享和借助 AI 优化简历的全栈项目。仓库内包含 Spring Boot 后端和 React + Vite 前端。
+Smart Resume 是一个面向单用户场景的私有化简历工作台，用于编写、优化、分享简历，并结合 AI 完成评分和模拟面试。仓库由 Spring Boot 后端与 React + Vite 前端组成，围绕一条完整工作流展开：安全访问、结构化编辑、实时预览、模板切换、简历评分、公开分享、PDF 导出与模拟面试。
 
-## 项目用途
+## 核心亮点
 
-这个项目可以理解为一个单用户的“私人简历工作室”：
+- 首次启动设置工作区密码，后续通过密码解锁私有工作区
+- 简历工作台支持多份简历的创建、复制、删除与恢复
+- 结构化编辑器配合实时预览，支持模块显隐与布局调整
+- 支持内置模板与自定义模板
+- 内置 AI 配置、简历助手对话、简历评分与模拟面试能力
+- 支持生成公开分享链接，并可选密码保护
+- 支持浏览器端导出当前简历为 PDF
 
-- 首次启动时设置访问密码，之后通过该密码解锁工作区。
-- 创建并管理多份简历。
-- 在结构化编辑界面中维护简历内容，并实时预览。
-- 调整模块顺序与版式布局。
-- 切换内置模板，并支持创建自定义模板。
-- 在浏览器中将当前简历导出为 PDF。
-- 生成公开分享链接，并支持分享密码保护。
-- 使用 AI 简历助手进行多轮对话，并一键应用建议。
-- 基于通用质量或目标 JD 对简历进行 AI 评分。
-- 发起模拟面试，并获取 AI 生成的面试报告。
+## 产品导览
+
+### 访问与工作台
+
+![解锁页](./docs/login.png)
+
+首次进入时设置工作区密码，之后通过该密码解锁你的私人简历工作台。
+
+![简历工作台](./docs/Resume-Homepage.png)
+
+在主工作台中管理多份简历，并快速进入模板中心、面试中心、AI 配置与回收桶。
+
+![回收桶](./docs/Resume-Recycle-Bin.png)
+
+已删除的简历会进入回收桶，方便在同一工作流里直接恢复。
+
+### 编辑与模板
+
+![简历编辑器](./docs/Resume-Edit.png)
+
+左侧维护结构化简历内容，右侧实时查看渲染后的简历预览效果。
+
+![标准 A4 预览](./docs/Resume-Preview.png)
+
+可打开标准 A4 预览窗口，在导出或分享前检查版式细节。
+
+![模板中心](./docs/Resume-Template.png)
+
+可以在内置模板之间切换，也可以从现有模板出发创建自定义版本。
+
+### AI 辅助流程
+
+![AI 配置](./docs/AI-Config.png)
+
+通过界面配置 OpenAI 兼容接口、DeepSeek 或 Ollama，无需把提供方信息写死在前端代码中。
+
+![AI 简历助手](./docs/Resume-Edit-AI-Chat.png)
+
+在编辑器内直接与 AI 简历助手多轮对话，并按建议定向优化简历内容。
+
+![简历评分](./docs/Resume-Score.png)
+
+支持按通用质量标准或目标 JD 对简历进行评分，并查看结构化反馈结果。
+
+### 分享与面试
+
+![简历分享](./docs/Resume-Share.png)
+
+生成公开分享链接，选择分享模式，并可按需启用密码保护。
+
+![面试中心](./docs/Interview-Hompage.png)
+
+创建模拟面试、跟踪面试进度，并查看生成后的面试报告。
+
+![进行中的面试](./docs/Interview2.png)
+
+在面试工作区中进行计时答题、查看企业信息补充，并直接提交当前轮回答。
+
+![历史轮次回看](./docs/Interview.png)
+
+需要复盘时，可以只读方式查看之前轮次的问题与回答记录。
+
+![面试报告](./docs/Interview-Report.png)
+
+查看生成后的面试报告，包括总分、维度评估、亮点总结和改进建议。
 
 ## 技术栈
 
@@ -36,32 +97,32 @@ Smart Resume 是一个用于创建、编辑、分享和借助 AI 优化简历的
 - TypeScript
 - Vite
 - Ant Design
+- React Router 7
 - `html2canvas` + `jspdf`，用于前端侧 PDF 导出
 
-## 项目结构
+## 仓库结构
 
 ```text
 smart-resume/
-├── backend/   # Spring Boot API、数据库迁移、AI 服务
-├── frontend/  # React 应用与简历工作区界面
-└── .trellis/  # 项目流程、规范与任务记录
+|-- backend/   Spring Boot API、数据库迁移与领域服务
+|-- docs/      README 截图与辅助资源
+|-- frontend/  简历工作台、编辑器、分享页与面试流程前端应用
+`-- .trellis/  项目流程、规范与任务记录
 ```
 
-## 环境要求
+## 快速开始
 
-启动前请先准备：
+### 环境要求
 
 - Java 21
 - Node.js 20.19+ 与 npm
 - PostgreSQL
 
-如需使用 AI 功能，还需要以下其一：
+如需使用 AI 能力，还需要以下之一：
 
 - OpenAI 兼容接口的 API Key
 - DeepSeek API Key
 - 或本地 Ollama 服务
-
-## 安装步骤
 
 ### 1. 克隆仓库
 
@@ -81,11 +142,11 @@ CREATE DATABASE smart_resume;
 后端默认配置如下：
 
 - 数据库地址：`jdbc:postgresql://localhost:5432/smart_resume`
-- 数据库用户名：`postgres`
-- 数据库密码：`postgres`
+- 用户名：`postgres`
+- 密码：`postgres`
 - 后端端口：`8080`
 
-如果你的本地环境不同，可以通过环境变量覆盖：
+如果本地环境不同，可以通过环境变量覆盖：
 
 ```bash
 export SMART_RESUME_DB_URL=jdbc:postgresql://localhost:5432/smart_resume
@@ -94,6 +155,8 @@ export SMART_RESUME_DB_PASSWORD=postgres
 export SMART_RESUME_BACKEND_PORT=8080
 export SMART_RESUME_TOKEN_SECRET=change-this-secret
 ```
+
+如果你使用 PowerShell，请把 `export` 换成 `$env:变量名='值'`。
 
 ### 3. 安装前端依赖
 
@@ -125,7 +188,7 @@ npm run dev
 
 然后在浏览器中打开 Vite 输出的地址，通常是 `http://localhost:5173`。
 
-前端默认请求 `http://localhost:8080`。如果你需要改成其他地址，可以这样配置：
+前端默认请求 `http://localhost:8080`。如果你需要改为其他后端地址，可以这样配置：
 
 ```bash
 cd frontend
@@ -138,27 +201,27 @@ npm run dev
 当前后端与前端都启动后：
 
 1. 在浏览器中打开前端页面。
-2. 在首次进入时设置工作区密码。
-3. 后续访问时使用该密码解锁。
+2. 首次进入时设置工作区密码。
+3. 后续访问时使用该密码解锁工作区。
 
-当前项目的访问模型是单用户模式，不是多账号系统。
+当前产品明确面向单用户工作区场景，并不是多账号系统。
 
-## AI 配置
+## AI 提供方
 
-AI 功能通过应用内的 AI 配置页面接入。后端已内置以下供应商支持：
+AI 功能通过应用内界面进行配置。当前后端支持：
 
 - OpenAI 兼容接口
 - DeepSeek
 - Ollama
 
-进入工作区后，可以在界面中配置 Base URL、API Key 和模型名称。
+这些能力主要用于简历对话助手、简历评分、面试生成与面试报告生成。
 
-## 说明
+## 补充说明
 
-- 公开分享页支持无密码访问，也支持密码保护。
-- PDF 导出目前由前端完成，不依赖后端渲染管线。
-- 仓库里已有包级文档，例如 [frontend/README.md](./frontend/README.md)，但根目录 README 才是本项目的总入口。
+- 公开分享页既支持无密码访问，也支持密码保护。
+- PDF 导出目前由前端完成，而不是依赖服务端渲染管线。
+- 前端还有单独的包级文档可参考：[frontend/README.md](./frontend/README.md)。
 
-## 许可证
+## 开源协议
 
-Smart Resume 基于 Apache License 2.0 开源发布。完整许可文本见 [LICENSE](./LICENSE)，归属说明见 [NOTICE](./NOTICE)。
+Smart Resume 基于 Apache License 2.0 发布。完整协议见 [LICENSE](./LICENSE)，归属说明见 [NOTICE](./NOTICE)。
