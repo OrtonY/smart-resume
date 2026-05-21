@@ -1106,3 +1106,36 @@ Refreshed the English and Chinese project READMEs, rewrote the frontend README, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: Implement push-branch + PR workflow
+
+**Date**: 2026-05-21
+**Task**: Implement push-branch + PR workflow
+**Branch**: `fix/git-push-workflow`
+
+### Summary
+
+Replaced local merge-to-develop with push-task-branch + gh-pr-create flow. Updated finish-work command, workflow.md, hooks, branch_policy, and spec guides to comply with GitHub branch protection rules.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `70751c5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
