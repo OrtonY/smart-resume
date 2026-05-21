@@ -18,6 +18,7 @@ export function listInterviews(query: InterviewListQuery = {}) {
   const params = new URLSearchParams()
   if (query.resumeId) params.set('resumeId', query.resumeId)
   if (query.status) params.set('status', query.status)
+  if (query.targetCompany) params.set('targetCompany', query.targetCompany)
   if (query.keyword) params.set('keyword', query.keyword)
   params.set('page', String(query.page ?? 1))
   params.set('pageSize', String(query.pageSize ?? 6))

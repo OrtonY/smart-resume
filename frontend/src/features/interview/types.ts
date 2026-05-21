@@ -2,6 +2,8 @@ export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD'
 export type InterviewStatus = 'IN_PROGRESS' | 'PAUSED' | 'ENDED'
 export type InterviewReportStatus = 'PENDING' | 'GENERATING' | 'READY' | 'FAILED'
 export type InterviewMessageRole = 'INTERVIEWER' | 'CANDIDATE' | 'SYSTEM'
+export type InterviewMessageStatus = 'NORMAL' | 'ABORTED'
+export type CompanyContextStatus = 'NOT_REQUESTED' | 'READY' | 'FAILED'
 
 export interface InterviewSummary {
   id: string
@@ -9,9 +11,12 @@ export interface InterviewSummary {
   resumeTitle: string | null
   aiConversationId: string
   title: string
-  jobDescription: string
+  jobDescription: string | null
+  targetCompany: string | null
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
+  companyContextSummary: string[]
+  companyContextStatus: CompanyContextStatus
   activeRoundIndex: number
   status: InterviewStatus
   reportStatus: InterviewReportStatus
@@ -27,8 +32,6 @@ export interface InterviewPage {
   pageSize: number
   totalPages: number
 }
-
-export type InterviewMessageStatus = 'NORMAL' | 'ABORTED'
 
 export interface InterviewMessage {
   id: string
@@ -49,6 +52,7 @@ export interface InterviewDetail extends InterviewSummary {
 
 export interface InterviewCreatePayload {
   resumeId?: string | null
+  targetCompany?: string | null
   title: string
   jobDescription?: string | null
   difficulty: InterviewDifficulty
@@ -58,6 +62,7 @@ export interface InterviewCreatePayload {
 export interface InterviewListQuery {
   resumeId?: string
   status?: InterviewStatus
+  targetCompany?: string
   keyword?: string
   page?: number
   pageSize?: number
@@ -75,7 +80,7 @@ export const INTERVIEW_STATUS_OPTIONS: Array<{ value: InterviewStatus; label: st
   { value: 'ENDED', label: '已结束' },
 ]
 
-export const INTERVIEWER_ROLE_OPTIONS = ['HR', 'Leader', '项目深挖', '场景题', '行为面试']
+export const INTERVIEWER_ROLE_OPTIONS = ['HR', 'Leader', '项目深挖', '场景题', '行为面试'] as const
 
 export function interviewDifficultyLabel(difficulty: InterviewDifficulty) {
   return INTERVIEW_DIFFICULTY_OPTIONS.find((item) => item.value === difficulty)?.label ?? difficulty
@@ -95,6 +100,17 @@ export function interviewReportStatusLabel(status: InterviewReportStatus) {
       return '生成失败'
     default:
       return '待生成'
+  }
+}
+
+export function companyContextStatusLabel(status: CompanyContextStatus) {
+  switch (status) {
+    case 'READY':
+      return '公司信息已注入'
+    case 'FAILED':
+      return '公司信息未生效'
+    default:
+      return '未使用公司信息'
   }
 }
 
