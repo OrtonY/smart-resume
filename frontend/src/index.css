@@ -1962,6 +1962,13 @@ a {
   line-height: 1.35;
 }
 
+.interview-card__company {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .interview-card p {
   max-height: 72px;
   margin: 0;
@@ -1993,6 +2000,210 @@ a {
 
 .interview-center > .resume-list-pagination {
   margin-top: auto;
+}
+
+.interview-company-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(280px, 42vw);
+  padding: 6px 12px;
+  border: 1px solid rgba(212, 146, 28, 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.98), rgba(255, 255, 255, 0.94)),
+    radial-gradient(circle at top right, rgba(255, 196, 61, 0.18), transparent 34%);
+  color: var(--text-primary);
+  box-shadow: 0 10px 24px rgba(191, 144, 61, 0.12);
+  cursor: help;
+  font: inherit;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.interview-company-chip:hover,
+.interview-company-chip:focus-visible {
+  border-color: rgba(212, 146, 28, 0.38);
+  box-shadow: 0 14px 28px rgba(191, 144, 61, 0.18);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.interview-company-chip__label {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.interview-company-chip strong {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.interview-company-chip__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 2px;
+  color: #9a6b14;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.interview-company-popover .ant-popover-inner {
+  max-width: 360px;
+  border-radius: 18px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.interview-company-popover__content {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.98), rgba(255, 255, 255, 0.96)),
+    radial-gradient(circle at top right, rgba(255, 196, 61, 0.2), transparent 34%);
+}
+
+.interview-company-popover__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.interview-company-popover__head span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.interview-company-popover__head strong {
+  font-size: 15px;
+}
+
+.interview-company-popover__summary {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+}
+
+.interview-company-popover__empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.interview-create-modal__tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 12px;
+}
+
+.interview-create-modal .ant-modal-content {
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.interview-create-modal .ant-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.interview-create-modal__body {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.interview-create-modal .ant-select-multiple .ant-select-selector {
+  max-height: 132px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: flex-start;
+}
+
+.interview-role-sorter {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 255, 0.76)),
+    radial-gradient(circle at top right, rgba(49, 87, 164, 0.08), transparent 28%);
+}
+
+.interview-role-sorter--empty {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.interview-role-sorter__hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.interview-role-sorter__list {
+  display: grid;
+  gap: 10px;
+}
+
+.interview-role-sorter__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.interview-role-sorter__copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.interview-role-sorter__copy strong {
+  font-size: 14px;
+}
+
+.interview-role-sorter__handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(49, 87, 164, 0.08);
+  color: #3157a4;
+  cursor: grab;
+}
+
+.interview-role-sorter__handle:active {
+  cursor: grabbing;
+}
+
+.interview-role-sorter__handle:hover,
+.interview-role-sorter__handle:focus-visible {
+  background: rgba(49, 87, 164, 0.14);
+  outline: none;
 }
 
 .interview-detail {
@@ -2516,6 +2727,16 @@ a {
 
   .interview-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .interview-company-chip {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .interview-company-chip__hint {
+    width: 100%;
+    padding-left: 0;
   }
 
   .interview-message {
