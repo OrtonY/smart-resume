@@ -1,11 +1,11 @@
 ---
 name: trellis-finish-work
-description: "Wrap up the current session: verify quality gate passed, remind user to commit, archive completed tasks, and record session progress to the developer journal. Use when done coding and ready to end the session."
+description: "Wrap up the current session: verify quality gate passed, archive completed tasks, record session progress, push branch, and create PR. Use when done coding and ready to end the session."
 ---
 
 # Finish Work
 
-Wrap up the current session: archive the active task (and any other completed-but-unarchived tasks the user wants to clean up) and record the session journal. Code commits are NOT done here — those happen in workflow Phase 3.4 before you invoke this command.
+Wrap up the current session: archive the active task, record the session journal, push the task branch to remote, and create a PR targeting `develop`. Code commits are NOT done here — those happen in workflow Phase 3.4 before you invoke this command.
 
 ## Step 1: Survey current state
 
@@ -40,7 +40,7 @@ For each remaining dirty path, decide whether it belongs to **the current task**
 Then route:
 
 - **Any remaining path looks like current-task work** — bail out with:
-  > "Working tree has uncommitted code changes from this task: `<list>`. Return to workflow Phase 3.4 to commit them before running ``finish-work` (Trellis command)`."
+  > "Working tree has uncommitted code changes from this task: `<list>`. Return to workflow Phase 3.4 to commit them before running `finish-work`."
 
   Do NOT run `git commit` here. Do NOT prompt the user to commit. The user goes back to Phase 3.4 and the AI drives the batched commit there.
 - **All remaining paths look unrelated** (other parallel-window work) — report them once and continue to Step 3:
@@ -68,4 +68,32 @@ python ./.trellis/scripts/add_session.py \
 
 Use the work-commit hashes produced in Phase 3.4 (visible in Step 1's `Recent commits` list, or via `git log --oneline`) for `--commit`. Do not include the archive commit hashes from Step 3. This produces a `chore: record journal` commit.
 
-Final git log order: `<work commits from 3.4>` → `chore(task): archive ...` (one or more) → `chore: record journal`.
+Final git log order on the task branch: `<work commits from 3.4>` → `chore(task): archive ...` (one or more) → `chore: record journal`.
+
+## Step 5: Push branch and create PR
+
+After all commits are in place on the task branch:
+
+1. **Push the task branch to origin**:
+   ```bash
+   git push -u origin <current-branch>
+   ```
+
+2. **Create a PR targeting `develop`**:
+   ```bash
+   gh pr create --base develop --title "<PR title>" --body "<summary>"
+   ```
+   - PR title: use the task title or a concise summary of the work (under 70 chars).
+   - PR body: brief summary of what changed + link to the task if relevant.
+
+3. **Report to user**:
+   > "PR created: <URL>. After it merges (rebase merge), sync local develop with:
+   > ```
+   > git checkout develop && git pull --rebase && git branch -d <branch>
+   > ```"
+
+**Rules**:
+- Always push to a new branch, never directly to `develop` or `master`.
+- The PR merge strategy is **rebase merge** (configured on the remote to enforce linear history).
+- Do NOT auto-merge or wait for merge — just create the PR and report the URL.
+- If `git push` fails (e.g., branch already exists on remote), report the error and let the user decide.

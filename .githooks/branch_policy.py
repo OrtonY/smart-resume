@@ -113,7 +113,7 @@ def check_pre_commit() -> int:
     return fail(
         f"Direct commits on '{branch}' are forbidden. "
         "Create a feature branch from 'develop', finish the work there, "
-        "then merge it back."
+        "then push it and open a PR."
     )
 
 

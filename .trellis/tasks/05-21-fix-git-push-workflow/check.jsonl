@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/guides/git-branching-workflow.md", "reason": "Verify updated spec matches new PR-based flow"}
+{"file": ".trellis/workflow.md", "reason": "Verify workflow-state breadcrumbs and Phase 3.4 are consistent"}
+{"file": ".trellis/tasks/05-21-fix-git-push-workflow/prd.md", "reason": "Check against acceptance criteria"}

@@ -73,7 +73,7 @@
     ".codex/hooks/session-start.py": "3fd36631fc85a9d12a698d79b459008d568dc276bc0aa2bf0191acebb559c934",
     ".codex/hooks/inject-workflow-state.py": "fe4cca4db7ca8c252f614efca16fa588009a4238542a2c9aa85167409f6f9a4c",
     ".codex/hooks.json": "7bad6065612c5bd0d4e0bb587bf3c9f3950c8060f9a52f4defd7247dd9ba8aec",
-    ".codex/config.toml": "bb5a62ce51a4357b825e2a77c9a0d3332b108bb469d3b06b275604ccbccd4320",
+    ".codex/config.toml": "cd29d64a44b4631593aca8ff4b071f1156f914fc9dfb976450af6f91b735bb57",
     "AGENTS.md": "6cacfe99748b435d0660c2463c697bc323d53798aecf3492283ca8eac1b29682",
     ".trellis/config.yaml": "5c9207418cecc390e9d86d589b4183b831f76697d92fb42fefd5221cd8772e51",
     ".trellis/scripts/add_session.py": "f26b66a539d160c739d4b88fd926b3d7f6745be326cd57131e5ef17a7b011fbe",
@@ -92,7 +92,7 @@
     ".trellis/scripts/common/tasks.py": "4436a8b0b53c270a35989e26d9dbd92669408c6562d88c02083a404562da85fe",
     ".trellis/scripts/common/task_context.py": "1c16a7fa82d363010d0d0ebdc038296ae1552bf6e90214787d707f49567bc159",
     ".trellis/scripts/common/task_queue.py": "0be61f713462b1fe4574927c82fc4704e678afe72dcb9813543aedf2f9e9e0c5",
-    ".trellis/scripts/common/task_store.py": "26b6aaddeec17a088de51dd69fa9d0bcbf88f62056494bd280e51b3f443197a7",
+    ".trellis/scripts/common/task_store.py": "4a6ad7f15fd6fdca0da174804ee2d750919d42e46066a891c7525aa8d8a2c592",
     ".trellis/scripts/common/task_utils.py": "f5ef4af87ba3e11d8b19630c0c96d009de1811fc9be56c2027a9c96e21ed103e",
     ".trellis/scripts/common/trellis_config.py": "0839dcf90ebbd77712c276930a89335b3313927051650c91d220fb51ca2a6a3c",
     ".trellis/scripts/common/types.py": "9962081cc2608fb9d1deb32c6880e336f62cdca6b338e7ae813304701e155ee9",
@@ -104,6 +104,16 @@
     ".trellis/scripts/init_developer.py": "0943f1c240993649ab89b91a2c5b379e84daa8c53b35f0490774bff05a552873",
     ".trellis/scripts/task.py": "e2614fbfc1308c90c0708a11475ca6684ea0a1e2a845140300192229589a2f1f",
     ".trellis/scripts/__init__.py": "1242be5b972094c2e141aecbe81a4efd478f6534e3d5e28306374e6a18fcf46c",
-    ".trellis/workflow.md": "0faed2d243ae25d7ccd25d31f68f9b430887f3766c8b3e904cc30f4098627c8b"
+    ".trellis/workflow.md": "0faed2d243ae25d7ccd25d31f68f9b430887f3766c8b3e904cc30f4098627c8b",
+    ".claude/skills/trellis-spec-bootstarp/references/mcp-setup.md": "df542fc8f279edd38046d26a7c8151804b708f57b24d4aa2733cea587a88c65e",
+    ".claude/skills/trellis-spec-bootstarp/references/repository-analysis.md": "0dae98d774f6e34559b9f3442888ac43e3a8af110c37cbefc49ce256986858b6",
+    ".claude/skills/trellis-spec-bootstarp/references/spec-task-planning.md": "ef493d028c3b0807a8a534bb71fb92a68129f273db763ad27ceb464a522e799d",
+    ".claude/skills/trellis-spec-bootstarp/references/spec-writing.md": "e9800fe9ed4a4cd87062ea1829cf2caa8d170ec15e141678a6a30e74c497f47d",
+    ".claude/skills/trellis-spec-bootstarp/SKILL.md": "81f400092b21392161e7d9dfa9111c9be36c81bc8641d252ed28e08373449ac0",
+    ".agents/skills/trellis-spec-bootstarp/references/mcp-setup.md": "df542fc8f279edd38046d26a7c8151804b708f57b24d4aa2733cea587a88c65e",
+    ".agents/skills/trellis-spec-bootstarp/references/repository-analysis.md": "0dae98d774f6e34559b9f3442888ac43e3a8af110c37cbefc49ce256986858b6",
+    ".agents/skills/trellis-spec-bootstarp/references/spec-task-planning.md": "ef493d028c3b0807a8a534bb71fb92a68129f273db763ad27ceb464a522e799d",
+    ".agents/skills/trellis-spec-bootstarp/references/spec-writing.md": "e9800fe9ed4a4cd87062ea1829cf2caa8d170ec15e141678a6a30e74c497f47d",
+    ".agents/skills/trellis-spec-bootstarp/SKILL.md": "81f400092b21392161e7d9dfa9111c9be36c81bc8641d252ed28e08373449ac0"
   }
 }

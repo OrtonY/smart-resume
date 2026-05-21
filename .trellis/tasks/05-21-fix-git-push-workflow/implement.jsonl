@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/guides/git-branching-workflow.md", "reason": "Current git branching spec — needs updating from merge-to-develop to PR-based flow"}
+{"file": ".trellis/workflow.md", "reason": "Main workflow definition — Phase 3.4 and workflow-state breadcrumbs need updating"}
+{"file": ".claude/commands/trellis/finish-work.md", "reason": "Finish-work skill — needs restructuring to push+PR instead of local merge"}
+{"file": ".claude/hooks/inject-workflow-state.py", "reason": "Contains GIT_BRANCH_POLICY_NOTICE text that needs updating"}
+{"file": ".claude/hooks/session-start.py", "reason": "Contains git-branch-policy block that needs updating"}
+{"file": ".trellis/tasks/05-21-fix-git-push-workflow/prd.md", "reason": "Task requirements"}
