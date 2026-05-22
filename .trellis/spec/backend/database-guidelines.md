@@ -157,3 +157,50 @@ The exact ID strategy remains open until the MVP concurrency and integration nee
 - Let the frontend fake a recycle-bin list from `includeDeleted=true` without a server-side deleted-only mode.
 #### Correct
 - Add a deleted-only query mode so the server remains the source of truth for deleted resume visibility.
+
+---
+
+## Scenario: Single-to-Multi-User Column Migration
+
+### 1. Scope / Trigger
+- Trigger: Adding `user_id` ownership to existing tables that previously had no user concept.
+
+### 2. Signatures
+- Migration: `V17__multi_user_support.sql`
+- Pattern applies to any future "add ownership column to existing data" scenario.
+
+### 3. Contracts
+- Phase 1: `ALTER TABLE <t> ADD COLUMN user_id bigint NULL`
+- Phase 2: Backfill from related records (cascade from parent → child)
+- Phase 3: `ALTER TABLE <t> ALTER COLUMN user_id SET NOT NULL`
+- Phase 4: Create composite indexes leading with `user_id`
+
+### 4. Validation & Error Matrix
+- Backfill leaves NULL rows → Phase 3 fails (migration aborts, safe)
+- Orphan child records with no parent → use fallback `user_id = 1`
+
+### 5. Good/Base/Bad Cases
+- Good: All rows get correct user_id from parent relationship chain.
+- Base: Orphan records fall back to admin user (id=1) — acceptable for legacy data.
+- Bad: Skipping Phase 3 (NOT NULL) leaves the door open for future inserts without ownership.
+
+### 6. Tests Required
+- `schema-test.sql` must include `user_id` columns with NOT NULL for all affected tables.
+- Service tests must set `CurrentUserContext` before any data operation.
+
+### 7. Wrong vs Correct
+#### Wrong
+```sql
+-- Adding NOT NULL with a DEFAULT that persists at runtime
+ALTER TABLE resumes ADD COLUMN user_id bigint NOT NULL DEFAULT 1;
+```
+This silently assigns all future inserts to user 1 if the service forgets to set user_id.
+
+#### Correct
+```sql
+-- Three-phase: nullable → backfill → enforce
+ALTER TABLE resumes ADD COLUMN user_id bigint NULL;
+UPDATE resumes SET user_id = 1 WHERE user_id IS NULL;
+ALTER TABLE resumes ALTER COLUMN user_id SET NOT NULL;
+```
+No runtime default — service code must explicitly provide user_id or the insert fails.
