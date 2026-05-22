@@ -37,7 +37,7 @@ import {
 } from '../features/resume/api/templateCatalogApi'
 import { createResume, getResume, updateResume } from '../features/resume/api/resumeApi'
 import {
-  replaceResumeTemplateCatalogCache,
+  replaceManagedResumeTemplateCatalogCache,
 } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
   DEFAULT_RESUME_TEMPLATE_KEY,
@@ -232,7 +232,7 @@ export function TemplateGalleryPage() {
   const syncTemplates = useCallback(
     (nextTemplates: ManagedResumeTemplateDefinition[], preferredKey?: string) => {
       setTemplates(nextTemplates)
-      replaceResumeTemplateCatalogCache(nextTemplates)
+      replaceManagedResumeTemplateCatalogCache(nextTemplates)
       setSelectedTemplateKey((current) =>
         chooseTemplateKey(nextTemplates, {
           current,

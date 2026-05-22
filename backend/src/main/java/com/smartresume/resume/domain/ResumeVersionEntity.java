@@ -10,6 +10,7 @@ public class ResumeVersionEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String resumeId;
     private Integer versionNumber;
     private String title;
@@ -24,6 +25,14 @@ public class ResumeVersionEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getResumeId() {

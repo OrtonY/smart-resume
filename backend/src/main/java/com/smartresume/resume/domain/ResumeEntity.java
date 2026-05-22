@@ -10,6 +10,7 @@ public class ResumeEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String title;
     private String templateKey;
     private String layoutJson;
@@ -24,6 +25,14 @@ public class ResumeEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getTitle() {

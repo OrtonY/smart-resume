@@ -1,24 +1,35 @@
 import { useEffect, useState } from 'react'
-import { loadResumeTemplateCatalog } from '../api/templateCatalogApi'
+import { listManagedResumeTemplates, loadResumeTemplateCatalog } from '../api/templateCatalogApi'
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
+  type ManagedResumeTemplateDefinition,
   type ResumeTemplateDefinition,
 } from '../templateCatalog'
 
-let cachedCatalog: ResumeTemplateDefinition[] | null = null
-let catalogRequest: Promise<ResumeTemplateDefinition[]> | null = null
+export type ResumeTemplateCatalogScope = 'public' | 'managed'
 
-export function useResumeTemplateCatalog() {
+let cachedPublicCatalog: ResumeTemplateDefinition[] | null = null
+let publicCatalogRequest: Promise<ResumeTemplateDefinition[]> | null = null
+let cachedManagedCatalog: ManagedResumeTemplateDefinition[] | null = null
+let managedCatalogRequest: Promise<ManagedResumeTemplateDefinition[]> | null = null
+
+interface UseResumeTemplateCatalogOptions {
+  scope?: ResumeTemplateCatalogScope
+}
+
+export function useResumeTemplateCatalog(options: UseResumeTemplateCatalogOptions = {}) {
+  const scope = options.scope ?? 'public'
+  const initialCatalog = scope === 'managed' ? cachedManagedCatalog : cachedPublicCatalog
   const [templates, setTemplates] = useState<ResumeTemplateDefinition[]>(
-    cachedCatalog ?? FALLBACK_RESUME_TEMPLATE_CATALOG,
+    initialCatalog ?? FALLBACK_RESUME_TEMPLATE_CATALOG,
   )
-  const [loading, setLoading] = useState(cachedCatalog == null)
+  const [loading, setLoading] = useState(initialCatalog == null)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     let active = true
 
-    void getSharedTemplateCatalog()
+    void getTemplateCatalog(scope)
       .then((catalog) => {
         if (!active) {
           return
@@ -42,7 +53,7 @@ export function useResumeTemplateCatalog() {
     return () => {
       active = false
     }
-  }, [])
+  }, [scope])
 
   return {
     templates,
@@ -51,27 +62,42 @@ export function useResumeTemplateCatalog() {
   }
 }
 
-async function getSharedTemplateCatalog() {
-  if (cachedCatalog) {
-    return cachedCatalog
+async function getTemplateCatalog(scope: ResumeTemplateCatalogScope) {
+  if (scope === 'managed') {
+    if (cachedManagedCatalog) {
+      return cachedManagedCatalog
+    }
+
+    if (!managedCatalogRequest) {
+      managedCatalogRequest = listManagedResumeTemplates().then((catalog) => {
+        cachedManagedCatalog = catalog
+        return catalog
+      })
+    }
+
+    return managedCatalogRequest
   }
 
-  if (!catalogRequest) {
-    catalogRequest = loadResumeTemplateCatalog().then((catalog) => {
-      cachedCatalog = catalog
+  if (cachedPublicCatalog) {
+    return cachedPublicCatalog
+  }
+
+  if (!publicCatalogRequest) {
+    publicCatalogRequest = loadResumeTemplateCatalog().then((catalog) => {
+      cachedPublicCatalog = catalog
       return catalog
     })
   }
 
-  return catalogRequest
+  return publicCatalogRequest
 }
 
-export function replaceResumeTemplateCatalogCache(catalog: ResumeTemplateDefinition[]) {
-  cachedCatalog = catalog
-  catalogRequest = Promise.resolve(catalog)
+export function replaceManagedResumeTemplateCatalogCache(catalog: ManagedResumeTemplateDefinition[]) {
+  cachedManagedCatalog = catalog
+  managedCatalogRequest = Promise.resolve(catalog)
 }
 
-export function invalidateResumeTemplateCatalogCache() {
-  cachedCatalog = null
-  catalogRequest = null
+export function invalidateManagedResumeTemplateCatalogCache() {
+  cachedManagedCatalog = null
+  managedCatalogRequest = null
 }

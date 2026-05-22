@@ -20,6 +20,6 @@ public class PublicTemplateCatalogController {
 
     @GetMapping
     public ApiResponse<List<TemplateCatalogResponse>> listTemplates() {
-        return ApiResponse.success(templateCatalogService.listTemplates());
+        return ApiResponse.success(templateCatalogService.listPublicTemplates());
     }
 }

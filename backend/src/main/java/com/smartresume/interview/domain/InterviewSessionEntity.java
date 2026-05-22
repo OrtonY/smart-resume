@@ -10,6 +10,7 @@ public class InterviewSessionEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String resumeId;
     private String title;
     private String aiConversationId;
@@ -35,6 +36,14 @@ public class InterviewSessionEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getResumeId() {

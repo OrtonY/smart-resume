@@ -23,7 +23,12 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
             return true;
         }
         String token = request.getHeader(ACCESS_TOKEN_HEADER);
-        systemAccessService.validateAccessToken(token);
+        CurrentUserContext.set(systemAccessService.authenticateAccessToken(token));
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        CurrentUserContext.clear();
     }
 }

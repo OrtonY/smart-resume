@@ -10,6 +10,7 @@ public class AiConfigurationEntity {
 
     @Id(keyType = KeyType.None)
     private Long id;
+    private Long userId;
     private String vendor;
     private String baseUrl;
     private String apiKey;
@@ -23,6 +24,14 @@ public class AiConfigurationEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getVendor() {
