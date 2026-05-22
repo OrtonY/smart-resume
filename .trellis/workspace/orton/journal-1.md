@@ -1118,6 +1118,7 @@ Refreshed the English and Chinese project READMEs, rewrote the frontend README, 
 
 Implemented multi-user account isolation across backend and frontend, added auth/workspace flow updates, then archived task 05-21-multi-user-support.
 
+
 ### Main Changes
 
 (Add details)
@@ -1127,6 +1128,7 @@ Implemented multi-user account isolation across backend and frontend, added auth
 | Hash | Message |
 |------|---------|
 | `4ad90b4` | (see git log) |
+
 
 ### Testing
 

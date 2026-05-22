@@ -5,9 +5,16 @@
 - `develop` is the long-lived integration branch for daily development.
 - Every task starts from a new branch created off `develop`.
 - Never make a normal development commit directly on `master` or `develop`.
-- Merge task branches back into `develop` when they are done, then delete the task branch.
+- Task branches are merged into `develop` via GitHub PR (rebase merge, linear history).
+- Never merge locally into `develop` — always push the branch and open a PR.
 - Merge `develop` into `master` only when preparing a release.
 - Never delete `develop`.
+
+## Remote Branch Protection (GitHub)
+
+- `develop`: requires PR, requires linear history (no merge commits), 0 approvals needed.
+- PR merge strategy: **Rebase merge** (preserves individual commits).
+- Force push disabled on `develop` and `master`.
 
 ## Operational Checklist
 
@@ -19,9 +26,10 @@ Before you start work:
 
 Before you finish work:
 
-1. Make sure the changes are merged back into `develop`, not `master`.
-2. Delete the task branch after the merge is complete.
-3. Leave `develop` in place for the next task.
+1. Push the task branch to origin: `git push -u origin <branch>`.
+2. Create a PR targeting `develop`: `gh pr create --base develop`.
+3. After PR merges (rebase merge), sync local: `git checkout develop && git pull --rebase`.
+4. Delete the local task branch: `git branch -d <branch>`.
 
 ## Release Rule
 
