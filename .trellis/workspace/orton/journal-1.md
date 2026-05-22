@@ -1106,3 +1106,36 @@ Refreshed the English and Chinese project READMEs, rewrote the frontend README, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: Multi-user support implementation and wrap-up
+
+**Date**: 2026-05-22
+**Task**: Multi-user support implementation and wrap-up
+**Branch**: `codex/multi-user-support`
+
+### Summary
+
+Implemented multi-user account isolation across backend and frontend, added auth/workspace flow updates, then archived task 05-21-multi-user-support.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ad90b4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
