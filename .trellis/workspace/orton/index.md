@@ -8,11 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 34
+- **Total Sessions**: 35
 - **Last Active**: 2026-05-22
-=======
-
-
 <!-- @@@/auto:current-status -->
 
 ---
@@ -22,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1141 | Active |
+| `journal-1.md` | ~1176 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -32,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 35 | 2026-05-22 | Share link title required | `ce4cacf` | `codex/share-link-title-required` |
 
 | 35 | 2026-05-22 | Multi-user support implementation and wrap-up | `4ad90b4` | `codex/multi-user-support` |
 | 34 | 2026-05-21 | Implement push-branch + PR workflow | `70751c5` | `fix/git-push-workflow` |

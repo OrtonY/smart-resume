@@ -46,6 +46,13 @@ public class ShareService {
     @Transactional
     public ShareLinkResponse createShare(String resumeId, CreateShareRequest request) {
         long userId = CurrentUserContext.requireUserId();
+        String normalizedTitle = request.title() == null ? "" : request.title().trim();
+        if (normalizedTitle.isEmpty()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Share title is required");
+        }
+        if (normalizedTitle.length() > 50) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Share title must be at most 50 characters");
+        }
         String normalizedMode = request.mode().trim().toUpperCase(Locale.ROOT);
         if (!"LATEST".equals(normalizedMode) && !"SNAPSHOT".equals(normalizedMode)) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Share mode must be LATEST or SNAPSHOT");
@@ -64,6 +71,7 @@ public class ShareService {
         share.setUserId(userId);
         share.setResumeId(resumeId);
         share.setShareCode(UUID.randomUUID().toString().replace("-", ""));
+        share.setTitle(normalizedTitle);
         share.setShareMode(normalizedMode);
         share.setTargetVersionId(targetVersionId);
         share.setActive(true);
@@ -211,6 +219,7 @@ public class ShareService {
             .orElse(null);
 
         return new ShareLinkResponse(
+            share.getTitle(),
             share.getShareCode(),
             share.getShareMode(),
             "/share/" + share.getShareCode(),
