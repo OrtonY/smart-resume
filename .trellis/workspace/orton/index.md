@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 35
+- **Total Sessions**: 36
 - **Last Active**: 2026-05-22
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1176 | Active |
+| `journal-1.md` | ~1210 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 36 | 2026-05-22 | Multi-user README and spec update | `4085da4`, `b76e7f5` | `docs/update-readme-multi-user` |
 | 35 | 2026-05-22 | Share link title required | `ce4cacf` | `codex/share-link-title-required` |
 
 | 35 | 2026-05-22 | Multi-user support implementation and wrap-up | `4ad90b4` | `codex/multi-user-support` |
