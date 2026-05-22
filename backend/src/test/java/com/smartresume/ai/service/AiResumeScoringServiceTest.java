@@ -2,6 +2,7 @@ package com.smartresume.ai.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,7 @@ import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreSuggestionGroup;
 import com.smartresume.ai.dto.AiInvocationRequest;
+import com.smartresume.resume.service.ResumeService;
 import com.smartresume.resume.dto.ResumeDtos.CertificateItem;
 import com.smartresume.resume.dto.ResumeDtos.EducationItem;
 import com.smartresume.resume.dto.ResumeDtos.HonorItem;
@@ -34,12 +36,16 @@ class AiResumeScoringServiceTest {
     @Mock
     private AiChatService aiChatService;
 
+    @Mock
+    private ResumeService resumeService;
+
     private AiResumeScoringService service;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        service = new AiResumeScoringService(aiChatService, objectMapper);
+        service = new AiResumeScoringService(aiChatService, resumeService, objectMapper);
+        when(resumeService.getResume(anyString())).thenReturn(null);
     }
 
     @Test

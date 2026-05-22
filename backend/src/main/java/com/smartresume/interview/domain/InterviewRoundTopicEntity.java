@@ -9,6 +9,7 @@ public class InterviewRoundTopicEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String sessionId;
     private Integer roundIndex;
     private String topicsJson;
@@ -19,6 +20,14 @@ public class InterviewRoundTopicEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getSessionId() {

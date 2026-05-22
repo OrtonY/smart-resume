@@ -28,7 +28,7 @@ public class TemplateCatalogController {
 
     @GetMapping
     public ApiResponse<List<TemplateCatalogResponse>> listTemplates() {
-        return ApiResponse.success(templateCatalogService.listTemplates());
+        return ApiResponse.success(templateCatalogService.listTemplatesForCurrentUser());
     }
 
     @PostMapping

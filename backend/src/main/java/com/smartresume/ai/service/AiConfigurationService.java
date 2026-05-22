@@ -7,6 +7,7 @@ import com.smartresume.ai.mapper.AiConfigurationMapper;
 import com.smartresume.ai.provider.ChatModelProviderRegistry;
 import com.smartresume.ai.provider.VendorMetadata;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiConfigurationService {
-
-    private static final long SINGLETON_ID = 1L;
 
     private final AiConfigurationMapper aiConfigurationMapper;
     private final ChatModelProviderRegistry chatModelProviderRegistry;
@@ -29,7 +28,7 @@ public class AiConfigurationService {
     }
 
     public AiConfigurationResponse getConfiguration() {
-        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(SINGLETON_ID);
+        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(CurrentUserContext.requireUserId());
         if (configuration == null) {
             return new AiConfigurationResponse("", "", "", false);
         }
@@ -37,7 +36,7 @@ public class AiConfigurationService {
     }
 
     public AiConfigurationEntity requireConfiguration() {
-        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(SINGLETON_ID);
+        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(CurrentUserContext.requireUserId());
         if (configuration == null) {
             throw new AppException(HttpStatus.PRECONDITION_REQUIRED, "AI configuration has not been configured");
         }
@@ -46,12 +45,14 @@ public class AiConfigurationService {
 
     @Transactional
     public AiConfigurationResponse saveConfiguration(AiConfigurationRequest request) {
-        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(SINGLETON_ID);
+        long userId = CurrentUserContext.requireUserId();
+        AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(userId);
         LocalDateTime now = LocalDateTime.now();
         boolean exists = configuration != null;
         if (!exists) {
             configuration = new AiConfigurationEntity();
-            configuration.setId(SINGLETON_ID);
+            configuration.setId(userId);
+            configuration.setUserId(userId);
             configuration.setCreatedAt(now);
         }
 
@@ -79,6 +80,7 @@ public class AiConfigurationService {
             configuration.setApiKey(apiKey);
         }
         configuration.setModelName(modelName);
+        configuration.setUserId(userId);
         configuration.setUpdatedAt(now);
 
         if (exists) {

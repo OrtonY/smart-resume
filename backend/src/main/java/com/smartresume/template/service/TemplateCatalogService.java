@@ -2,8 +2,12 @@ package com.smartresume.template.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mybatisflex.core.query.QueryCondition;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.template.domain.ResumeTemplateEntity;
+import com.smartresume.template.domain.table.ResumeTemplateEntityTableDef;
 import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
 import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCreateRequest;
 import com.smartresume.template.dto.TemplateCatalogDtos.TemplatePreview;
@@ -22,6 +26,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.mybatisflex.core.query.QueryMethods.lower;
+
 @Service
 public class TemplateCatalogService {
 
@@ -38,37 +44,52 @@ public class TemplateCatalogService {
     }
 
     @Transactional
-    public List<TemplateCatalogResponse> listTemplates() {
-        ensureCatalogAvailable();
-        return loadActiveTemplateResponses();
+    public List<TemplateCatalogResponse> listTemplatesForCurrentUser() {
+        long userId = CurrentUserContext.requireUserId();
+        ensureBuiltInCatalogAvailable();
+        return loadAccessibleTemplateResponses(userId);
+    }
+
+    @Transactional
+    public List<TemplateCatalogResponse> listPublicTemplates() {
+        ensureBuiltInCatalogAvailable();
+        return loadBuiltInTemplateResponses();
     }
 
     @Transactional
     public TemplateCatalogResponse createTemplate(TemplateCreateRequest request) {
+        long userId = CurrentUserContext.requireUserId();
         validateLayout(request.layout());
-        ResumeTemplateEntity existing = resumeTemplateMapper.selectOneById(request.key());
-        if (existing != null) {
+        String templateKey = request.key().trim();
+        ResumeTemplateEntity existing = resumeTemplateMapper.selectOneById(templateKey);
+        if (existing != null && !Boolean.TRUE.equals(existing.getDeleted())) {
             throw new AppException(HttpStatus.CONFLICT, "Template key already exists");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        ResumeTemplateEntity entity = new ResumeTemplateEntity();
-        entity.setKey(request.key().trim());
+        ResumeTemplateEntity entity = existing == null ? new ResumeTemplateEntity() : existing;
+        entity.setKey(templateKey);
+        entity.setUserId(userId);
         entity.setBuiltIn(false);
         entity.setDeleted(false);
-        entity.setCreatedAt(now);
+        entity.setDeletedAt(null);
+        if (entity.getCreatedAt() == null) {
+            entity.setCreatedAt(now);
+        }
         applyEditableFields(entity, request.name(), request.summary(), request.category(), request.layout(), request.theme(), request.preview(), now);
-        resumeTemplateMapper.insert(entity);
+
+        if (existing == null) {
+            resumeTemplateMapper.insert(entity);
+        } else {
+            resumeTemplateMapper.update(entity);
+        }
         return toResponse(entity);
     }
 
     @Transactional
     public TemplateCatalogResponse updateTemplate(String templateKey, TemplateUpdateRequest request) {
         validateLayout(request.layout());
-        ResumeTemplateEntity entity = requireActiveTemplate(templateKey);
-        if (Boolean.TRUE.equals(entity.getBuiltIn())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Built-in templates cannot be modified");
-        }
+        ResumeTemplateEntity entity = requireCurrentUserCustomTemplate(templateKey);
         applyEditableFields(entity, request.name(), request.summary(), request.category(), request.layout(), request.theme(), request.preview(), LocalDateTime.now());
         resumeTemplateMapper.update(entity);
         return toResponse(entity);
@@ -76,11 +97,7 @@ public class TemplateCatalogService {
 
     @Transactional
     public void deleteTemplate(String templateKey) {
-        ResumeTemplateEntity entity = requireActiveTemplate(templateKey);
-        if (Boolean.TRUE.equals(entity.getBuiltIn())) {
-            throw new AppException(HttpStatus.CONFLICT, "Built-in templates cannot be deleted. Use restore-from-backup if you need to roll them back.");
-        }
-
+        ResumeTemplateEntity entity = requireCurrentUserCustomTemplate(templateKey);
         entity.setDeleted(true);
         entity.setDeletedAt(LocalDateTime.now());
         entity.setUpdatedAt(entity.getDeletedAt());
@@ -89,6 +106,7 @@ public class TemplateCatalogService {
 
     @Transactional
     public List<TemplateCatalogResponse> restoreBuiltInTemplatesFromBackup() {
+        CurrentUserContext.requireAdmin();
         LocalDateTime now = LocalDateTime.now();
         for (TemplateCatalogResponse template : loadBackupCatalog()) {
             ResumeTemplateEntity entity = resumeTemplateMapper.selectOneById(template.key());
@@ -99,6 +117,7 @@ public class TemplateCatalogService {
                 entity.setCreatedAt(now);
             }
 
+            entity.setUserId(null);
             entity.setBuiltIn(true);
             entity.setDeleted(false);
             entity.setDeletedAt(null);
@@ -111,14 +130,62 @@ public class TemplateCatalogService {
             }
         }
 
-        return loadActiveTemplateResponses();
+        return loadAccessibleTemplateResponses(CurrentUserContext.requireUserId());
     }
 
-    private void ensureCatalogAvailable() {
-        if (resumeTemplateMapper.selectAll().stream().anyMatch(template -> !Boolean.TRUE.equals(template.getDeleted()))) {
+    public TemplateCatalogResponse validateCurrentUserTemplateAccess(String templateKey) {
+        return resolveAccessibleTemplate(templateKey, CurrentUserContext.requireUserId())
+            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Template not found"));
+    }
+
+    public TemplateCatalogResponse resolveTemplateForUser(String templateKey, long userId) {
+        return resolveAccessibleTemplate(templateKey, userId).orElse(null);
+    }
+
+    private void ensureBuiltInCatalogAvailable() {
+        ResumeTemplateEntityTableDef table = ResumeTemplateEntityTableDef.RESUME_TEMPLATE_ENTITY;
+        QueryWrapper query = QueryWrapper.create()
+            .where(table.BUILT_IN.eq(true))
+            .and(table.DELETED.eq(false));
+        if (resumeTemplateMapper.selectCountByQuery(query) > 0) {
             return;
         }
-        restoreBuiltInTemplatesFromBackup();
+        restoreBuiltInTemplatesWithoutAuth();
+    }
+
+    private void restoreBuiltInTemplatesWithoutAuth() {
+        LocalDateTime now = LocalDateTime.now();
+        for (TemplateCatalogResponse template : loadBackupCatalog()) {
+            ResumeTemplateEntity entity = resumeTemplateMapper.selectOneById(template.key());
+            boolean isNewEntity = entity == null;
+            if (entity == null) {
+                entity = new ResumeTemplateEntity();
+                entity.setKey(template.key());
+                entity.setCreatedAt(now);
+            }
+            entity.setUserId(null);
+            entity.setBuiltIn(true);
+            entity.setDeleted(false);
+            entity.setDeletedAt(null);
+            applyEditableFields(entity, template.name(), template.summary(), template.category(), template.layout(), template.theme(), template.preview(), now);
+            if (isNewEntity) {
+                resumeTemplateMapper.insert(entity);
+            } else {
+                resumeTemplateMapper.update(entity);
+            }
+        }
+    }
+
+    private ResumeTemplateEntity requireCurrentUserCustomTemplate(String templateKey) {
+        long userId = CurrentUserContext.requireUserId();
+        ResumeTemplateEntity entity = requireActiveTemplate(templateKey);
+        if (Boolean.TRUE.equals(entity.getBuiltIn())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Built-in templates cannot be modified");
+        }
+        if (!Long.valueOf(userId).equals(entity.getUserId())) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Template not found");
+        }
+        return entity;
     }
 
     private ResumeTemplateEntity requireActiveTemplate(String templateKey) {
@@ -129,14 +196,41 @@ public class TemplateCatalogService {
         return entity;
     }
 
-    private List<TemplateCatalogResponse> loadActiveTemplateResponses() {
-        return resumeTemplateMapper.selectAll().stream()
-            .filter(template -> !Boolean.TRUE.equals(template.getDeleted()))
-            .sorted(Comparator
-                .comparing(ResumeTemplateEntity::getBuiltIn, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing(ResumeTemplateEntity::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+    private List<TemplateCatalogResponse> loadAccessibleTemplateResponses(long userId) {
+        ResumeTemplateEntityTableDef table = ResumeTemplateEntityTableDef.RESUME_TEMPLATE_ENTITY;
+        QueryCondition accessible = table.BUILT_IN.eq(true).or(table.USER_ID.eq(userId));
+        QueryWrapper query = QueryWrapper.create()
+            .where(table.DELETED.eq(false))
+            .and(accessible)
+            .orderBy(table.BUILT_IN, false)
+            .orderBy(table.UPDATED_AT, false)
+            .orderBy(table.KEY, true);
+        return resumeTemplateMapper.selectListByQuery(query).stream()
             .map(this::toResponse)
             .toList();
+    }
+
+    private List<TemplateCatalogResponse> loadBuiltInTemplateResponses() {
+        ResumeTemplateEntityTableDef table = ResumeTemplateEntityTableDef.RESUME_TEMPLATE_ENTITY;
+        QueryWrapper query = QueryWrapper.create()
+            .where(table.BUILT_IN.eq(true))
+            .and(table.DELETED.eq(false))
+            .orderBy(table.UPDATED_AT, false)
+            .orderBy(table.KEY, true);
+        return resumeTemplateMapper.selectListByQuery(query).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    private java.util.Optional<TemplateCatalogResponse> resolveAccessibleTemplate(String templateKey, long userId) {
+        ResumeTemplateEntity entity = resumeTemplateMapper.selectOneById(templateKey);
+        if (entity == null || Boolean.TRUE.equals(entity.getDeleted())) {
+            return java.util.Optional.empty();
+        }
+        if (Boolean.TRUE.equals(entity.getBuiltIn()) || Long.valueOf(userId).equals(entity.getUserId())) {
+            return java.util.Optional.of(toResponse(entity));
+        }
+        return java.util.Optional.empty();
     }
 
     private void applyEditableFields(
@@ -190,8 +284,7 @@ public class TemplateCatalogService {
         try (InputStream inputStream = new ClassPathResource(CATALOG_RESOURCE_PATH).getInputStream()) {
             List<TemplateCatalogResponse> rawCatalog = objectMapper.readerForListOf(TemplateCatalogResponse.class)
                 .readValue(inputStream);
-            List<TemplateCatalogResponse> catalog = rawCatalog
-                .stream()
+            List<TemplateCatalogResponse> catalog = rawCatalog.stream()
                 .map(item -> new TemplateCatalogResponse(
                     item.key(),
                     item.name(),

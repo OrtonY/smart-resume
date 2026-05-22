@@ -42,6 +42,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import type { AiResumeSuggestion } from '../features/ai/types'
 import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
+import { WorkspaceSessionCard } from '../features/system/components/WorkspaceSessionCard'
 import { MarkdownComposer } from '../lib/markdown/MarkdownComposer'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
@@ -63,6 +64,10 @@ import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemp
 import {
   resolveResumeTemplate,
 } from '../features/resume/templateCatalog'
+import type {
+  RegistrationSettingsResponse,
+  SessionUser,
+} from '../features/system/types'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
 import type {
   CertificateItem,
@@ -84,8 +89,10 @@ import type {
 const { Paragraph, Text } = Typography
 
 interface WorkspacePageProps {
-  accessToken: string
+  currentUser: SessionUser
   onLogout: () => void
+  registrationEnabled: boolean
+  onRegistrationEnabledChange: (enabled: boolean) => Promise<RegistrationSettingsResponse>
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
@@ -187,12 +194,17 @@ function createResumeSignature(resume: Pick<ResumeDetail, 'title' | 'templateKey
   })
 }
 
-export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
+export function WorkspacePage({
+  currentUser,
+  onLogout,
+  registrationEnabled,
+  onRegistrationEnabledChange,
+}: WorkspacePageProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { resumeId } = useParams()
   const { message } = App.useApp()
-  const { templates, loading: loadingTemplates } = useResumeTemplateCatalog()
+  const { templates, loading: loadingTemplates } = useResumeTemplateCatalog({ scope: 'managed' })
   const [resumeList, setResumeList] = useState<ResumeSummary[]>([])
   const [resumePage, setResumePage] = useState<ResumePage | null>(null)
   const [draft, setDraft] = useState<ResumeDetail | null>(null)
@@ -287,7 +299,7 @@ export function WorkspacePage({ accessToken, onLogout }: WorkspacePageProps) {
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [accessToken, loadResumeList])
+  }, [currentUser.userId, loadResumeList])
 
   useEffect(() => {
     if (!resumeId) {
@@ -573,12 +585,15 @@ function showSection(sectionKey: ResumeSectionKey) {
       />
     ) : (
       <ResumeListView
+        currentUser={currentUser}
         loadingResumeList={loadingResumeList}
         onCopyResume={handleCopyResume}
         onDeleteResume={handleDeleteResume}
         onPageChange={handlePageChange}
+        onRegistrationEnabledChange={onRegistrationEnabledChange}
         onLogout={onLogout}
         onOpenResume={(targetResumeId) => navigate(`/app/resumes/${targetResumeId}`)}
+        registrationEnabled={registrationEnabled}
         resumePage={resumePage}
         resumeList={resumeList}
         selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
@@ -591,23 +606,29 @@ function showSection(sectionKey: ResumeSectionKey) {
 }
 
 function ResumeListView({
+  currentUser,
   loadingResumeList,
   onCopyResume,
   onDeleteResume,
   onPageChange,
+  onRegistrationEnabledChange,
   onLogout,
   onOpenResume,
+  registrationEnabled,
   resumePage,
   resumeList,
   selectedTemplateName,
   templates,
 }: {
+  currentUser: SessionUser
   loadingResumeList: boolean
   onCopyResume: (resumeId: string, title: string) => Promise<void>
   onDeleteResume: (resumeId: string) => Promise<void>
   onPageChange: (page: number) => Promise<void>
+  onRegistrationEnabledChange: (enabled: boolean) => Promise<RegistrationSettingsResponse>
   onLogout: () => void
   onOpenResume: (resumeId: string) => void
+  registrationEnabled: boolean
   resumePage: ResumePage | null
   resumeList: ResumeSummary[]
   selectedTemplateName: (templateKey: string) => string
@@ -720,6 +741,12 @@ function ResumeListView({
                 回收桶
               </Button>
             </Link>
+            <WorkspaceSessionCard
+              currentUser={currentUser}
+              registrationEnabled={registrationEnabled}
+              onRegistrationEnabledChange={onRegistrationEnabledChange}
+              onLogout={onLogout}
+            />
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
               锁定工作区
             </Button>

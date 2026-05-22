@@ -1,3 +1,5 @@
+import type { ResumeTemplateDefinition } from './templateCatalog'
+
 export interface PersonalInfo {
   fullName: string
   headline: string
@@ -108,6 +110,7 @@ export interface ResumeDetail {
   layout: ResumeLayout
   updatedAt: string
   deletedAt: string | null
+  resolvedTemplate?: ResumeTemplateDefinition | null
 }
 
 export type ShareMode = 'LATEST' | 'SNAPSHOT'
