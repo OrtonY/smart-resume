@@ -13,6 +13,7 @@ public class ResumeShareEntity {
     private Long userId;
     private String resumeId;
     private String shareCode;
+    private String title;
     private String shareMode;
     private String targetVersionId;
     private String passwordHash;
@@ -50,6 +51,14 @@ public class ResumeShareEntity {
 
     public void setShareCode(String shareCode) {
         this.shareCode = shareCode;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getShareMode() {

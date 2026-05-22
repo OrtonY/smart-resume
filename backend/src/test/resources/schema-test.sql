@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS resume_share_links (
     resume_id VARCHAR(64) NOT NULL,
     user_id BIGINT NOT NULL,
     share_code VARCHAR(80) NOT NULL UNIQUE,
+    title VARCHAR(50) NULL,
     share_mode VARCHAR(20) NOT NULL,
     target_version_id VARCHAR(64) NULL,
     password_hash VARCHAR(200) NULL,

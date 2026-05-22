@@ -416,12 +416,12 @@ export function WorkspacePage({
     await loadResumeList()
   }
 
-  async function handleCreateShare(mode: ShareMode, password?: string) {
+  async function handleCreateShare(title: string, mode: ShareMode, password?: string) {
     if (!resumeId) {
       return
     }
 
-    const share = await createShare(resumeId, mode, password)
+    const share = await createShare(resumeId, title, mode, password)
     await navigator.clipboard.writeText(`${window.location.origin}${share.sharePath}`)
     void message.success(`${mode === 'LATEST' ? '最新版本' : '快照'}分享链接已复制。`)
   }
@@ -1079,6 +1079,7 @@ function ShareLinksModal({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Space direction="vertical" size={4}>
                     <Space wrap>
+                      <Text strong>{share.title?.trim() ? share.title : '未命名分享'}</Text>
                       <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>
                         {share.shareMode === 'LATEST' ? '最新版' : '快照'}
                       </Tag>
@@ -1323,7 +1324,7 @@ function ResumeEditorView({
   hiddenSections: ResumeSectionKey[]
   loadingTemplates: boolean
   onApplyPatch: (patch: AiResumeSuggestion) => void
-  onCreateShare: (mode: ShareMode, password?: string) => Promise<void>
+  onCreateShare: (title: string, mode: ShareMode, password?: string) => Promise<void>
   exportingPdf: boolean
   onExpandedModulesChange: (keys: string | string[]) => void
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
@@ -1341,6 +1342,7 @@ function ResumeEditorView({
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareTitle, setShareTitle] = useState('')
   const [shareMode, setShareMode] = useState<ShareMode>('LATEST')
   const [sharePasswordEnabled, setSharePasswordEnabled] = useState(false)
   const [sharePassword, setSharePassword] = useState('')
@@ -1449,6 +1451,7 @@ function ResumeEditorView({
             <ResumeScoreButton draft={draft} />
             <Button icon={<ShareAltOutlined />} onClick={() => {
               setShareModalOpen(true)
+              setShareTitle('')
               setShareMode('LATEST')
               setSharePasswordEnabled(false)
               setSharePassword('')
@@ -1615,13 +1618,22 @@ function ResumeEditorView({
         title="创建分享链接"
         onCancel={() => setShareModalOpen(false)}
         onOk={async () => {
+          const normalizedShareTitle = shareTitle.trim()
+          if (!normalizedShareTitle) {
+            void message.warning('请输入分享标题')
+            return
+          }
+          if (normalizedShareTitle.length > 50) {
+            void message.warning('分享标题最多 50 个字符')
+            return
+          }
           if (sharePasswordEnabled && !sharePassword.trim()) {
             void message.warning('请输入密码')
             return
           }
           setCreatingShare(true)
           try {
-            await onCreateShare(shareMode, sharePasswordEnabled ? sharePassword.trim() : undefined)
+            await onCreateShare(normalizedShareTitle, shareMode, sharePasswordEnabled ? sharePassword.trim() : undefined)
             setShareModalOpen(false)
           } catch (error) {
             void message.error(error instanceof Error ? error.message : '创建分享失败')
@@ -1635,6 +1647,20 @@ function ResumeEditorView({
         destroyOnHidden
       >
         <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 20 }}>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>分享标题</Text>
+            <Input
+              value={shareTitle}
+              onChange={(event) => setShareTitle(event.target.value)}
+              maxLength={50}
+              placeholder="例如：投递后端岗位（5月）"
+              showCount
+            />
+            <div style={{ marginTop: 4 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>标题用于区分分享用途，创建后会展示在分享列表中。</Text>
+            </div>
+          </div>
+
           <div style={{ marginBottom: 20 }}>
             <Text strong style={{ display: 'block', marginBottom: 8 }}>分享类型</Text>
             <Radio.Group value={shareMode} onChange={(e) => setShareMode(e.target.value)}>

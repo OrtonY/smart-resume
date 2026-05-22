@@ -1141,3 +1141,36 @@ Implemented multi-user account isolation across backend and frontend, added auth
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: Share link title required
+
+**Date**: 2026-05-22
+**Task**: Share link title required
+**Branch**: `codex/share-link-title-required`
+
+### Summary
+
+Implemented mandatory title for resume share links across DB migration, backend DTO/service validation, and frontend share form request payload updates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ce4cacf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
