@@ -25,6 +25,7 @@ At the current bootstrap stage, these documents define the initial engineering b
 | [Interview Simulation](./interview-simulation.md) | Interview creation/list/detail contract, company context extraction, prompt injection rules | Active |
 | [AI Resume Chat](./ai-resume-chat.md) | Smart Resume Assistant prompt contract, suggestion sentinel protocol, SSE event extension | Active |
 | [AI Resume Scoring](./ai-resume-scoring.md) | Resume scoring API and AI-backed response contract | Active |
+| [Auth & Multi-User](./auth-multi-user.md) | Authentication, session, token, per-user data isolation | Active |
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To refine |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To refine |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To refine |
