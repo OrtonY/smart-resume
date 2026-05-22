@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.service.AiChatService;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
@@ -20,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,6 +54,7 @@ class InterviewServiceTest {
 
     @BeforeEach
     void setUpSchema() {
+        CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(1L, "admin", true));
         jdbcTemplate.execute("""
             create table if not exists resumes (
                 id varchar(64) primary key,
@@ -130,6 +133,11 @@ class InterviewServiceTest {
             .thenReturn("请详细描述一下你在订单系统优化中的关键贡献。")
             .thenReturn("好的，现在进入下一轮，请介绍一个你最有挑战的项目。");
         when(aiChatService.callStructured(any(AiInvocationRequest.class), any())).thenReturn(null);
+    }
+
+    @AfterEach
+    void clearCurrentUser() {
+        CurrentUserContext.clear();
     }
 
     @Test
@@ -350,6 +358,7 @@ class InterviewServiceTest {
         LocalDateTime now = LocalDateTime.now();
         ResumeEntity resume = new ResumeEntity();
         resume.setId(UUID.randomUUID().toString());
+        resume.setUserId(1L);
         resume.setTitle(title);
         resume.setTemplateKey("classic");
         resume.setLayoutJson("{\"sectionOrder\":[],\"hiddenSections\":[]}");

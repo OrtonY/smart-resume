@@ -9,6 +9,7 @@ import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.memory.AiConversationIdGenerator;
 import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.resume.service.ResumeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -36,18 +37,22 @@ public class AiResumeScoringService {
         """;
 
     private final AiChatService aiChatService;
+    private final ResumeService resumeService;
     private final ObjectMapper objectMapper;
 
     public AiResumeScoringService(
         AiChatService aiChatService,
+        ResumeService resumeService,
         ObjectMapper objectMapper
     ) {
         this.aiChatService = aiChatService;
+        this.resumeService = resumeService;
         this.objectMapper = objectMapper;
     }
 
     public AiResumeScoreResponse scoreResume(AiResumeScoreRequest request) {
         AiResumeContext resume = request.resume();
+        resumeService.validResume(resume.id());
         boolean jobDescriptionProvided = StringUtils.hasText(request.jobDescription());
 
         String conversationId = AiConversationIdGenerator.generate(resume.id(), AiFeatureType.RESUME_SCORE);

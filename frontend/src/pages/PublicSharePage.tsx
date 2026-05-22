@@ -29,7 +29,12 @@ export function PublicSharePage() {
   const [verifying, setVerifying] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
-  const { templates } = useResumeTemplateCatalog()
+  const { templates } = useResumeTemplateCatalog({ scope: 'public' })
+  const previewTemplates = !resume?.resolvedTemplate
+    ? templates
+    : templates.some((template) => template.key === resume.resolvedTemplate?.key)
+      ? templates
+      : [resume.resolvedTemplate, ...templates]
 
   const loadPublicShare = useCallback(async (token?: string) => {
     setLoading(true)
@@ -106,7 +111,7 @@ export function PublicSharePage() {
             <Spin size="large" tip="正在加载分享的简历..." />
           </div>
         ) : resume ? (
-          <ResumePreview resume={resume} templates={templates} previewMode="a4-paged" />
+          <ResumePreview resume={resume} templates={previewTemplates} previewMode="a4-paged" />
         ) : (
           <Result status="404" title="分享链接不可用" subTitle={errorMessage || '此公开分享可能已过期或不存在。'} />
         )}

@@ -2,6 +2,7 @@ package com.smartresume.interview.controller;
 
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.common.api.ApiResponse;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
@@ -102,7 +103,7 @@ public class InterviewController {
 
     @PostMapping("/{interviewId}/report/regenerate")
     public ApiResponse<Void> regenerateReport(@PathVariable String interviewId) {
-        interviewReportService.generateReportAsync(interviewId);
+        interviewReportService.generateReportAsync(interviewId, CurrentUserContext.requireUserId());
         return ApiResponse.success(null, "Report regeneration started");
     }
 }

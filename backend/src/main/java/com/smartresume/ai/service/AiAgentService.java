@@ -8,6 +8,7 @@ import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.suggestion.AiResumeSuggestionPlan;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.resume.service.ResumeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -68,20 +69,24 @@ public class AiAgentService {
 
     private final AiChatService aiChatService;
     private final AiChatHistoryService aiChatHistoryService;
+    private final ResumeService resumeService;
     private final ObjectMapper objectMapper;
 
     public AiAgentService(
         AiChatService aiChatService,
         AiChatHistoryService aiChatHistoryService,
+        ResumeService resumeService,
         ObjectMapper objectMapper
     ) {
         this.aiChatService = aiChatService;
         this.aiChatHistoryService = aiChatHistoryService;
+        this.resumeService = resumeService;
         this.objectMapper = objectMapper;
     }
 
     public Flux<AiChatEvent> streamChat(AiChatRequest request) {
         return Flux.defer(() -> {
+            resumeService.validResume(request.resume().id());
             String conversationId = aiChatHistoryService.resolveConversationId(
                 request.resume().id(),
                 request.conversationId(),

@@ -66,6 +66,10 @@ a {
   padding: 30px;
 }
 
+.auth-card--wide {
+  width: 100%;
+}
+
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -84,6 +88,68 @@ a {
 .auth-subtitle {
   margin: 12px 0 0;
   color: var(--text-secondary);
+}
+
+.auth-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-help-trigger {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.1);
+  color: var(--accent-cool);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.auth-help-trigger:hover,
+.auth-help-trigger:focus-visible {
+  background: rgba(49, 87, 164, 0.18);
+  outline: none;
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.75fr);
+  gap: 24px;
+  width: min(1100px, 100%);
+  align-items: stretch;
+}
+
+.auth-segmented {
+  width: 100%;
+}
+
+.auth-segmented .ant-segmented-group {
+  width: 100%;
+}
+
+.auth-segmented .ant-segmented-item {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.auth-side-card {
+  align-self: stretch;
+}
+
+.auth-side-card__section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 255, 0.74)),
+    radial-gradient(circle at top right, rgba(49, 87, 164, 0.08), transparent 30%);
 }
 
 .workspace-layout,
@@ -190,6 +256,45 @@ a {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+
+.workspace-session-card {
+  display: grid;
+  gap: 10px;
+  min-width: 260px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.78)),
+    radial-gradient(circle at top right, rgba(255, 140, 66, 0.09), transparent 28%);
+}
+
+.workspace-session-card__identity {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-session-card__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-session-card__settings {
+  justify-self: end;
+}
+
+.workspace-session-card__setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .workspace-hub__toolbar {
@@ -2663,6 +2768,11 @@ a {
   .workspace-layout,
   .template-gallery-page {
     padding: 0;
+  }
+
+  .auth-shell {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .workspace-layout {

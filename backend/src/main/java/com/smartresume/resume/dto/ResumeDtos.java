@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
 
 public final class ResumeDtos {
 
@@ -36,7 +37,8 @@ public final class ResumeDtos {
         ResumeContentPayload content,
         ResumeLayoutPayload layout,
         LocalDateTime updatedAt,
-        LocalDateTime deletedAt
+        LocalDateTime deletedAt,
+        TemplateCatalogResponse resolvedTemplate
     ) {
     }
 

@@ -1108,15 +1108,16 @@ Refreshed the English and Chinese project READMEs, rewrote the frontend README, 
 - None - task complete
 
 
-## Session 34: Implement push-branch + PR workflow
+## Session 34: Multi-user support implementation and wrap-up
 
-**Date**: 2026-05-21
-**Task**: Implement push-branch + PR workflow
-**Branch**: `fix/git-push-workflow`
+**Date**: 2026-05-22
+**Task**: Multi-user support implementation and wrap-up
+**Branch**: `codex/multi-user-support`
 
 ### Summary
 
-Replaced local merge-to-develop with push-task-branch + gh-pr-create flow. Updated finish-work command, workflow.md, hooks, branch_policy, and spec guides to comply with GitHub branch protection rules.
+Implemented multi-user account isolation across backend and frontend, added auth/workspace flow updates, then archived task 05-21-multi-user-support.
+
 
 ### Main Changes
 
@@ -1126,7 +1127,8 @@ Replaced local merge-to-develop with push-task-branch + gh-pr-create flow. Updat
 
 | Hash | Message |
 |------|---------|
-| `70751c5` | (see git log) |
+| `4ad90b4` | (see git log) |
+
 
 ### Testing
 

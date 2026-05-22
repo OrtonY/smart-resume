@@ -10,6 +10,7 @@ public class ResumeSectionEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String resumeId;
     private String sectionType;
     private Integer sortOrder;
@@ -23,6 +24,14 @@ public class ResumeSectionEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getResumeId() {

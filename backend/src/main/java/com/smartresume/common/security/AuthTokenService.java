@@ -27,11 +27,12 @@ public class AuthTokenService {
         this.properties = properties;
     }
 
-    public String createToken(long credentialVersion) {
+    public String createToken(long userId, long credentialVersion) {
         Instant now = Instant.now();
         TokenPayload payload = new TokenPayload(
             now.getEpochSecond(),
             now.plusSeconds(properties.tokenValidityDays() * 24 * 60 * 60).getEpochSecond(),
+            userId,
             credentialVersion,
             UUID.randomUUID().toString()
         );
@@ -87,6 +88,12 @@ public class AuthTokenService {
         }
     }
 
-    public record TokenPayload(long issuedAtEpochSecond, long expiresAtEpochSecond, long credentialVersion, String nonce) {
+    public record TokenPayload(
+        long issuedAtEpochSecond,
+        long expiresAtEpochSecond,
+        long userId,
+        long credentialVersion,
+        String nonce
+    ) {
     }
 }

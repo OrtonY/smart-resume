@@ -49,8 +49,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
             .addPathPatterns("/api/**")
             .excludePathPatterns(List.of(
                 "/api/system/bootstrap",
-                "/api/system/password/setup",
-                "/api/system/password/verify",
+                "/api/system/login",
+                "/api/system/register",
                 "/api/public/**",
                 "/actuator/health",
                 "/error"
