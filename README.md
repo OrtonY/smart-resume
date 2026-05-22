@@ -2,11 +2,11 @@
 
 [中文说明](./README.zh-CN.md)
 
-Smart Resume is a private, single-user resume workspace for writing, refining, sharing, and practicing with AI. The repository combines a Spring Boot backend with a React + Vite frontend and focuses on one complete workflow: secure access, structured editing, live preview, template switching, scoring, sharing, PDF export, and mock interviews.
+Smart Resume is a private, multi-user resume workspace for writing, refining, sharing, and practicing with AI. The repository combines a Spring Boot backend with a React + Vite frontend and focuses on one complete workflow: account registration and login, structured editing, live preview, template switching, scoring, sharing, PDF export, and mock interviews.
 
 ## Highlights
 
-- First-run password setup and later unlock flow for a private workspace
+- Multi-user account system with registration and login, admin-controlled registration toggle
 - Resume hub for creating, copying, deleting, and recovering multiple resumes
 - Structured editor with live preview, section visibility, and layout customization
 - Built-in and custom template support
@@ -18,9 +18,13 @@ Smart Resume is a private, single-user resume workspace for writing, refining, s
 
 ### Access and workspace
 
-![Unlock screen](./docs/login.png)
+![Login](./docs/login.png)
 
-Set a workspace password once, then unlock the studio on later visits.
+Register a new account or log in with username and password to enter your private workspace.
+
+![System configuration](./docs/System-Config.png)
+
+Manage system settings from the workspace: toggle public registration (admin only), change your password, and configure AI providers.
 
 ![Resume workspace](./docs/Resume-Homepage.png)
 
@@ -201,10 +205,9 @@ npm run dev
 After both services are running:
 
 1. Open the frontend in your browser.
-2. Set the workspace password on the first-launch screen.
-3. Use that password to unlock the app on later visits.
-
-The current product is intentionally designed around a single-user workspace instead of a multi-account system.
+2. Log in with the default admin account: username `admin`, password `admin123`.
+3. Change the default password immediately from the system settings.
+4. Other users can register new accounts when public registration is enabled (default).
 
 ## AI Providers
 

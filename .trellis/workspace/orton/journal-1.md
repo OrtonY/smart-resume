@@ -1174,3 +1174,37 @@ Implemented mandatory title for resume share links across DB migration, backend 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 36: Multi-user README and spec update
+
+**Date**: 2026-05-22
+**Task**: Multi-user README and spec update
+**Branch**: `docs/update-readme-multi-user`
+
+### Summary
+
+Updated README (EN/CN) to reflect multi-user auth flow, added System-Config screenshot, created auth-multi-user spec and added migration pattern to database guidelines.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4085da4` | (see git log) |
+| `b76e7f5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
