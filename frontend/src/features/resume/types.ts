@@ -116,6 +116,7 @@ export interface ResumeDetail {
 export type ShareMode = 'LATEST' | 'SNAPSHOT'
 
 export interface ShareLink {
+  title: string | null
   shareCode: string
   shareMode: ShareMode
   sharePath: string

@@ -49,10 +49,10 @@ export function restoreResume(resumeId: string) {
   })
 }
 
-export function createShare(resumeId: string, mode: ShareMode, password?: string) {
+export function createShare(resumeId: string, title: string, mode: ShareMode, password?: string) {
   return request<ShareLink>(`/api/resumes/${resumeId}/shares`, {
     method: 'POST',
-    body: { mode, password: password || null },
+    body: { title, mode, password: password || null },
   })
 }
 
