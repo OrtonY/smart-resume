@@ -11,16 +11,16 @@ public final class ShareDtos {
     }
 
     public record CreateShareRequest(
-        @NotBlank(message = "Share title is required")
-        @Size(max = 50, message = "Share title must be at most 50 characters")
+        @NotBlank(message = "{validation.share.titleRequired}")
+        @Size(max = 50, message = "{validation.share.titleMaxLength}")
         String title,
-        @NotBlank(message = "Share mode is required") String mode,
+        @NotBlank(message = "{validation.share.modeRequired}") String mode,
         String password
     ) {
     }
 
     public record VerifySharePasswordRequest(
-        @NotBlank(message = "Password is required") String password
+        @NotBlank(message = "{validation.share.passwordRequired}") String password
     ) {
     }
 

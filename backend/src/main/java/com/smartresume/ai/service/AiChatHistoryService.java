@@ -96,7 +96,7 @@ public class AiChatHistoryService {
 
     private AiChatConversationEntity requireConversation(String resumeId, String conversationId) {
         if (conversationId == null || conversationId.isBlank()) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Conversation id is required");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.aiChat.conversationIdRequired");
         }
         long userId = CurrentUserContext.requireUserId();
         AiChatConversationEntityTableDef table = AiChatConversationEntityTableDef.AI_CHAT_CONVERSATION_ENTITY;
@@ -106,7 +106,7 @@ public class AiChatHistoryService {
             .and(table.USER_ID.eq(userId));
         AiChatConversationEntity conversation = aiChatConversationMapper.selectOneByQuery(query);
         if (conversation == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "AI chat conversation not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.aiChat.conversationNotFound");
         }
         return conversation;
     }

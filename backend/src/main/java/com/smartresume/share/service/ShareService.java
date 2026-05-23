@@ -48,14 +48,14 @@ public class ShareService {
         long userId = CurrentUserContext.requireUserId();
         String normalizedTitle = request.title() == null ? "" : request.title().trim();
         if (normalizedTitle.isEmpty()) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Share title is required");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.share.titleRequired");
         }
         if (normalizedTitle.length() > 50) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Share title must be at most 50 characters");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.share.titleTooLong");
         }
         String normalizedMode = request.mode().trim().toUpperCase(Locale.ROOT);
         if (!"LATEST".equals(normalizedMode) && !"SNAPSHOT".equals(normalizedMode)) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Share mode must be LATEST or SNAPSHOT");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.share.invalidMode");
         }
 
         String targetVersionId = null;
@@ -117,11 +117,11 @@ public class ShareService {
         ResumeShareEntity share = findActiveShare(shareCode);
 
         if (share.getPasswordHash() == null) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "This share link does not require a password");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.share.passwordNotRequired");
         }
 
         if (!passwordEncoder.matches(password, share.getPasswordHash())) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Incorrect password");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.share.passwordIncorrect");
         }
 
         String token = shareTokenService.createShareToken(shareCode);
@@ -131,7 +131,7 @@ public class ShareService {
     public ShareAccessLogsPage getAccessLogs(String resumeId, String shareCode) {
         ResumeShareEntity share = requireOwnedShare(resumeId, shareCode);
         if (!resumeId.equals(share.getResumeId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Share link not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.share.notFound");
         }
 
         ShareAccessLogEntityTableDef accessLogTable = ShareAccessLogEntityTableDef.SHARE_ACCESS_LOG_ENTITY;
@@ -181,7 +181,7 @@ public class ShareService {
             QueryWrapper.create().where(shareTable.SHARE_CODE.eq(shareCode)).and(shareTable.ACTIVE.eq(true))
         ).stream().findFirst().orElse(null);
         if (share == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Share link not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.share.notFound");
         }
         return share;
     }
@@ -192,7 +192,7 @@ public class ShareService {
             QueryWrapper.create().where(shareTable.SHARE_CODE.eq(shareCode))
         ).stream().findFirst().orElse(null);
         if (share == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Share link not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.share.notFound");
         }
         return share;
     }
@@ -201,7 +201,7 @@ public class ShareService {
         long userId = CurrentUserContext.requireUserId();
         ResumeShareEntity share = findShareByCode(shareCode);
         if (!resumeId.equals(share.getResumeId()) || !Long.valueOf(userId).equals(share.getUserId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Share link not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.share.notFound");
         }
         return share;
     }

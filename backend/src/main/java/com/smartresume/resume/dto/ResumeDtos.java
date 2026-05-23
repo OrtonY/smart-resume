@@ -43,28 +43,28 @@ public final class ResumeDtos {
     }
 
     public record ResumeCreateRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title,
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.resume.templateKeyRequired}")
         String templateKey
     ) {
     }
 
     public record ResumeCopyRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title
     ) {
     }
 
     public record ResumeUpdateRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title,
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.resume.templateKeyRequired}")
         String templateKey,
-        @NotNull(message = "Resume content is required")
+        @NotNull(message = "{validation.resume.contentRequired}")
         @Valid
         ResumeContentPayload content,
-        @NotNull(message = "Resume layout is required")
+        @NotNull(message = "{validation.resume.layoutRequired}")
         @Valid
         ResumeLayoutPayload layout
     ) {
@@ -83,8 +83,8 @@ public final class ResumeDtos {
     }
 
     public record ResumeLayoutPayload(
-        List<@NotBlank(message = "Section key cannot be blank") String> sectionOrder,
-        List<@NotBlank(message = "Hidden section key cannot be blank") String> hiddenSections
+        List<@NotBlank(message = "{validation.resume.sectionKeyRequired}") String> sectionOrder,
+        List<@NotBlank(message = "{validation.resume.hiddenSectionKeyRequired}") String> hiddenSections
     ) {
     }
 

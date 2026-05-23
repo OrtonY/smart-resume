@@ -1,0 +1,152 @@
+{
+  "center": {
+    "tag": "Interview Center",
+    "title": "Interview Center",
+    "description": "Create mock interviews linked to a resume or standalone. Pause and resume anytime, review full transcripts and analysis reports after ending.",
+    "backToHome": "Back to home",
+    "newInterview": "New interview"
+  },
+  "filter": {
+    "searchPlaceholder": "Search title or JD",
+    "companyPlaceholder": "Filter by company",
+    "resumePlaceholder": "Linked resume",
+    "statusPlaceholder": "Interview status"
+  },
+  "list": {
+    "empty": "No interview records yet.",
+    "noJd": "No JD provided. Questions will be based on resume and interviewer roles.",
+    "roundLabel": "Round {{current}}",
+    "noResume": "No linked resume",
+    "updatedAt": "Updated at {{time}}"
+  },
+  "create": {
+    "title": "New Interview",
+    "resumeLabel": "Linked resume (optional)",
+    "resumePlaceholder": "Select a resume",
+    "resumeOrJdRequired": "Please provide at least a resume or a JD.",
+    "titleLabel": "Interview title",
+    "titleRequired": "Please enter an interview title.",
+    "titlePlaceholder": "e.g. Java Backend Leader Round",
+    "companyLabel": "Target company (optional)",
+    "companyExtra": "AI will extract company insights at creation time and reuse them for the interview.",
+    "companyPlaceholder": "e.g. ByteDance, Alibaba Cloud, Tencent Cloud",
+    "jdLabel": "Job description (optional)",
+    "jdPlaceholder": "Paste or type job responsibilities and requirements. If left blank, questions will be based on resume and interviewer roles.",
+    "difficultyLabel": "Difficulty",
+    "difficultyRequired": "Please select a difficulty level.",
+    "rolesLabel": "Interviewers",
+    "rolesRequired": "Please select at least one interviewer role.",
+    "rolesPlaceholder": "Select or type one or more roles",
+    "tipDragSort": "Drag to reorder",
+    "tipFirstRole": "First role starts the interview",
+    "tipMixRoles": "Mix preset and custom roles",
+    "startInterview": "Start interview",
+    "creatingOverlay": "AI is preparing interview questions and company context, please wait..."
+  },
+  "detail": {
+    "roundTag": "Round {{current}} / {{total}}",
+    "targetCompanyLabel": "Target company",
+    "companyPopoverEmpty": "No reusable company context was extracted. This interview will rely on resume, JD and interviewer roles.",
+    "companyChipLabel": "View {{company}} company info",
+    "companyChipHint": "Hover to view profile",
+    "continueInterview": "Continue",
+    "nextRound": "Next round",
+    "nextRoundTitle": "Next interviewer",
+    "pause": "Pause",
+    "pauseTitle": "Pause interview",
+    "endConfirm": "End this interview?",
+    "endOk": "End",
+    "endTitle": "End interview",
+    "viewReport": "View report",
+    "backToCenter": "Back to Interview Center",
+    "roundTabLabel": "Round {{index}} · {{role}}",
+    "notFound": "Interview not found.",
+    "nextRoundOverlay": "AI interviewer is getting ready..."
+  },
+  "message": {
+    "candidate": "Candidate",
+    "interviewer": "Interviewer",
+    "aborted": "Response interrupted",
+    "regenerate": "Regenerate",
+    "thinking": "Thinking...",
+    "composerPlaceholder": "Type your answer...",
+    "disabledPlaceholder": "Cannot respond in current state.",
+    "sendAnswer": "Send answer",
+    "viewingHistory": "Viewing a past round (read-only)"
+  },
+  "report": {
+    "title": "Interview Report",
+    "modalTitle": "Interview Report",
+    "pendingNotEnded": "Report will be generated after the interview ends",
+    "pendingEnded": "Report not yet generated",
+    "generate": "Generate report",
+    "generating": "AI is analyzing interview performance and generating the report...",
+    "failed": "Report generation failed",
+    "regenerate": "Regenerate",
+    "dataError": "Report data is invalid",
+    "skillAssessment": "Skill Assessment",
+    "technicalAbility": "Technical ability",
+    "communication": "Communication",
+    "problemSolving": "Problem solving",
+    "professionalism": "Professionalism",
+    "strengths": "Strengths",
+    "improvements": "Areas for improvement",
+    "roundsDetail": "Round Details",
+    "scoreUnit": "pts",
+    "candidateAnswer": "Candidate answer:",
+    "feedback": "Feedback:",
+    "referenceAnswer": "Reference answer:",
+    "learningResources": "Learning Resources"
+  },
+  "roleSorter": {
+    "empty": "Select at least one interviewer first, then drag to reorder rounds.",
+    "hint": "Drag the handle on the right to reorder. The first interviewer starts the interview.",
+    "roundLabel": "Round {{index}}",
+    "dragAria": "Drag to reorder {{role}}"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "status": {
+    "inProgress": "In progress",
+    "paused": "Paused",
+    "ended": "Ended"
+  },
+  "reportStatus": {
+    "ready": "Report ready",
+    "generating": "Generating report",
+    "failed": "Generation failed",
+    "pending": "Pending"
+  },
+  "companyContext": {
+    "ready": "Company info injected",
+    "failed": "Company info not applied",
+    "notRequested": "Company info not used"
+  },
+  "interviewerRoles": {
+    "hr": "HR",
+    "leader": "Leader",
+    "projectDeepDive": "Project deep-dive",
+    "scenario": "Scenario-based",
+    "behavioral": "Behavioral"
+  },
+  "feedback": {
+    "loadResumeFailed": "Unable to load resume options.",
+    "loadListFailed": "Unable to load interview list.",
+    "loadDetailFailed": "Unable to load interview details.",
+    "operationFailed": "Operation failed.",
+    "createCompanyFailed": "Interview started, but company context extraction failed. Proceeding as a regular interview.",
+    "createSuccess": "Interview started.",
+    "createFailed": "Failed to create interview.",
+    "autoContinued": "Interview auto-resumed.",
+    "paused": "Interview paused.",
+    "continued": "Interview resumed.",
+    "ended": "Interview ended. Report is being generated, please check back later.",
+    "nextRound": "Moved to next round.",
+    "emptyMessage": "Please enter your answer.",
+    "sendFailed": "Failed to send.",
+    "regenerateFailed": "Failed to regenerate."
+  }
+}

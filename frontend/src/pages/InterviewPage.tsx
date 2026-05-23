@@ -39,6 +39,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   continueInterview,
@@ -56,8 +57,8 @@ import { InterviewerRoleSorter } from '../features/interview/components/Intervie
 import { useInterviewTimer } from '../features/interview/hooks/useInterviewTimer'
 import {
   companyContextStatusLabel,
-  INTERVIEW_DIFFICULTY_OPTIONS,
-  INTERVIEW_STATUS_OPTIONS,
+  getInterviewDifficultyOptions,
+  getInterviewStatusOptions,
   INTERVIEWER_ROLE_OPTIONS,
   interviewDifficultyLabel,
   interviewReportStatusLabel,
@@ -92,6 +93,7 @@ type CreateFormValues = {
 export function InterviewPage({ onLogout }: InterviewPageProps) {
   void onLogout
 
+  const { t } = useTranslation('interview')
   const navigate = useNavigate()
   const { interviewId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -132,9 +134,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       const pageResult = await listResumes(false, 1, 100)
       setResumes(pageResult.items)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载简历选项。')
+      void message.error(error instanceof Error ? error.message : t('feedback.loadResumeFailed'))
     }
-  }, [message])
+  }, [message, t])
 
   const loadList = useCallback(async () => {
     setLoadingList(true)
@@ -149,11 +151,11 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       })
       setInterviewPage(result)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载面试列表。')
+      void message.error(error instanceof Error ? error.message : t('feedback.loadListFailed'))
     } finally {
       setLoadingList(false)
     }
-  }, [filterResumeId, filterStatus, filterTargetCompany, keyword, message, page])
+  }, [filterResumeId, filterStatus, filterTargetCompany, keyword, message, page, t])
 
   const loadDetail = useCallback(async () => {
     if (!interviewId) {
@@ -166,12 +168,12 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
     try {
       setDetail(await getInterview(interviewId))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载面试详情。')
+      void message.error(error instanceof Error ? error.message : t('feedback.loadDetailFailed'))
       setDetail(null)
     } finally {
       setLoadingDetail(false)
     }
-  }, [interviewId, message])
+  }, [interviewId, message, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -264,9 +266,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       const created = await createInterview(payload)
 
       if (payload.targetCompany && created.companyContextStatus === 'FAILED') {
-        void message.warning('面试已开始，但目标公司的信息提炼失败，本场会按普通面试继续。')
+        void message.warning(t('feedback.createCompanyFailed'))
       } else {
-        void message.success('面试已开始。')
+        void message.success(t('feedback.createSuccess'))
       }
 
       setCreateOpen(false)
@@ -274,7 +276,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       updateSearch({ create: undefined })
       navigate(`/app/interviews/${created.id}`)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '创建面试失败。')
+      void message.error(error instanceof Error ? error.message : t('feedback.createFailed'))
     } finally {
       setCreating(false)
     }
@@ -288,11 +290,11 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         void message.success(successText)
         return next
       } catch (error) {
-        void message.error(error instanceof Error ? error.message : '操作失败。')
+        void message.error(error instanceof Error ? error.message : t('feedback.operationFailed'))
         return null
       }
     },
-    [message],
+    [message, t],
   )
 
   useEffect(() => {
@@ -309,13 +311,13 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
     autoContinueInterviewIdRef.current = detail.id
     void refreshAfterAction(
       () => continueInterview(detail.id),
-      '面试已自动继续。',
+      t('feedback.autoContinued'),
     ).then((updated) => {
       if (!updated) {
         autoContinueInterviewIdRef.current = null
       }
     })
-  }, [detail, loadingDetail, refreshAfterAction])
+  }, [detail, loadingDetail, refreshAfterAction, t])
 
   async function handleSubmitMessage() {
     if (!detail || streaming) {
@@ -324,7 +326,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
 
     const trimmed = messageDraft.trim()
     if (!trimmed) {
-      void message.warning('请输入回答内容。')
+      void message.warning(t('feedback.emptyMessage'))
       return
     }
 
@@ -362,7 +364,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setDetail(await getInterview(detail.id))
       } else {
-        void message.error(error instanceof Error ? error.message : '发送失败。')
+        void message.error(error instanceof Error ? error.message : t('feedback.sendFailed'))
         setDetail((prev) => {
           if (!prev) {
             return prev
@@ -407,7 +409,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setDetail(await getInterview(detail.id))
       } else {
-        void message.error(error instanceof Error ? error.message : '重新生成失败。')
+        void message.error(error instanceof Error ? error.message : t('feedback.regenerateFailed'))
       }
     } finally {
       abortControllerRef.current = null
@@ -433,15 +435,15 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           skipAutoContinueAfterPauseRef.current = detail.id
           void refreshAfterAction(
             () => pauseInterview(detail.id),
-            '面试已暂停。',
+            t('feedback.paused'),
           ).then(() => navigate('/app/interviews'))
         }}
-        onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), '面试已继续。')}
+        onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), t('feedback.continued'))}
         onEnd={() =>
           detail &&
           void refreshAfterAction(
             () => endInterview(detail.id),
-            '面试已结束，报告正在生成，请稍后查看。',
+            t('feedback.ended'),
           ).then((updated) => {
             if (updated) {
               navigate('/app/interviews')
@@ -449,7 +451,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           })
         }
         onNextRound={() =>
-          detail ? refreshAfterAction(() => nextInterviewRound(detail.id), '已进入下一轮面试。') : Promise.resolve(null)
+          detail ? refreshAfterAction(() => nextInterviewRound(detail.id), t('feedback.nextRound')) : Promise.resolve(null)
         }
         onSubmitMessage={() => void handleSubmitMessage()}
         onStopStreaming={handleStopStreaming}
@@ -466,17 +468,17 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       <div className="interview-center">
         <div className="workspace-hub__hero">
           <div className="workspace-hub__copy">
-            <Tag color="blue">Interview Center</Tag>
-            <h1>面试中心</h1>
-            <p>创建与简历绑定或不绑定的模拟面试，暂停后可继续，结束后可回看完整过程和分析报告。</p>
+            <Tag color="blue">{t('center.tag')}</Tag>
+            <h1>{t('center.title')}</h1>
+            <p>{t('center.description')}</p>
           </div>
 
           <div className="workspace-hub__actions">
             <Link to="/app">
-              <Button icon={<ArrowLeftOutlined />}>返回首页</Button>
+              <Button icon={<ArrowLeftOutlined />}>{t('center.backToHome')}</Button>
             </Link>
             <Button icon={<PlusOutlined />} onClick={openCreateModal}>
-              新建面试
+              {t('center.newInterview')}
             </Button>
           </div>
         </div>
@@ -486,7 +488,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
             <Input.Search
               key={`keyword-${keyword}`}
               allowClear
-              placeholder="搜索标题或 JD"
+              placeholder={t('filter.searchPlaceholder')}
               defaultValue={keyword}
               onSearch={(value) => updateSearch({ keyword: value.trim() || undefined, page: '1' })}
               style={{ width: 260 }}
@@ -494,14 +496,14 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
             <Input.Search
               key={`company-${filterTargetCompany}`}
               allowClear
-              placeholder="筛选目标公司"
+              placeholder={t('filter.companyPlaceholder')}
               defaultValue={filterTargetCompany}
               onSearch={(value) => updateSearch({ targetCompany: value.trim() || undefined, page: '1' })}
               style={{ width: 220 }}
             />
             <Select
               allowClear
-              placeholder="关联简历"
+              placeholder={t('filter.resumePlaceholder')}
               value={filterResumeId}
               options={resumeOptions}
               onChange={(value?: string) => updateSearch({ resumeId: value, page: '1' })}
@@ -509,9 +511,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
             />
             <Select
               allowClear
-              placeholder="面试状态"
+              placeholder={t('filter.statusPlaceholder')}
               value={filterStatus}
-              options={INTERVIEW_STATUS_OPTIONS}
+              options={getInterviewStatusOptions(t)}
               onChange={(value?: InterviewStatus) => updateSearch({ status: value, page: '1' })}
               style={{ width: 160 }}
             />
@@ -524,7 +526,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           </div>
         ) : !interviewPage || interviewPage.items.length === 0 ? (
           <Card className="glass-card workspace-hub__empty" bordered={false}>
-            <Empty description="还没有面试记录。" />
+            <Empty description={t('list.empty')} />
           </Card>
         ) : (
           <>
@@ -537,26 +539,26 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
                   onClick={() => navigate(`/app/interviews/${item.id}`)}
                 >
                   <div className="interview-card__head">
-                    <Tag color={statusColor(item.status)}>{interviewStatusLabel(item.status)}</Tag>
-                    <Tag color="purple">{interviewReportStatusLabel(item.reportStatus)}</Tag>
+                    <Tag color={statusColor(item.status)}>{interviewStatusLabel(item.status, t)}</Tag>
+                    <Tag color="purple">{interviewReportStatusLabel(item.reportStatus, t)}</Tag>
                   </div>
                   <strong>{item.title}</strong>
                   {item.targetCompany ? (
                     <div className="interview-card__company">
                       <Tag color="gold">{item.targetCompany}</Tag>
                       <Tag color={companyContextColor(item.companyContextStatus)}>
-                        {companyContextStatusLabel(item.companyContextStatus)}
+                        {companyContextStatusLabel(item.companyContextStatus, t)}
                       </Tag>
                     </div>
                   ) : null}
-                  <p>{item.jobDescription || '未提供岗位 JD，将主要依据简历和角色设定出题。'}</p>
+                  <p>{item.jobDescription || t('list.noJd')}</p>
                   <div className="interview-card__meta">
-                    <span>{interviewDifficultyLabel(item.difficulty)}</span>
-                    <span>{`第 ${Math.min(item.activeRoundIndex + 1, item.interviewerRoles.length)} 轮`}</span>
+                    <span>{interviewDifficultyLabel(item.difficulty, t)}</span>
+                    <span>{t('list.roundLabel', { current: Math.min(item.activeRoundIndex + 1, item.interviewerRoles.length) })}</span>
                     <span>{item.interviewerRoles.join(' / ')}</span>
-                    <span>{item.resumeTitle ?? '未绑定简历'}</span>
+                    <span>{item.resumeTitle ?? t('list.noResume')}</span>
                   </div>
-                  <Text type="secondary">更新于 {new Date(item.updatedAt).toLocaleString()}</Text>
+                  <Text type="secondary">{t('list.updatedAt', { time: new Date(item.updatedAt).toLocaleString() })}</Text>
                 </button>
               ))}
             </div>
@@ -577,7 +579,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       </div>
 
       <Modal
-        title="新建面试"
+        title={t('create.title')}
         open={createOpen}
         centered
         width={720}
@@ -595,73 +597,73 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           >
             <Form.Item
               name="resumeId"
-              label="关联简历（可选）"
+              label={t('create.resumeLabel')}
               rules={[
                 {
                   validator: (_, value) => {
                     if (value || form.getFieldValue('jobDescription')?.trim()) {
                       return Promise.resolve()
                     }
-                    return Promise.reject(new Error('简历和 JD 至少填写一个。'))
+                    return Promise.reject(new Error(t('create.resumeOrJdRequired')))
                   },
                 },
               ]}
             >
-              <Select allowClear placeholder="选择简历" options={resumeOptions} />
+              <Select allowClear placeholder={t('create.resumePlaceholder')} options={resumeOptions} />
             </Form.Item>
 
-            <Form.Item name="title" label="面试标题" rules={[{ required: true, message: '请输入面试标题。' }]}>
-              <Input maxLength={200} placeholder="例如：Java 后端 Leader 面" />
+            <Form.Item name="title" label={t('create.titleLabel')} rules={[{ required: true, message: t('create.titleRequired') }]}>
+              <Input maxLength={200} placeholder={t('create.titlePlaceholder')} />
             </Form.Item>
 
             <Form.Item
               name="targetCompany"
-              label="目标公司（可选）"
-              extra="仅在创建时调用 AI 提炼该公司的业务和特点，后续面试直接复用这些信息。"
+              label={t('create.companyLabel')}
+              extra={t('create.companyExtra')}
             >
-              <Input maxLength={200} placeholder="例如：字节跳动、阿里云、腾讯云" />
+              <Input maxLength={200} placeholder={t('create.companyPlaceholder')} />
             </Form.Item>
 
             <Form.Item
               name="jobDescription"
-              label="岗位 JD（可选）"
+              label={t('create.jdLabel')}
               rules={[
                 {
                   validator: (_, value) => {
                     if (value?.trim() || form.getFieldValue('resumeId')) {
                       return Promise.resolve()
                     }
-                    return Promise.reject(new Error('简历和 JD 至少填写一个。'))
+                    return Promise.reject(new Error(t('create.resumeOrJdRequired')))
                   },
                 },
               ]}
             >
               <Input.TextArea
                 rows={8}
-                placeholder="粘贴或输入岗位职责、任职要求。若不填写，则主要基于简历和面试官角色出题。"
+                placeholder={t('create.jdPlaceholder')}
               />
             </Form.Item>
 
-            <Form.Item name="difficulty" label="面试难度" rules={[{ required: true, message: '请选择面试难度。' }]}>
-              <Select options={INTERVIEW_DIFFICULTY_OPTIONS} />
+            <Form.Item name="difficulty" label={t('create.difficultyLabel')} rules={[{ required: true, message: t('create.difficultyRequired') }]}>
+              <Select options={getInterviewDifficultyOptions(t)} />
             </Form.Item>
 
             <Form.Item
               name="interviewerRoles"
-              label="面试官"
-              rules={[{ required: true, message: '请至少选择一位面试官角色。' }]}
+              label={t('create.rolesLabel')}
+              rules={[{ required: true, message: t('create.rolesRequired') }]}
             >
               <Select
                 mode="tags"
-                placeholder="选择或输入一个或多个角色"
+                placeholder={t('create.rolesPlaceholder')}
                 options={INTERVIEWER_ROLE_OPTIONS.map((role) => ({ value: role, label: role }))}
               />
             </Form.Item>
 
             <div className="interview-create-modal__tips">
-              <Tag color="blue">支持拖拽排序</Tag>
-              <Tag color="default">首位角色会最先开始</Tag>
-              <Tag color="gold">可混合预设角色和自定义角色</Tag>
+              <Tag color="blue">{t('create.tipDragSort')}</Tag>
+              <Tag color="default">{t('create.tipFirstRole')}</Tag>
+              <Tag color="gold">{t('create.tipMixRoles')}</Tag>
             </div>
 
             <InterviewerRoleSorter
@@ -671,9 +673,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
 
             <Space style={{ marginTop: 20 }}>
               <Button type="primary" htmlType="submit" loading={creating} icon={<PlayCircleOutlined />}>
-                开始面试
+                {t('create.startInterview')}
               </Button>
-              <Button onClick={closeCreateModal}>取消</Button>
+              <Button onClick={closeCreateModal}>{t('common:actions.cancel')}</Button>
             </Space>
           </Form>
         </div>
@@ -682,7 +684,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       {creating ? (
         <div className="interview-creating-overlay">
           <Spin size="large" />
-          <p>AI 正在准备面试题目和公司背景，请稍候...</p>
+          <p>{t('create.creatingOverlay')}</p>
         </div>
       ) : null}
     </div>
@@ -724,6 +726,7 @@ function InterviewDetailView({
   submittingMessage: boolean
   setDetail: Dispatch<SetStateAction<InterviewDetail | null>>
 }) {
+  const { t } = useTranslation('interview')
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
@@ -834,9 +837,9 @@ function InterviewDetailView({
     return (
       <div className="workspace-layout">
         <Card className="glass-card workspace-hub__empty" bordered={false}>
-          <Empty description="没有找到这场面试。" />
+          <Empty description={t('detail.notFound')} />
           <Button type="primary" onClick={onBack}>
-            返回面试中心
+            {t('detail.backToCenter')}
           </Button>
         </Card>
       </div>
@@ -852,8 +855,8 @@ function InterviewDetailView({
         <div className="interview-detail__topbar">
           <Space align="center">
             <strong style={{ fontSize: 16 }}>{detail.title}</strong>
-            <Tag color="blue">{`第 ${detail.activeRoundIndex + 1} / ${detail.interviewerRoles.length} 轮`}</Tag>
-            <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty)}</Tag>
+            <Tag color="blue">{t('detail.roundTag', { current: detail.activeRoundIndex + 1, total: detail.interviewerRoles.length })}</Tag>
+            <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty, t)}</Tag>
             {detail.targetCompany ? (
               <Popover
                 trigger="hover"
@@ -862,10 +865,10 @@ function InterviewDetailView({
                 content={
                   <div className="interview-company-popover__content">
                     <div className="interview-company-popover__head">
-                      <span>目标公司</span>
+                      <span>{t('detail.targetCompanyLabel')}</span>
                       <strong>{detail.targetCompany}</strong>
                       <Tag color={companyContextColor(detail.companyContextStatus)}>
-                        {companyContextStatusLabel(detail.companyContextStatus)}
+                        {companyContextStatusLabel(detail.companyContextStatus, t)}
                       </Tag>
                     </div>
                     {detail.companyContextSummary.length > 0 ? (
@@ -876,7 +879,7 @@ function InterviewDetailView({
                       </ul>
                     ) : (
                       <p className="interview-company-popover__empty">
-                        未提炼到可复用的公司背景，本场面试将主要依据简历、JD 和面试官角色进行。
+                        {t('detail.companyPopoverEmpty')}
                       </p>
                     )}
                   </div>
@@ -885,13 +888,13 @@ function InterviewDetailView({
                 <button
                   type="button"
                   className="interview-company-chip"
-                  aria-label={`查看 ${detail.targetCompany} 的公司信息`}
+                  aria-label={t('detail.companyChipLabel', { company: detail.targetCompany })}
                 >
-                  <span className="interview-company-chip__label">目标公司</span>
+                  <span className="interview-company-chip__label">{t('detail.targetCompanyLabel')}</span>
                   <strong>{detail.targetCompany}</strong>
                   <span className="interview-company-chip__hint">
                     <EyeOutlined />
-                    悬停查看画像
+                    {t('detail.companyChipHint')}
                   </span>
                 </button>
               </Popover>
@@ -902,27 +905,27 @@ function InterviewDetailView({
             <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 13, padding: '2px 8px' }}>
               {timerDisplay}
             </Tag>
-            {detail.status === 'PAUSED' ? <Button onClick={onContinue}>继续面试</Button> : null}
+            {detail.status === 'PAUSED' ? <Button onClick={onContinue}>{t('detail.continueInterview')}</Button> : null}
             {hasNextRound ? (
               <Button
                 type="primary"
                 ghost
                 icon={<ArrowRightOutlined />}
-                title="下一轮面试官"
+                title={t('detail.nextRoundTitle')}
                 onClick={() => void handleNextRound()}
               >
-                下一轮
+                {t('detail.nextRound')}
               </Button>
             ) : null}
             {detail.status === 'IN_PROGRESS' ? (
-              <Button icon={<PauseCircleOutlined />} title="暂停面试" onClick={onPause}>
-                暂停
+              <Button icon={<PauseCircleOutlined />} title={t('detail.pauseTitle')} onClick={onPause}>
+                {t('detail.pause')}
               </Button>
             ) : null}
             {detail.status !== 'ENDED' ? (
-              <Popconfirm title="确定结束面试？" onConfirm={onEnd} okText="结束" cancelText="取消">
-                <Button type="primary" ghost danger icon={<PoweroffOutlined />} title="结束面试">
-                  结束
+              <Popconfirm title={t('detail.endConfirm')} onConfirm={onEnd} okText={t('detail.endOk')} cancelText={t('common:actions.cancel')}>
+                <Button type="primary" ghost danger icon={<PoweroffOutlined />} title={t('detail.endTitle')}>
+                  {t('detail.endOk')}
                 </Button>
               </Popconfirm>
             ) : null}
@@ -931,12 +934,12 @@ function InterviewDetailView({
             detail.reportStatus === 'GENERATING' ||
             detail.reportStatus === 'FAILED' ? (
               <Button icon={<FileTextOutlined />} onClick={() => setReportDrawerOpen(true)}>
-                查看报告
+                {t('detail.viewReport')}
               </Button>
             ) : null}
             {detail.status === 'ENDED' ? (
               <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
-                返回面试中心
+                {t('detail.backToCenter')}
               </Button>
             ) : null}
           </Space>
@@ -951,7 +954,7 @@ function InterviewDetailView({
               className={`interview-round-tab${safeActiveRoundTab === index ? ' interview-round-tab--active' : ''}`}
               onClick={() => setActiveRoundTab(index)}
             >
-              {`第 ${index + 1} 轮 · ${role}`}
+              {t('detail.roundTabLabel', { index: index + 1, role })}
             </button>
           ))}
         </div>
@@ -969,10 +972,10 @@ function InterviewDetailView({
                   <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
                     <div className="interview-message__role">
                       <MessageOutlined />
-                      {item.role === 'CANDIDATE' ? '候选人' : '面试官'}
+                      {item.role === 'CANDIDATE' ? t('message.candidate') : t('message.interviewer')}
                       {item.status === 'ABORTED' ? (
                         <Tag color="warning" style={{ marginLeft: 8 }}>
-                          回复中断
+                          {t('message.aborted')}
                         </Tag>
                       ) : null}
                     </div>
@@ -982,7 +985,7 @@ function InterviewDetailView({
                       {isLastInterviewerMessage && canMessage && !streaming ? (
                         <div className="interview-message__actions">
                           <Button className="interview-regenerate-button" size="small" onClick={onRegenerate}>
-                            重新生成
+                            {t('message.regenerate')}
                           </Button>
                         </div>
                       ) : null}
@@ -995,7 +998,7 @@ function InterviewDetailView({
                 <div className="interview-message interview-message--interviewer">
                   <div className="interview-message__role">
                     <MessageOutlined />
-                    面试官
+                    {t('message.interviewer')}
                   </div>
                   <div className="interview-message__bubble">
                     {streamingContent ? (
@@ -1007,7 +1010,7 @@ function InterviewDetailView({
                           <div className="interview-thinking-bubble__dot" />
                           <div className="interview-thinking-bubble__dot" />
                         </div>
-                        <span>思考中...</span>
+                        <span>{t('message.thinking')}</span>
                       </div>
                     )}
                   </div>
@@ -1021,23 +1024,23 @@ function InterviewDetailView({
                   value={messageDraft}
                   onChange={onUpdateMessageDraft}
                   onSubmit={onSubmitMessage}
-                  placeholder="输入你的回答..."
+                  placeholder={t('message.composerPlaceholder')}
                   disabled={false}
                   autoSize={{ minRows: 3, maxRows: 8 }}
                 />
                 {streaming ? (
                   <Button danger icon={<StopOutlined />} onClick={onStopStreaming}>
-                    停止
+                    {t('common:actions.stop')}
                   </Button>
                 ) : (
                   <Button type="primary" icon={<SendOutlined />} loading={submittingMessage} onClick={onSubmitMessage}>
-                    发送回答
+                    {t('message.sendAnswer')}
                   </Button>
                 )}
               </div>
             ) : !isViewingCurrentRound ? (
               <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
-                当前正在查看历史轮次，只读模式
+                {t('message.viewingHistory')}
               </div>
             ) : (
               <div className="interview-composer">
@@ -1045,12 +1048,12 @@ function InterviewDetailView({
                   value={messageDraft}
                   onChange={onUpdateMessageDraft}
                   onSubmit={undefined}
-                  placeholder="当前状态下无法继续作答。"
+                  placeholder={t('message.disabledPlaceholder')}
                   disabled
                   autoSize={{ minRows: 3, maxRows: 8 }}
                 />
                 <Button type="primary" icon={<SendOutlined />} disabled>
-                  发送回答
+                  {t('message.sendAnswer')}
                 </Button>
               </div>
             )}
@@ -1061,12 +1064,12 @@ function InterviewDetailView({
       {nextRoundLoading ? (
         <div className="interview-next-round-overlay">
           <Spin size="large" />
-          <p>AI 面试官准备中...</p>
+          <p>{t('detail.nextRoundOverlay')}</p>
         </div>
       ) : null}
 
       <Modal
-        title="面试报告"
+        title={t('report.modalTitle')}
         open={reportDrawerOpen}
         width="66%"
         onCancel={() => setReportDrawerOpen(false)}

@@ -1,0 +1,36 @@
+{
+  "session": {
+    "openButton": "System Settings",
+    "modalTitle": "System Settings",
+    "registration": {
+      "label": "Registration Toggle",
+      "description": "Control whether new users can self-register on the login page",
+      "on": "On",
+      "off": "Off",
+      "enabled": "Registration enabled",
+      "disabled": "Registration disabled",
+      "updateFailed": "Failed to update registration setting"
+    },
+    "password": {
+      "title": "Change Password",
+      "currentLabel": "Current Password",
+      "currentPlaceholder": "Enter your current password",
+      "currentRequired": "Please enter your current password",
+      "newLabel": "New Password",
+      "newPlaceholder": "Enter a new password",
+      "newRequired": "Please enter a new password",
+      "newMin": "New password must be at least 6 characters",
+      "newMax": "New password cannot exceed 64 characters",
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Re-enter the new password",
+      "confirmRequired": "Please confirm the new password",
+      "mismatch": "The two passwords do not match",
+      "submit": "Save New Password",
+      "success": "Password changed successfully. Please log in again.",
+      "failed": "Failed to change password"
+    }
+  },
+  "errors": {
+    "requestFailed": "Request failed"
+  }
+}

@@ -1,0 +1,11 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/index.md", "reason": "FE conventions overview, lists component/state/quality guides relevant to wiring i18n across feature pages"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Where to place i18n module (src/i18n/locales/{lang}/{namespace}.json) and how features are organized"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component patterns; t() usage, avoiding hardcoded strings in JSX/props"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "How global state (locale, persisted to localStorage) integrates with existing stores; avoid duplicating providers"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type patterns for namespace keys / typed t() to keep translation lookups safe"}
+{"file": ".trellis/spec/backend/index.md", "reason": "BE overview; locates error-handling and quality specs needed for MessageSource wiring"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Where messages_*.properties + LocaleConfig live in the modular monolith"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "GlobalExceptionHandler + AppException patterns; replace hardcoded messages with MessageSource keys"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Accept-Language flows FE→BE; catalog payload shape change spans controller/service/template renderer"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "getLocalizedField helper must be reusable; search before adding new util; touching catalog config triggers pre-modification grep"}

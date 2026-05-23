@@ -237,7 +237,7 @@ public class ResumeService {
     public ResumeDetailResponse getVersionSnapshotForUser(String versionId, long userId) {
         ResumeVersionEntity version = resumeVersionMapper.selectOneById(versionId);
         if (version == null || !Long.valueOf(userId).equals(version.getUserId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Resume snapshot not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.resume.snapshotNotFound");
         }
         return new ResumeDetailResponse(
             version.getResumeId(),
@@ -285,7 +285,7 @@ public class ResumeService {
     private ResumeEntity requireResume(String resumeId, long userId) {
         ResumeEntity resume = resumeMapper.selectOneById(resumeId);
         if (resume == null || !Long.valueOf(userId).equals(resume.getUserId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Resume not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.resume.notFound");
         }
         return resume;
     }
@@ -293,7 +293,7 @@ public class ResumeService {
     private ResumeEntity requireActiveResume(String resumeId, long userId) {
         ResumeEntity resume = requireResume(resumeId, userId);
         if (Boolean.TRUE.equals(resume.getDeleted())) {
-            throw new AppException(HttpStatus.CONFLICT, "Resume has been deleted");
+            throw AppException.of(HttpStatus.CONFLICT, "error.resume.alreadyDeleted");
         }
         return resume;
     }
@@ -326,7 +326,7 @@ public class ResumeService {
         try {
             return objectMapper.readerForListOf(itemClass).readValue(json);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse stored resume section");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.sectionParseFailed");
         }
     }
 
@@ -337,7 +337,7 @@ public class ResumeService {
         try {
             return objectMapper.readValue(json, targetClass);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse stored resume content");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.contentParseFailed");
         }
     }
 
@@ -447,7 +447,7 @@ public class ResumeService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to serialize resume content");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.contentSerializeFailed");
         }
     }
 }

@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor,
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Tag } from 'antd'
+import { useTranslation } from 'react-i18next'
 
 interface InterviewerRoleSorterProps {
   roles: string[]
@@ -10,6 +11,7 @@ interface InterviewerRoleSorterProps {
 }
 
 export function InterviewerRoleSorter({ roles, onChange }: InterviewerRoleSorterProps) {
+  const { t } = useTranslation('interview')
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
   const itemIds = roles.map((role, index) => `${index}:${role}`)
 
@@ -31,7 +33,7 @@ export function InterviewerRoleSorter({ roles, onChange }: InterviewerRoleSorter
   if (roles.length === 0) {
     return (
       <div className="interview-role-sorter interview-role-sorter--empty">
-        先选择至少一位面试官，再拖动调整轮次顺序。
+        {t('roleSorter.empty')}
       </div>
     )
   }
@@ -39,7 +41,7 @@ export function InterviewerRoleSorter({ roles, onChange }: InterviewerRoleSorter
   return (
     <div className="interview-role-sorter">
       <div className="interview-role-sorter__hint">
-        拖动右侧手柄即可调整顺序，排在最前面的面试官会优先开始。
+        {t('roleSorter.hint')}
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
@@ -55,6 +57,7 @@ export function InterviewerRoleSorter({ roles, onChange }: InterviewerRoleSorter
 }
 
 function SortableRoleRow({ id, index, role }: { id: string; index: number; role: string }) {
+  const { t } = useTranslation('interview')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -65,13 +68,13 @@ function SortableRoleRow({ id, index, role }: { id: string; index: number; role:
   return (
     <div ref={setNodeRef} style={style} className="interview-role-sorter__item">
       <div className="interview-role-sorter__copy">
-        <Tag color="blue">{`第 ${index + 1} 轮`}</Tag>
+        <Tag color="blue">{t('roleSorter.roundLabel', { index: index + 1 })}</Tag>
         <strong>{role}</strong>
       </div>
       <button
         type="button"
         className="interview-role-sorter__handle"
-        aria-label={`拖动调整 ${role} 的顺序`}
+        aria-label={t('roleSorter.dragAria', { role })}
         {...attributes}
         {...listeners}
       >

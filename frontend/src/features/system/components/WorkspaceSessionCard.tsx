@@ -1,6 +1,7 @@
 import { KeyOutlined, SettingOutlined } from '@ant-design/icons'
 import { App, Button, Form, Input, Modal, Space, Switch, Typography } from 'antd'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { changePassword } from '../api/systemApi'
 import type { RegistrationSettingsResponse, SessionUser } from '../types'
 
@@ -26,6 +27,7 @@ export function WorkspaceSessionCard({
   onLogout,
 }: WorkspaceSessionCardProps) {
   const { message } = App.useApp()
+  const { t } = useTranslation('system')
   const [open, setOpen] = useState(false)
   const [passwordForm] = Form.useForm<PasswordFormValues>()
   const [updatingRegistration, setUpdatingRegistration] = useState(false)
@@ -35,9 +37,9 @@ export function WorkspaceSessionCard({
     setUpdatingRegistration(true)
     try {
       const result = await onRegistrationEnabledChange(nextEnabled)
-      void message.success(result.registrationEnabled ? '已开启注册' : '已关闭注册')
+      void message.success(result.registrationEnabled ? t('session.registration.enabled') : t('session.registration.disabled'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '注册开关更新失败')
+      void message.error(error instanceof Error ? error.message : t('session.registration.updateFailed'))
     } finally {
       setUpdatingRegistration(false)
     }
@@ -52,10 +54,10 @@ export function WorkspaceSessionCard({
       })
       setOpen(false)
       passwordForm.resetFields()
-      void message.success('密码修改成功，请重新登录')
+      void message.success(t('session.password.success'))
       onLogout()
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '修改密码失败')
+      void message.error(error instanceof Error ? error.message : t('session.password.failed'))
     } finally {
       setChangingPassword(false)
     }
@@ -64,11 +66,11 @@ export function WorkspaceSessionCard({
   return (
     <>
       <Button icon={<SettingOutlined />} onClick={() => setOpen(true)}>
-        {'系统设置'}
+        {t('session.openButton')}
       </Button>
 
       <Modal
-        title={'系统设置'}
+        title={t('session.modalTitle')}
         open={open}
         onCancel={() => {
           setOpen(false)
@@ -81,15 +83,15 @@ export function WorkspaceSessionCard({
           {currentUser.admin ? (
             <div className={'workspace-session-card__setting-row'}>
               <div>
-                <Text strong>{'注册开关'}</Text>
+                <Text strong>{t('session.registration.label')}</Text>
                 <div>
-                  <Text type={'secondary'}>{'控制新用户是否可以在登录页自助注册'}</Text>
+                  <Text type={'secondary'}>{t('session.registration.description')}</Text>
                 </div>
               </div>
               <Switch
                 checked={registrationEnabled}
-                checkedChildren={'开'}
-                unCheckedChildren={'关'}
+                checkedChildren={t('session.registration.on')}
+                unCheckedChildren={t('session.registration.off')}
                 loading={updatingRegistration}
                 onChange={(checked) => {
                   void handleRegistrationToggle(checked)
@@ -101,50 +103,50 @@ export function WorkspaceSessionCard({
           <div>
             <Space align={'center'} size={8} style={{ marginBottom: 12 }}>
               <KeyOutlined />
-              <Text strong>{'修改密码'}</Text>
+              <Text strong>{t('session.password.title')}</Text>
             </Space>
             <Form form={passwordForm} layout={'vertical'} onFinish={(values) => void handleChangePassword(values)}>
               <Form.Item
                 name={'currentPassword'}
-                label={'当前密码'}
-                rules={[{ required: true, message: '请输入当前密码' }]}
+                label={t('session.password.currentLabel')}
+                rules={[{ required: true, message: t('session.password.currentRequired') }]}
               >
-                <Input.Password autoComplete={'current-password'} placeholder={'请输入当前密码'} />
+                <Input.Password autoComplete={'current-password'} placeholder={t('session.password.currentPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={'newPassword'}
-                label={'新密码'}
+                label={t('session.password.newLabel')}
                 rules={[
-                  { required: true, message: '请输入新密码' },
-                  { min: 6, message: '新密码至少 6 位' },
-                  { max: 64, message: '新密码不能超过 64 位' },
+                  { required: true, message: t('session.password.newRequired') },
+                  { min: 6, message: t('session.password.newMin') },
+                  { max: 64, message: t('session.password.newMax') },
                 ]}
               >
-                <Input.Password autoComplete={'new-password'} placeholder={'请输入新密码'} />
+                <Input.Password autoComplete={'new-password'} placeholder={t('session.password.newPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={'confirmNewPassword'}
-                label={'确认新密码'}
+                label={t('session.password.confirmLabel')}
                 dependencies={['newPassword']}
                 rules={[
-                  { required: true, message: '请再次输入新密码' },
+                  { required: true, message: t('session.password.confirmRequired') },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || value === getFieldValue('newPassword')) {
                         return Promise.resolve()
                       }
-                      return Promise.reject(new Error('两次输入的新密码不一致'))
+                      return Promise.reject(new Error(t('session.password.mismatch')))
                     },
                   }),
                 ]}
               >
-                <Input.Password autoComplete={'new-password'} placeholder={'请再次输入新密码'} />
+                <Input.Password autoComplete={'new-password'} placeholder={t('session.password.confirmPlaceholder')} />
               </Form.Item>
 
               <Button type={'primary'} htmlType={'submit'} block loading={changingPassword}>
-                {'保存新密码'}
+                {t('session.password.submit')}
               </Button>
             </Form>
           </div>

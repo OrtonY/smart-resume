@@ -1,9 +1,18 @@
 [
   {
     "key": "north-star",
-    "name": "北极星",
-    "summary": "经典专业风，头部信息清晰，适合通用求职场景。",
-    "category": "经典专业",
+    "name": {
+      "zh": "北极星",
+      "en": "North Star"
+    },
+    "summary": {
+      "zh": "经典专业风，头部信息清晰，适合通用求职场景。",
+      "en": "Classic professional layout with a strong header, suitable for most job applications."
+    },
+    "category": {
+      "zh": "经典专业",
+      "en": "Classic Professional"
+    },
     "layout": "classic",
     "theme": {
       "pageBackground": "#ffffff",
@@ -28,9 +37,18 @@
   },
   {
     "key": "grid-slate",
-    "name": "网格石板",
-    "summary": "现代双栏风，侧栏承载辅助信息，主栏突出核心经历。",
-    "category": "现代双栏",
+    "name": {
+      "zh": "网格石板",
+      "en": "Grid Slate"
+    },
+    "summary": {
+      "zh": "现代双栏风，侧栏承载辅助信息，主栏突出核心经历。",
+      "en": "Modern two-column layout with a sidebar for supporting details and a main column for headline experience."
+    },
+    "category": {
+      "zh": "现代双栏",
+      "en": "Modern Two-Column"
+    },
     "layout": "two-column",
     "theme": {
       "pageBackground": "#ffffff",
@@ -55,9 +73,18 @@
   },
   {
     "key": "pure-form",
-    "name": "纯序",
-    "summary": "极简 ATS 风，版式克制紧凑，强调可读性和结构化。",
-    "category": "ATS 极简",
+    "name": {
+      "zh": "纯序",
+      "en": "Pure Form"
+    },
+    "summary": {
+      "zh": "极简 ATS 风，版式克制紧凑，强调可读性和结构化。",
+      "en": "Minimal ATS-friendly layout with restrained typography that emphasizes readability and structure."
+    },
+    "category": {
+      "zh": "ATS 极简",
+      "en": "ATS Minimal"
+    },
     "layout": "minimal",
     "theme": {
       "pageBackground": "#ffffff",
@@ -82,9 +109,18 @@
   },
   {
     "key": "ink-flow",
-    "name": "墨流",
-    "summary": "编辑感模板，身份气质更强，适合产品与创意岗位。",
-    "category": "编辑创意",
+    "name": {
+      "zh": "墨流",
+      "en": "Ink Flow"
+    },
+    "summary": {
+      "zh": "编辑感模板，身份气质更强，适合产品与创意岗位。",
+      "en": "Editorial-style template with a distinctive personal voice, ideal for product and creative roles."
+    },
+    "category": {
+      "zh": "编辑创意",
+      "en": "Editorial Creative"
+    },
     "layout": "editorial",
     "theme": {
       "pageBackground": "#ffffff",

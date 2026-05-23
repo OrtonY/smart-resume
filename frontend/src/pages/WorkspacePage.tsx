@@ -35,6 +35,7 @@ import {
   Typography,
 } from 'antd'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -43,6 +44,7 @@ import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/compone
 import type { AiResumeSuggestion } from '../features/ai/types'
 import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
 import { WorkspaceSessionCard } from '../features/system/components/WorkspaceSessionCard'
+import { LanguageSwitcher } from '../components/shared/LanguageSwitcher'
 import { MarkdownComposer } from '../lib/markdown/MarkdownComposer'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import {
@@ -113,56 +115,24 @@ const MAX_AVATAR_FILE_SIZE_BYTES = 1024 * 1024
 const RESUMES_PER_PAGE = 6
 const AVATAR_INPUT_ID = 'resume-editor-avatar-input'
 
-const MODULE_DEFINITIONS: ResumeModuleDefinition[] = [
-  {
-    key: 'personal-info',
-    title: '个人信息',
-    description: '姓名、职位、电话、邮箱和个人链接。',
-    removable: false,
-  },
-  {
-    key: 'summary',
-    title: '个人简介',
-    description: '用一小段文字快速交代你的定位和亮点。',
-    removable: true,
-  },
-  {
-    key: 'workExperience',
-    title: '工作经历',
-    description: '按时间组织公司、岗位和成果。',
-    removable: true,
-  },
-  {
-    key: 'projectExperience',
-    title: '项目经历',
-    description: '突出关键项目、角色和影响。',
-    removable: true,
-  },
-  {
-    key: 'education',
-    title: '教育经历',
-    description: '展示学校、学位和专业背景。',
-    removable: true,
-  },
-  {
-    key: 'skills',
-    title: '技能特长',
-    description: '放置技能标签和熟练度。',
-    removable: true,
-  },
-  {
-    key: 'honors',
-    title: '荣誉奖项',
-    description: '补充外部认可或内部荣誉。',
-    removable: true,
-  },
-  {
-    key: 'certificates',
-    title: '资格证书',
-    description: '展示资质、证书和编号信息。',
-    removable: true,
-  },
+const MODULE_KEYS: Array<{ key: ResumeModuleId; titleKey: string; descKey: string; removable: boolean }> = [
+  { key: 'personal-info', titleKey: 'modules.personalInfo.title', descKey: 'modules.personalInfo.description', removable: false },
+  { key: 'summary', titleKey: 'modules.summary.title', descKey: 'modules.summary.description', removable: true },
+  { key: 'workExperience', titleKey: 'modules.workExperience.title', descKey: 'modules.workExperience.description', removable: true },
+  { key: 'projectExperience', titleKey: 'modules.projectExperience.title', descKey: 'modules.projectExperience.description', removable: true },
+  { key: 'education', titleKey: 'modules.education.title', descKey: 'modules.education.description', removable: true },
+  { key: 'skills', titleKey: 'modules.skills.title', descKey: 'modules.skills.description', removable: true },
+  { key: 'honors', titleKey: 'modules.honors.title', descKey: 'modules.honors.description', removable: true },
+  { key: 'certificates', titleKey: 'modules.certificates.title', descKey: 'modules.certificates.description', removable: true },
 ]
+
+function useModuleDefinitions(): ResumeModuleDefinition[] {
+  const { t } = useTranslation('workspace')
+  return useMemo(
+    () => MODULE_KEYS.map((m) => ({ key: m.key, title: t(m.titleKey), description: t(m.descKey), removable: m.removable })),
+    [t],
+  )
+}
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -200,11 +170,13 @@ export function WorkspacePage({
   registrationEnabled,
   onRegistrationEnabledChange,
 }: WorkspacePageProps) {
+  const { t } = useTranslation('workspace')
   const navigate = useNavigate()
   const location = useLocation()
   const { resumeId } = useParams()
   const { message } = App.useApp()
   const { templates, loading: loadingTemplates } = useResumeTemplateCatalog({ scope: 'managed' })
+  const MODULE_DEFINITIONS = useModuleDefinitions()
   const [resumeList, setResumeList] = useState<ResumeSummary[]>([])
   const [resumePage, setResumePage] = useState<ResumePage | null>(null)
   const [draft, setDraft] = useState<ResumeDetail | null>(null)
@@ -225,11 +197,11 @@ export function WorkspacePage({
       setResumePage(page)
       setResumeList(page.items)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
+      void message.error(error instanceof Error ? error.message : t('feedback.loadListFailed'))
     } finally {
       setLoadingResumeList(false)
     }
-  }, [isRecycleBinView, message])
+  }, [isRecycleBinView, message, t])
 
   const loadResumeDetail = useCallback(
     async (targetResumeId: string) => {
@@ -247,12 +219,12 @@ export function WorkspacePage({
         setSaveState('saved')
       } catch (error) {
         setDraft(null)
-        void message.error(error instanceof Error ? error.message : '无法加载简历详情。')
+        void message.error(error instanceof Error ? error.message : t('feedback.loadDetailFailed'))
       } finally {
         setLoadingResumeDetail(false)
       }
     },
-    [message],
+    [message, t],
   )
 
   const persistDraft = useCallback(
@@ -287,10 +259,10 @@ export function WorkspacePage({
         )
       } catch (error) {
         setSaveState('save_failed')
-        void message.error(error instanceof Error ? error.message : '自动保存失败。')
+        void message.error(error instanceof Error ? error.message : t('feedback.saveAutoFailed'))
       }
     },
-    [message],
+    [message, t],
   )
 
   useEffect(() => {
@@ -349,7 +321,7 @@ export function WorkspacePage({
         .map((key) => MODULE_DEFINITIONS.find((item) => item.key === key))
         .filter((item): item is ResumeModuleDefinition => Boolean(item)),
     ],
-    [sectionOrder],
+    [MODULE_DEFINITIONS, sectionOrder],
   )
 
   const updateDraft = useCallback((mutator: (next: ResumeDetail) => void) => {
@@ -385,17 +357,17 @@ export function WorkspacePage({
         setResumePage(page)
         setResumeList(page.items)
       } catch (error) {
-        void message.error(error instanceof Error ? error.message : '无法加载简历列表。')
+        void message.error(error instanceof Error ? error.message : t('feedback.loadListFailed'))
       } finally {
         setLoadingResumeList(false)
       }
     },
-    [isRecycleBinView, message],
+    [isRecycleBinView, message, t],
   )
 
   async function handleDeleteResume(targetResumeId: string) {
     await deleteResume(targetResumeId)
-    void message.success('简历已移至回收站。')
+    void message.success(t('feedback.moveToBinSuccess'))
 
     if (resumeId === targetResumeId) {
       navigate('/app')
@@ -406,13 +378,13 @@ export function WorkspacePage({
 
   async function handleCopyResume(targetResumeId: string, title: string) {
     await copyResume(targetResumeId, { title })
-    void message.success('简历已复制。')
+    void message.success(t('feedback.copySuccess'))
     await loadResumeList()
   }
 
   async function handleRestoreResume(targetResumeId: string) {
     await restoreResume(targetResumeId)
-    void message.success('简历已恢复。')
+    void message.success(t('feedback.restoreSuccess'))
     await loadResumeList()
   }
 
@@ -423,7 +395,7 @@ export function WorkspacePage({
 
     const share = await createShare(resumeId, title, mode, password)
     await navigator.clipboard.writeText(`${window.location.origin}${share.sharePath}`)
-    void message.success(`${mode === 'LATEST' ? '最新版本' : '快照'}分享链接已复制。`)
+    void message.success(mode === 'LATEST' ? t('feedback.shareCopiedLatest') : t('feedback.shareCopiedSnapshot'))
   }
 
   async function handleExportPdf(previewRoot?: HTMLElement | null) {
@@ -434,13 +406,13 @@ export function WorkspacePage({
     setExportingPdf(true)
     try {
       if (!previewRoot) {
-        throw new Error('未找到可导出的简历预览。')
+        throw new Error(t('feedback.exportPreviewMissing'))
       }
 
       await exportResumePdf(previewRoot, draft.title)
-      void message.success('PDF 已开始下载。')
+      void message.success(t('feedback.exportPdfStart'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '导出失败，请重试。')
+      void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
     } finally {
       setExportingPdf(false)
     }
@@ -536,7 +508,7 @@ function showSection(sectionKey: ResumeSectionKey) {
   const pageContent = isEditorView ? (
     loadingResumeDetail ? (
       <div className="workspace-loading-state">
-        <Spin size="large" tip="正在加载简历编辑器..." />
+        <Spin size="large" tip={t('editor.loading')} />
       </div>
     ) : draft ? (
       <ResumeEditorView
@@ -563,10 +535,10 @@ function showSection(sectionKey: ResumeSectionKey) {
     ) : (
       <div className="workspace-empty-shell">
         <Card className="glass-card" bordered={false}>
-          <Empty description="没有找到这份简历，返回列表后重新选择。" />
+          <Empty description={t('editor.missing')} />
           <Space style={{ marginTop: 16 }}>
             <Button type="primary" onClick={() => navigate('/app')}>
-              返回简历列表
+              {t('actions.backToResumeList')}
             </Button>
           </Space>
         </Card>
@@ -634,6 +606,7 @@ function ResumeListView({
   selectedTemplateName: (templateKey: string) => string
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
 }) {
+  const { t } = useTranslation('workspace')
   const { message } = App.useApp()
   const [shareDialog, setShareDialog] = useState<ShareDialogState>(null)
   const [loadingShareResumeId, setLoadingShareResumeId] = useState<string | null>(null)
@@ -657,11 +630,11 @@ function ResumeListView({
         [resume.id]: shares,
       }))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载分享链接。')
+      void message.error(error instanceof Error ? error.message : t('feedback.loadShareLinksFailed'))
     } finally {
       setLoadingShareResumeId((current) => (current === resume.id ? null : current))
     }
-  }, [message])
+  }, [message, t])
 
   const refreshShareLinks = useCallback(async () => {
     if (!shareDialog) return
@@ -672,9 +645,9 @@ function ResumeListView({
         [shareDialog.resumeId]: shares,
       }))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法刷新分享链接。')
+      void message.error(error instanceof Error ? error.message : t('feedback.refreshShareLinksFailed'))
     }
-  }, [shareDialog, message])
+  }, [shareDialog, message, t])
 
   useEffect(() => {
     const missingResumes = visibleResumes.filter((item) => !previewDetailsByResumeId[item.id])
@@ -719,26 +692,26 @@ function ResumeListView({
       <div className="workspace-hub">
         <div className="workspace-hub__hero">
           <div className="workspace-hub__copy">
-            <Tag color="blue">Smart Resume</Tag>
-            <h1>智慧简历</h1>
-            <p>选择简历开始编辑，实时预览效果。</p>
+            <Tag color="blue">{t('hero.tag')}</Tag>
+            <h1>{t('hero.title')}</h1>
+            <p>{t('hero.subtitle')}</p>
           </div>
 
           <div className="workspace-hub__actions">
             <Link to="/app/templates">
               <Button icon={<FileAddOutlined />}>
-                模板目录
+                {t('actions.templateGallery')}
               </Button>
             </Link>
             <Link to="/app/interviews">
               <Button icon={<MessageOutlined />}>
-                面试中心
+                {t('actions.interviewCenter')}
               </Button>
             </Link>
             <AiConfigurationButton />
             <Link to="/app/recycle-bin">
               <Button icon={<InboxOutlined />}>
-                回收桶
+                {t('actions.recycleBin')}
               </Button>
             </Link>
             <WorkspaceSessionCard
@@ -747,19 +720,20 @@ function ResumeListView({
               onRegistrationEnabledChange={onRegistrationEnabledChange}
               onLogout={onLogout}
             />
+            <LanguageSwitcher />
             <Button icon={<LogoutOutlined />} onClick={onLogout}>
-              锁定工作区
+              {t('actions.lockWorkspace')}
             </Button>
           </div>
         </div>
 
         <div className="workspace-hub__toolbar">
           <Space wrap align="center">
-            <Text strong>我的简历</Text>
-            <Tag color="blue">{resumePage?.total ?? resumeList.length} 份</Tag>
+            <Text strong>{t('list.myResumes')}</Text>
+            <Tag color="blue">{t('list.totalCount', { count: resumePage?.total ?? resumeList.length })}</Tag>
           </Space>
           {(resumePage?.total ?? resumeList.length) > RESUMES_PER_PAGE ? (
-            <Text type="secondary">每页最多展示 {RESUMES_PER_PAGE} 份简历</Text>
+            <Text type="secondary">{t('list.perPageHint', { count: RESUMES_PER_PAGE })}</Text>
           ) : null}
         </div>
 
@@ -769,7 +743,7 @@ function ResumeListView({
           </div>
         ) : resumeList.length === 0 ? (
           <Card className="glass-card workspace-hub__empty" bordered={false}>
-            <Empty description="还没有简历，先创建一份试试。" />
+            <Empty description={t('list.empty')} />
           </Card>
         ) : (
           <Space direction="vertical" size={18} style={{ width: '100%' }}>
@@ -844,13 +818,14 @@ function ResumeVisualCard({
   status?: 'active' | 'deleted'
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
 }) {
+  const { t } = useTranslation('workspace')
   const { message: cardMessage } = App.useApp()
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
   const [copyTitle, setCopyTitle] = useState('')
   const [copying, setCopying] = useState(false)
 
   const openCopyDialog = () => {
-    setCopyTitle(`${item.title} 副本`)
+    setCopyTitle(`${item.title} ${t('copyDialog.copySuffix')}`)
     setCopyDialogOpen(true)
   }
 
@@ -863,7 +838,7 @@ function ResumeVisualCard({
     if (!onCopyResume) return
     const trimmed = copyTitle.trim()
     if (!trimmed) {
-      void cardMessage.warning('请输入简历名称。')
+      void cardMessage.warning(t('copyDialog.warningEmpty'))
       return
     }
     setCopying(true)
@@ -871,7 +846,7 @@ function ResumeVisualCard({
       await onCopyResume(item.id, trimmed)
       setCopyDialogOpen(false)
     } catch (error) {
-      void cardMessage.error(error instanceof Error ? error.message : '复制简历失败。')
+      void cardMessage.error(error instanceof Error ? error.message : t('copyDialog.errorFailed'))
     } finally {
       setCopying(false)
     }
@@ -887,7 +862,7 @@ function ResumeVisualCard({
       ) : (
         <div className="resume-list-card__preview-fallback">
           {loadingPreview ? <Spin size="small" /> : <FileAddOutlined />}
-          <Text type="secondary">{loadingPreview ? '正在生成预览' : selectedTemplateName}</Text>
+          <Text type="secondary">{loadingPreview ? t('list.previewGenerating') : selectedTemplateName}</Text>
         </div>
       )}
     </div>
@@ -900,12 +875,12 @@ function ResumeVisualCard({
           className="resume-list-card__preview-button"
           type="button"
           onClick={() => onOpenResume(item.id)}
-          aria-label={`打开 ${item.title}`}
+          aria-label={t('list.openResume', { title: item.title })}
         >
           {preview}
         </button>
       ) : (
-        <div className="resume-list-card__preview-button" aria-label={`${item.title} 预览`}>
+        <div className="resume-list-card__preview-button" aria-label={t('list.previewLabel', { title: item.title })}>
           {preview}
         </div>
       )}
@@ -916,17 +891,17 @@ function ResumeVisualCard({
           shape="circle"
           icon={<ShareAltOutlined />}
           onClick={() => void onOpenShareDialog(item)}
-          aria-label={`查看 ${item.title} 的分享链接`}
+          aria-label={t('actions.openShareDialog')}
         />
       ) : null}
 
       <div className="resume-list-card__body">
         <div className="resume-list-card__topline">
           <Tag color="default">{selectedTemplateName}</Tag>
-          <Tag color={status === 'deleted' ? 'red' : 'blue'}>{status === 'deleted' ? '已删除' : '可编辑'}</Tag>
+          <Tag color={status === 'deleted' ? 'red' : 'blue'}>{status === 'deleted' ? t('list.tagDeleted') : t('list.tagEditable')}</Tag>
         </div>
         <strong>{item.title}</strong>
-        <p>{status === 'deleted' ? '删除于' : '更新于'} {new Date(item.updatedAt).toLocaleString()}</p>
+        <p>{status === 'deleted' ? t('list.deletedAt') : t('list.updatedAt')} {new Date(item.updatedAt).toLocaleString()}</p>
       </div>
 
       <div className="resume-list-card__actions">
@@ -938,7 +913,7 @@ function ResumeVisualCard({
               void onRestoreResume(item.id)
             }}
           >
-            恢复
+            {t('card.restore')}
           </Button>
         ) : null}
 
@@ -947,7 +922,7 @@ function ResumeVisualCard({
             icon={<CopyOutlined />}
             onClick={openCopyDialog}
           >
-            复制
+            {t('card.copy')}
           </Button>
         ) : null}
 
@@ -959,29 +934,29 @@ function ResumeVisualCard({
               void onDeleteResume(item.id)
             }}
           >
-            删除
+            {t('card.delete')}
           </Button>
         ) : null}
       </div>
 
       {onCopyResume ? (
         <Modal
-          title="复制简历"
+          title={t('copyDialog.title')}
           open={copyDialogOpen}
           onCancel={closeCopyDialog}
           onOk={() => void submitCopy()}
-          okText="复制"
-          cancelText="取消"
+          okText={t('copyDialog.okText')}
+          cancelText={t('copyDialog.cancelText')}
           confirmLoading={copying}
           destroyOnHidden
         >
           <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            <Text>请输入新简历的名称：</Text>
+            <Text>{t('copyDialog.prompt')}</Text>
             <Input
               autoFocus
               value={copyTitle}
               maxLength={200}
-              placeholder="新简历名称"
+              placeholder={t('copyDialog.placeholder')}
               onChange={(event) => setCopyTitle(event.target.value)}
               onPressEnter={() => void submitCopy()}
             />
@@ -1005,6 +980,7 @@ function ShareLinksModal({
   shareDialog: ShareDialogState
   shareLinks: ShareLink[]
 }) {
+  const { t } = useTranslation('workspace')
   const { message } = App.useApp()
   const [expandedShare, setExpandedShare] = useState<string | null>(null)
   const [accessLogs, setAccessLogs] = useState<ShareAccessLog[]>([])
@@ -1024,7 +1000,7 @@ function ShareLinksModal({
       const result = await getShareAccessLogs(shareDialog.resumeId, share.shareCode)
       setAccessLogs(result.logs)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法加载访问记录')
+      void message.error(error instanceof Error ? error.message : t('share.feedback2.loadLogsFailed'))
       setAccessLogs([])
     } finally {
       setLoadingLogs(false)
@@ -1035,10 +1011,10 @@ function ShareLinksModal({
     if (!shareDialog) return
     try {
       await toggleShare(shareDialog.resumeId, share.shareCode)
-      void message.success(share.active ? '已禁用分享链接' : '已启用分享链接')
+      void message.success(share.active ? t('share.feedback2.disabled') : t('share.feedback2.enabled'))
       onRefresh()
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '操作失败')
+      void message.error(error instanceof Error ? error.message : t('share.feedback2.operationFailed'))
     }
   }
 
@@ -1046,16 +1022,16 @@ function ShareLinksModal({
     if (!shareDialog) return
     try {
       await deleteShare(shareDialog.resumeId, share.shareCode)
-      void message.success('分享链接已删除')
+      void message.success(t('share.feedback2.deleted'))
       onRefresh()
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '删除失败')
+      void message.error(error instanceof Error ? error.message : t('share.feedback2.deleteFailed'))
     }
   }
 
   return (
     <Modal
-      title={shareDialog ? `${shareDialog.resumeTitle} 的分享链接` : '分享链接'}
+      title={shareDialog ? t('share.linksTitle', { title: shareDialog.resumeTitle }) : t('share.linksTitleFallback')}
       open={Boolean(shareDialog)}
       onCancel={onClose}
       footer={null}
@@ -1067,7 +1043,7 @@ function ShareLinksModal({
           <Spin />
         </div>
       ) : shareLinks.length === 0 ? (
-        <Empty description="还没有分享链接，进入编辑页后可以创建最新版或快照链接。" />
+        <Empty description={t('share.linksEmpty')} />
       ) : (
         <div className="share-list">
           {shareLinks.map((share) => {
@@ -1079,21 +1055,21 @@ function ShareLinksModal({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Space direction="vertical" size={4}>
                     <Space wrap>
-                      <Text strong>{share.title?.trim() ? share.title : '未命名分享'}</Text>
+                      <Text strong>{share.title?.trim() ? share.title : t('share.linkUntitled')}</Text>
                       <Tag color={share.shareMode === 'LATEST' ? 'blue' : 'orange'}>
-                        {share.shareMode === 'LATEST' ? '最新版' : '快照'}
+                        {share.shareMode === 'LATEST' ? t('share.modeTagLatest') : t('share.modeTagSnapshot')}
                       </Tag>
-                      {share.hasPassword ? <Tag icon={<LockOutlined />} color="red">密码保护</Tag> : null}
-                      {!share.active ? <Tag color="default">已禁用</Tag> : null}
-                      <Tag>{share.viewCount} 次访问</Tag>
+                      {share.hasPassword ? <Tag icon={<LockOutlined />} color="red">{t('share.passwordProtected')}</Tag> : null}
+                      {!share.active ? <Tag color="default">{t('share.disabled')}</Tag> : null}
+                      <Tag>{t('share.viewCount', { count: share.viewCount })}</Tag>
                     </Space>
                     <Text copyable={{ text: fullUrl }} style={share.active ? undefined : { textDecoration: 'line-through' }}>{fullUrl}</Text>
                     <Space size={16}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>创建: {new Date(share.createdAt).toLocaleString()}</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>{t('share.createdAt', { value: new Date(share.createdAt).toLocaleString() })}</Text>
                       {share.lastAccessedAt ? (
-                        <Text type="secondary" style={{ fontSize: 12 }}>最近访问: {new Date(share.lastAccessedAt).toLocaleString()}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{t('share.lastAccessedAt', { value: new Date(share.lastAccessedAt).toLocaleString() })}</Text>
                       ) : (
-                        <Text type="secondary" style={{ fontSize: 12 }}>暂无访问</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{t('share.noVisits')}</Text>
                       )}
                     </Space>
                   </Space>
@@ -1103,9 +1079,9 @@ function ShareLinksModal({
                       size="small"
                       onClick={() => void handleToggleLogs(share)}
                     >
-                      {isExpanded ? '收起' : '详情'}
+                      {isExpanded ? t('common:actions.collapse') : t('common:actions.details')}
                     </Button>
-                    <Tooltip title={share.active ? '禁用' : '启用'}>
+                    <Tooltip title={share.active ? t('share.toggleDisable') : t('share.toggleEnable')}>
                       <Button
                         size="small"
                         icon={share.active ? <EyeInvisibleOutlined /> : <EyeOutlined />}
@@ -1113,14 +1089,14 @@ function ShareLinksModal({
                       />
                     </Tooltip>
                     <Popconfirm
-                      title="确定删除此分享链接？"
-                      description="删除后访问记录也会一并清除，无法恢复。"
+                      title={t('share.deleteConfirmTitle')}
+                      description={t('share.deleteConfirmDescription')}
                       onConfirm={() => void handleDelete(share)}
-                      okText="删除"
-                      cancelText="取消"
+                      okText={t('share.deleteOk')}
+                      cancelText={t('common:actions.cancel')}
                       okButtonProps={{ danger: true }}
                     >
-                      <Tooltip title="删除">
+                      <Tooltip title={t('common:actions.delete')}>
                         <Button size="small" danger icon={<DeleteOutlined />} />
                       </Tooltip>
                     </Popconfirm>
@@ -1129,10 +1105,10 @@ function ShareLinksModal({
                       size="small"
                       onClick={async () => {
                         await navigator.clipboard.writeText(fullUrl)
-                        void message.success('分享链接已复制。')
+                        void message.success(t('share.feedback2.linkCopied'))
                       }}
                     >
-                      复制
+                      {t('common:actions.copy')}
                     </Button>
                   </Space>
                 </div>
@@ -1142,7 +1118,7 @@ function ShareLinksModal({
                     {loadingLogs ? (
                       <Spin size="small" />
                     ) : accessLogs.length === 0 ? (
-                      <Text type="secondary">暂无访问记录</Text>
+                      <Text type="secondary">{t('share.noLogs')}</Text>
                     ) : (
                       <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                         {accessLogs.map((log) => (
@@ -1181,6 +1157,7 @@ function RecycleBinView({
   selectedTemplateName: (templateKey: string) => string
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
 }) {
+  const { t } = useTranslation('workspace')
   const [previewDetailsByResumeId, setPreviewDetailsByResumeId] = useState<Record<string, ResumeDetail>>({})
   const visibleResumes = resumeList
   const visibleResumeIds = useMemo(() => visibleResumes.map((item) => item.id), [visibleResumes])
@@ -1230,15 +1207,15 @@ function RecycleBinView({
       <div className="workspace-hub workspace-hub--recycle">
         <div className="workspace-hub__hero">
           <div className="workspace-hub__copy">
-            <Tag color="default">Recycle Bin</Tag>
-            <h1>回收桶</h1>
-            <p>这里仅展示已删除简历。恢复后，简历会重新回到首页列表。</p>
+            <Tag color="default">{t('recycle.tag')}</Tag>
+            <h1>{t('recycle.title')}</h1>
+            <p>{t('recycle.subtitle')}</p>
           </div>
 
           <div className="workspace-hub__actions">
             <Link to="/app">
               <Button icon={<ArrowLeftOutlined />}>
-                返回首页
+                {t('actions.backToHome')}
               </Button>
             </Link>
           </div>
@@ -1246,8 +1223,8 @@ function RecycleBinView({
 
         <div className="workspace-hub__toolbar">
           <Space wrap align="center">
-            <Text strong>已删除简历</Text>
-            <Tag color="red">{resumePage?.total ?? resumeList.length} 份</Tag>
+            <Text strong>{t('recycle.deletedHeading')}</Text>
+            <Tag color="red">{t('recycle.totalCount', { count: resumePage?.total ?? resumeList.length })}</Tag>
           </Space>
         </div>
 
@@ -1257,7 +1234,7 @@ function RecycleBinView({
           </div>
         ) : resumeList.length === 0 ? (
           <Card className="glass-card workspace-hub__empty" bordered={false}>
-            <Empty description="回收桶为空。" />
+            <Empty description={t('recycle.empty')} />
           </Card>
         ) : (
           <Space direction="vertical" size={18} style={{ width: '100%' }}>
@@ -1338,6 +1315,7 @@ function ResumeEditorView({
   templates: ReturnType<typeof useResumeTemplateCatalog>['templates']
   orderedModuleDefinitions: ResumeModuleDefinition[]
 }) {
+  const { t } = useTranslation('workspace')
   const { message } = App.useApp()
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
@@ -1356,11 +1334,11 @@ function ResumeEditorView({
   const interviewMenuItems = [
     {
       key: 'create',
-      label: <Link to={`/app/interviews?create=1&resumeId=${draft.id}`}>发起面试</Link>,
+      label: <Link to={`/app/interviews?create=1&resumeId=${draft.id}`}>{t('editor.interviewMenu.create')}</Link>,
     },
     {
       key: 'related',
-      label: <Link to={`/app/interviews?resumeId=${draft.id}`}>相关面试</Link>,
+      label: <Link to={`/app/interviews?resumeId=${draft.id}`}>{t('editor.interviewMenu.related')}</Link>,
     },
   ]
 
@@ -1388,12 +1366,12 @@ function ResumeEditorView({
     }
 
     if (!file.type.startsWith('image/')) {
-      void message.error('仅支持上传图片文件。')
+      void message.error(t('modules.personalInfo.avatarOnlyImage'))
       return
     }
 
     if (file.size > MAX_AVATAR_FILE_SIZE_BYTES) {
-      void message.error('头像图片需控制在 1 MB 以内。')
+      void message.error(t('modules.personalInfo.avatarTooLarge'))
       return
     }
 
@@ -1403,11 +1381,11 @@ function ResumeEditorView({
       onUpdateDraft((next) => {
         next.content.personalInfo.avatar = dataUrl
       })
-      void message.success('头像已更新。')
+      void message.success(t('modules.personalInfo.avatarUpdated'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '头像读取失败，请重试。')
+      void message.error(error instanceof Error ? error.message : t('modules.personalInfo.avatarReadFailed'))
     }
-  }, [message, onUpdateDraft])
+  }, [message, onUpdateDraft, t])
 
   return (
     <div className="workspace-layout">
@@ -1424,29 +1402,29 @@ function ResumeEditorView({
           <div className="resume-editor-shell__title">
             <Space wrap>
               <Link to="/app">
-                <Button icon={<ArrowLeftOutlined />}>返回列表</Button>
+                <Button icon={<ArrowLeftOutlined />}>{t('actions.backToList')}</Button>
               </Link>
               <Tag color="gold">{selectedTemplate.category}</Tag>
               <Tag className="save-state" color={saveStateColor(saveState)}>
-                {saveStateLabel(saveState)}
+                {saveStateLabel(saveState, t)}
               </Tag>
-              {loadingTemplates ? <Tag color="processing">模板目录同步中</Tag> : null}
+              {loadingTemplates ? <Tag color="processing">{t('editor.templateSyncing')}</Tag> : null}
             </Space>
 
             <Input
               size="large"
               value={draft.title}
               onChange={(event) => onUpdateDraft((next) => { next.title = event.target.value })}
-              placeholder="简历标题"
+              placeholder={t('editor.titlePlaceholder')}
             />
           </div>
 
           <Space wrap className="resume-editor-shell__actions">
             <Link to={`/app/templates?resumeId=${draft.id}`}>
-              <Button>修改模板</Button>
+              <Button>{t('editor.modifyTemplate')}</Button>
             </Link>
             <Dropdown menu={{ items: interviewMenuItems }}>
-              <Button icon={<MessageOutlined />}>面试</Button>
+              <Button icon={<MessageOutlined />}>{t('editor.interview')}</Button>
             </Dropdown>
             <ResumeScoreButton draft={draft} />
             <Button icon={<ShareAltOutlined />} onClick={() => {
@@ -1455,8 +1433,8 @@ function ResumeEditorView({
               setShareMode('LATEST')
               setSharePasswordEnabled(false)
               setSharePassword('')
-            }}>分享</Button>
-            <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>导出 PDF</Button>
+            }}>{t('editor.share')}</Button>
+            <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>{t('editor.exportPdf')}</Button>
           </Space>
         </div>
 
@@ -1464,12 +1442,12 @@ function ResumeEditorView({
           <Card className="glass-card resume-editor-rail" bordered={false}>
             <div className="resume-editor-rail__head">
               <div>
-                <Text strong>简历结构</Text>
+                <Text strong>{t('editor.structureTitle')}</Text>
                 <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                  直接在这里调整顺序和显隐，右侧预览会同步更新。
+                  {t('editor.structureDescription')}
                 </Paragraph>
               </div>
-              <Tag color="blue">{orderedModuleDefinitions.length} 个模块</Tag>
+              <Tag color="blue">{t('editor.moduleCount', { count: orderedModuleDefinitions.length })}</Tag>
             </div>
 
             <div className="resume-editor-rail__list">
@@ -1483,7 +1461,7 @@ function ResumeEditorView({
                     <span>{personalInfoModule.title}</span>
                     <small>{personalInfoModule.description}</small>
                   </button>
-                  <Tag color="default">固定</Tag>
+                  <Tag color="default">{t('editor.fixedTag')}</Tag>
                 </div>
               ) : null}
 
@@ -1520,7 +1498,7 @@ function ResumeEditorView({
                       <div className="resume-editor-collapse__label">
                         <span>
                           {module.title}
-                          {isHidden ? <Tag color="default">预览已隐藏</Tag> : null}
+                          {isHidden ? <Tag color="default">{t('editor.previewHidden')}</Tag> : null}
                         </span>
                         <small>{module.description}</small>
                       </div>
@@ -1548,6 +1526,7 @@ function ResumeEditorView({
                           onUpdateDraft,
                           handleAvatarPickerOpen,
                           handleAvatarRemove,
+                          t,
                         )}
                       </div>
                     ),
@@ -1570,7 +1549,7 @@ function ResumeEditorView({
                     onClick={() => setPreviewDialogOpen(true)}
                   />
                   <Paragraph type="secondary" className="resume-editor-preview__hint">
-                    点击右侧预览，可在屏幕中间打开标准 A4 视图。
+                    {t('editor.previewHint')}
                   </Paragraph>
                 </>
               ) : (
@@ -1588,7 +1567,7 @@ function ResumeEditorView({
         centered
         width={1040}
         destroyOnHidden
-        title="标准 A4 预览"
+        title={t('editor.previewModalTitle')}
       >
         <div className="resume-preview-modal">
           {deferredDraft ? (
@@ -1615,20 +1594,20 @@ function ResumeEditorView({
 
       <Modal
         open={shareModalOpen}
-        title="创建分享链接"
+        title={t('share.createTitle')}
         onCancel={() => setShareModalOpen(false)}
         onOk={async () => {
           const normalizedShareTitle = shareTitle.trim()
           if (!normalizedShareTitle) {
-            void message.warning('请输入分享标题')
+            void message.warning(t('share.warning.titleEmpty'))
             return
           }
           if (normalizedShareTitle.length > 50) {
-            void message.warning('分享标题最多 50 个字符')
+            void message.warning(t('share.warning.titleTooLong'))
             return
           }
           if (sharePasswordEnabled && !sharePassword.trim()) {
-            void message.warning('请输入密码')
+            void message.warning(t('share.warning.passwordEmpty'))
             return
           }
           setCreatingShare(true)
@@ -1636,59 +1615,59 @@ function ResumeEditorView({
             await onCreateShare(normalizedShareTitle, shareMode, sharePasswordEnabled ? sharePassword.trim() : undefined)
             setShareModalOpen(false)
           } catch (error) {
-            void message.error(error instanceof Error ? error.message : '创建分享失败')
+            void message.error(error instanceof Error ? error.message : t('share.feedback.createFailed'))
           } finally {
             setCreatingShare(false)
           }
         }}
-        okText="创建并复制链接"
-        cancelText="取消"
+        okText={t('share.okText')}
+        cancelText={t('share.cancelText')}
         confirmLoading={creatingShare}
         destroyOnHidden
       >
         <div style={{ marginTop: 16 }}>
           <div style={{ marginBottom: 20 }}>
-            <Text strong style={{ display: 'block', marginBottom: 8 }}>分享标题</Text>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('share.titleLabel')}</Text>
             <Input
               value={shareTitle}
               onChange={(event) => setShareTitle(event.target.value)}
               maxLength={50}
-              placeholder="例如：投递后端岗位（5月）"
+              placeholder={t('share.titlePlaceholder')}
               showCount
             />
             <div style={{ marginTop: 4 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>标题用于区分分享用途，创建后会展示在分享列表中。</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>{t('share.titleHint')}</Text>
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <Text strong style={{ display: 'block', marginBottom: 8 }}>分享类型</Text>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('share.modeLabel')}</Text>
             <Radio.Group value={shareMode} onChange={(e) => setShareMode(e.target.value)}>
-              <Radio.Button value="LATEST">最新版本</Radio.Button>
-              <Radio.Button value="SNAPSHOT">当前快照</Radio.Button>
+              <Radio.Button value="LATEST">{t('share.modeLatest')}</Radio.Button>
+              <Radio.Button value="SNAPSHOT">{t('share.modeSnapshot')}</Radio.Button>
             </Radio.Group>
             <div style={{ marginTop: 4 }}>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                {shareMode === 'LATEST' ? '链接始终展示简历的最新内容' : '链接展示此刻的简历内容，后续编辑不影响'}
+                {shareMode === 'LATEST' ? t('share.modeLatestHint') : t('share.modeSnapshotHint')}
               </Text>
             </div>
           </div>
 
           <div>
             <Space style={{ marginBottom: 8 }}>
-              <Text strong>密码保护</Text>
+              <Text strong>{t('share.passwordLabel')}</Text>
               <Switch size="small" checked={sharePasswordEnabled} onChange={setSharePasswordEnabled} />
             </Space>
             {sharePasswordEnabled ? (
               <Input.Password
-                placeholder="设置访问密码"
+                placeholder={t('share.passwordPlaceholder')}
                 value={sharePassword}
                 onChange={(e) => setSharePassword(e.target.value)}
                 autoFocus
               />
             ) : (
               <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>开启后，访问者需输入密码才能查看</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>{t('share.passwordHint')}</Text>
               </div>
             )}
           </div>
@@ -1713,16 +1692,16 @@ function saveStateColor(saveState: SaveState) {
   }
 }
 
-function saveStateLabel(saveState: SaveState) {
+function saveStateLabel(saveState: SaveState, t: (key: string) => string) {
   switch (saveState) {
     case 'saving':
-      return '保存中...'
+      return t('saveState.saving')
     case 'saved':
-      return '已保存'
+      return t('saveState.saved')
     case 'save_failed':
-      return '保存失败'
+      return t('saveState.saveFailed')
     default:
-      return '待保存'
+      return t('saveState.idle')
   }
 }
 
@@ -1740,6 +1719,7 @@ function renderModuleContent(
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
   onAvatarPickerOpen: () => void,
   onAvatarRemove: () => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   if (moduleKey === 'personal-info') {
     return (
@@ -1753,13 +1733,13 @@ function renderModuleContent(
             )}
           </div>
           <div className="resume-editor-avatar-field__body">
-            <Text strong>头像</Text>
+            <Text strong>{t('modules.personalInfo.avatarTitle')}</Text>
             <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              上传后会自动转换为 base64 保存。建议使用 1 MB 以内的方形职业头像。
+              {t('modules.personalInfo.avatarHint')}
             </Paragraph>
             <Space wrap>
               <Button type="default" icon={<PlusOutlined />} onClick={onAvatarPickerOpen}>
-                {draft.content.personalInfo.avatar ? '更换头像' : '上传头像'}
+                {draft.content.personalInfo.avatar ? t('modules.personalInfo.changeAvatar') : t('modules.personalInfo.uploadAvatar')}
               </Button>
               <Button
                 danger
@@ -1767,7 +1747,7 @@ function renderModuleContent(
                 onClick={onAvatarRemove}
                 disabled={!draft.content.personalInfo.avatar}
               >
-                移除头像
+                {t('modules.personalInfo.removeAvatar')}
               </Button>
             </Space>
           </div>
@@ -1775,67 +1755,67 @@ function renderModuleContent(
 
         <SectionGrid>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>姓名</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.fullName')}</Text>
             <Input
               value={draft.content.personalInfo.fullName}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.fullName = event.target.value })}
-              placeholder="姓名"
+              placeholder={t('modules.personalInfo.placeholder.fullName')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>职位/头衔</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.headline')}</Text>
             <Input
               value={draft.content.personalInfo.headline}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.headline = event.target.value })}
-              placeholder="职位 / 头衔"
+              placeholder={t('modules.personalInfo.placeholder.headline')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>电话</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.phone')}</Text>
             <Input
               value={draft.content.personalInfo.phone}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.phone = event.target.value })}
-              placeholder="电话"
+              placeholder={t('modules.personalInfo.placeholder.phone')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>邮箱</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.email')}</Text>
             <Input
               value={draft.content.personalInfo.email}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.email = event.target.value })}
-              placeholder="邮箱"
+              placeholder={t('modules.personalInfo.placeholder.email')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>所在城市</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.city')}</Text>
             <Input
               value={draft.content.personalInfo.city}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.city = event.target.value })}
-              placeholder="所在城市"
+              placeholder={t('modules.personalInfo.placeholder.city')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>个人网站</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.website')}</Text>
             <Input
               value={draft.content.personalInfo.website}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.website = event.target.value })}
-              placeholder="个人网站 / 作品集"
+              placeholder={t('modules.personalInfo.placeholder.website')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>期望薪资</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.expectedSalary')}</Text>
             <Input
               value={draft.content.personalInfo.expectedSalary}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.expectedSalary = event.target.value })}
-              placeholder="期望薪资"
+              placeholder={t('modules.personalInfo.placeholder.expectedSalary')}
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>年龄</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.personalInfo.fields.age')}</Text>
             <Input
               value={draft.content.personalInfo.age}
               onChange={(event) => updateDraft((next) => { next.content.personalInfo.age = event.target.value })}
-              placeholder="年龄"
+              placeholder={t('modules.personalInfo.placeholder.age')}
             />
           </div>
         </SectionGrid>
@@ -1847,13 +1827,13 @@ function renderModuleContent(
     case 'summary':
       return (
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>个人简介</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.summary.label')}</Text>
           <MarkdownComposer
             hidePreview
             autoSize={{ minRows: 6, maxRows: 12 }}
             value={draft.content.personalSummary}
             onChange={(val) => updateDraft((next) => { next.content.personalSummary = val })}
-            placeholder="用一段短文概括你的优势、方向和关键成果。（支持 Markdown 格式）"
+            placeholder={t('modules.summary.placeholder')}
           />
         </div>
       )
@@ -1869,7 +1849,7 @@ function renderModuleContent(
             description: '',
           })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     case 'workExperience':
       return renderWorkSection(draft.content.workExperience, () => {
         updateDraft((next) => {
@@ -1881,7 +1861,7 @@ function renderModuleContent(
             description: '',
           })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     case 'projectExperience':
       return renderProjectSection(draft.content.projectExperience, () => {
         updateDraft((next) => {
@@ -1893,13 +1873,13 @@ function renderModuleContent(
             description: '',
           })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     case 'skills':
       return renderSkillSection(draft.content.skills, () => {
         updateDraft((next) => {
           next.content.skills.push({ name: '', level: '' })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     case 'honors':
       return renderHonorSection(draft.content.honors, () => {
         updateDraft((next) => {
@@ -1910,7 +1890,7 @@ function renderModuleContent(
             description: '',
           })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     case 'certificates':
       return renderCertificateSection(draft.content.certificates, () => {
         updateDraft((next) => {
@@ -1921,7 +1901,7 @@ function renderModuleContent(
             credentialId: '',
           })
         })
-      }, updateDraft)
+      }, updateDraft, t)
     default:
       return null
   }
@@ -1931,42 +1911,44 @@ function renderEducationSection(
   items: EducationItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<EducationItem>(
     items,
     addItem,
-    (index) => `教育经历 ${index + 1}`,
+    (index) => t('modules.education.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>学校</Text>
-          <Input value={item.school} placeholder="学校" onChange={(event) => updateDraft((next) => { next.content.education[index].school = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.school')}</Text>
+          <Input value={item.school} placeholder={t('modules.education.placeholder.school')} onChange={(event) => updateDraft((next) => { next.content.education[index].school = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>学位</Text>
-          <Input value={item.degree} placeholder="学位" onChange={(event) => updateDraft((next) => { next.content.education[index].degree = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.degree')}</Text>
+          <Input value={item.degree} placeholder={t('modules.education.placeholder.degree')} onChange={(event) => updateDraft((next) => { next.content.education[index].degree = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>专业</Text>
-          <Input value={item.major} placeholder="专业" onChange={(event) => updateDraft((next) => { next.content.education[index].major = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.major')}</Text>
+          <Input value={item.major} placeholder={t('modules.education.placeholder.major')} onChange={(event) => updateDraft((next) => { next.content.education[index].major = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
-          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.startDate')}</Text>
+          <Input value={item.startDate} placeholder={t('modules.education.placeholder.startDate')} onChange={(event) => updateDraft((next) => { next.content.education[index].startDate = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
-          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.endDate')}</Text>
+          <Input value={item.endDate} placeholder={t('modules.education.placeholder.endDate')} onChange={(event) => updateDraft((next) => { next.content.education[index].endDate = event.target.value })} />
         </div>
         <SectionGridFullWidth>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>亮点描述</Text>
-            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder="亮点描述（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.education[index].description = val })} />
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.education.fields.description')}</Text>
+            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder={t('modules.education.placeholder.description')} onChange={(val) => updateDraft((next) => { next.content.education[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.education.splice(index, 1) }),
+    t,
   )
 }
 
@@ -1974,38 +1956,40 @@ function renderWorkSection(
   items: WorkExperienceItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<WorkExperienceItem>(
     items,
     addItem,
-    (index) => `工作经历 ${index + 1}`,
+    (index) => t('modules.workExperience.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>公司</Text>
-          <Input value={item.company} placeholder="公司" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].company = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.workExperience.fields.company')}</Text>
+          <Input value={item.company} placeholder={t('modules.workExperience.placeholder.company')} onChange={(event) => updateDraft((next) => { next.content.workExperience[index].company = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>职位</Text>
-          <Input value={item.role} placeholder="职位" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.workExperience.fields.role')}</Text>
+          <Input value={item.role} placeholder={t('modules.workExperience.placeholder.role')} onChange={(event) => updateDraft((next) => { next.content.workExperience[index].role = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
-          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.workExperience.fields.startDate')}</Text>
+          <Input value={item.startDate} placeholder={t('modules.workExperience.placeholder.startDate')} onChange={(event) => updateDraft((next) => { next.content.workExperience[index].startDate = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
-          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.workExperience.fields.endDate')}</Text>
+          <Input value={item.endDate} placeholder={t('modules.workExperience.placeholder.endDate')} onChange={(event) => updateDraft((next) => { next.content.workExperience[index].endDate = event.target.value })} />
         </div>
         <SectionGridFullWidth>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>工作内容</Text>
-            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder="工作内容、范围和成果（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.workExperience[index].description = val })} />
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.workExperience.fields.description')}</Text>
+            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder={t('modules.workExperience.placeholder.description')} onChange={(val) => updateDraft((next) => { next.content.workExperience[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.workExperience.splice(index, 1) }),
+    t,
   )
 }
 
@@ -2013,38 +1997,40 @@ function renderProjectSection(
   items: ProjectExperienceItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<ProjectExperienceItem>(
     items,
     addItem,
-    (index) => `项目经历 ${index + 1}`,
+    (index) => t('modules.projectExperience.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>项目名称</Text>
-          <Input value={item.name} placeholder="项目名称" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].name = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.projectExperience.fields.name')}</Text>
+          <Input value={item.name} placeholder={t('modules.projectExperience.placeholder.name')} onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].name = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>角色</Text>
-          <Input value={item.role} placeholder="角色" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].role = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.projectExperience.fields.role')}</Text>
+          <Input value={item.role} placeholder={t('modules.projectExperience.placeholder.role')} onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].role = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>开始日期</Text>
-          <Input value={item.startDate} placeholder="开始日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.projectExperience.fields.startDate')}</Text>
+          <Input value={item.startDate} placeholder={t('modules.projectExperience.placeholder.startDate')} onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].startDate = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>结束日期</Text>
-          <Input value={item.endDate} placeholder="结束日期" onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.projectExperience.fields.endDate')}</Text>
+          <Input value={item.endDate} placeholder={t('modules.projectExperience.placeholder.endDate')} onChange={(event) => updateDraft((next) => { next.content.projectExperience[index].endDate = event.target.value })} />
         </div>
         <SectionGridFullWidth>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>项目描述</Text>
-            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder="项目描述、技术栈和成果（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.projectExperience[index].description = val })} />
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.projectExperience.fields.description')}</Text>
+            <MarkdownComposer hidePreview autoSize={{ minRows: 4, maxRows: 10 }} value={item.description} placeholder={t('modules.projectExperience.placeholder.description')} onChange={(val) => updateDraft((next) => { next.content.projectExperience[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.projectExperience.splice(index, 1) }),
+    t,
   )
 }
 
@@ -2052,24 +2038,26 @@ function renderSkillSection(
   items: SkillItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<SkillItem>(
     items,
     addItem,
-    (index) => `技能 ${index + 1}`,
+    (index) => t('modules.skills.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>技能名称</Text>
-          <Input value={item.name} placeholder="技能名称" onChange={(event) => updateDraft((next) => { next.content.skills[index].name = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.skills.fields.name')}</Text>
+          <Input value={item.name} placeholder={t('modules.skills.placeholder.name')} onChange={(event) => updateDraft((next) => { next.content.skills[index].name = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>熟练度</Text>
-          <Input value={item.level} placeholder="熟练度 / 等级" onChange={(event) => updateDraft((next) => { next.content.skills[index].level = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.skills.fields.level')}</Text>
+          <Input value={item.level} placeholder={t('modules.skills.placeholder.level')} onChange={(event) => updateDraft((next) => { next.content.skills[index].level = event.target.value })} />
         </div>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.skills.splice(index, 1) }),
+    t,
   )
 }
 
@@ -2077,34 +2065,36 @@ function renderHonorSection(
   items: HonorItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<HonorItem>(
     items,
     addItem,
-    (index) => `奖项 ${index + 1}`,
+    (index) => t('modules.honors.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>奖项名称</Text>
-          <Input value={item.title} placeholder="奖项名称" onChange={(event) => updateDraft((next) => { next.content.honors[index].title = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.honors.fields.title')}</Text>
+          <Input value={item.title} placeholder={t('modules.honors.placeholder.title')} onChange={(event) => updateDraft((next) => { next.content.honors[index].title = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>颁发机构</Text>
-          <Input value={item.issuer} placeholder="颁发机构" onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.honors.fields.issuer')}</Text>
+          <Input value={item.issuer} placeholder={t('modules.honors.placeholder.issuer')} onChange={(event) => updateDraft((next) => { next.content.honors[index].issuer = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>获奖时间</Text>
-          <Input value={item.awardedAt} placeholder="获奖时间" onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.honors.fields.awardedAt')}</Text>
+          <Input value={item.awardedAt} placeholder={t('modules.honors.placeholder.awardedAt')} onChange={(event) => updateDraft((next) => { next.content.honors[index].awardedAt = event.target.value })} />
         </div>
         <SectionGridFullWidth>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>奖项说明</Text>
-            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder="奖项说明（支持 Markdown 格式）" onChange={(val) => updateDraft((next) => { next.content.honors[index].description = val })} />
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.honors.fields.description')}</Text>
+            <MarkdownComposer hidePreview autoSize={{ minRows: 3, maxRows: 8 }} value={item.description} placeholder={t('modules.honors.placeholder.description')} onChange={(val) => updateDraft((next) => { next.content.honors[index].description = val })} />
           </div>
         </SectionGridFullWidth>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.honors.splice(index, 1) }),
+    t,
   )
 }
 
@@ -2112,32 +2102,34 @@ function renderCertificateSection(
   items: CertificateItem[],
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   return renderRepeatableCards<CertificateItem>(
     items,
     addItem,
-    (index) => `证书 ${index + 1}`,
+    (index) => t('modules.certificates.entryTitle', { index: index + 1 }),
     (item, index) => (
       <SectionGrid>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>证书名称</Text>
-          <Input value={item.name} placeholder="证书名称" onChange={(event) => updateDraft((next) => { next.content.certificates[index].name = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.certificates.fields.name')}</Text>
+          <Input value={item.name} placeholder={t('modules.certificates.placeholder.name')} onChange={(event) => updateDraft((next) => { next.content.certificates[index].name = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>签发机构</Text>
-          <Input value={item.issuer} placeholder="签发机构" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuer = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.certificates.fields.issuer')}</Text>
+          <Input value={item.issuer} placeholder={t('modules.certificates.placeholder.issuer')} onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuer = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>签发时间</Text>
-          <Input value={item.issuedAt} placeholder="签发时间" onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuedAt = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.certificates.fields.issuedAt')}</Text>
+          <Input value={item.issuedAt} placeholder={t('modules.certificates.placeholder.issuedAt')} onChange={(event) => updateDraft((next) => { next.content.certificates[index].issuedAt = event.target.value })} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>证书编号</Text>
-          <Input value={item.credentialId} placeholder="证书编号" onChange={(event) => updateDraft((next) => { next.content.certificates[index].credentialId = event.target.value })} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modules.certificates.fields.credentialId')}</Text>
+          <Input value={item.credentialId} placeholder={t('modules.certificates.placeholder.credentialId')} onChange={(event) => updateDraft((next) => { next.content.certificates[index].credentialId = event.target.value })} />
         </div>
       </SectionGrid>
     ),
     (index) => updateDraft((next) => { next.content.certificates.splice(index, 1) }),
+    t,
   )
 }
 
@@ -2147,12 +2139,13 @@ function renderRepeatableCards<T>(
   titleForIndex: (index: number) => string,
   renderFields: (item: T, index: number) => ReactNode,
   removeItem: (index: number) => void,
+  t: (key: string) => string,
 ) {
   return (
     <Space direction="vertical" size={12} style={{ width: '100%' }}>
       {items.length === 0 ? (
         <div className="empty-state">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无条目" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('editor.noEntries')} />
         </div>
       ) : null}
 
@@ -2163,7 +2156,7 @@ function renderRepeatableCards<T>(
           title={titleForIndex(index)}
           extra={(
             <Button danger type="text" onClick={() => removeItem(index)}>
-              删除
+              {t('editor.deleteEntry')}
             </Button>
           )}
         >
@@ -2172,7 +2165,7 @@ function renderRepeatableCards<T>(
       ))}
 
       <Button onClick={addItem} icon={<PlusOutlined />}>
-        添加条目
+        {t('editor.addEntry')}
       </Button>
     </Space>
   )
@@ -2191,6 +2184,7 @@ function SortableModuleRow({
   onHideSection: (key: ResumeSectionKey) => void
   onShowSection: (key: ResumeSectionKey) => void
 }) {
+  const { t } = useTranslation('workspace')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.key })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -2211,7 +2205,7 @@ function SortableModuleRow({
       >
         <span>
           {module.title}
-          {isHidden ? <Tag color="default">已隐藏</Tag> : null}
+          {isHidden ? <Tag color="default">{t('editor.hiddenTag')}</Tag> : null}
         </span>
         <small>{module.description}</small>
       </button>

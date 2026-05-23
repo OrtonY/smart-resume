@@ -12,20 +12,20 @@ public final class SystemAccessDtos {
     }
 
     public record LoginRequest(
-        @NotBlank(message = "Username is required")
-        @Size(min = 3, max = 80, message = "Username must be between 3 and 80 characters")
+        @NotBlank(message = "{validation.user.usernameRequired}")
+        @Size(min = 3, max = 80, message = "{validation.user.usernameLength}")
         String username,
-        @NotBlank(message = "Password is required")
+        @NotBlank(message = "{validation.user.passwordRequired}")
         String password
     ) {
     }
 
     public record RegisterRequest(
-        @NotBlank(message = "Username is required")
-        @Size(min = 3, max = 80, message = "Username must be between 3 and 80 characters")
+        @NotBlank(message = "{validation.user.usernameRequired}")
+        @Size(min = 3, max = 80, message = "{validation.user.usernameLength}")
         String username,
-        @NotBlank(message = "Password is required")
-        @Size(min = 6, max = 64, message = "Password must be between 6 and 64 characters")
+        @NotBlank(message = "{validation.user.passwordRequired}")
+        @Size(min = 6, max = 64, message = "{validation.user.passwordLength}")
         String password
     ) {
     }
@@ -46,10 +46,10 @@ public final class SystemAccessDtos {
     }
 
     public record ChangePasswordRequest(
-        @NotBlank(message = "Current password is required")
+        @NotBlank(message = "{validation.user.currentPasswordRequired}")
         String currentPassword,
-        @NotBlank(message = "New password is required")
-        @Size(min = 6, max = 64, message = "New password must be between 6 and 64 characters")
+        @NotBlank(message = "{validation.user.newPasswordRequired}")
+        @Size(min = 6, max = 64, message = "{validation.user.newPasswordLength}")
         String newPassword
     ) {
     }
