@@ -90,7 +90,7 @@ public class AiResumeScoringService {
         try {
             sb.append(objectMapper.writeValueAsString(resume));
         } catch (JsonProcessingException e) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to serialize resume context");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.resumeSerializeFailed");
         }
 
         if (jobDescriptionProvided) {

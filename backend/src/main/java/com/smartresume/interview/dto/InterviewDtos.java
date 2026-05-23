@@ -13,18 +13,18 @@ public final class InterviewDtos {
     public record InterviewCreateRequest(
         String resumeId,
         String targetCompany,
-        @NotBlank(message = "Interview title is required")
+        @NotBlank(message = "{validation.interview.titleRequired}")
         String title,
         String jobDescription,
-        @NotBlank(message = "Interview difficulty is required")
+        @NotBlank(message = "{validation.interview.difficultyRequired}")
         String difficulty,
-        @NotEmpty(message = "At least one interviewer role is required")
-        List<@NotBlank(message = "Interviewer role cannot be blank") String> interviewerRoles
+        @NotEmpty(message = "{validation.interview.rolesRequired}")
+        List<@NotBlank(message = "{validation.interview.roleNotBlank}") String> interviewerRoles
     ) {
     }
 
     public record InterviewMessageRequest(
-        @NotBlank(message = "Message content is required")
+        @NotBlank(message = "{validation.interview.messageRequired}")
         String content
     ) {
     }

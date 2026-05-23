@@ -1,6 +1,7 @@
 import { Button, Input } from 'antd'
 import type { TextAreaProps, TextAreaRef } from 'antd/es/input/TextArea'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const { TextArea } = Input
 
@@ -19,6 +20,7 @@ interface MarkdownTextAreaProps extends Omit<TextAreaProps, 'onChange'> {
  */
 export function MarkdownTextArea(props: MarkdownTextAreaProps) {
   const { value, onChange, className, ...rest } = props
+  const { t } = useTranslation('template')
   const ref = useRef<TextAreaRef>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isFocused, setIsFocused] = useState(false)
@@ -147,14 +149,14 @@ export function MarkdownTextArea(props: MarkdownTextAreaProps) {
         onFocus={handleFocus}
         onBlur={handleBlur}
       />
-      <div style={toolbarStyle} role="toolbar" aria-label="格式工具栏">
+      <div style={toolbarStyle} role="toolbar" aria-label={t('markdown.toolbar.ariaLabel')}>
         <Button
           type="text"
           size="small"
           onMouseDown={(event) => event.preventDefault()}
           onClick={applyBold}
           style={{ fontWeight: 700, padding: '0 6px' }}
-          title="加粗"
+          title={t('markdown.toolbar.boldButton')}
         >
           B
         </Button>

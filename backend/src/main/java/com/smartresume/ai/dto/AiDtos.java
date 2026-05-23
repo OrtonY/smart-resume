@@ -21,7 +21,7 @@ public final class AiDtos {
     }
 
     public record AiConfigurationRequest(
-        @NotBlank(message = "AI vendor is required")
+        @NotBlank(message = "{validation.ai.vendorRequired}")
         String vendor,
         String baseUrl,
         String apiKey,
@@ -30,10 +30,10 @@ public final class AiDtos {
     }
 
     public record AiChatRequest(
-        @NotBlank(message = "Message is required")
+        @NotBlank(message = "{validation.ai.messageRequired}")
         String message,
         String conversationId,
-        @NotNull(message = "Resume context is required")
+        @NotNull(message = "{validation.ai.resumeContextRequired}")
         @Valid
         AiResumeContext resume
     ) {
@@ -41,22 +41,22 @@ public final class AiDtos {
 
     public record AiResumeScoreRequest(
         String jobDescription,
-        @NotNull(message = "Resume context is required")
+        @NotNull(message = "{validation.ai.resumeContextRequired}")
         @Valid
         AiResumeContext resume
     ) {
     }
 
     public record AiResumeContext(
-        @NotBlank(message = "Resume id is required")
+        @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String id,
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.ai.resumeTitleRequired}")
         String title,
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.ai.templateKeyRequired}")
         String templateKey,
-        @NotNull(message = "Resume content is required")
+        @NotNull(message = "{validation.ai.resumeContentRequired}")
         ResumeContentPayload content,
-        @NotNull(message = "Resume layout is required")
+        @NotNull(message = "{validation.ai.resumeLayoutRequired}")
         ResumeLayoutPayload layout
     ) {
     }
@@ -106,7 +106,7 @@ public final class AiDtos {
     }
 
     public record ListModelsRequest(
-        @NotBlank(message = "Vendor is required")
+        @NotBlank(message = "{validation.ai.vendorRequired}")
         String vendor,
         String baseUrl,
         String apiKey

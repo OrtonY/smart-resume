@@ -1,6 +1,8 @@
 import { LockOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Segmented, Space, Tag, Tooltip, message } from 'antd'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '../components/shared/LanguageSwitcher'
 import { login, register } from '../features/system/api/systemApi'
 import type { AccessTokenResponse, BootstrapStatus } from '../features/system/types'
 
@@ -18,6 +20,7 @@ interface AuthFormValues {
 }
 
 export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
+  const { t } = useTranslation('auth')
   const [form] = Form.useForm<AuthFormValues>()
   const [messageApi, contextHolder] = message.useMessage()
   const [mode, setMode] = useState<AuthMode>('login')
@@ -26,15 +29,15 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
   const canRegister = !bootstrapStatus.hasUsers || bootstrapStatus.registrationEnabled
   const activeMode: AuthMode = mode === 'register' && canRegister ? 'register' : 'login'
   const modeOptions = useMemo<Array<{ label: string; value: AuthMode }>>(() => {
-    const options: Array<{ label: string; value: AuthMode }> = [{ label: '登录', value: 'login' }]
+    const options: Array<{ label: string; value: AuthMode }> = [{ label: t('mode.login'), value: 'login' }]
     if (canRegister) {
       options.push({
-        label: bootstrapStatus.hasUsers ? '注册' : '创建管理员',
+        label: bootstrapStatus.hasUsers ? t('mode.register') : t('mode.createAdmin'),
         value: 'register',
       })
     }
     return options
-  }, [bootstrapStatus.hasUsers, canRegister])
+  }, [bootstrapStatus.hasUsers, canRegister, t])
 
   async function handleFinish(values: AuthFormValues) {
     setSubmitting(true)
@@ -45,9 +48,9 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
       }
       const result = activeMode === 'register' ? await register(payload) : await login(payload)
       await onAuthenticated(result)
-      void messageApi.success(activeMode === 'register' ? '注册成功' : '登录成功')
+      void messageApi.success(activeMode === 'register' ? t('feedback.registerSuccess') : t('feedback.loginSuccess'))
     } catch (error) {
-      void messageApi.error(error instanceof Error ? error.message : '认证失败，请稍后重试')
+      void messageApi.error(error instanceof Error ? error.message : t('feedback.authFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -60,27 +63,28 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
         <Space direction={'vertical'} size={20} style={{ width: '100%' }}>
           <div className={'auth-header-row'}>
             <div>
-              <div className={'auth-kicker'}>{'账号访问'}</div>
-              <h1 className={'auth-title'}>{'登录 Smart Resume'}</h1>
-              <p className={'auth-subtitle'}>{'多用户模式下，每个账号的数据独立保存。'}</p>
+              <div className={'auth-kicker'}>{t('page.kicker')}</div>
+              <h1 className={'auth-title'}>{t('page.title')}</h1>
+              <p className={'auth-subtitle'}>{t('page.subtitle')}</p>
             </div>
             <Tooltip
               title={(
                 <div>
-                  <div>{'1.原工作区密码迁移至admin用户下'}</div>
-                  <div>{'2.默认用户名密码admin/admin123，登录后请及时修改'}</div>
+                  <div>{t('help.tipMigration')}</div>
+                  <div>{t('help.tipDefault')}</div>
                 </div>
               )}
             >
-              <button type={'button'} className={'auth-help-trigger'} aria-label={'登录帮助'}>
+              <button type={'button'} className={'auth-help-trigger'} aria-label={t('help.trigger')}>
                 <QuestionCircleOutlined />
               </button>
             </Tooltip>
+            <LanguageSwitcher />
           </div>
 
           <Space size={[8, 8]} wrap>
             <Tag color={bootstrapStatus.registrationEnabled ? 'green' : 'default'}>
-              {bootstrapStatus.registrationEnabled ? '注册已开启' : '注册已关闭'}
+              {bootstrapStatus.registrationEnabled ? t('tag.registrationEnabled') : t('tag.registrationDisabled')}
             </Tag>
           </Space>
 
@@ -101,35 +105,35 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
             <Alert
               type={'info'}
               showIcon
-              message={'当前未开放自助注册'}
-              description={'请使用已有账号登录，或联系管理员开启注册。'}
+              message={t('alert.registrationClosedTitle')}
+              description={t('alert.registrationClosedDescription')}
             />
           ) : null}
 
           <Form form={form} layout={'vertical'} onFinish={(values) => void handleFinish(values)}>
             <Form.Item
-              label={'用户名'}
+              label={t('form.username')}
               name={'username'}
               rules={[
-                { required: true, message: '请输入用户名' },
-                { min: 3, message: '用户名至少 3 位' },
-                { max: 80, message: '用户名不能超过 80 位' },
+                { required: true, message: t('form.usernameRequired') },
+                { min: 3, message: t('form.usernameMin') },
+                { max: 80, message: t('form.usernameMax') },
               ]}
             >
-              <Input prefix={<UserOutlined />} placeholder={'请输入用户名'} size={'large'} autoComplete={'username'} />
+              <Input prefix={<UserOutlined />} placeholder={t('form.usernamePlaceholder')} size={'large'} autoComplete={'username'} />
             </Form.Item>
 
             <Form.Item
-              label={'密码'}
+              label={t('form.password')}
               name={'password'}
               rules={[
-                { required: true, message: '请输入密码' },
-                ...(activeMode === 'register' ? [{ min: 6, message: '密码至少 6 位' }] : []),
+                { required: true, message: t('form.passwordRequired') },
+                ...(activeMode === 'register' ? [{ min: 6, message: t('form.passwordMin') }] : []),
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder={activeMode === 'register' ? '请设置密码' : '请输入密码'}
+                placeholder={activeMode === 'register' ? t('form.newPasswordPlaceholder') : t('form.passwordPlaceholder')}
                 size={'large'}
                 autoComplete={activeMode === 'register' ? 'new-password' : 'current-password'}
               />
@@ -137,24 +141,24 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
 
             {activeMode === 'register' ? (
               <Form.Item
-                label={'确认密码'}
+                label={t('form.confirmPassword')}
                 name={'confirmPassword'}
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: '请再次输入密码' },
+                  { required: true, message: t('form.confirmPasswordRequired') },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || value === getFieldValue('password')) {
                         return Promise.resolve()
                       }
-                      return Promise.reject(new Error('两次输入的密码不一致'))
+                      return Promise.reject(new Error(t('form.passwordMismatch')))
                     },
                   }),
                 ]}
               >
                 <Input.Password
                   prefix={<LockOutlined />}
-                  placeholder={'请再次输入密码'}
+                  placeholder={t('form.confirmPasswordPlaceholder')}
                   size={'large'}
                   autoComplete={'new-password'}
                 />
@@ -162,7 +166,7 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
             ) : null}
 
             <Button type={'primary'} htmlType={'submit'} size={'large'} block loading={submitting}>
-              {activeMode === 'register' ? '注册账号' : '登录'}
+              {activeMode === 'register' ? t('button.register') : t('button.login')}
             </Button>
           </Form>
         </Space>

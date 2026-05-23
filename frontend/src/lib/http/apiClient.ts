@@ -1,3 +1,4 @@
+import i18n from '../../i18n'
 import { clearAccessToken, getAccessToken } from '../auth/tokenStorage'
 
 interface ApiEnvelope<T> {
@@ -16,6 +17,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080
 export async function request<T>(path: string, options: RequestOptions = {}) {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
+  headers.set('Accept-Language', i18n.language)
 
   if (!options.skipAuth) {
     const token = getAccessToken()
@@ -36,7 +38,7 @@ export async function request<T>(path: string, options: RequestOptions = {}) {
     if (response.status === 401) {
       clearAccessToken()
     }
-    throw new Error(payload.message || '请求失败')
+    throw new Error(payload.message || i18n.t('errors.requestFailed', { ns: 'common' }))
   }
 
   return payload.data

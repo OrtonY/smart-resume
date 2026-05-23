@@ -21,7 +21,7 @@ public final class CurrentUserContext {
     public static AuthenticatedUser require() {
         AuthenticatedUser user = get();
         if (user == null) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Authentication is required");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.required");
         }
         return user;
     }
@@ -32,7 +32,7 @@ public final class CurrentUserContext {
 
     public static void requireAdmin() {
         if (!require().admin()) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Admin access is required");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.auth.adminRequired");
         }
     }
 

@@ -1,3 +1,4 @@
+import i18n from '../../../i18n'
 import { createExportFilename, downloadBlob } from './fileDownload'
 
 const A4_WIDTH_MM = 210
@@ -11,7 +12,7 @@ export async function exportResumePdf(previewRoot: HTMLElement, title: string) {
   const pages = Array.from(previewRoot.querySelectorAll<HTMLElement>('.resume-preview-paper--page'))
 
   if (pages.length === 0) {
-    throw new Error('未找到可导出的简历预览。')
+    throw new Error(i18n.t('export.noPreviewError', { ns: 'template' }))
   }
 
   await waitForImages(previewRoot)

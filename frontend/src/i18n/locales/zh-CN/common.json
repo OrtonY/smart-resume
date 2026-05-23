@@ -1,0 +1,57 @@
+{
+  "actions": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "copy": "复制",
+    "close": "关闭",
+    "submit": "提交",
+    "retry": "重试",
+    "reload": "重新加载",
+    "refresh": "刷新",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "create": "创建",
+    "add": "添加",
+    "remove": "移除",
+    "restore": "恢复",
+    "upload": "上传",
+    "download": "下载",
+    "send": "发送",
+    "stop": "停止",
+    "search": "搜索",
+    "details": "详情",
+    "collapse": "收起",
+    "expand": "展开",
+    "switch": "切换",
+    "apply": "应用",
+    "loading": "加载中..."
+  },
+  "status": {
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "saved": "已保存",
+    "saveFailed": "保存失败",
+    "pending": "待处理",
+    "success": "成功",
+    "failed": "失败"
+  },
+  "errors": {
+    "generic": "操作失败，请稍后重试。",
+    "loadFailed": "加载失败，请稍后重试。",
+    "requestFailed": "请求失败"
+  },
+  "language": {
+    "label": "语言",
+    "zh": "中",
+    "en": "EN",
+    "switchTo": "切换到 {{language}}"
+  },
+  "app": {
+    "title": "Smart Resume",
+    "loading": "Loading Smart Resume..."
+  }
+}

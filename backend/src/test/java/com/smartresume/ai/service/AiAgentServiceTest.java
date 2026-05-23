@@ -51,7 +51,6 @@ class AiAgentServiceTest {
         aiAgentService = new AiAgentService(aiChatService, aiChatHistoryService, resumeService, objectMapper);
         when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString()))
             .thenReturn("conv-test-1");
-        when(resumeService.getResume(anyString())).thenReturn(null);
     }
 
     /**

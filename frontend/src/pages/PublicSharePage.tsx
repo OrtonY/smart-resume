@@ -1,6 +1,7 @@
 import { Button, Card, Form, Input, Result, Spin, message } from 'antd'
 import { LockOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare, verifySharePassword } from '../features/resume/api/resumeApi'
@@ -23,6 +24,7 @@ function clearShareToken(shareCode: string) {
 
 export function PublicSharePage() {
   const { shareCode = '' } = useParams()
+  const { t } = useTranslation('share')
   const [resume, setResume] = useState<ResumeDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -44,7 +46,7 @@ export function PublicSharePage() {
       const shareToken = token || getShareToken(shareCode)
       setResume(await getPublicShare(shareCode, shareToken))
     } catch (error) {
-      const msg = error instanceof Error ? error.message : '无法加载分享的简历。'
+      const msg = error instanceof Error ? error.message : t('page.loadFailed')
       if (msg === 'Password required' || msg.includes('password') || msg.includes('Password')) {
         setNeedsPassword(true)
         clearShareToken(shareCode)
@@ -56,7 +58,7 @@ export function PublicSharePage() {
     } finally {
       setLoading(false)
     }
-  }, [messageApi, shareCode])
+  }, [messageApi, shareCode, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -73,7 +75,7 @@ export function PublicSharePage() {
       setShareToken(shareCode, token)
       await loadPublicShare(token)
     } catch (error) {
-      void messageApi.error(error instanceof Error ? error.message : '密码验证失败')
+      void messageApi.error(error instanceof Error ? error.message : t('page.verifyFailed'))
     } finally {
       setVerifying(false)
     }
@@ -85,15 +87,15 @@ export function PublicSharePage() {
         {contextHolder}
         <Card className="auth-card" bordered={false} style={{ width: 400, textAlign: 'center' }}>
           <LockOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
-          <h2 style={{ marginBottom: 8 }}>此分享链接需要密码</h2>
-          <p style={{ color: '#666', marginBottom: 24 }}>请输入密码以查看简历内容</p>
+          <h2 style={{ marginBottom: 8 }}>{t('passwordGate.title')}</h2>
+          <p style={{ color: '#666', marginBottom: 24 }}>{t('passwordGate.subtitle')}</p>
           <Form onFinish={handlePasswordSubmit} layout="vertical">
-            <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
-              <Input.Password placeholder="输入密码" size="large" autoFocus />
+            <Form.Item name="password" rules={[{ required: true, message: t('passwordGate.passwordRequired') }]}>
+              <Input.Password placeholder={t('passwordGate.passwordPlaceholder')} size="large" autoFocus />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={verifying} block size="large">
-                验证
+                {t('passwordGate.verifyButton')}
               </Button>
             </Form.Item>
           </Form>
@@ -108,12 +110,12 @@ export function PublicSharePage() {
       <Card className="auth-card" bordered={false} style={{ width: 'min(960px, 100%)' }}>
         {loading ? (
           <div className="full-page-center" style={{ minHeight: 320 }}>
-            <Spin size="large" tip="正在加载分享的简历..." />
+            <Spin size="large" tip={t('page.loading')} />
           </div>
         ) : resume ? (
           <ResumePreview resume={resume} templates={previewTemplates} previewMode="a4-paged" />
         ) : (
-          <Result status="404" title="分享链接不可用" subTitle={errorMessage || '此公开分享可能已过期或不存在。'} />
+          <Result status="404" title={t('notFound.title')} subTitle={errorMessage || t('notFound.subtitle')} />
         )}
 
         {!loading && !resume && !needsPassword ? <EmptyPreview /> : null}

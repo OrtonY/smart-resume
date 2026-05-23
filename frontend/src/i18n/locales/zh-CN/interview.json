@@ -1,0 +1,152 @@
+{
+  "center": {
+    "tag": "Interview Center",
+    "title": "面试中心",
+    "description": "创建与简历绑定或不绑定的模拟面试，暂停后可继续，结束后可回看完整过程和分析报告。",
+    "backToHome": "返回首页",
+    "newInterview": "新建面试"
+  },
+  "filter": {
+    "searchPlaceholder": "搜索标题或 JD",
+    "companyPlaceholder": "筛选目标公司",
+    "resumePlaceholder": "关联简历",
+    "statusPlaceholder": "面试状态"
+  },
+  "list": {
+    "empty": "还没有面试记录。",
+    "noJd": "未提供岗位 JD，将主要依据简历和角色设定出题。",
+    "roundLabel": "第 {{current}} 轮",
+    "noResume": "未绑定简历",
+    "updatedAt": "更新于 {{time}}"
+  },
+  "create": {
+    "title": "新建面试",
+    "resumeLabel": "关联简历（可选）",
+    "resumePlaceholder": "选择简历",
+    "resumeOrJdRequired": "简历和 JD 至少填写一个。",
+    "titleLabel": "面试标题",
+    "titleRequired": "请输入面试标题。",
+    "titlePlaceholder": "例如：Java 后端 Leader 面",
+    "companyLabel": "目标公司（可选）",
+    "companyExtra": "仅在创建时调用 AI 提炼该公司的业务和特点，后续面试直接复用这些信息。",
+    "companyPlaceholder": "例如：字节跳动、阿里云、腾讯云",
+    "jdLabel": "岗位 JD（可选）",
+    "jdPlaceholder": "粘贴或输入岗位职责、任职要求。若不填写，则主要基于简历和面试官角色出题。",
+    "difficultyLabel": "面试难度",
+    "difficultyRequired": "请选择面试难度。",
+    "rolesLabel": "面试官",
+    "rolesRequired": "请至少选择一位面试官角色。",
+    "rolesPlaceholder": "选择或输入一个或多个角色",
+    "tipDragSort": "支持拖拽排序",
+    "tipFirstRole": "首位角色会最先开始",
+    "tipMixRoles": "可混合预设角色和自定义角色",
+    "startInterview": "开始面试",
+    "creatingOverlay": "AI 正在准备面试题目和公司背景，请稍候..."
+  },
+  "detail": {
+    "roundTag": "第 {{current}} / {{total}} 轮",
+    "targetCompanyLabel": "目标公司",
+    "companyPopoverEmpty": "未提炼到可复用的公司背景，本场面试将主要依据简历、JD 和面试官角色进行。",
+    "companyChipLabel": "查看 {{company}} 的公司信息",
+    "companyChipHint": "悬停查看画像",
+    "continueInterview": "继续面试",
+    "nextRound": "下一轮",
+    "nextRoundTitle": "下一轮面试官",
+    "pause": "暂停",
+    "pauseTitle": "暂停面试",
+    "endConfirm": "确定结束面试？",
+    "endOk": "结束",
+    "endTitle": "结束面试",
+    "viewReport": "查看报告",
+    "backToCenter": "返回面试中心",
+    "roundTabLabel": "第 {{index}} 轮 · {{role}}",
+    "notFound": "没有找到这场面试。",
+    "nextRoundOverlay": "AI 面试官准备中..."
+  },
+  "message": {
+    "candidate": "候选人",
+    "interviewer": "面试官",
+    "aborted": "回复中断",
+    "regenerate": "重新生成",
+    "thinking": "思考中...",
+    "composerPlaceholder": "输入你的回答...",
+    "disabledPlaceholder": "当前状态下无法继续作答。",
+    "sendAnswer": "发送回答",
+    "viewingHistory": "当前正在查看历史轮次，只读模式"
+  },
+  "report": {
+    "title": "面试报告",
+    "modalTitle": "面试报告",
+    "pendingNotEnded": "面试结束后将自动生成报告",
+    "pendingEnded": "报告尚未生成",
+    "generate": "生成报告",
+    "generating": "AI 正在分析面试表现，生成报告中...",
+    "failed": "报告生成失败",
+    "regenerate": "重新生成",
+    "dataError": "报告数据异常",
+    "skillAssessment": "能力评估",
+    "technicalAbility": "技术能力",
+    "communication": "沟通表达",
+    "problemSolving": "问题解决",
+    "professionalism": "专业素养",
+    "strengths": "亮点",
+    "improvements": "改进建议",
+    "roundsDetail": "各轮面试详情",
+    "scoreUnit": "分",
+    "candidateAnswer": "候选人回答：",
+    "feedback": "评价：",
+    "referenceAnswer": "参考答案：",
+    "learningResources": "学习资源推荐"
+  },
+  "roleSorter": {
+    "empty": "先选择至少一位面试官，再拖动调整轮次顺序。",
+    "hint": "拖动右侧手柄即可调整顺序，排在最前面的面试官会优先开始。",
+    "roundLabel": "第 {{index}} 轮",
+    "dragAria": "拖动调整 {{role}} 的顺序"
+  },
+  "difficulty": {
+    "easy": "简单",
+    "medium": "中等",
+    "hard": "困难"
+  },
+  "status": {
+    "inProgress": "进行中",
+    "paused": "已暂停",
+    "ended": "已结束"
+  },
+  "reportStatus": {
+    "ready": "报告已生成",
+    "generating": "报告生成中",
+    "failed": "生成失败",
+    "pending": "待生成"
+  },
+  "companyContext": {
+    "ready": "公司信息已注入",
+    "failed": "公司信息未生效",
+    "notRequested": "未使用公司信息"
+  },
+  "interviewerRoles": {
+    "hr": "HR",
+    "leader": "Leader",
+    "projectDeepDive": "项目深挖",
+    "scenario": "场景题",
+    "behavioral": "行为面试"
+  },
+  "feedback": {
+    "loadResumeFailed": "无法加载简历选项。",
+    "loadListFailed": "无法加载面试列表。",
+    "loadDetailFailed": "无法加载面试详情。",
+    "operationFailed": "操作失败。",
+    "createCompanyFailed": "面试已开始，但目标公司的信息提炼失败，本场会按普通面试继续。",
+    "createSuccess": "面试已开始。",
+    "createFailed": "创建面试失败。",
+    "autoContinued": "面试已自动继续。",
+    "paused": "面试已暂停。",
+    "continued": "面试已继续。",
+    "ended": "面试已结束，报告正在生成，请稍后查看。",
+    "nextRound": "已进入下一轮面试。",
+    "emptyMessage": "请输入回答内容。",
+    "sendFailed": "发送失败。",
+    "regenerateFailed": "重新生成失败。"
+  }
+}
