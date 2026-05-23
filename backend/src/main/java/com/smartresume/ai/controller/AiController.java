@@ -110,12 +110,12 @@ public class AiController {
     public ApiResponse<ListModelsResponse> listModels(@Valid @RequestBody ListModelsRequest request) {
         ChatModelProvider provider = chatModelProviderRegistry.findProvider(request.vendor())
             .orElseGet(() -> chatModelProviderRegistry.findProvider("OpenAI")
-                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Unsupported vendor: " + request.vendor())));
+                .orElseThrow(() -> AppException.of(HttpStatus.BAD_REQUEST, "error.ai.unsupportedVendor", request.vendor())));
         try {
             List<String> models = provider.listModels(request.baseUrl(), request.apiKey());
             return ApiResponse.success(new ListModelsResponse(models));
         } catch (Exception e) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Failed to fetch models: " + e.getMessage());
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.ai.modelsFetchFailed", e.getMessage());
         }
     }
 }

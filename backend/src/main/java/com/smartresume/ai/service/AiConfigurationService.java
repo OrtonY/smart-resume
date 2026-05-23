@@ -38,7 +38,7 @@ public class AiConfigurationService {
     public AiConfigurationEntity requireConfiguration() {
         AiConfigurationEntity configuration = aiConfigurationMapper.selectOneById(CurrentUserContext.requireUserId());
         if (configuration == null) {
-            throw new AppException(HttpStatus.PRECONDITION_REQUIRED, "AI configuration has not been configured");
+            throw AppException.of(HttpStatus.PRECONDITION_REQUIRED, "error.ai.notConfigured");
         }
         return configuration;
     }
@@ -71,7 +71,7 @@ public class AiConfigurationService {
         }
 
         if (apiKey.isBlank() && isApiKeyRequired(vendor, metadata) && !hasExistingApiKey(configuration)) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "API key is required");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.ai.apiKeyRequired");
         }
 
         configuration.setVendor(vendor);

@@ -1208,3 +1208,36 @@ Updated README (EN/CN) to reflect multi-user auth flow, added System-Config scre
 ### Next Steps
 
 - None - task complete
+
+
+## Session 37: i18n: frontend and backend internationalization
+
+**Date**: 2026-05-23
+**Task**: i18n: frontend and backend internationalization
+**Branch**: `feat/i18n`
+
+### Summary
+
+Added react-i18next with zh-CN/en-US locales (8 namespaces), Spring MessageSource with Accept-Language resolution, migrated all hardcoded Chinese to translation keys, bilingual template catalog, and fixed test/lint issues.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c0e2b1b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

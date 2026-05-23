@@ -1,5 +1,6 @@
 import { Empty } from "antd";
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
   createTemplateStyleVariables,
@@ -102,6 +103,7 @@ export function ResumePreview({
   previewMode = "auto",
   onClick,
 }: ResumePreviewProps) {
+  const { t } = useTranslation('workspace');
   const stageRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLElement | null>(null);
   const [previewMetrics, setPreviewMetrics] = useState({
@@ -110,11 +112,11 @@ export function ResumePreview({
     pageSlices: [{ offset: 0, inset: 0, visibleHeight: A4_PREVIEW_HEIGHT_PX }] as PageSlice[],
   });
   const template = resolveResumeTemplate(templates, resume.templateKey);
-  const model = createPreviewModel(resume, template);
+  const model = createPreviewModel(resume, template, t);
   const layout = normalizeResumeLayout(resume.layout);
   const orderedKeys = normalizeResumeSectionOrder(sectionOrder ?? layout.sectionOrder);
   const hiddenKeySet = new Set(hiddenSections ?? layout.hiddenSections);
-  const sectionNodes = createSectionNodes(model, hiddenKeySet);
+  const sectionNodes = createSectionNodes(model, hiddenKeySet, t);
   const templateStyleVariables = createTemplateStyleVariables(template);
   const isFixedA4Preview = previewMode === "a4-fit";
   const isPagedA4Preview = previewMode === "a4-paged";
@@ -555,6 +557,7 @@ function EditorialPreview({
   sectionNodes: Record<ResumeSectionKey, ReactNode | null>;
   orderedKeys: ResumeSectionKey[];
 }) {
+  const { t } = useTranslation('workspace');
   const showSummary = Boolean(sectionNodes.summary);
 
   return (
@@ -564,11 +567,11 @@ function EditorialPreview({
           <ResumeHeader model={model} />
         </div>
         <div className="resume-template__hero-panel">
-          <h2>个人简介</h2>
+          <h2>{t('preview.summary')}</h2>
           {showSummary ? (
             <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
           ) : (
-            <p className="resume-template__paragraph">让结构保持克制，把最强的经历和成果放到最前面。</p>
+            <p className="resume-template__paragraph">{t('preview.summaryFallback')}</p>
           )}
         </div>
       </header>
@@ -718,69 +721,74 @@ function PreviewSection({
 function createPreviewModel(
   resume: Pick<ResumeDetail, "title" | "templateKey" | "content" | "layout">,
   template: ResumeTemplateDefinition,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ): PreviewModel {
   const { content } = resume;
 
   return {
     template,
     name: content.personalInfo.fullName || resume.title,
-    headline: content.personalInfo.headline || "用结构化表达讲清你的职业价值。",
+    headline: content.personalInfo.headline || t("preview.headlineFallback"),
     summary: content.personalSummary.trim(),
     avatar: (content.personalInfo.avatar ?? "").trim(),
     contact: [
-      { label: "电话", value: content.personalInfo.phone },
-      { label: "邮箱", value: content.personalInfo.email },
-      { label: "城市", value: content.personalInfo.city },
-      { label: "链接", value: content.personalInfo.website },
-      { label: "期望薪资", value: content.personalInfo.expectedSalary },
-      { label: "年龄", value: formatAge(content.personalInfo.age) ?? "" },
+      { label: t("preview.contact.phone"), value: content.personalInfo.phone },
+      { label: t("preview.contact.email"), value: content.personalInfo.email },
+      { label: t("preview.contact.city"), value: content.personalInfo.city },
+      { label: t("preview.contact.website"), value: content.personalInfo.website },
+      { label: t("preview.contact.expectedSalary"), value: content.personalInfo.expectedSalary },
+      { label: t("preview.contact.age"), value: formatAge(content.personalInfo.age, t) ?? "" },
     ].filter((item) => item.value.trim().length > 0),
     education: content.education.map((item) => ({
-      title: item.school || "学校",
+      title: item.school || t("preview.fallback.school"),
       subtitle: joinParts([item.degree, item.major]),
-      meta: formatPeriod(item.startDate, item.endDate),
+      meta: formatPeriod(item.startDate, item.endDate, t),
       body: item.description,
     })),
     work: content.workExperience.map((item) => ({
-      title: item.company || "公司",
-      subtitle: item.role || "职位",
-      meta: formatPeriod(item.startDate, item.endDate),
+      title: item.company || t("preview.fallback.company"),
+      subtitle: item.role || t("preview.fallback.role"),
+      meta: formatPeriod(item.startDate, item.endDate, t),
       body: item.description,
     })),
     projects: content.projectExperience.map((item) => ({
-      title: item.name || "项目",
-      subtitle: item.role || "角色",
-      meta: formatPeriod(item.startDate, item.endDate),
+      title: item.name || t("preview.fallback.project"),
+      subtitle: item.role || t("preview.fallback.projectRole"),
+      meta: formatPeriod(item.startDate, item.endDate, t),
       body: item.description,
     })),
     honors: content.honors.map((item) => ({
-      title: item.title || "荣誉奖项",
+      title: item.title || t("preview.fallback.honor"),
       subtitle: item.issuer,
       meta: item.awardedAt,
       body: item.description,
     })),
     certificates: content.certificates.map((item) => ({
-      title: item.name || "证书",
+      title: item.name || t("preview.fallback.certificate"),
       subtitle: item.issuer,
       meta: joinParts([item.issuedAt, item.credentialId]),
     })),
-    skills: content.skills.map((item) => joinParts([item.name || "技能", item.level])),
+    skills: content.skills.map((item) => joinParts([item.name || t("preview.fallback.skill"), item.level])),
   };
 }
 
-function createSectionNodes(model: PreviewModel, hiddenSections: Set<ResumeSectionKey>): Record<ResumeSectionKey, ReactNode | null> {
+function createSectionNodes(
+  model: PreviewModel,
+  hiddenSections: Set<ResumeSectionKey>,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): Record<ResumeSectionKey, ReactNode | null> {
   return {
     summary: hiddenSections.has("summary") ? null : (
-      <PreviewSection title="个人简介" hidden={!model.summary}>
+      <PreviewSection title={t("preview.summary")} hidden={!model.summary}>
         <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
       </PreviewSection>
     ),
-    workExperience: hiddenSections.has("workExperience") ? null : <TimelineSection title="工作经历" items={model.work} />,
-    projectExperience: hiddenSections.has("projectExperience") ? null : <TimelineSection title="项目经历" items={model.projects} />,
-    education: hiddenSections.has("education") ? null : <TimelineSection title="教育经历" items={model.education} inlineSubtitle />,
-    skills: hiddenSections.has("skills") ? null : <SkillSection title="技能特长" items={model.skills} tone="plain" />,
-    honors: hiddenSections.has("honors") ? null : <TimelineSection title="荣誉奖项" items={model.honors} compact />,
-    certificates: hiddenSections.has("certificates") ? null : <TimelineSection title="资格证书" items={model.certificates} compact />,
+    workExperience: hiddenSections.has("workExperience") ? null : <TimelineSection title={t("preview.workExperience")} items={model.work} />,
+    projectExperience: hiddenSections.has("projectExperience") ? null : <TimelineSection title={t("preview.projectExperience")} items={model.projects} />,
+    education: hiddenSections.has("education") ? null : <TimelineSection title={t("preview.education")} items={model.education} inlineSubtitle />,
+    skills: hiddenSections.has("skills") ? null : <SkillSection title={t("preview.skills")} items={model.skills} tone="plain" />,
+    honors: hiddenSections.has("honors") ? null : <TimelineSection title={t("preview.honors")} items={model.honors} compact />,
+    certificates: hiddenSections.has("certificates") ? null : <TimelineSection title={t("preview.certificates")} items={model.certificates} compact />,
   };
 }
 
@@ -802,7 +810,7 @@ function joinParts(parts: Array<string | undefined>) {
     .join(" · ");
 }
 
-function formatPeriod(startDate?: string, endDate?: string) {
+function formatPeriod(startDate: string | undefined, endDate: string | undefined, t: (key: string) => string) {
   const start = (startDate ?? "").trim();
   const end = (endDate ?? "").trim();
 
@@ -810,24 +818,25 @@ function formatPeriod(startDate?: string, endDate?: string) {
     return "";
   }
 
-  return `${start || "开始时间"} - ${end || "至今"}`;
+  return `${start || t("preview.period.from")} - ${end || t("preview.period.until")}`;
 }
 
-function formatAge(age?: string): string | null {
+function formatAge(age: string | undefined, t: (key: string) => string): string | null {
   const trimmed = (age ?? "").trim();
   if (!trimmed) return null;
   const n = Number.parseInt(trimmed, 10);
   if (!Number.isInteger(n)) return null;
   if (String(n) !== trimmed) return null;
   if (n < 1 || n > 150) return null;
-  return `${n}岁`;
+  return `${n}${t("preview.ageSuffix")}`;
 }
 
 export function EmptyPreview() {
+  const { t } = useTranslation('workspace');
   return (
     <div className="glass-card">
       <div className="empty-state">
-        <Empty description="创建或打开一份简历后，这里会实时显示预览。" />
+        <Empty description={t('preview.empty')} />
       </div>
     </div>
   );

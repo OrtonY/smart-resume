@@ -1,5 +1,6 @@
 import { UndoOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, Input, Tooltip, Typography } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { isLikelySingleColor } from '../templateColorTokens'
 
 const { Text } = Typography
@@ -20,6 +21,7 @@ interface ColorFieldProps {
  * overwrite the user's data.
  */
 export function ColorField({ label, value, onChange, onReset, canReset }: ColorFieldProps) {
+  const { t } = useTranslation('template')
   const editable = isLikelySingleColor(value)
 
   return (
@@ -27,12 +29,12 @@ export function ColorField({ label, value, onChange, onReset, canReset }: ColorF
       <div className="template-editor-field__label-row">
         <Text type="secondary">{label}</Text>
         {canReset && onReset ? (
-          <Tooltip title="撤销该字段未保存的修改">
+          <Tooltip title={t('color.resetTooltip')}>
             <Button
               type="text"
               size="small"
               icon={<UndoOutlined />}
-              aria-label={`重置${label}`}
+              aria-label={t('color.resetAriaLabel', { label })}
               onClick={onReset}
             />
           </Tooltip>
@@ -50,7 +52,7 @@ export function ColorField({ label, value, onChange, onReset, canReset }: ColorF
         <Input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="无法识别为颜色，可手动编辑"
+          placeholder={t('color.fallbackPlaceholder')}
         />
       )}
     </div>

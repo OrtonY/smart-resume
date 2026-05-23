@@ -6,6 +6,7 @@ import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
+import com.smartresume.common.util.LocalizedFields;
 import com.smartresume.template.domain.ResumeTemplateEntity;
 import com.smartresume.template.domain.table.ResumeTemplateEntityTableDef;
 import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
@@ -63,7 +64,7 @@ public class TemplateCatalogService {
         String templateKey = request.key().trim();
         ResumeTemplateEntity existing = resumeTemplateMapper.selectOneById(templateKey);
         if (existing != null && !Boolean.TRUE.equals(existing.getDeleted())) {
-            throw new AppException(HttpStatus.CONFLICT, "Template key already exists");
+            throw AppException.of(HttpStatus.CONFLICT, "error.template.keyExists");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -135,7 +136,7 @@ public class TemplateCatalogService {
 
     public TemplateCatalogResponse validateCurrentUserTemplateAccess(String templateKey) {
         return resolveAccessibleTemplate(templateKey, CurrentUserContext.requireUserId())
-            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Template not found"));
+            .orElseThrow(() -> AppException.of(HttpStatus.NOT_FOUND, "error.template.notFound"));
     }
 
     public TemplateCatalogResponse resolveTemplateForUser(String templateKey, long userId) {
@@ -180,10 +181,10 @@ public class TemplateCatalogService {
         long userId = CurrentUserContext.requireUserId();
         ResumeTemplateEntity entity = requireActiveTemplate(templateKey);
         if (Boolean.TRUE.equals(entity.getBuiltIn())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Built-in templates cannot be modified");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.template.builtInImmutable");
         }
         if (!Long.valueOf(userId).equals(entity.getUserId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Template not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.template.notFound");
         }
         return entity;
     }
@@ -191,7 +192,7 @@ public class TemplateCatalogService {
     private ResumeTemplateEntity requireActiveTemplate(String templateKey) {
         ResumeTemplateEntity entity = resumeTemplateMapper.selectOneById(templateKey);
         if (entity == null || Boolean.TRUE.equals(entity.getDeleted())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Template not found");
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.template.notFound");
         }
         return entity;
     }
@@ -235,29 +236,36 @@ public class TemplateCatalogService {
 
     private void applyEditableFields(
         ResumeTemplateEntity entity,
-        String name,
-        String summary,
-        String category,
+        Object name,
+        Object summary,
+        Object category,
         String layout,
         TemplateTheme theme,
         TemplatePreview preview,
         LocalDateTime now
     ) {
-        entity.setName(name.trim());
-        entity.setSummary(summary.trim());
-        entity.setCategory(category.trim());
+        entity.setName(encodeLocalized(name));
+        entity.setSummary(encodeLocalized(summary));
+        entity.setCategory(encodeLocalized(category));
         entity.setLayout(layout.trim());
         entity.setThemeJson(toJson(theme));
         entity.setPreviewJson(toJson(preview));
         entity.setUpdatedAt(now);
     }
 
+    private String encodeLocalized(Object field) {
+        if (field instanceof CharSequence s) {
+            return s.toString().trim();
+        }
+        return LocalizedFields.encodeForStorage(field, objectMapper);
+    }
+
     private TemplateCatalogResponse toResponse(ResumeTemplateEntity entity) {
         return new TemplateCatalogResponse(
             entity.getKey(),
-            entity.getName(),
-            entity.getSummary(),
-            entity.getCategory(),
+            LocalizedFields.decodeStored(entity.getName(), objectMapper),
+            LocalizedFields.decodeStored(entity.getSummary(), objectMapper),
+            LocalizedFields.decodeStored(entity.getCategory(), objectMapper),
             entity.getLayout(),
             fromJson(entity.getThemeJson(), TemplateTheme.class),
             fromJson(entity.getPreviewJson(), TemplatePreview.class),
@@ -298,18 +306,18 @@ public class TemplateCatalogService {
                 ))
                 .collect(Collectors.toList());
             if (catalog.isEmpty()) {
-                throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Template backup catalog is empty");
+                throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.template.backupEmpty");
             }
             return List.copyOf(catalog);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to load template backup catalog");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.template.backupLoadFailed");
         }
     }
 
     private void validateLayout(String layout) {
         String normalizedLayout = layout == null ? "" : layout.trim();
         if (!SUPPORTED_LAYOUTS.contains(normalizedLayout)) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Unsupported template layout");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.template.unsupportedLayout");
         }
     }
 
@@ -317,7 +325,7 @@ public class TemplateCatalogService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to serialize template metadata");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.template.metadataSerializeFailed");
         }
     }
 
@@ -325,7 +333,7 @@ public class TemplateCatalogService {
         try {
             return objectMapper.readValue(json, targetClass);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse stored template metadata");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.template.metadataParseFailed");
         }
     }
 }

@@ -56,12 +56,12 @@ public class SystemAccessService {
     public AccessTokenResponse register(String username, String rawPassword) {
         boolean firstUser = !hasUsers();
         if (!firstUser && !registrationEnabled()) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Registration is currently disabled");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.system.registrationDisabled");
         }
 
         String normalizedUsername = normalizeUsername(username);
         if (findUserByUsername(normalizedUsername) != null) {
-            throw new AppException(HttpStatus.CONFLICT, "Username already exists");
+            throw AppException.of(HttpStatus.CONFLICT, "error.system.usernameExists");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -79,7 +79,7 @@ public class SystemAccessService {
     public AccessTokenResponse login(String username, String rawPassword) {
         UserEntity user = findUserByUsername(normalizeUsername(username));
         if (user == null || !passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Incorrect username or password");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.system.invalidCredentials");
         }
         return issueAccessToken(user);
     }
@@ -88,7 +88,7 @@ public class SystemAccessService {
     public void changePassword(String currentPassword, String newPassword) {
         UserEntity user = requireUser(CurrentUserContext.requireUserId());
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.system.currentPasswordIncorrect");
         }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());
@@ -109,7 +109,7 @@ public class SystemAccessService {
         AuthTokenService.TokenPayload payload = authTokenService.verifyToken(token);
         UserEntity user = requireUser(payload.userId());
         if (payload.credentialVersion() != credentialVersion(user)) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Access token is no longer valid");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenRevoked");
         }
         return new CurrentUserContext.AuthenticatedUser(
             user.getId(),
@@ -157,7 +157,7 @@ public class SystemAccessService {
     private UserEntity requireUser(long userId) {
         UserEntity user = userMapper.selectOneById(userId);
         if (user == null) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "User does not exist");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.system.userNotFound");
         }
         return user;
     }

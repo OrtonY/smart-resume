@@ -68,50 +68,44 @@ export interface InterviewListQuery {
   pageSize?: number
 }
 
-export const INTERVIEW_DIFFICULTY_OPTIONS: Array<{ value: InterviewDifficulty; label: string }> = [
-  { value: 'EASY', label: '简单' },
-  { value: 'MEDIUM', label: '中等' },
-  { value: 'HARD', label: '困难' },
-]
-
-export const INTERVIEW_STATUS_OPTIONS: Array<{ value: InterviewStatus; label: string }> = [
-  { value: 'IN_PROGRESS', label: '进行中' },
-  { value: 'PAUSED', label: '已暂停' },
-  { value: 'ENDED', label: '已结束' },
-]
+import type { TFunction } from 'i18next'
 
 export const INTERVIEWER_ROLE_OPTIONS = ['HR', 'Leader', '项目深挖', '场景题', '行为面试'] as const
 
-export function interviewDifficultyLabel(difficulty: InterviewDifficulty) {
-  return INTERVIEW_DIFFICULTY_OPTIONS.find((item) => item.value === difficulty)?.label ?? difficulty
+export function getInterviewDifficultyOptions(t: TFunction): Array<{ value: InterviewDifficulty; label: string }> {
+  return [
+    { value: 'EASY', label: t('interview:difficulty.easy') },
+    { value: 'MEDIUM', label: t('interview:difficulty.medium') },
+    { value: 'HARD', label: t('interview:difficulty.hard') },
+  ]
 }
 
-export function interviewStatusLabel(status: InterviewStatus) {
-  return INTERVIEW_STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status
+export function getInterviewStatusOptions(t: TFunction): Array<{ value: InterviewStatus; label: string }> {
+  return [
+    { value: 'IN_PROGRESS', label: t('interview:status.inProgress') },
+    { value: 'PAUSED', label: t('interview:status.paused') },
+    { value: 'ENDED', label: t('interview:status.ended') },
+  ]
 }
 
-export function interviewReportStatusLabel(status: InterviewReportStatus) {
-  switch (status) {
-    case 'READY':
-      return '报告已生成'
-    case 'GENERATING':
-      return '报告生成中'
-    case 'FAILED':
-      return '生成失败'
-    default:
-      return '待生成'
-  }
+export function interviewDifficultyLabel(difficulty: InterviewDifficulty, t: TFunction) {
+  const key = { EASY: 'easy', MEDIUM: 'medium', HARD: 'hard' }[difficulty] ?? difficulty
+  return t(`interview:difficulty.${key}`)
 }
 
-export function companyContextStatusLabel(status: CompanyContextStatus) {
-  switch (status) {
-    case 'READY':
-      return '公司信息已注入'
-    case 'FAILED':
-      return '公司信息未生效'
-    default:
-      return '未使用公司信息'
-  }
+export function interviewStatusLabel(status: InterviewStatus, t: TFunction) {
+  const key = { IN_PROGRESS: 'inProgress', PAUSED: 'paused', ENDED: 'ended' }[status] ?? status
+  return t(`interview:status.${key}`)
+}
+
+export function interviewReportStatusLabel(status: InterviewReportStatus, t: TFunction) {
+  const key = { READY: 'ready', GENERATING: 'generating', FAILED: 'failed', PENDING: 'pending' }[status] ?? 'pending'
+  return t(`interview:reportStatus.${key}`)
+}
+
+export function companyContextStatusLabel(status: CompanyContextStatus, t: TFunction) {
+  const key = { READY: 'ready', FAILED: 'failed', NOT_REQUESTED: 'notRequested' }[status] ?? 'notRequested'
+  return t(`interview:companyContext.${key}`)
 }
 
 export interface QuestionEvaluation {

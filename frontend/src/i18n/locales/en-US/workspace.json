@@ -1,0 +1,341 @@
+{
+  "hero": {
+    "tag": "Smart Resume",
+    "title": "Smart Resume",
+    "subtitle": "Pick a resume to start editing and see live preview."
+  },
+  "actions": {
+    "templateGallery": "Templates",
+    "interviewCenter": "Interview Center",
+    "recycleBin": "Recycle Bin",
+    "lockWorkspace": "Lock workspace",
+    "backToList": "Back to list",
+    "backToHome": "Back to home",
+    "backToWorkspace": "Back to workspace",
+    "backToResumeList": "Back to resume list",
+    "openShareDialog": "View share links",
+    "openResume": "Open resume",
+    "previewLabel": "Resume preview"
+  },
+  "list": {
+    "myResumes": "My resumes",
+    "totalCount": "{{count}}",
+    "perPageHint": "Up to {{count}} resumes per page",
+    "empty": "No resumes yet. Create one to get started.",
+    "previewGenerating": "Generating preview",
+    "openResume": "Open {{title}}",
+    "previewLabel": "{{title}} preview",
+    "tagDeleted": "Deleted",
+    "tagEditable": "Editable",
+    "deletedAt": "Deleted at",
+    "updatedAt": "Updated at"
+  },
+  "card": {
+    "restore": "Restore",
+    "copy": "Copy",
+    "delete": "Delete"
+  },
+  "copyDialog": {
+    "title": "Copy resume",
+    "okText": "Copy",
+    "cancelText": "Cancel",
+    "prompt": "Enter a name for the new resume:",
+    "placeholder": "New resume name",
+    "copySuffix": "Copy",
+    "warningEmpty": "Please enter a resume name.",
+    "errorFailed": "Failed to copy resume."
+  },
+  "feedback": {
+    "loadListFailed": "Unable to load resume list.",
+    "loadDetailFailed": "Unable to load resume details.",
+    "saveAutoFailed": "Auto-save failed.",
+    "moveToBinSuccess": "Resume moved to recycle bin.",
+    "copySuccess": "Resume copied.",
+    "restoreSuccess": "Resume restored.",
+    "exportPdfStart": "PDF download started.",
+    "exportPdfFailed": "Export failed. Please try again.",
+    "exportPreviewMissing": "No resume preview found to export.",
+    "shareCopiedLatest": "Latest version share link copied.",
+    "shareCopiedSnapshot": "Snapshot share link copied.",
+    "loadShareLinksFailed": "Unable to load share links.",
+    "refreshShareLinksFailed": "Unable to refresh share links."
+  },
+  "saveState": {
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
+    "idle": "Pending save"
+  },
+  "editor": {
+    "loading": "Loading resume editor...",
+    "missing": "This resume was not found. Return to the list and try again.",
+    "templateSyncing": "Syncing template catalog",
+    "titlePlaceholder": "Resume title",
+    "modifyTemplate": "Change template",
+    "interview": "Interview",
+    "interviewMenu": {
+      "create": "Start interview",
+      "related": "Related interviews"
+    },
+    "share": "Share",
+    "exportPdf": "Export PDF",
+    "moduleCount": "{{count}} modules",
+    "structureTitle": "Resume structure",
+    "structureDescription": "Reorder and toggle visibility here. The preview updates live.",
+    "fixedTag": "Fixed",
+    "hiddenTag": "Hidden",
+    "previewHidden": "Hidden in preview",
+    "previewHint": "Click the preview to open the standard A4 view in the center of the screen.",
+    "previewModalTitle": "Standard A4 preview",
+    "dragHandleAria": "Drag {{title}}",
+    "deleteEntry": "Delete",
+    "addEntry": "Add entry",
+    "noEntries": "No entries yet",
+    "emptyPreview": "Create or open a resume to see the live preview here."
+  },
+  "modules": {
+    "personalInfo": {
+      "title": "Personal info",
+      "description": "Name, role, phone, email and personal links.",
+      "avatarTitle": "Avatar",
+      "avatarHint": "Uploads are stored as base64. Use a square headshot under 1 MB.",
+      "uploadAvatar": "Upload avatar",
+      "changeAvatar": "Change avatar",
+      "removeAvatar": "Remove avatar",
+      "avatarOnlyImage": "Only image files are supported.",
+      "avatarTooLarge": "Avatar image must be under 1 MB.",
+      "avatarUpdated": "Avatar updated.",
+      "avatarReadFailed": "Failed to read avatar. Please try again.",
+      "fields": {
+        "fullName": "Full name",
+        "headline": "Title / headline",
+        "phone": "Phone",
+        "email": "Email",
+        "city": "City",
+        "website": "Website",
+        "expectedSalary": "Expected salary",
+        "age": "Age"
+      },
+      "placeholder": {
+        "fullName": "Full name",
+        "headline": "Title / headline",
+        "phone": "Phone",
+        "email": "Email",
+        "city": "City",
+        "website": "Website / portfolio",
+        "expectedSalary": "Expected salary",
+        "age": "Age"
+      }
+    },
+    "summary": {
+      "title": "Summary",
+      "description": "A short paragraph that captures your positioning and highlights.",
+      "label": "Summary",
+      "placeholder": "Summarize your strengths, focus and key wins. (Markdown supported)"
+    },
+    "workExperience": {
+      "title": "Work experience",
+      "description": "Organize companies, roles and impact in chronological order.",
+      "entryTitle": "Work experience {{index}}",
+      "fields": {
+        "company": "Company",
+        "role": "Role",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Responsibilities"
+      },
+      "placeholder": {
+        "company": "Company",
+        "role": "Role",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Responsibilities, scope and impact (Markdown supported)"
+      }
+    },
+    "projectExperience": {
+      "title": "Projects",
+      "description": "Highlight key projects, your role and the impact.",
+      "entryTitle": "Project {{index}}",
+      "fields": {
+        "name": "Project name",
+        "role": "Role",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Project description"
+      },
+      "placeholder": {
+        "name": "Project name",
+        "role": "Role",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Project description, stack and impact (Markdown supported)"
+      }
+    },
+    "education": {
+      "title": "Education",
+      "description": "Show schools, degrees and academic background.",
+      "entryTitle": "Education {{index}}",
+      "fields": {
+        "school": "School",
+        "degree": "Degree",
+        "major": "Major",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Highlights"
+      },
+      "placeholder": {
+        "school": "School",
+        "degree": "Degree",
+        "major": "Major",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Highlights (Markdown supported)"
+      }
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "List skill tags and proficiency levels.",
+      "entryTitle": "Skill {{index}}",
+      "fields": {
+        "name": "Skill",
+        "level": "Proficiency"
+      },
+      "placeholder": {
+        "name": "Skill",
+        "level": "Proficiency / level"
+      }
+    },
+    "honors": {
+      "title": "Honors & awards",
+      "description": "Add external recognition or internal honors.",
+      "entryTitle": "Award {{index}}",
+      "fields": {
+        "title": "Award",
+        "issuer": "Issuer",
+        "awardedAt": "Award date",
+        "description": "Description"
+      },
+      "placeholder": {
+        "title": "Award",
+        "issuer": "Issuer",
+        "awardedAt": "Award date",
+        "description": "Description (Markdown supported)"
+      }
+    },
+    "certificates": {
+      "title": "Certificates",
+      "description": "Show qualifications, certificates and credential IDs.",
+      "entryTitle": "Certificate {{index}}",
+      "fields": {
+        "name": "Certificate",
+        "issuer": "Issuer",
+        "issuedAt": "Issued date",
+        "credentialId": "Credential ID"
+      },
+      "placeholder": {
+        "name": "Certificate",
+        "issuer": "Issuer",
+        "issuedAt": "Issued date",
+        "credentialId": "Credential ID"
+      }
+    }
+  },
+  "preview": {
+    "summary": "Summary",
+    "workExperience": "Work experience",
+    "projectExperience": "Projects",
+    "education": "Education",
+    "skills": "Skills",
+    "honors": "Honors & awards",
+    "certificates": "Certificates",
+    "headlineFallback": "Tell your professional story with structure.",
+    "summaryFallback": "Keep it focused and lead with your strongest experiences and outcomes.",
+    "contact": {
+      "phone": "Phone",
+      "email": "Email",
+      "city": "City",
+      "website": "Link",
+      "expectedSalary": "Expected salary",
+      "age": "Age"
+    },
+    "fallback": {
+      "school": "School",
+      "company": "Company",
+      "role": "Role",
+      "project": "Project",
+      "projectRole": "Role",
+      "honor": "Award",
+      "certificate": "Certificate",
+      "skill": "Skill"
+    },
+    "period": {
+      "from": "Start",
+      "until": "Present"
+    },
+    "ageSuffix": "yrs",
+    "empty": "Create or open a resume to see the live preview here.",
+    "ariaAvatar": "{{name}} avatar"
+  },
+  "share": {
+    "createTitle": "Create share link",
+    "okText": "Create and copy link",
+    "cancelText": "Cancel",
+    "titleLabel": "Share title",
+    "titlePlaceholder": "e.g. Backend application (May)",
+    "titleHint": "The title helps you tell shares apart and is shown in the share list.",
+    "modeLabel": "Share type",
+    "modeLatest": "Latest version",
+    "modeSnapshot": "Current snapshot",
+    "modeLatestHint": "The link always shows the latest content of the resume",
+    "modeSnapshotHint": "The link shows the resume as it is now; later edits do not affect it",
+    "passwordLabel": "Password protection",
+    "passwordPlaceholder": "Set an access password",
+    "passwordHint": "When enabled, viewers must enter the password to view",
+    "warning": {
+      "titleEmpty": "Please enter a share title",
+      "titleTooLong": "Share title must be 50 characters or fewer",
+      "passwordEmpty": "Please enter a password"
+    },
+    "feedback": {
+      "createFailed": "Failed to create share"
+    },
+    "linksTitle": "Share links for {{title}}",
+    "linksTitleFallback": "Share links",
+    "linksEmpty": "No share links yet. Open the editor to create a latest or snapshot link.",
+    "linkUntitled": "Untitled share",
+    "modeTagLatest": "Latest",
+    "modeTagSnapshot": "Snapshot",
+    "passwordProtected": "Password protected",
+    "disabled": "Disabled",
+    "viewCount": "{{count}} views",
+    "createdAt": "Created: {{value}}",
+    "lastAccessedAt": "Last accessed: {{value}}",
+    "noVisits": "No visits yet",
+    "toggleEnable": "Enable",
+    "toggleDisable": "Disable",
+    "deleteConfirmTitle": "Delete this share link?",
+    "deleteConfirmDescription": "Access logs will also be cleared and cannot be recovered.",
+    "deleteOk": "Delete",
+    "feedback2": {
+      "enabled": "Share link enabled",
+      "disabled": "Share link disabled",
+      "operationFailed": "Operation failed",
+      "deleted": "Share link deleted",
+      "deleteFailed": "Failed to delete",
+      "loadLogsFailed": "Unable to load access logs",
+      "linkCopied": "Share link copied."
+    },
+    "noLogs": "No access logs yet"
+  },
+  "recycle": {
+    "tag": "Recycle Bin",
+    "title": "Recycle Bin",
+    "subtitle": "Only deleted resumes are shown here. Restored resumes return to the home list.",
+    "deletedHeading": "Deleted resumes",
+    "totalCount": "{{count}}",
+    "empty": "Recycle bin is empty."
+  },
+  "footer": {
+    "footerHint": ""
+  }
+}

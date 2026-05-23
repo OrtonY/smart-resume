@@ -1,0 +1,10 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/index.md", "reason": "FE Quality Check entry: lists per-layer index linking to quality-guidelines"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "FE quality bar: lint/type-check/forbidden patterns; verify no leftover hardcoded zh strings"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Component review: confirm t() usage, no inline strings in JSX/props/Toast/Modal"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type-safety check: namespace key typing, locale enums, no any"}
+{"file": ".trellis/spec/backend/index.md", "reason": "BE Quality Check entry: links to quality + error-handling specs"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "BE quality bar: mvn verify, forbidden patterns; ensure no hardcoded user-facing zh in handler"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify GlobalExceptionHandler + AppException pull from MessageSource via locale"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer review: Accept-Language end-to-end; catalog payload shape consistent FE↔BE"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Reuse review: getLocalizedField helper not duplicated; translation keys not duplicated across namespaces"}

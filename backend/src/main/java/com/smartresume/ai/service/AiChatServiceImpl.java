@@ -102,7 +102,7 @@ public class AiChatServiceImpl implements AiChatService {
         String content = extractContent(response);
 
         if (content == null || content.isBlank()) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "AI provider returned an empty response.");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.providerEmptyResponse");
         }
 
         String persisted = sanitizeForPersistence(content, request);
@@ -153,11 +153,9 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         log.error("Structured output parsing failed after all retries for {}", responseType.getSimpleName());
-        throw new AppException(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Failed to parse AI response into " + responseType.getSimpleName() + ": " +
-                (lastException != null ? lastException.getMessage() : "unknown error")
-        );
+        String detail = responseType.getSimpleName() + ": "
+            + (lastException != null ? lastException.getMessage() : "unknown error");
+        throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.parseFailed", detail);
     }
 
     private Prompt buildPromptWithMemory(ChatMemory chatMemory, String conversationId, AiInvocationRequest request) {
@@ -175,7 +173,7 @@ public class AiChatServiceImpl implements AiChatService {
         String vendor = configuration.getVendor();
         ChatModelProvider provider = chatModelProviderRegistry.findProvider(vendor)
             .orElseGet(() -> chatModelProviderRegistry.findProvider("OpenAI")
-                .orElseThrow(() -> new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "No AI provider available")));
+                .orElseThrow(() -> AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.providerUnavailable")));
         return provider.createChatModel(configuration);
     }
 

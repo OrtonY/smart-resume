@@ -1,0 +1,174 @@
+{
+  "gallery": {
+    "title": {
+      "catalog": "Template Gallery",
+      "changeTemplate": "Change Template"
+    },
+    "nav": {
+      "backToWorkspace": "Back to Workspace"
+    },
+    "summary": {
+      "linkedResume": "Linked Resume",
+      "createEntry": "Create Entry",
+      "previewThenCreate": "Preview then Create",
+      "currentTemplate": "Current: {{name}}",
+      "newDraft": "New Template Draft",
+      "editExisting": "Editing Template"
+    },
+    "catalog": {
+      "title": "Template Catalog",
+      "newTemplate": "New Template",
+      "refreshCatalog": "Refresh",
+      "refreshFailed": "Template catalog refresh failed",
+      "selectTemplate": "Select a resume template"
+    },
+    "editor": {
+      "title": {
+        "create": "New Template",
+        "edit": "Template Settings"
+      },
+      "tag": {
+        "builtIn": "Built-in",
+        "custom": "Custom"
+      },
+      "builtInReadonly": {
+        "title": "Built-in templates are read-only",
+        "subtitle": "To customize, click \"New Template\" to create a copy based on the current template."
+      },
+      "selectFirst": {
+        "title": "Please select a template to edit."
+      },
+      "section": {
+        "basic": "Basic Info",
+        "theme": "Theme",
+        "preview": "Preview Style"
+      },
+      "field": {
+        "key": "Template Key",
+        "keyPlaceholder": "e.g. modern-ops",
+        "name": "Name",
+        "category": "Category",
+        "layout": "Layout",
+        "summary": "Description"
+      },
+      "save": {
+        "createTemplate": "Save as New Template",
+        "updateTemplate": "Save Changes",
+        "cancelCreate": "Cancel"
+      },
+      "delete": {
+        "title": "Delete Custom Template",
+        "description": "Resumes referencing this template key will not be automatically updated.",
+        "confirm": "Delete",
+        "button": "Delete Custom Template"
+      }
+    },
+    "preview": {
+      "tagBuiltIn": "Built-in",
+      "tagCustom": "Custom",
+      "applyToResume": "Apply to Resume",
+      "backToResume": "Back to Resume",
+      "createFromTemplate": "Create Resume from Template",
+      "lastUpdated": "Last updated: {{time}}",
+      "lastUpdatedBuiltIn": "Built-in fallback"
+    },
+    "loading": {
+      "changeTemplate": "Loading template editor...",
+      "catalog": "Loading template catalog..."
+    },
+    "error": {
+      "catalogUnavailable": "Template catalog unavailable",
+      "loadCatalog": "Failed to load template catalog",
+      "loadResume": "Failed to load linked resume",
+      "loadingResume": "Loading linked resume...",
+      "resumeLoadFailed": "Failed to load linked resume. Showing sample preview."
+    },
+    "message": {
+      "resumeCreated": "Resume created.",
+      "createResumeFailed": "Failed to create resume.",
+      "templateCreated": "Template created and saved.",
+      "templateUpdated": "Template updated.",
+      "templateSaveFailed": "Failed to save template",
+      "templateDeleted": "Custom template deleted.",
+      "templateDeleteFailed": "Failed to delete template",
+      "templateApplied": "Applied to current resume.",
+      "templateApplyFailed": "Failed to apply template"
+    },
+    "validation": {
+      "keyRequired": "Please enter a template key.",
+      "basicRequired": "Please complete all basic info fields.",
+      "themeRequired": "Theme fields cannot be empty.",
+      "previewRequired": "Preview style fields cannot be empty."
+    },
+    "draft": {
+      "copyName": "{{name}} - Copy",
+      "defaultResumeName": "{{name}} Resume",
+      "untitledResume": "Untitled Resume"
+    }
+  },
+  "layout": {
+    "classic": "Classic",
+    "twoColumn": "Two-Column",
+    "minimal": "Minimal ATS",
+    "editorial": "Editorial"
+  },
+  "theme": {
+    "pageBackground": "Page Background",
+    "borderColor": "Border Color",
+    "mutedText": "Muted Text",
+    "accent": "Accent",
+    "accentSoft": "Accent Soft",
+    "accentText": "Accent Text",
+    "heroBackground": "Hero Background",
+    "heroText": "Hero Text",
+    "heroMuted": "Hero Muted",
+    "railBackground": "Rail Background",
+    "panelBackground": "Panel Background"
+  },
+  "previewStyle": {
+    "canvasBackground": "Canvas Background",
+    "sheetBackground": "Sheet Background",
+    "heroBackground": "Preview Hero Background",
+    "asideBackground": "Preview Aside Background",
+    "lineColor": "Line Color"
+  },
+  "picker": {
+    "ariaLabel": "Select a resume template",
+    "currentTag": "Current"
+  },
+  "gradient": {
+    "resetTooltip": "Revert unsaved changes to this field",
+    "resetAriaLabel": "Reset {{label}}",
+    "startColor": "Start",
+    "endColor": "End",
+    "angle": "Angle {{degrees}}°",
+    "fallbackPlaceholder": "Not a 2-stop linear-gradient; cannot edit visually"
+  },
+  "color": {
+    "resetTooltip": "Revert unsaved changes to this field",
+    "resetAriaLabel": "Reset {{label}}",
+    "fallbackPlaceholder": "Not recognized as a color; edit manually"
+  },
+  "markdown": {
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "inlineCode": "Inline Code",
+      "codeBlock": "Code Block",
+      "unorderedList": "Unordered List",
+      "orderedList": "Ordered List",
+      "link": "Link",
+      "linkText": "link text",
+      "ariaLabel": "Formatting toolbar",
+      "boldButton": "Bold"
+    },
+    "mode": {
+      "edit": "Edit",
+      "preview": "Preview"
+    },
+    "emptyPreview": "No content"
+  },
+  "export": {
+    "noPreviewError": "No exportable resume preview found."
+  }
+}

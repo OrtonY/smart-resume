@@ -1,6 +1,7 @@
 import { BarChartOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Empty, Input, Modal, Progress, Space, Spin, Tag, Typography } from 'antd'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { scoreAiResume } from '../api/aiApi'
 import { toAiResumeContext } from '../resumeContext'
 import type { AiResumeScoreResponse } from '../types'
@@ -29,6 +30,7 @@ function ResumeScoreButtonInner({
   draft: ResumeDetail
   persistedState: PersistedResumeScoreState | null
 }) {
+  const { t } = useTranslation('ai')
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [jobDescription, setJobDescription] = useState(persistedState?.jobDescription ?? '')
@@ -74,7 +76,7 @@ function ResumeScoreButtonInner({
       })
       setShowJobDescriptionInput(false)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '简历评分失败')
+      void message.error(error instanceof Error ? error.message : t('score.scoreFailed'))
     } finally {
       setScoring(false)
     }
@@ -83,21 +85,21 @@ function ResumeScoreButtonInner({
   return (
     <>
       <Button icon={<BarChartOutlined />} onClick={() => setOpen(true)}>
-        简历评分
+        {t('score.buttonLabel')}
       </Button>
 
       <Modal
         open={open}
-        title="简历评分"
+        title={t('score.modalTitle')}
         onCancel={handleClose}
         footer={null}
         destroyOnHidden={false}
       >
         <div className="resume-score-panel">
           <div className="resume-score-panel__intro">
-            <Tag color="blue">当前简历</Tag>
+            <Tag color="blue">{t('score.currentResume')}</Tag>
             <Text strong>{draft.title}</Text>
-            <Tag color="default">JD 选填</Tag>
+            <Tag color="default">{t('score.jdOptional')}</Tag>
           </div>
 
           {showJobDescriptionInput ? (
@@ -106,32 +108,32 @@ function ResumeScoreButtonInner({
                 rows={6}
                 value={jobDescription}
                 onChange={(event) => setJobDescription(event.target.value)}
-                placeholder="可填写目标岗位 JD，帮助评分更贴近投递场景；留空也可以直接评分。"
+                placeholder={t('score.jdPlaceholder')}
               />
               <div className="resume-score-panel__actions">
                 <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                  当前为可跑通前后端流程的模拟评分结果，后续可无缝替换成真实 AI 评分。
+                  {t('score.mockHint')}
                 </Paragraph>
                 <Button type="primary" icon={<BarChartOutlined />} loading={scoring} onClick={() => void handleScore()}>
-                  {result ? '重新评分' : '开始评分'}
+                  {result ? t('score.rescore') : t('score.startScoring')}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="resume-score-panel__collapsed">
               <div className="resume-score-panel__collapsed-copy">
-                <Text strong>JD 输入区已收起</Text>
+                <Text strong>{t('score.jdCollapsedTitle')}</Text>
                 <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                  {jobDescription.trim() ? '本次评分已使用你填写的 JD。' : '本次评分未填写 JD，结果基于通用简历质量。'}
+                  {jobDescription.trim() ? t('score.jdUsed') : t('score.jdNotUsed')}
                 </Paragraph>
-                <Text type="secondary">评分结果已保存在当前浏览器，下次打开可继续查看。</Text>
+                <Text type="secondary">{t('score.savedHint')}</Text>
               </div>
               <Space wrap>
                 <Button onClick={() => setShowJobDescriptionInput(true)}>
-                  修改 JD
+                  {t('score.modifyJd')}
                 </Button>
                 <Button type="primary" icon={<BarChartOutlined />} loading={scoring} onClick={() => void handleScore()}>
-                  重新评分
+                  {t('score.rescore')}
                 </Button>
               </Space>
             </div>
@@ -144,8 +146,8 @@ function ResumeScoreButtonInner({
                   <Alert
                     showIcon
                     type="info"
-                    message="当前展示的是 Mock 评分结果"
-                    description="接口结构已经稳定，后续接入真实 AI 时无需调整页面交互。"
+                    message={t('score.mockAlertTitle')}
+                    description={t('score.mockAlertDescription')}
                   />
                 ) : null}
 
@@ -155,21 +157,21 @@ function ResumeScoreButtonInner({
                       type="dashboard"
                       percent={result.score}
                       strokeColor="#3157a4"
-                      format={(percent) => `${percent ?? 0} 分`}
+                      format={(percent) => t('score.scoreUnit', { score: percent ?? 0 })}
                     />
                   </div>
                   <div className="resume-score-result__summary">
                     <Space wrap>
-                      <Tag color="geekblue">评分完成</Tag>
-                      {result.jobDescriptionProvided ? <Tag color="green">已结合 JD</Tag> : <Tag color="gold">未填写 JD</Tag>}
+                      <Tag color="geekblue">{t('score.scoreCompleted')}</Tag>
+                      {result.jobDescriptionProvided ? <Tag color="green">{t('score.withJd')}</Tag> : <Tag color="gold">{t('score.withoutJd')}</Tag>}
                     </Space>
                     <Paragraph>{result.summary}</Paragraph>
-                    <Text type="secondary">生成时间：{new Date(result.generatedAt).toLocaleString()}</Text>
+                    <Text type="secondary">{t('score.generatedAt', { time: new Date(result.generatedAt).toLocaleString() })}</Text>
                   </div>
                 </div>
 
                 <div className="resume-score-result__strengths">
-                  <Text strong>当前亮点</Text>
+                  <Text strong>{t('score.strengthsTitle')}</Text>
                   <div className="resume-score-result__tag-list">
                     {result.strengths.map((item) => (
                       <Tag color="blue" key={item}>
@@ -196,7 +198,7 @@ function ResumeScoreButtonInner({
               <div className="resume-score-empty">
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="填写 JD 后点击开始评分，或直接评分查看当前简历的结构与内容建议。"
+                  description={t('score.emptyDescription')}
                 />
               </div>
             )}

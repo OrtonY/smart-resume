@@ -212,7 +212,7 @@ class AiChatServiceImplTest {
 
         assertThatThrownBy(() -> aiChatService.call(request))
             .isInstanceOf(AppException.class)
-            .hasMessageContaining("empty response");
+            .hasMessageContaining("error.ai.providerEmptyResponse");
     }
 
     @Test
@@ -229,7 +229,7 @@ class AiChatServiceImplTest {
 
         assertThatThrownBy(() -> aiChatService.call(request))
             .isInstanceOf(AppException.class)
-            .hasMessageContaining("empty response");
+            .hasMessageContaining("error.ai.providerEmptyResponse");
     }
 
     // --- callStructured() tests ---
@@ -292,7 +292,7 @@ class AiChatServiceImplTest {
 
         assertThatThrownBy(() -> aiChatService.callStructured(request, SimplePerson.class))
             .isInstanceOf(AppException.class)
-            .hasMessageContaining("Failed to parse AI response");
+            .hasMessageContaining("error.ai.parseFailed");
     }
 
     // --- helper methods ---

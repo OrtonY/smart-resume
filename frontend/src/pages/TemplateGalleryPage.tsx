@@ -24,6 +24,7 @@ import {
   Typography,
 } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ColorField } from '../features/resume/components/ColorField'
 import { GradientField } from '../features/resume/components/GradientField'
@@ -43,6 +44,7 @@ import {
   DEFAULT_RESUME_TEMPLATE_KEY,
   FALLBACK_RESUME_TEMPLATE_CATALOG,
   getDefaultResumeTemplate,
+  getLocalizedField,
   type ManagedResumeTemplateDefinition,
   type ResumeTemplateDefinition,
   type ResumeTemplateLayout,
@@ -58,35 +60,35 @@ const { TextArea } = Input
 
 type EditorMode = 'edit' | 'create'
 
-const LAYOUT_OPTIONS: Array<{ value: ResumeTemplateLayout; label: string }> = [
-  { value: 'classic', label: '经典专业' },
-  { value: 'two-column', label: '现代双栏' },
-  { value: 'minimal', label: '极简 ATS' },
-  { value: 'editorial', label: '编辑创意' },
+const LAYOUT_OPTION_KEYS: Array<{ value: ResumeTemplateLayout; labelKey: string }> = [
+  { value: 'classic', labelKey: 'layout.classic' },
+  { value: 'two-column', labelKey: 'layout.twoColumn' },
+  { value: 'minimal', labelKey: 'layout.minimal' },
+  { value: 'editorial', labelKey: 'layout.editorial' },
 ]
 
 type ColorTokenKind = 'color' | 'gradient'
 
-const THEME_FIELDS: Array<{ key: keyof ResumeTemplateTheme; label: string; kind: ColorTokenKind }> = [
-  { key: 'pageBackground', label: '页面背景', kind: 'color' },
-  { key: 'borderColor', label: '边框颜色', kind: 'color' },
-  { key: 'mutedText', label: '弱化文字', kind: 'color' },
-  { key: 'accent', label: '主强调色', kind: 'color' },
-  { key: 'accentSoft', label: '浅强调色', kind: 'color' },
-  { key: 'accentText', label: '强调色上的文字', kind: 'color' },
-  { key: 'heroBackground', label: '头部背景', kind: 'gradient' },
-  { key: 'heroText', label: '头部文字', kind: 'color' },
-  { key: 'heroMuted', label: '头部弱化文字', kind: 'color' },
-  { key: 'railBackground', label: '侧栏背景', kind: 'gradient' },
-  { key: 'panelBackground', label: '面板背景', kind: 'color' },
+const THEME_FIELDS: Array<{ key: keyof ResumeTemplateTheme; labelKey: string; kind: ColorTokenKind }> = [
+  { key: 'pageBackground', labelKey: 'theme.pageBackground', kind: 'color' },
+  { key: 'borderColor', labelKey: 'theme.borderColor', kind: 'color' },
+  { key: 'mutedText', labelKey: 'theme.mutedText', kind: 'color' },
+  { key: 'accent', labelKey: 'theme.accent', kind: 'color' },
+  { key: 'accentSoft', labelKey: 'theme.accentSoft', kind: 'color' },
+  { key: 'accentText', labelKey: 'theme.accentText', kind: 'color' },
+  { key: 'heroBackground', labelKey: 'theme.heroBackground', kind: 'gradient' },
+  { key: 'heroText', labelKey: 'theme.heroText', kind: 'color' },
+  { key: 'heroMuted', labelKey: 'theme.heroMuted', kind: 'color' },
+  { key: 'railBackground', labelKey: 'theme.railBackground', kind: 'gradient' },
+  { key: 'panelBackground', labelKey: 'theme.panelBackground', kind: 'color' },
 ]
 
-const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; label: string; kind: ColorTokenKind }> = [
-  { key: 'canvasBackground', label: '画布背景', kind: 'gradient' },
-  { key: 'sheetBackground', label: '纸张背景', kind: 'color' },
-  { key: 'heroBackground', label: '预览头部背景', kind: 'gradient' },
-  { key: 'asideBackground', label: '预览侧栏背景', kind: 'color' },
-  { key: 'lineColor', label: '分隔线颜色', kind: 'color' },
+const PREVIEW_FIELDS: Array<{ key: keyof ResumeTemplatePreview; labelKey: string; kind: ColorTokenKind }> = [
+  { key: 'canvasBackground', labelKey: 'previewStyle.canvasBackground', kind: 'gradient' },
+  { key: 'sheetBackground', labelKey: 'previewStyle.sheetBackground', kind: 'color' },
+  { key: 'heroBackground', labelKey: 'previewStyle.heroBackground', kind: 'gradient' },
+  { key: 'asideBackground', labelKey: 'previewStyle.asideBackground', kind: 'color' },
+  { key: 'lineColor', labelKey: 'previewStyle.lineColor', kind: 'color' },
 ]
 
 const DEMO_RESUME: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'> = {
@@ -180,6 +182,8 @@ function getDefaultManagedTemplate(catalog: ManagedResumeTemplateDefinition[]) {
 export function TemplateGalleryPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { t, i18n } = useTranslation('template')
+  const locale = i18n.language
   const resumeId = searchParams.get('resumeId') ?? ''
   const { message } = App.useApp()
   const [templates, setTemplates] = useState<ManagedResumeTemplateDefinition[]>([])
@@ -208,7 +212,12 @@ export function TemplateGalleryPage() {
     () => buildPreviewResume(resume, previewTemplate.key),
     [previewTemplate.key, resume],
   )
-  const linkedTemplateName = resume ? templates.find((item) => item.key === resume.templateKey)?.name ?? resume.templateKey : null
+  const linkedTemplate = resume ? templates.find((item) => item.key === resume.templateKey) : null
+  const linkedTemplateName = resume
+    ? linkedTemplate
+      ? getLocalizedField(linkedTemplate.name, locale)
+      : resume.templateKey
+    : null
   const draftDirty = useMemo(() => {
     if (!editorDraft) {
       return false
@@ -252,12 +261,12 @@ export function TemplateGalleryPage() {
         syncTemplates(catalog, preferredKey)
         setTemplateError(null)
       } catch (error) {
-        setTemplateError(error instanceof Error ? error : new Error('无法加载模板目录'))
+        setTemplateError(error instanceof Error ? error : new Error(t('gallery.error.loadCatalog')))
       } finally {
         setLoadingTemplates(false)
       }
     },
-    [syncTemplates],
+    [syncTemplates, t],
   )
 
   const loadResume = useCallback(async () => {
@@ -275,11 +284,11 @@ export function TemplateGalleryPage() {
       setResumeError(null)
     } catch (error) {
       setResume(null)
-      setResumeError(error instanceof Error ? error : new Error('无法加载关联简历'))
+      setResumeError(error instanceof Error ? error : new Error(t('gallery.error.loadResume')))
     } finally {
       setLoadingResume(false)
     }
-  }, [resumeId])
+  }, [resumeId, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -334,13 +343,13 @@ export function TemplateGalleryPage() {
     setCreatingResumeTemplateKey(templateKey)
     try {
       const detail = await createResume({
-        title: template ? `${template.name}简历` : '未命名简历',
+        title: template ? t('gallery.draft.defaultResumeName', { name: template.name }) : t('gallery.draft.untitledResume'),
         templateKey,
       })
-      void message.success('简历已创建。')
+      void message.success(t('gallery.message.resumeCreated'))
       navigate(`/app/resumes/${detail.id}`)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '无法创建简历。')
+      void message.error(error instanceof Error ? error.message : t('gallery.message.createResumeFailed'))
     } finally {
       setCreatingResumeTemplateKey(null)
     }
@@ -349,7 +358,7 @@ export function TemplateGalleryPage() {
   function handleCreateFromCurrent() {
     setSelectionTouched(true)
     setEditorMode('create')
-    setEditorDraft(createNewTemplateDraft(selectedTemplate, templates))
+    setEditorDraft(createNewTemplateDraft(selectedTemplate, templates, t))
   }
 
   function handleCancelCreate() {
@@ -362,7 +371,7 @@ export function TemplateGalleryPage() {
       return
     }
 
-    const validationMessage = validateTemplateDraft(editorDraft, editorMode)
+    const validationMessage = validateTemplateDraft(editorDraft, editorMode, t)
     if (validationMessage) {
       void message.error(validationMessage)
       return
@@ -377,14 +386,14 @@ export function TemplateGalleryPage() {
         })
         await loadTemplateCatalog(editorDraft.key)
         setEditorMode('edit')
-        void message.success('模板已创建，已写入数据库。')
+        void message.success(t('gallery.message.templateCreated'))
       } else if (selectedTemplate) {
         await updateResumeTemplate(selectedTemplate.key, toUpdatePayload(editorDraft))
         await loadTemplateCatalog(selectedTemplate.key)
-        void message.success('模板已更新。')
+        void message.success(t('gallery.message.templateUpdated'))
       }
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '模板保存失败')
+      void message.error(error instanceof Error ? error.message : t('gallery.message.templateSaveFailed'))
     } finally {
       setSavingTemplate(false)
     }
@@ -400,9 +409,9 @@ export function TemplateGalleryPage() {
       await deleteResumeTemplate(selectedTemplate.key)
       await loadTemplateCatalog()
       setEditorMode('edit')
-      void message.success('自定义模板已删除。')
+      void message.success(t('gallery.message.templateDeleted'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '模板删除失败')
+      void message.error(error instanceof Error ? error.message : t('gallery.message.templateDeleteFailed'))
     } finally {
       setDeletingTemplateKey(null)
     }
@@ -422,9 +431,9 @@ export function TemplateGalleryPage() {
         layout: resume.layout,
       })
       setResume(updated)
-      void message.success('已应用到当前简历。')
+      void message.success(t('gallery.message.templateApplied'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '模板应用失败')
+      void message.error(error instanceof Error ? error.message : t('gallery.message.templateApplyFailed'))
     } finally {
       setApplyingTemplateKey(null)
     }
@@ -468,7 +477,7 @@ export function TemplateGalleryPage() {
   if (loadingTemplates && templates.length === 0) {
     return (
       <div className="full-page-center" style={{ minHeight: '100vh' }}>
-        <Spin size="large" tip={isResumeTemplateChange ? '正在加载修改模板...' : '正在加载模板目录...'} />
+        <Spin size="large" tip={isResumeTemplateChange ? t('gallery.loading.changeTemplate') : t('gallery.loading.catalog')} />
       </div>
     )
   }
@@ -479,15 +488,15 @@ export function TemplateGalleryPage() {
         <Card className="auth-card" bordered={false} style={{ width: 'min(860px, 100%)' }}>
           <Result
             status="error"
-            title="模板目录暂时不可用"
+            title={t('gallery.error.catalogUnavailable')}
             subTitle={templateError.message}
             extra={
               <Space wrap>
                 <Button type="primary" onClick={() => void loadTemplateCatalog()}>
-                  重新加载
+                  {t('common:actions.reload')}
                 </Button>
                 <Button onClick={() => navigate('/app')} icon={<ArrowLeftOutlined />}>
-                  返回工作区
+                  {t('gallery.nav.backToWorkspace')}
                 </Button>
               </Space>
             }
@@ -503,28 +512,28 @@ export function TemplateGalleryPage() {
         <div>
           <div className="template-gallery-page__nav">
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/app')}>
-              返回工作区
+              {t('gallery.nav.backToWorkspace')}
             </Button>
           </div>
           <Title level={2} style={{ marginBottom: 8 }}>
-            {isResumeTemplateChange ? '修改模板' : '模板目录'}
+            {isResumeTemplateChange ? t('gallery.title.changeTemplate') : t('gallery.title.catalog')}
           </Title>
         </div>
 
         <Card className="glass-card template-gallery-summary" bordered={false}>
           <Space direction="vertical" size={6}>
-            <Text type="secondary">{resume ? '当前关联简历' : '创建入口'}</Text>
+            <Text type="secondary">{resume ? t('gallery.summary.linkedResume') : t('gallery.summary.createEntry')}</Text>
             <Title level={4} style={{ margin: 0 }}>
-              {resume ? resume.title : '预览后创建简历'}
+              {resume ? resume.title : t('gallery.summary.previewThenCreate')}
             </Title>
             <Space wrap>
               {resume ? (
                 <Tag color="blue" icon={<CheckCircleOutlined />}>
-                  当前模板：{linkedTemplateName ?? resume.templateKey}
+                  {t('gallery.summary.currentTemplate', { name: linkedTemplateName ?? resume.templateKey })}
                 </Tag>
               ) : (
                 <Tag color="success">
-                  {editorMode === 'create' ? '新建模板草稿' : '编辑已有模板'}
+                  {editorMode === 'create' ? t('gallery.summary.newDraft') : t('gallery.summary.editExisting')}
                 </Tag>
               )}
             </Space>
@@ -537,14 +546,14 @@ export function TemplateGalleryPage() {
           <Card
             className="glass-card"
             bordered={false}
-            title="模板目录"
+            title={t('gallery.catalog.title')}
             extra={
               <Space wrap>
                 <Button icon={<PlusOutlined />} onClick={handleCreateFromCurrent}>
-                  新建模板
+                  {t('gallery.catalog.newTemplate')}
                 </Button>
                 <Button icon={<ReloadOutlined />} onClick={() => void loadTemplateCatalog(selectedTemplate?.key)}>
-                  刷新目录
+                  {t('gallery.catalog.refreshCatalog')}
                 </Button>
               </Space>
             }
@@ -554,7 +563,7 @@ export function TemplateGalleryPage() {
                 <Alert
                   type="warning"
                   showIcon
-                  message="模板目录最近一次刷新失败"
+                  message={t('gallery.catalog.refreshFailed')}
                   description={templateError.message}
                 />
               ) : null}
@@ -563,7 +572,7 @@ export function TemplateGalleryPage() {
                 templates={templates.length > 0 ? templates : [FALLBACK_MANAGED_TEMPLATE]}
                 value={selectedTemplate?.key ?? FALLBACK_MANAGED_TEMPLATE.key}
                 onChange={(key) => void handleTemplateSelect(key)}
-                ariaLabel="选择简历模板"
+                ariaLabel={t('gallery.catalog.selectTemplate')}
               />
             </Space>
           </Card>
@@ -571,20 +580,20 @@ export function TemplateGalleryPage() {
           <Card
             className="glass-card"
             bordered={false}
-            title={editorMode === 'create' ? '新建模板' : '模板配置'}
+            title={editorMode === 'create' ? t('gallery.editor.title.create') : t('gallery.editor.title.edit')}
             extra={
               editorMode === 'edit' && selectedTemplate ? (
                 <Space wrap>
                   <Tag color={selectedTemplate.builtIn ? 'blue' : 'green'}>
-                    {selectedTemplate.builtIn ? '内置模板' : '自定义模板'}
+                    {selectedTemplate.builtIn ? t('gallery.editor.tag.builtIn') : t('gallery.editor.tag.custom')}
                   </Tag>
-                  <Tag>{layoutLabel(selectedTemplate.layout)}</Tag>
+                  <Tag>{layoutLabel(selectedTemplate.layout, t)}</Tag>
                 </Space>
               ) : null
             }
           >
             {editorMode === 'edit' && selectedTemplate?.builtIn ? (
-              <Result status="info" title="内置模板不可编辑" subTitle="内置模板为只读，如需自定义请点击「新建模板」基于当前模板创建副本。" />
+              <Result status="info" title={t('gallery.editor.builtInReadonly.title')} subTitle={t('gallery.editor.builtInReadonly.subtitle')} />
             ) : editorDraft ? (
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
                 <Collapse
@@ -592,42 +601,42 @@ export function TemplateGalleryPage() {
                   items={[
                     {
                       key: 'basic',
-                      label: '基础信息',
+                      label: t('gallery.editor.section.basic'),
                       children: (
                         <div className="template-editor-grid">
                           <div className="template-editor-field template-editor-field--span-2">
-                            <Text type="secondary">模板标识</Text>
+                            <Text type="secondary">{t('gallery.editor.field.key')}</Text>
                             <Input
                               value={editorDraft.key}
                               disabled={editorMode === 'edit'}
-                              placeholder="例如 modern-ops"
+                              placeholder={t('gallery.editor.field.keyPlaceholder')}
                               onChange={(event) => updateDraftField('key', normalizeTemplateKey(event.target.value))}
                             />
                           </div>
                           <div className="template-editor-field">
-                            <Text type="secondary">名称</Text>
+                            <Text type="secondary">{t('gallery.editor.field.name')}</Text>
                             <Input
                               value={editorDraft.name}
                               onChange={(event) => updateDraftField('name', event.target.value)}
                             />
                           </div>
                           <div className="template-editor-field">
-                            <Text type="secondary">分类</Text>
+                            <Text type="secondary">{t('gallery.editor.field.category')}</Text>
                             <Input
                               value={editorDraft.category}
                               onChange={(event) => updateDraftField('category', event.target.value)}
                             />
                           </div>
                           <div className="template-editor-field">
-                            <Text type="secondary">布局</Text>
+                            <Text type="secondary">{t('gallery.editor.field.layout')}</Text>
                             <Select<ResumeTemplateLayout>
                               value={editorDraft.layout}
-                              options={LAYOUT_OPTIONS}
+                              options={LAYOUT_OPTION_KEYS.map((opt) => ({ value: opt.value, label: t(opt.labelKey) }))}
                               onChange={(value) => updateDraftField('layout', value)}
                             />
                           </div>
                           <div className="template-editor-field template-editor-field--span-2">
-                            <Text type="secondary">说明</Text>
+                            <Text type="secondary">{t('gallery.editor.field.summary')}</Text>
                             <TextArea
                               rows={4}
                               value={editorDraft.summary}
@@ -639,7 +648,7 @@ export function TemplateGalleryPage() {
                     },
                     {
                       key: 'theme',
-                      label: '主题样式',
+                      label: t('gallery.editor.section.theme'),
                       children: (
                         <div className="template-editor-grid">
                           {THEME_FIELDS.map((field) => {
@@ -656,7 +665,7 @@ export function TemplateGalleryPage() {
                             return field.kind === 'gradient' ? (
                               <GradientField
                                 key={field.key}
-                                label={field.label}
+                                label={t(field.labelKey)}
                                 value={currentValue}
                                 onChange={(next) => updateDraftTheme(field.key, next)}
                                 onReset={handleReset}
@@ -665,7 +674,7 @@ export function TemplateGalleryPage() {
                             ) : (
                               <ColorField
                                 key={field.key}
-                                label={field.label}
+                                label={t(field.labelKey)}
                                 value={currentValue}
                                 onChange={(next) => updateDraftTheme(field.key, next)}
                                 onReset={handleReset}
@@ -678,7 +687,7 @@ export function TemplateGalleryPage() {
                     },
                     {
                       key: 'preview',
-                      label: '预览样式',
+                      label: t('gallery.editor.section.preview'),
                       children: (
                         <div className="template-editor-grid">
                           {PREVIEW_FIELDS.map((field) => {
@@ -695,7 +704,7 @@ export function TemplateGalleryPage() {
                             return field.kind === 'gradient' ? (
                               <GradientField
                                 key={field.key}
-                                label={field.label}
+                                label={t(field.labelKey)}
                                 value={currentValue}
                                 onChange={(next) => updateDraftPreview(field.key, next)}
                                 onReset={handleReset}
@@ -704,7 +713,7 @@ export function TemplateGalleryPage() {
                             ) : (
                               <ColorField
                                 key={field.key}
-                                label={field.label}
+                                label={t(field.labelKey)}
                                 value={currentValue}
                                 onChange={(next) => updateDraftPreview(field.key, next)}
                                 onReset={handleReset}
@@ -726,19 +735,19 @@ export function TemplateGalleryPage() {
                       onClick={() => void handleSaveTemplate()}
                       disabled={!draftDirty || savingTemplate}
                     >
-                      {editorMode === 'create' ? '保存为新模板' : '保存修改'}
+                      {editorMode === 'create' ? t('gallery.editor.save.createTemplate') : t('gallery.editor.save.updateTemplate')}
                     </Button>
                     {editorMode === 'create' ? (
-                      <Button onClick={handleCancelCreate}>取消新建</Button>
+                      <Button onClick={handleCancelCreate}>{t('gallery.editor.save.cancelCreate')}</Button>
                     ) : null}
                   </Space>
 
                   {editorMode === 'edit' && selectedTemplate && !selectedTemplate.builtIn ? (
                     <Popconfirm
-                      title="删除自定义模板"
-                      description="删除后不会自动修改仍引用这个模板 key 的简历。"
-                      okText="删除"
-                      cancelText="取消"
+                      title={t('gallery.editor.delete.title')}
+                      description={t('gallery.editor.delete.description')}
+                      okText={t('gallery.editor.delete.confirm')}
+                      cancelText={t('common:actions.cancel')}
                       onConfirm={() => void handleDeleteTemplate()}
                     >
                       <Button
@@ -746,14 +755,14 @@ export function TemplateGalleryPage() {
                         icon={<DeleteOutlined />}
                         loading={deletingTemplateKey === selectedTemplate.key}
                       >
-                        删除自定义模板
+                        {t('gallery.editor.delete.button')}
                       </Button>
                     </Popconfirm>
                   ) : null}
                 </div>
               </Space>
             ) : (
-              <Result status="info" title="请选择一个模板后再编辑。" />
+              <Result status="info" title={t('gallery.editor.selectFirst.title')} />
             )}
           </Card>
         </Space>
@@ -761,29 +770,29 @@ export function TemplateGalleryPage() {
         <div className="template-gallery-preview">
           <Card className="glass-card" bordered={false}>
             <Space direction="vertical" size={16} style={{ width: '100%' }}>
-              {loadingResume ? <Alert type="info" showIcon message="正在加载关联简历..." /> : null}
+              {loadingResume ? <Alert type="info" showIcon message={t('gallery.error.loadingResume')} /> : null}
               {resumeError ? (
                 <Alert
                   type="warning"
                   showIcon
-                  message="关联简历加载失败，已切换为示例预览。"
+                  message={t('gallery.error.resumeLoadFailed')}
                   description={resumeError.message}
                 />
               ) : null}
 
               <div>
                 <Space wrap size={[8, 8]}>
-                  <Tag color="gold">{previewTemplate.category}</Tag>
-                  <Tag>{layoutLabel(previewTemplate.layout)}</Tag>
+                  <Tag color="gold">{getLocalizedField(previewTemplate.category, locale)}</Tag>
+                  <Tag>{layoutLabel(previewTemplate.layout, t)}</Tag>
                   <Tag color={previewTemplate.builtIn ? 'blue' : 'green'}>
-                    {previewTemplate.builtIn ? '内置' : '自定义'}
+                    {previewTemplate.builtIn ? t('gallery.preview.tagBuiltIn') : t('gallery.preview.tagCustom')}
                   </Tag>
                 </Space>
                 <Title level={4} style={{ margin: '10px 0 6px' }}>
-                  {previewTemplate.name}
+                  {getLocalizedField(previewTemplate.name, locale)}
                 </Title>
                 <Paragraph type="secondary" style={{ marginBottom: 12 }}>
-                  {previewTemplate.summary}
+                  {getLocalizedField(previewTemplate.summary, locale)}
                 </Paragraph>
                 <Space wrap>
                   {resume ? (
@@ -794,10 +803,10 @@ export function TemplateGalleryPage() {
                         loading={applyingTemplateKey === selectedTemplate?.key}
                         disabled={!canApplyTemplate}
                       >
-                        应用到当前简历
+                        {t('gallery.preview.applyToResume')}
                       </Button>
                       <Button onClick={() => navigate(`/app/resumes/${resume.id}`)}>
-                        返回当前简历
+                        {t('gallery.preview.backToResume')}
                       </Button>
                     </>
                   ) : (
@@ -807,11 +816,15 @@ export function TemplateGalleryPage() {
                       onClick={() => void handleCreateResumeFromTemplate(previewTemplate.key)}
                       loading={creatingResumeTemplateKey === previewTemplate.key}
                     >
-                      使用此模板创建简历
+                      {t('gallery.preview.createFromTemplate')}
                     </Button>
                   )}
                   <Text type="secondary">
-                    最近更新：{previewTemplate.updatedAt ? new Date(previewTemplate.updatedAt).toLocaleString() : '内置备份'}
+                    {t('gallery.preview.lastUpdated', {
+                      time: previewTemplate.updatedAt
+                        ? new Date(previewTemplate.updatedAt).toLocaleString()
+                        : t('gallery.preview.lastUpdatedBuiltIn'),
+                    })}
                   </Text>
                 </Space>
               </div>
@@ -866,6 +879,7 @@ function cloneManagedTemplate(template: ManagedResumeTemplateDefinition): Manage
 function createNewTemplateDraft(
   template: ResumeTemplateDefinition | null,
   existingTemplates: ManagedResumeTemplateDefinition[],
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): ManagedResumeTemplateDefinition {
   const base = template ?? FALLBACK_MANAGED_TEMPLATE
   const baseKey = normalizeTemplateKey(`${base.key}-copy`) || 'custom-template'
@@ -877,7 +891,7 @@ function createNewTemplateDraft(
       updatedAt: null,
     }),
     key: createUniqueTemplateKey(baseKey, existingTemplates),
-    name: `${base.name} - 副本`,
+    name: t('gallery.draft.copyName', { name: base.name }),
     builtIn: false,
     updatedAt: null,
   }
@@ -923,9 +937,13 @@ function buildPreviewResume(resume: ResumeDetail | null, templateKey: string) {
   }
 }
 
-function validateTemplateDraft(template: ManagedResumeTemplateDefinition, mode: EditorMode) {
+function validateTemplateDraft(
+  template: ManagedResumeTemplateDefinition,
+  mode: EditorMode,
+  t: (key: string) => string,
+) {
   if (mode === 'create' && !template.key.trim()) {
-    return '请先填写模板 key。'
+    return t('gallery.validation.keyRequired')
   }
 
   const basicFields = [
@@ -935,15 +953,15 @@ function validateTemplateDraft(template: ManagedResumeTemplateDefinition, mode: 
     template.layout,
   ]
   if (basicFields.some((field) => field.trim().length === 0)) {
-    return '请补全模板的基础信息。'
+    return t('gallery.validation.basicRequired')
   }
 
   if (THEME_FIELDS.some((field) => template.theme[field.key].trim().length === 0)) {
-    return '主题样式不能为空。'
+    return t('gallery.validation.themeRequired')
   }
 
   if (PREVIEW_FIELDS.some((field) => template.preview[field.key].trim().length === 0)) {
-    return '预览样式不能为空。'
+    return t('gallery.validation.previewRequired')
   }
 
   return null
@@ -998,6 +1016,7 @@ function serializeTemplateDraft(template: ManagedResumeTemplateDefinition) {
   })
 }
 
-function layoutLabel(layout: ResumeTemplateLayout) {
-  return LAYOUT_OPTIONS.find((item) => item.value === layout)?.label ?? layout
+function layoutLabel(layout: ResumeTemplateLayout, t: (key: string) => string) {
+  const option = LAYOUT_OPTION_KEYS.find((item) => item.value === layout)
+  return option ? t(option.labelKey) : layout
 }
