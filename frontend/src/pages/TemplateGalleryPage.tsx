@@ -2,6 +2,7 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  EyeOutlined,
   FileAddOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -16,6 +17,7 @@ import {
   Collapse,
   Input,
   Popconfirm,
+  Radio,
   Result,
   Select,
   Space,
@@ -30,6 +32,7 @@ import { ColorField } from '../features/resume/components/ColorField'
 import { GradientField } from '../features/resume/components/GradientField'
 import { ResumePreview } from '../features/resume/components/ResumePreview'
 import { ResumeTemplatePicker } from '../features/resume/components/ResumeTemplatePicker'
+import { useIsMobile } from '../lib/hooks/useIsMobile'
 import {
   createResumeTemplate,
   deleteResumeTemplate,
@@ -184,6 +187,7 @@ export function TemplateGalleryPage() {
   const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation('template')
   const locale = i18n.language
+  const isMobile = useIsMobile()
   const resumeId = searchParams.get('resumeId') ?? ''
   const { message } = App.useApp()
   const [templates, setTemplates] = useState<ManagedResumeTemplateDefinition[]>([])
@@ -194,6 +198,8 @@ export function TemplateGalleryPage() {
   const [resumeError, setResumeError] = useState<Error | null>(null)
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
   const [selectionTouched, setSelectionTouched] = useState(false)
+  const [mobileExpanded, setMobileExpanded] = useState(false)
+  const [mobileView, setMobileView] = useState<'edit' | 'preview'>('preview')
   const [editorMode, setEditorMode] = useState<EditorMode>('edit')
   const [editorDraft, setEditorDraft] = useState<ManagedResumeTemplateDefinition | null>(null)
   const [savingTemplate, setSavingTemplate] = useState(false)
@@ -359,6 +365,10 @@ export function TemplateGalleryPage() {
     setSelectionTouched(true)
     setEditorMode('create')
     setEditorDraft(createNewTemplateDraft(selectedTemplate, templates, t))
+    if (isMobile) {
+      setMobileExpanded(true)
+      setMobileView('edit')
+    }
   }
 
   function handleCancelCreate() {
@@ -543,6 +553,7 @@ export function TemplateGalleryPage() {
 
       <div className="template-gallery-layout">
         <Space direction="vertical" size={18} style={{ width: '100%' }}>
+          {(!isMobile || !mobileExpanded) ? (
           <Card
             className="glass-card"
             bordered={false}
@@ -552,9 +563,11 @@ export function TemplateGalleryPage() {
                 <Button icon={<PlusOutlined />} onClick={handleCreateFromCurrent}>
                   {t('gallery.catalog.newTemplate')}
                 </Button>
-                <Button icon={<ReloadOutlined />} onClick={() => void loadTemplateCatalog(selectedTemplate?.key)}>
-                  {t('gallery.catalog.refreshCatalog')}
-                </Button>
+                {!isMobile ? (
+                  <Button icon={<ReloadOutlined />} onClick={() => void loadTemplateCatalog(selectedTemplate?.key)}>
+                    {t('gallery.catalog.refreshCatalog')}
+                  </Button>
+                ) : null}
               </Space>
             }
           >
@@ -574,9 +587,42 @@ export function TemplateGalleryPage() {
                 onChange={(key) => void handleTemplateSelect(key)}
                 ariaLabel={t('gallery.catalog.selectTemplate')}
               />
+
+              {isMobile && selectedTemplate ? (
+                <Button
+                  type="primary"
+                  block
+                  icon={<EyeOutlined />}
+                  onClick={() => { setMobileExpanded(true); setMobileView('preview') }}
+                >
+                  {t('gallery.catalog.viewTemplate')}
+                </Button>
+              ) : null}
             </Space>
           </Card>
+          ) : null}
 
+          {isMobile && mobileExpanded ? (
+            <>
+              <div className="resume-editor-mobile-tabs">
+                <Radio.Group
+                  value={mobileView}
+                  onChange={(e) => setMobileView(e.target.value)}
+                  optionType="button"
+                  buttonStyle="solid"
+                  size="middle"
+                >
+                  <Radio.Button value="edit">{t('gallery.editor.section.basic')}</Radio.Button>
+                  <Radio.Button value="preview">{t('gallery.editor.section.preview')}</Radio.Button>
+                </Radio.Group>
+              </div>
+              <Button icon={<ArrowLeftOutlined />} onClick={() => setMobileExpanded(false)} style={{ alignSelf: 'flex-start' }}>
+                {t('gallery.nav.backToCatalog')}
+              </Button>
+            </>
+          ) : null}
+
+          {(!isMobile || (mobileExpanded && mobileView === 'edit')) ? (
           <Card
             className="glass-card"
             bordered={false}
@@ -765,8 +811,10 @@ export function TemplateGalleryPage() {
               <Result status="info" title={t('gallery.editor.selectFirst.title')} />
             )}
           </Card>
+          ) : null}
         </Space>
 
+        {(!isMobile || (mobileExpanded && mobileView === 'preview')) ? (
         <div className="template-gallery-preview">
           <Card className="glass-card" bordered={false}>
             <Space direction="vertical" size={16} style={{ width: '100%' }}>
@@ -840,6 +888,7 @@ export function TemplateGalleryPage() {
             </Space>
           </Card>
         </div>
+        ) : null}
       </div>
     </div>
   )

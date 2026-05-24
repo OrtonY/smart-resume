@@ -1,7 +1,8 @@
 import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Card, Empty, Form, Input, List, Modal, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
@@ -465,7 +466,9 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     }
     event.currentTarget.releasePointerCapture(event.pointerId)
     if (Math.abs(event.clientX - drag.startX) < 4 && Math.abs(event.clientY - drag.startY) < 4) {
-      handleOpen()
+      event.preventDefault()
+      event.stopPropagation()
+      window.setTimeout(handleOpen, 50)
     }
   }
 
@@ -484,7 +487,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         <span>{t('trigger.label')}</span>
       </button>
 
-      <Modal
+      <ResponsiveModal
         open={open}
         title={t('assistant.modalTitle')}
         onCancel={() => setOpen(false)}
@@ -492,6 +495,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         width={900}
         destroyOnHidden={false}
         centered
+        mobileHeight="100dvh"
         styles={{
           body: {
             height: 'calc(100vh - 140px)',
@@ -596,7 +600,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
             </div>
           )}
         </div>
-      </Modal>
+      </ResponsiveModal>
     </>
   )
 }
@@ -822,7 +826,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
   }
 
   return (
-    <Modal
+    <ResponsiveModal
       open={open}
       title={t('configuration.modalTitle')}
       onCancel={onClose}
@@ -870,7 +874,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
           </Form.Item>
         </Form>
       </Spin>
-    </Modal>
+    </ResponsiveModal>
   )
 }
 

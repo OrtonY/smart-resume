@@ -2870,3 +2870,512 @@ a {
     justify-items: start;
   }
 }
+
+/* ===== Mobile (≤480px) ===== */
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
+    padding-right: 0 !important;
+  }
+
+  /* Prevent iOS Safari auto-zoom on focus */
+  input,
+  textarea,
+  select,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-select-selector,
+  .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+
+  .workspace-hub,
+  .resume-editor-shell,
+  .interview-center,
+  .interview-detail {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+
+  .workspace-hub__hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .workspace-hub__copy {
+    gap: 6px;
+  }
+
+  .workspace-hub__copy h1 {
+    font-size: clamp(24px, 7.5vw, 30px);
+    line-height: 1.15;
+  }
+
+  .workspace-hub__copy p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .workspace-hub__actions {
+    gap: 8px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .workspace-hub__actions .workspace-session-card {
+    display: none;
+  }
+
+  .workspace-hub__toolbar {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .resume-list-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .resume-list-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  /* Hamburger drawer */
+  .workspace-mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .workspace-mobile-drawer .ant-drawer-body {
+    padding: 16px 12px;
+  }
+
+  .workspace-mobile-drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .workspace-mobile-drawer-list .ant-btn {
+    height: 48px;
+    justify-content: flex-start;
+    width: 100%;
+    text-align: left;
+  }
+
+  .workspace-mobile-drawer__divider {
+    height: 1px;
+    background: rgba(20, 33, 61, 0.08);
+    margin: 8px 0;
+  }
+
+  /* Editor mobile tabs */
+  .resume-editor-shell {
+    height: auto;
+    min-height: 100dvh;
+    padding: 12px;
+  }
+
+  .resume-editor-shell__topbar,
+  .resume-editor-shell__meta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-editor-shell__title {
+    min-width: 0;
+  }
+
+  .resume-editor-shell__actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .resume-editor-mobile-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    border: 1px solid rgba(20, 33, 61, 0.08);
+    padding: 4px;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-group {
+    display: flex;
+    width: 100%;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-button-wrapper {
+    flex: 1;
+    text-align: center;
+    height: 40px;
+    line-height: 38px;
+    border-radius: 10px !important;
+    border: none !important;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-button-wrapper::before {
+    display: none;
+  }
+
+  .resume-editor-layout {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .resume-editor-layout--mobile-edit .resume-editor-preview,
+  .resume-editor-layout--mobile-preview .resume-editor-rail,
+  .resume-editor-layout--mobile-preview .resume-editor-stack {
+    display: none;
+  }
+
+  .resume-editor-rail,
+  .resume-editor-stack,
+  .resume-editor-stack__card,
+  .resume-editor-preview,
+  .resume-editor-preview__sticky {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .resume-editor-section-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-editor-module-row {
+    padding: 14px;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .resume-editor-module-row__handle {
+    width: 44px;
+    height: 44px;
+    color: rgba(20, 33, 61, 0.55);
+    background: rgba(20, 33, 61, 0.04);
+  }
+
+  /* A4 preview scale-to-fit on mobile */
+  .resume-preview-stage--mobile-fit {
+    overflow: visible;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .resume-preview-stage--mobile-fit .resume-preview-paper {
+    transform: scale(var(--mobile-preview-scale, 1));
+    transform-origin: top left;
+  }
+
+  .resume-preview-stage--mobile-fit .resume-preview-pages {
+    width: var(--mobile-preview-paper-width, 100%);
+  }
+
+  /* Auth */
+  .auth-shell {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  /* Interview */
+  .interview-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-detail {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 12px;
+    overflow: auto;
+  }
+
+  .interview-detail__topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .interview-message {
+    max-width: 100%;
+  }
+
+  .interview-composer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Template gallery */
+  .template-gallery-page,
+  .template-gallery-layout {
+    padding: 0;
+  }
+
+  .template-gallery-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .template-gallery-preview {
+    position: static;
+  }
+
+  .template-gallery-preview .resume-preview-stage {
+    overflow: visible;
+  }
+
+  .template-gallery-preview .resume-preview-paper {
+    transform: scale(calc((100vw - 56px) / 794));
+    transform-origin: top left;
+  }
+
+  .template-gallery-preview .resume-preview-pages {
+    width: calc(100vw - 56px);
+  }
+
+  /* Restore desktop template layouts inside scaled preview */
+  .template-gallery-preview .resume-template--split {
+    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .template-gallery-preview .resume-template__editorial-grid {
+    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+  }
+
+  .template-gallery-preview .resume-template__hero:not(.resume-template__hero--compact) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  }
+
+  .template-gallery-preview .resume-template__masthead,
+  .template-gallery-preview .resume-template__masthead--minimal {
+    flex-direction: row;
+  }
+
+  .template-gallery-preview .resume-template__hero-identity-row {
+    flex-direction: column;
+  }
+
+  .template-gallery-preview .resume-template__sidebar,
+  .template-gallery-preview .resume-template__notes-column {
+    padding: 20px 28px 30px;
+    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+    background: var(--template-rail-background);
+  }
+
+  .template-gallery-page__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Modal -> bottom sheet (when wrapper detects mobile, it switches to Drawer; this rules apply if a Modal still slips through) */
+  .ant-modal.is-mobile-sheet {
+    max-width: 100vw;
+    margin: 0;
+    top: auto;
+    padding-bottom: 0;
+  }
+
+  .ant-modal.is-mobile-sheet .ant-modal-content {
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* Touch target floor */
+  .ant-btn:not(.ant-btn-sm):not(.ant-btn-link):not(.ant-btn-text) {
+    min-height: 40px;
+  }
+
+  .ant-tag {
+    font-size: 13px;
+  }
+
+  /* Issue 1: Template gallery top display */
+  .template-gallery-page__head {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .template-gallery-page__head .ant-typography h2 {
+    font-size: 22px;
+  }
+
+  .template-gallery-summary .ant-card-body {
+    padding: 14px;
+  }
+
+  .template-card__sheet {
+    min-height: 120px;
+  }
+
+  .template-card__body strong {
+    font-size: 14px;
+  }
+
+  .template-card__body p {
+    font-size: 13px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .template-card {
+    padding: 10px;
+  }
+
+  .template-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Issue 2: Template gallery mobile expand-on-click */
+  .template-gallery-layout--mobile-collapsed .template-gallery-preview,
+  .template-gallery-layout--mobile-collapsed > .ant-space > .ant-space-item:nth-child(2) {
+    display: none;
+  }
+
+  /* Issue 3: Resume editor structure/content split */
+  .resume-editor-layout--mobile-structure .resume-editor-stack,
+  .resume-editor-layout--mobile-structure .resume-editor-preview {
+    display: none;
+  }
+
+  .resume-editor-layout--mobile-content .resume-editor-rail,
+  .resume-editor-layout--mobile-content .resume-editor-preview {
+    display: none;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-rail,
+  .resume-editor-layout--mobile-preview .resume-editor-stack {
+    display: none;
+  }
+
+  /* Resume editor preview scale-to-fit on mobile */
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-stage {
+    overflow: visible;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-paper {
+    transform: scale(calc((100vw - 48px) / 794));
+    transform-origin: top left;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-pages {
+    width: calc(100vw - 48px);
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template--split {
+    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__editorial-grid {
+    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__hero:not(.resume-template__hero--compact) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__masthead,
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__masthead--minimal {
+    flex-direction: row;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__hero-identity-row {
+    flex-direction: column;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__sidebar,
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__notes-column {
+    padding: 20px 28px 30px;
+    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+    background: var(--template-rail-background);
+  }
+
+  /* Issue 4: Collapse top actions */
+  .resume-editor-shell__actions--desktop {
+    display: none !important;
+  }
+
+  .resume-editor-shell__actions--mobile {
+    display: flex !important;
+  }
+
+  /* Issue 5: AI Chat panel in drawer */
+  .responsive-modal-drawer .ai-chat-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .responsive-modal-drawer .ai-chat-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .responsive-modal-drawer .ai-chat-messages {
+    min-height: 120px;
+  }
+
+  /* Issue 6: Fix AI floating trigger position on mobile */
+  .ai-floating-trigger {
+    left: auto !important;
+    top: auto !important;
+    right: 16px;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Issue 7: Interview filter card */
+  .interview-filter-card .ant-space {
+    width: 100%;
+  }
+
+  .interview-filter-card .ant-space .ant-space-item {
+    width: 100%;
+  }
+
+  .interview-filter-card .ant-input-search,
+  .interview-filter-card .ant-select {
+    width: 100% !important;
+  }
+
+  /* Issue 8: Interview detail topbar */
+  .interview-detail__topbar {
+    gap: 6px;
+  }
+
+  .interview-detail__topbar > .ant-space {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .interview-detail__topbar--actions-desktop {
+    display: none !important;
+  }
+
+  .interview-detail__topbar--actions-mobile {
+    display: flex !important;
+  }
+
+  .interview-message-list {
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  .interview-round-tabs {
+    padding: 0;
+  }
+
+  .interview-round-tab {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
