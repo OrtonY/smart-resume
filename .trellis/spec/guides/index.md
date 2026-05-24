@@ -48,6 +48,15 @@ These guides help you **ask the right questions before coding**.
 
 → Read [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)
 
+### When to Think About i18n & Mobile Adaptation
+
+- [ ] You're adding any user-facing text (label, message, placeholder, error)
+- [ ] You're building a new page, modal, or panel
+- [ ] You're adding buttons or interactive elements
+- [ ] You're writing CSS that uses viewport units (`vw`, `vh`) or media queries
+
+→ Read [Quality Guidelines → Required Patterns](../frontend/quality-guidelines.md#required-patterns)
+
 ---
 
 ## Pre-Modification Rule (CRITICAL)
