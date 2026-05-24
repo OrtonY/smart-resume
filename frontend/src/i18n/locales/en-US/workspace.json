@@ -91,7 +91,13 @@
     "deleteEntry": "Delete",
     "addEntry": "Add entry",
     "noEntries": "No entries yet",
-    "emptyPreview": "Create or open a resume to see the live preview here."
+    "emptyPreview": "Create or open a resume to see the live preview here.",
+    "tabEdit": "Edit",
+    "tabPreview": "Preview",
+    "tabStructure": "Structure",
+    "tabContent": "Content",
+    "moreActions": "More",
+    "moreActionsAria": "More actions"
   },
   "modules": {
     "personalInfo": {

@@ -7,9 +7,11 @@ import {
   EyeInvisibleOutlined,
   FileAddOutlined,
   HolderOutlined,
+  MenuOutlined,
   MessageOutlined,
   LockOutlined,
   LogoutOutlined,
+  MoreOutlined,
   PlusOutlined,
   RollbackOutlined,
   ShareAltOutlined,
@@ -20,10 +22,10 @@ import {
   Button,
   Card,
   Collapse,
+  Drawer,
   Dropdown,
   Empty,
   Input,
-  Modal,
   Pagination,
   Popconfirm,
   Radio,
@@ -36,10 +38,12 @@ import {
 } from 'antd'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ResponsiveModal } from '../components/shared/ResponsiveModal'
+import { useIsMobile } from '../lib/hooks/useIsMobile'
 import { AiConfigurationButton, AiResumeAssistant } from '../features/ai/components/AiResumeAssistant'
 import type { AiResumeSuggestion } from '../features/ai/types'
 import { ResumeScoreButton } from '../features/ai/components/ResumeScoreButton'
@@ -608,6 +612,8 @@ function ResumeListView({
 }) {
   const { t } = useTranslation('workspace')
   const { message } = App.useApp()
+  const isMobile = useIsMobile()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareDialog, setShareDialog] = useState<ShareDialogState>(null)
   const [loadingShareResumeId, setLoadingShareResumeId] = useState<string | null>(null)
   const [shareLinksByResumeId, setShareLinksByResumeId] = useState<Record<string, ShareLink[]>>({})
@@ -698,32 +704,79 @@ function ResumeListView({
           </div>
 
           <div className="workspace-hub__actions">
-            <Link to="/app/templates">
-              <Button icon={<FileAddOutlined />}>
-                {t('actions.templateGallery')}
-              </Button>
-            </Link>
-            <Link to="/app/interviews">
-              <Button icon={<MessageOutlined />}>
-                {t('actions.interviewCenter')}
-              </Button>
-            </Link>
-            <AiConfigurationButton />
-            <Link to="/app/recycle-bin">
-              <Button icon={<InboxOutlined />}>
-                {t('actions.recycleBin')}
-              </Button>
-            </Link>
-            <WorkspaceSessionCard
-              currentUser={currentUser}
-              registrationEnabled={registrationEnabled}
-              onRegistrationEnabledChange={onRegistrationEnabledChange}
-              onLogout={onLogout}
-            />
-            <LanguageSwitcher />
-            <Button icon={<LogoutOutlined />} onClick={onLogout}>
-              {t('actions.lockWorkspace')}
-            </Button>
+            {isMobile ? (
+              <>
+                <LanguageSwitcher />
+                <WorkspaceSessionCard
+                  currentUser={currentUser}
+                  registrationEnabled={registrationEnabled}
+                  onRegistrationEnabledChange={onRegistrationEnabledChange}
+                  onLogout={onLogout}
+                />
+                <Button icon={<MenuOutlined />} onClick={() => setMobileMenuOpen(true)} />
+                <Drawer
+                  open={mobileMenuOpen}
+                  onClose={() => setMobileMenuOpen(false)}
+                  placement="right"
+                  width={260}
+                  title={null}
+                  push={false}
+                  className="workspace-mobile-drawer"
+                >
+                  <div className="workspace-mobile-drawer-list">
+                    <Link to="/app/templates" onClick={() => setMobileMenuOpen(false)}>
+                      <Button icon={<FileAddOutlined />} block>
+                        {t('actions.templateGallery')}
+                      </Button>
+                    </Link>
+                    <Link to="/app/interviews" onClick={() => setMobileMenuOpen(false)}>
+                      <Button icon={<MessageOutlined />} block>
+                        {t('actions.interviewCenter')}
+                      </Button>
+                    </Link>
+                    <AiConfigurationButton />
+                    <Link to="/app/recycle-bin" onClick={() => setMobileMenuOpen(false)}>
+                      <Button icon={<InboxOutlined />} block>
+                        {t('actions.recycleBin')}
+                      </Button>
+                    </Link>
+                    <div className="workspace-mobile-drawer__divider" />
+                    <Button icon={<LogoutOutlined />} onClick={onLogout} block>
+                      {t('actions.lockWorkspace')}
+                    </Button>
+                  </div>
+                </Drawer>
+              </>
+            ) : (
+              <>
+                <Link to="/app/templates">
+                  <Button icon={<FileAddOutlined />}>
+                    {t('actions.templateGallery')}
+                  </Button>
+                </Link>
+                <Link to="/app/interviews">
+                  <Button icon={<MessageOutlined />}>
+                    {t('actions.interviewCenter')}
+                  </Button>
+                </Link>
+                <AiConfigurationButton />
+                <Link to="/app/recycle-bin">
+                  <Button icon={<InboxOutlined />}>
+                    {t('actions.recycleBin')}
+                  </Button>
+                </Link>
+                <WorkspaceSessionCard
+                  currentUser={currentUser}
+                  registrationEnabled={registrationEnabled}
+                  onRegistrationEnabledChange={onRegistrationEnabledChange}
+                  onLogout={onLogout}
+                />
+                <LanguageSwitcher />
+                <Button icon={<LogoutOutlined />} onClick={onLogout}>
+                  {t('actions.lockWorkspace')}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -940,7 +993,7 @@ function ResumeVisualCard({
       </div>
 
       {onCopyResume ? (
-        <Modal
+        <ResponsiveModal
           title={t('copyDialog.title')}
           open={copyDialogOpen}
           onCancel={closeCopyDialog}
@@ -961,7 +1014,7 @@ function ResumeVisualCard({
               onPressEnter={() => void submitCopy()}
             />
           </Space>
-        </Modal>
+        </ResponsiveModal>
       ) : null}
     </article>
   )
@@ -1030,7 +1083,7 @@ function ShareLinksModal({
   }
 
   return (
-    <Modal
+    <ResponsiveModal
       title={shareDialog ? t('share.linksTitle', { title: shareDialog.resumeTitle }) : t('share.linksTitleFallback')}
       open={Boolean(shareDialog)}
       onCancel={onClose}
@@ -1136,7 +1189,7 @@ function ShareLinksModal({
           })}
         </div>
       )}
-    </Modal>
+    </ResponsiveModal>
   )
 }
 
@@ -1317,6 +1370,8 @@ function ResumeEditorView({
 }) {
   const { t } = useTranslation('workspace')
   const { message } = App.useApp()
+  const isMobile = useIsMobile()
+  const [mobileEditorTab, setMobileEditorTab] = useState<'structure' | 'content' | 'preview'>('content')
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
@@ -1326,7 +1381,10 @@ function ResumeEditorView({
   const [sharePassword, setSharePassword] = useState('')
   const [creatingShare, setCreatingShare] = useState(false)
   const exportPreviewRef = useRef<HTMLDivElement | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+  )
 
   const personalInfoModule = orderedModuleDefinitions.find((module) => module.key === 'personal-info')
   const sortableModules = orderedModuleDefinitions.filter((module) => module.key !== 'personal-info')
@@ -1419,7 +1477,7 @@ function ResumeEditorView({
             />
           </div>
 
-          <Space wrap className="resume-editor-shell__actions">
+          <Space wrap className="resume-editor-shell__actions resume-editor-shell__actions--desktop">
             <Link to={`/app/templates?resumeId=${draft.id}`}>
               <Button>{t('editor.modifyTemplate')}</Button>
             </Link>
@@ -1436,9 +1494,64 @@ function ResumeEditorView({
             }}>{t('editor.share')}</Button>
             <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>{t('editor.exportPdf')}</Button>
           </Space>
+
+          <Space wrap className="resume-editor-shell__actions resume-editor-shell__actions--mobile" style={{ display: 'none' }}>
+            <ResumeScoreButton draft={draft} />
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items: [
+                  {
+                    key: 'modifyTemplate',
+                    label: <Link to={`/app/templates?resumeId=${draft.id}`}>{t('editor.modifyTemplate')}</Link>,
+                  },
+                  ...interviewMenuItems.map((item) => ({ ...item, key: `interview-${item.key}` })),
+                  {
+                    key: 'share',
+                    label: t('editor.share'),
+                    icon: <ShareAltOutlined />,
+                    onClick: () => {
+                      setShareModalOpen(true)
+                      setShareTitle('')
+                      setShareMode('LATEST')
+                      setSharePasswordEnabled(false)
+                      setSharePassword('')
+                    },
+                  },
+                  {
+                    key: 'exportPdf',
+                    label: t('editor.exportPdf'),
+                    icon: <DownloadOutlined />,
+                    disabled: exportingPdf,
+                    onClick: () => void onExportPdf(exportPreviewRef.current),
+                  },
+                ],
+              }}
+            >
+              <Button icon={<MoreOutlined />} aria-label={t('editor.moreActionsAria')}>
+                {t('editor.moreActions')}
+              </Button>
+            </Dropdown>
+          </Space>
         </div>
 
-<div className="resume-editor-layout">
+        {isMobile ? (
+          <div className="resume-editor-mobile-tabs">
+            <Radio.Group
+              value={mobileEditorTab}
+              onChange={(e) => setMobileEditorTab(e.target.value)}
+              optionType="button"
+              buttonStyle="solid"
+              size="middle"
+            >
+              <Radio.Button value="structure">{t('editor.tabStructure')}</Radio.Button>
+              <Radio.Button value="content">{t('editor.tabContent')}</Radio.Button>
+              <Radio.Button value="preview">{t('editor.tabPreview')}</Radio.Button>
+            </Radio.Group>
+          </div>
+        ) : null}
+
+        <div className={`resume-editor-layout${isMobile ? ` resume-editor-layout--mobile-${mobileEditorTab}` : ''}`}>
           <Card className="glass-card resume-editor-rail" bordered={false}>
             <div className="resume-editor-rail__head">
               <div>
@@ -1560,7 +1673,7 @@ function ResumeEditorView({
         </div>
       </div>
 
-      <Modal
+      <ResponsiveModal
         open={previewDialogOpen}
         onCancel={() => setPreviewDialogOpen(false)}
         footer={null}
@@ -1568,6 +1681,7 @@ function ResumeEditorView({
         width={1040}
         destroyOnHidden
         title={t('editor.previewModalTitle')}
+        mobileHeight="100dvh"
       >
         <div className="resume-preview-modal">
           {deferredDraft ? (
@@ -1580,7 +1694,7 @@ function ResumeEditorView({
             />
           ) : null}
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       <div className="resume-export-source" ref={exportPreviewRef} aria-hidden="true">
         <ResumePreview
@@ -1592,7 +1706,7 @@ function ResumeEditorView({
         />
       </div>
 
-      <Modal
+      <ResponsiveModal
         open={shareModalOpen}
         title={t('share.createTitle')}
         onCancel={() => setShareModalOpen(false)}
@@ -1672,7 +1786,7 @@ function ResumeEditorView({
             )}
           </div>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       <AiResumeAssistant draft={draft} onApplyPatch={onApplyPatch} />
     </div>

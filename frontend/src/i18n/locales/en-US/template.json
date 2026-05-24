@@ -5,7 +5,8 @@
       "changeTemplate": "Change Template"
     },
     "nav": {
-      "backToWorkspace": "Back to Workspace"
+      "backToWorkspace": "Back to Workspace",
+      "backToCatalog": "Back to catalog"
     },
     "summary": {
       "linkedResume": "Linked Resume",
@@ -20,7 +21,8 @@
       "newTemplate": "New Template",
       "refreshCatalog": "Refresh",
       "refreshFailed": "Template catalog refresh failed",
-      "selectTemplate": "Select a resume template"
+      "selectTemplate": "Select a resume template",
+      "viewTemplate": "View template"
     },
     "editor": {
       "title": {

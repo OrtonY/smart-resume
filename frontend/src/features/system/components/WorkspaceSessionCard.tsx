@@ -1,7 +1,8 @@
 import { KeyOutlined, SettingOutlined } from '@ant-design/icons'
-import { App, Button, Form, Input, Modal, Space, Switch, Typography } from 'antd'
+import { App, Button, Form, Input, Space, Switch, Typography } from 'antd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { changePassword } from '../api/systemApi'
 import type { RegistrationSettingsResponse, SessionUser } from '../types'
 
@@ -69,7 +70,7 @@ export function WorkspaceSessionCard({
         {t('session.openButton')}
       </Button>
 
-      <Modal
+      <ResponsiveModal
         title={t('session.modalTitle')}
         open={open}
         onCancel={() => {
@@ -151,7 +152,7 @@ export function WorkspaceSessionCard({
             </Form>
           </div>
         </Space>
-      </Modal>
+      </ResponsiveModal>
     </>
   )
 }
