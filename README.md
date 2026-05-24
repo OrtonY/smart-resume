@@ -12,7 +12,9 @@ Smart Resume is a private, multi-user resume workspace for writing, refining, sh
 - Built-in and custom template support
 - AI configuration, resume assistant chat, resume scoring, and interview simulation
 - Public share links with optional password protection
-- Browser-side PDF export for the current resume
+- Two PDF export modes:
+  - Quick export: client-side screenshot (`html2canvas` + `jspdf`), pixel-perfect to the preview
+  - High-quality export: server-side rendering via Playwright + Chromium, producing real-text, ATS-friendly PDFs that match the preview pixel-for-pixel
 
 ## Product Tour
 
@@ -102,7 +104,12 @@ Inspect the generated report with overall score, dimension breakdown, strengths,
 - Vite
 - Ant Design
 - React Router 7
-- `html2canvas` + `jspdf` for client-side PDF export
+- `html2canvas` + `jspdf` for the client-side quick PDF export
+
+### PDF Export Pipeline (optional, server-side)
+
+- Playwright + headless Chromium for high-quality, ATS-friendly PDF export
+- Renders the same React preview component used in the editor, so server-side PDFs are pixel-identical to the live preview
 
 ## Repository Layout
 
@@ -172,9 +179,36 @@ cd ..
 
 ## Run the Application
 
-Open two terminals.
+You have two options: an all-in-one script for production-style runs, or two terminals for development.
 
-### Terminal 1: start the backend
+### Option A: One-command script (production-style)
+
+From the project root:
+
+```bash
+./start.sh
+```
+
+The script will:
+
+1. Check Node.js (>= 20) and Java (>= 21) versions and abort with a clear message if either is missing or out of date — it will not switch versions for you, please run `nvm use 20` (or equivalent) first.
+2. Install frontend dependencies and build the frontend (multi-entry: `index.html` for the app, `export.html` for server-side PDF rendering).
+3. Sync the built frontend `dist/` into `backend/src/main/resources/static/` so Spring Boot can serve it.
+4. Build the backend JAR.
+5. Install Playwright's bundled Chromium (required for high-quality PDF export).
+6. Launch the backend, which now serves both the API and the frontend on the configured port.
+
+If you only want to build without launching, use:
+
+```bash
+./build.sh
+```
+
+### Option B: Two terminals (development)
+
+Use this when you are actively iterating on the frontend with hot reload.
+
+#### Terminal 1: start the backend
 
 ```bash
 cd backend
@@ -183,7 +217,7 @@ cd backend
 
 Flyway migrations run automatically on startup.
 
-### Terminal 2: start the frontend
+#### Terminal 2: start the frontend
 
 ```bash
 cd frontend
@@ -199,6 +233,8 @@ cd frontend
 echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
+
+In dev mode, the **high-quality (server-side) PDF export** will be unavailable because the backend cannot find `static/export.html`; the API returns a friendly 503 with a localized message. The **quick (client-side) PDF export** keeps working in dev. To exercise the server-side path during development, run `./build.sh` once and start the backend from the produced JAR.
 
 ## First-Time Setup
 
@@ -221,8 +257,11 @@ Typical use cases include resume chat, resume scoring, interview generation, and
 
 ## Notes
 
-- Public share pages can be open or password-protected.
-- PDF export currently happens in the frontend rather than through a server-side rendering pipeline.
+- Public share pages can be open or password-protected. Logged-in viewers and public share visitors can both download the high-quality PDF if the server is configured for it.
+- PDF export has two paths:
+  - **Quick export** (client-side, `html2canvas` + `jspdf`): always available, generated entirely in the browser. The output is image-based, so the text inside is not selectable or ATS-parsable.
+  - **High-quality export** (server-side, Playwright + Chromium): produces real-text, ATS-friendly PDFs that match the live preview pixel-for-pixel. Requires the steps performed by `start.sh` / `build.sh` (frontend `dist/` synced into `static/` and Chromium installed).
+  - If the server is missing either piece, the backend still starts normally and only the high-quality export endpoint returns a 503 with a localized message; all other features keep working.
 - The frontend has its own package-level guide in [frontend/README.md](./frontend/README.md).
 
 ## License
