@@ -1,10 +1,11 @@
 import { Button, Card, Form, Input, Result, Spin, message } from 'antd'
-import { LockOutlined } from '@ant-design/icons'
+import { DownloadOutlined, LockOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare, verifySharePassword } from '../features/resume/api/resumeApi'
+import { exportSharePdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import type { ResumeDetail } from '../features/resume/types'
 
@@ -29,6 +30,7 @@ export function PublicSharePage() {
   const [loading, setLoading] = useState(true)
   const [needsPassword, setNeedsPassword] = useState(false)
   const [verifying, setVerifying] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
   const { templates } = useResumeTemplateCatalog({ scope: 'public' })
@@ -104,6 +106,19 @@ export function PublicSharePage() {
     )
   }
 
+  async function handleDownloadPdf() {
+    if (!resume || downloading) return
+    setDownloading(true)
+    try {
+      const shareToken = getShareToken(shareCode)
+      await exportSharePdf(shareCode, resume.title, shareToken)
+    } catch (error) {
+      void messageApi.error(error instanceof Error ? error.message : t('page.downloadFailed'))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div className="full-page-center">
       {contextHolder}
@@ -113,7 +128,14 @@ export function PublicSharePage() {
             <Spin size="large" tip={t('page.loading')} />
           </div>
         ) : resume ? (
-          <ResumePreview resume={resume} templates={previewTemplates} previewMode="a4-paged" />
+          <>
+            <div style={{ marginBottom: 12, textAlign: 'right' }}>
+              <Button icon={<DownloadOutlined />} loading={downloading} onClick={() => void handleDownloadPdf()}>
+                {t('page.downloadPdf')}
+              </Button>
+            </div>
+            <ResumePreview resume={resume} templates={previewTemplates} previewMode="a4-paged" />
+          </>
         ) : (
           <Result status="404" title={t('notFound.title')} subTitle={errorMessage || t('notFound.subtitle')} />
         )}

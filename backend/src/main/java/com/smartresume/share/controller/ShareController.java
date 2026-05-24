@@ -1,6 +1,8 @@
 package com.smartresume.share.controller;
 
 import com.smartresume.common.api.ApiResponse;
+import com.smartresume.export.controller.ExportController;
+import com.smartresume.export.service.PdfExportService;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.share.dto.ShareDtos.CreateShareRequest;
 import com.smartresume.share.dto.ShareDtos.ShareAccessLogsPage;
@@ -11,6 +13,7 @@ import com.smartresume.share.service.ShareService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,9 +29,11 @@ public class ShareController {
     private static final String SHARE_TOKEN_HEADER = "X-Share-Token";
 
     private final ShareService shareService;
+    private final PdfExportService pdfExportService;
 
-    public ShareController(ShareService shareService) {
+    public ShareController(ShareService shareService, PdfExportService pdfExportService) {
         this.shareService = shareService;
+        this.pdfExportService = pdfExportService;
     }
 
     @PostMapping("/api/resumes/{resumeId}/shares")
@@ -72,6 +77,16 @@ public class ShareController {
             @PathVariable String shareCode,
             @Valid @RequestBody VerifySharePasswordRequest request) {
         return ApiResponse.success(shareService.verifyPassword(shareCode, request.password()), "Password verified");
+    }
+
+    @GetMapping("/api/public/shares/{shareCode}/export/pdf")
+    public ResponseEntity<byte[]> exportSharePdf(
+            @PathVariable String shareCode,
+            @RequestHeader(value = SHARE_TOKEN_HEADER, required = false) String shareToken,
+            @RequestHeader(value = "X-Resume-Language", required = false) String languageTag) {
+        ResumeDetailResponse resume = shareService.getPublicShareForExport(shareCode, shareToken);
+        byte[] pdfBytes = pdfExportService.exportResumePdf(resume, languageTag);
+        return ExportController.buildPdfResponse(pdfBytes, resume.title());
     }
 
     private String extractIpAddress(HttpServletRequest request) {

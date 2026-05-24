@@ -79,6 +79,8 @@
     },
     "share": "分享",
     "exportPdf": "导出 PDF",
+    "exportServerPdf": "高质量导出",
+    "exportQuickPdf": "快速导出（截图）",
     "moduleCount": "{{count}} 个模块",
     "structureTitle": "简历结构",
     "structureDescription": "直接在这里调整顺序和显隐，右侧预览会同步更新。",

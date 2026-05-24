@@ -1274,3 +1274,36 @@ Full mobile adaptation: template gallery expand-on-click, resume editor 3-tab sp
 ### Next Steps
 
 - None - task complete
+
+
+## Session 39: Fix server PDF export parity
+
+**Date**: 2026-05-24
+**Task**: Fix server PDF export parity
+**Branch**: `codex/fix-export-preview-mismatch`
+
+### Summary
+
+Aligned server PDF export with browser preview, fixed page overflow/blank page issues, and verified all four templates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e18bf50` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

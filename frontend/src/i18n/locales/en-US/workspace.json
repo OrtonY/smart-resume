@@ -79,6 +79,8 @@
     },
     "share": "Share",
     "exportPdf": "Export PDF",
+    "exportServerPdf": "High Quality Export",
+    "exportQuickPdf": "Quick Export (Screenshot)",
     "moduleCount": "{{count}} modules",
     "structureTitle": "Resume structure",
     "structureDescription": "Reorder and toggle visibility here. The preview updates live.",

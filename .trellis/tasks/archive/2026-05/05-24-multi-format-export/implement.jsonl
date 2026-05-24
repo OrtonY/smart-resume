@@ -1,0 +1,4 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer export pipeline and data contract boundaries"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Frontend export entrypoint lives under feature/page split"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Backend export service and controller placement"}
