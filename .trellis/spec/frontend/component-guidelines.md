@@ -82,9 +82,62 @@ new EventSource('/api/interviews/123/report/events')
 
 ## Styling Patterns
 
-<!-- How styles are applied (CSS modules, styled-components, Tailwind, etc.) -->
+### Convention: Insulate Off-screen Rasterization Sources from Responsive Media Queries
 
-(To be filled by the team)
+**What**: Any DOM subtree rendered solely to be rasterized off-screen (e.g., the PDF export source `.resume-export-source` in `frontend/src/index.css`, captured by `html2canvas` in `frontend/src/features/resume/export/pdfExport.ts`) must override every responsive rule that would otherwise mutate its layout based on the actual device viewport. Treat the rasterization container as an isolated styling scope, not a free-form preview.
+
+**Why**: `html2canvas` captures whatever the browser computes for the live DOM. The device's actual viewport still drives:
+
+- Responsive media queries (`@media (max-width: 480px / 900px / 1280px)`) — even when the container itself is fixed at 794px (A4 width at 96dpi).
+- Viewport units (`vw`, `vh`) — `4vw` resolves against the device viewport, not the container width.
+- The mobile body font-size cascade (`body { font-size: 15px }` under `max-width: 480px`).
+- iOS Safari `text-size-adjust` auto-boost.
+
+Without explicit overrides, a phone exports a "mobile-shaped" PDF (single-column masthead, shrunken padding, smaller headline, centered identity) instead of matching the desktop result.
+
+**How to apply**:
+
+1. Pin the container's base font-size and disable text-size-adjust:
+
+   ```css
+   .resume-export-source {
+     width: 794px;
+     font-size: 16px;
+     -webkit-text-size-adjust: 100%;
+     text-size-adjust: 100%;
+   }
+   ```
+
+2. Re-declare every desktop value that mobile media queries override inside the rasterization scope: grid columns, `flex-direction`, padding, font-size, avatar size, sidebar borders, etc.
+
+3. Replace `vw`/`vh` clamps with their desktop maxima inside the scope (e.g., `clamp(28px, 4vw, 38px)` -> `font-size: 38px`).
+
+4. **Match selector specificity** when overriding rules with modifier classes. A two-class selector `.scope .foo` (specificity 0,2,0) silently beats single-class modifier `.foo--compact` (0,1,0). Use `:not(.foo--compact)` in the override so the modifier still wins.
+
+**Wrong vs Correct**:
+
+```css
+/* Wrong: forces every hero variant into two columns, breaking the editorial
+   "compact" template that should stack vertically. */
+.resume-export-source .resume-template__hero {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+
+/* Correct: preserves the --compact modifier's single-column layout. */
+.resume-export-source .resume-template__hero:not(.resume-template__hero--compact) {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+```
+
+**When to revisit this convention**:
+
+- Introducing a new off-screen rasterization source (PDF, image export, share card).
+- Adding a new `@media (max-width: …)` rule that touches any selector used inside `.resume-export-source`.
+- Adding a new template variant whose layout differs from the base template (audit `:not()` guards).
+
+**Validation**: After any of the above, generate the PDF on a 375px-wide viewport (mobile) and a >=1280px viewport (desktop) and diff page-1 visually. The two outputs must be layout-identical (text wrapping may differ if fonts haven't fully loaded; structural layout must not).
+
+**Related**: `frontend/src/features/resume/export/pdfExport.ts` rasterizes pages queried via `.resume-preview-paper--page` inside the export root passed by `WorkspacePage` (`exportPreviewRef`).
 
 ---
 
