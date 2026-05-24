@@ -66,6 +66,7 @@ import {
   updateResume,
 } from '../features/resume/api/resumeApi'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
+import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import {
   resolveResumeTemplate,
@@ -422,6 +423,22 @@ export function WorkspacePage({
     }
   }
 
+  async function handleExportServerPdf() {
+    if (!resumeId || !draft || exportingPdf) {
+      return
+    }
+
+    setExportingPdf(true)
+    try {
+      await exportResumeServerPdf(resumeId, draft.title)
+      void message.success(t('feedback.exportPdfStart'))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -525,6 +542,7 @@ function showSection(sectionKey: ResumeSectionKey) {
         onCreateShare={handleCreateShare}
         exportingPdf={exportingPdf}
         onExportPdf={handleExportPdf}
+        onExportServerPdf={handleExportServerPdf}
         onExpandedModulesChange={handleExpandedModulesChange}
         onFocusModule={focusModule}
         onHideSection={hideSection}
@@ -1338,6 +1356,7 @@ function ResumeEditorView({
   exportingPdf,
   onExpandedModulesChange,
   onExportPdf,
+  onExportServerPdf,
   onFocusModule,
   onHideSection,
   onDragEnd,
@@ -1358,6 +1377,7 @@ function ResumeEditorView({
   exportingPdf: boolean
   onExpandedModulesChange: (keys: string | string[]) => void
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
+  onExportServerPdf: () => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onDragEnd: (event: DragEndEvent) => void
@@ -1492,7 +1512,12 @@ function ResumeEditorView({
               setSharePasswordEnabled(false)
               setSharePassword('')
             }}>{t('editor.share')}</Button>
-            <Button icon={<DownloadOutlined />} loading={exportingPdf} disabled={exportingPdf} onClick={() => void onExportPdf(exportPreviewRef.current)}>{t('editor.exportPdf')}</Button>
+            <Dropdown menu={{ items: [
+              { key: 'exportServerPdf', label: t('editor.exportServerPdf'), icon: <DownloadOutlined />, disabled: exportingPdf, onClick: () => void onExportServerPdf() },
+              { key: 'exportQuickPdf', label: t('editor.exportQuickPdf'), icon: <DownloadOutlined />, disabled: exportingPdf, onClick: () => void onExportPdf(exportPreviewRef.current) },
+            ] }}>
+              <Button icon={<DownloadOutlined />} loading={exportingPdf}>{t('editor.exportPdf')}</Button>
+            </Dropdown>
           </Space>
 
           <Space wrap className="resume-editor-shell__actions resume-editor-shell__actions--mobile" style={{ display: 'none' }}>
@@ -1519,8 +1544,15 @@ function ResumeEditorView({
                     },
                   },
                   {
-                    key: 'exportPdf',
-                    label: t('editor.exportPdf'),
+                    key: 'exportServerPdf',
+                    label: t('editor.exportServerPdf'),
+                    icon: <DownloadOutlined />,
+                    disabled: exportingPdf,
+                    onClick: () => void onExportServerPdf(),
+                  },
+                  {
+                    key: 'exportQuickPdf',
+                    label: t('editor.exportQuickPdf'),
                     icon: <DownloadOutlined />,
                     disabled: exportingPdf,
                     onClick: () => void onExportPdf(exportPreviewRef.current),

@@ -113,6 +113,19 @@ public class ShareService {
         return resumeService.getResumeForUser(share.getResumeId(), share.getUserId());
     }
 
+    public ResumeDetailResponse getPublicShareForExport(String shareCode, String shareToken) {
+        ResumeShareEntity share = findActiveShare(shareCode);
+
+        if (share.getPasswordHash() != null) {
+            shareTokenService.verifyShareToken(shareToken, shareCode);
+        }
+
+        if ("SNAPSHOT".equals(share.getShareMode())) {
+            return resumeService.getVersionSnapshotForUser(share.getTargetVersionId(), share.getUserId());
+        }
+        return resumeService.getResumeForUser(share.getResumeId(), share.getUserId());
+    }
+
     public ShareTokenResponse verifyPassword(String shareCode, String password) {
         ResumeShareEntity share = findActiveShare(shareCode);
 

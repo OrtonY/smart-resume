@@ -2,7 +2,9 @@
   "page": {
     "loading": "正在加载分享的简历...",
     "loadFailed": "无法加载分享的简历。",
-    "verifyFailed": "密码验证失败"
+    "verifyFailed": "密码验证失败",
+    "downloadPdf": "下载 PDF",
+    "downloadFailed": "下载失败，请重试。"
   },
   "passwordGate": {
     "title": "此分享链接需要密码",

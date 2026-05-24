@@ -1,0 +1,28 @@
+{
+  "id": "multi-format-export",
+  "name": "multi-format-export",
+  "title": "brainstorm: 多格式导出增强",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "orton",
+  "assignee": "orton",
+  "createdAt": "2026-05-24",
+  "completedAt": "2026-05-24",
+  "branch": null,
+  "base_branch": "develop",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}otes": "",
+  "meta": {}
+}

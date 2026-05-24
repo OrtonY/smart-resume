@@ -2,7 +2,9 @@
   "page": {
     "loading": "Loading shared resume...",
     "loadFailed": "Failed to load shared resume.",
-    "verifyFailed": "Password verification failed"
+    "verifyFailed": "Password verification failed",
+    "downloadPdf": "Download PDF",
+    "downloadFailed": "Download failed. Please try again."
   },
   "passwordGate": {
     "title": "This share link requires a password",
