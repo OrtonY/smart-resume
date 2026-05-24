@@ -5,7 +5,8 @@
       "changeTemplate": "修改模板"
     },
     "nav": {
-      "backToWorkspace": "返回工作区"
+      "backToWorkspace": "返回工作区",
+      "backToCatalog": "返回模板目录"
     },
     "summary": {
       "linkedResume": "当前关联简历",
@@ -20,7 +21,8 @@
       "newTemplate": "新建模板",
       "refreshCatalog": "刷新目录",
       "refreshFailed": "模板目录最近一次刷新失败",
-      "selectTemplate": "选择简历模板"
+      "selectTemplate": "选择简历模板",
+      "viewTemplate": "查看模板"
     },
     "editor": {
       "title": {

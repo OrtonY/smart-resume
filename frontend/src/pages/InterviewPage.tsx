@@ -5,6 +5,7 @@ import {
   EyeOutlined,
   FileTextOutlined,
   MessageOutlined,
+  MoreOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
@@ -16,10 +17,10 @@ import {
   App,
   Button,
   Card,
+  Dropdown,
   Empty,
   Form,
   Input,
-  Modal,
   Pagination,
   Popconfirm,
   Popover,
@@ -41,6 +42,8 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ResponsiveModal } from '../components/shared/ResponsiveModal'
+import { useIsMobile } from '../lib/hooks/useIsMobile'
 import {
   continueInterview,
   createInterview,
@@ -578,7 +581,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         )}
       </div>
 
-      <Modal
+      <ResponsiveModal
         title={t('create.title')}
         open={createOpen}
         centered
@@ -679,7 +682,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
             </Space>
           </Form>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {creating ? (
         <div className="interview-creating-overlay">
@@ -727,6 +730,7 @@ function InterviewDetailView({
   setDetail: Dispatch<SetStateAction<InterviewDetail | null>>
 }) {
   const { t } = useTranslation('interview')
+  const isMobile = useIsMobile()
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
@@ -905,43 +909,63 @@ function InterviewDetailView({
             <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 13, padding: '2px 8px' }}>
               {timerDisplay}
             </Tag>
-            {detail.status === 'PAUSED' ? <Button onClick={onContinue}>{t('detail.continueInterview')}</Button> : null}
-            {hasNextRound ? (
-              <Button
-                type="primary"
-                ghost
-                icon={<ArrowRightOutlined />}
-                title={t('detail.nextRoundTitle')}
-                onClick={() => void handleNextRound()}
+            {!isMobile ? (
+              <>
+                {detail.status === 'PAUSED' ? <Button onClick={onContinue}>{t('detail.continueInterview')}</Button> : null}
+                {hasNextRound ? (
+                  <Button
+                    type="primary"
+                    ghost
+                    icon={<ArrowRightOutlined />}
+                    title={t('detail.nextRoundTitle')}
+                    onClick={() => void handleNextRound()}
+                  >
+                    {t('detail.nextRound')}
+                  </Button>
+                ) : null}
+                {detail.status === 'IN_PROGRESS' ? (
+                  <Button icon={<PauseCircleOutlined />} title={t('detail.pauseTitle')} onClick={onPause}>
+                    {t('detail.pause')}
+                  </Button>
+                ) : null}
+                {detail.status !== 'ENDED' ? (
+                  <Popconfirm title={t('detail.endConfirm')} onConfirm={onEnd} okText={t('detail.endOk')} cancelText={t('common:actions.cancel')}>
+                    <Button type="primary" ghost danger icon={<PoweroffOutlined />} title={t('detail.endTitle')}>
+                      {t('detail.endOk')}
+                    </Button>
+                  </Popconfirm>
+                ) : null}
+                {detail.status === 'ENDED' ||
+                detail.reportStatus === 'READY' ||
+                detail.reportStatus === 'GENERATING' ||
+                detail.reportStatus === 'FAILED' ? (
+                  <Button icon={<FileTextOutlined />} onClick={() => setReportDrawerOpen(true)}>
+                    {t('detail.viewReport')}
+                  </Button>
+                ) : null}
+                {detail.status === 'ENDED' ? (
+                  <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+                    {t('detail.backToCenter')}
+                  </Button>
+                ) : null}
+              </>
+            ) : (
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    ...(detail.status === 'PAUSED' ? [{ key: 'continue', label: t('detail.continueInterview'), icon: <PlayCircleOutlined />, onClick: onContinue }] : []),
+                    ...(hasNextRound ? [{ key: 'nextRound', label: t('detail.nextRound'), icon: <ArrowRightOutlined />, onClick: () => void handleNextRound() }] : []),
+                    ...(detail.status === 'IN_PROGRESS' ? [{ key: 'pause', label: t('detail.pause'), icon: <PauseCircleOutlined />, onClick: onPause }] : []),
+                    ...(detail.status !== 'ENDED' ? [{ key: 'end', label: t('detail.endOk'), icon: <PoweroffOutlined />, danger: true, onClick: onEnd }] : []),
+                    ...((detail.status === 'ENDED' || detail.reportStatus === 'READY' || detail.reportStatus === 'GENERATING' || detail.reportStatus === 'FAILED') ? [{ key: 'report', label: t('detail.viewReport'), icon: <FileTextOutlined />, onClick: () => setReportDrawerOpen(true) }] : []),
+                    ...(detail.status === 'ENDED' ? [{ key: 'back', label: t('detail.backToCenter'), icon: <ArrowLeftOutlined />, onClick: onBack }] : []),
+                  ],
+                }}
               >
-                {t('detail.nextRound')}
-              </Button>
-            ) : null}
-            {detail.status === 'IN_PROGRESS' ? (
-              <Button icon={<PauseCircleOutlined />} title={t('detail.pauseTitle')} onClick={onPause}>
-                {t('detail.pause')}
-              </Button>
-            ) : null}
-            {detail.status !== 'ENDED' ? (
-              <Popconfirm title={t('detail.endConfirm')} onConfirm={onEnd} okText={t('detail.endOk')} cancelText={t('common:actions.cancel')}>
-                <Button type="primary" ghost danger icon={<PoweroffOutlined />} title={t('detail.endTitle')}>
-                  {t('detail.endOk')}
-                </Button>
-              </Popconfirm>
-            ) : null}
-            {detail.status === 'ENDED' ||
-            detail.reportStatus === 'READY' ||
-            detail.reportStatus === 'GENERATING' ||
-            detail.reportStatus === 'FAILED' ? (
-              <Button icon={<FileTextOutlined />} onClick={() => setReportDrawerOpen(true)}>
-                {t('detail.viewReport')}
-              </Button>
-            ) : null}
-            {detail.status === 'ENDED' ? (
-              <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
-                {t('detail.backToCenter')}
-              </Button>
-            ) : null}
+                <Button icon={<MoreOutlined />} />
+              </Dropdown>
+            )}
           </Space>
         </div>
 
@@ -1068,7 +1092,7 @@ function InterviewDetailView({
         </div>
       ) : null}
 
-      <Modal
+      <ResponsiveModal
         title={t('report.modalTitle')}
         open={reportDrawerOpen}
         width="66%"
@@ -1076,6 +1100,7 @@ function InterviewDetailView({
         footer={null}
         destroyOnHidden
         className="interview-report-modal"
+        mobileHeight="100dvh"
       >
         <InterviewReportPanel
           interviewId={detail.id}
@@ -1089,7 +1114,7 @@ function InterviewDetailView({
             }
           }}
         />
-      </Modal>
+      </ResponsiveModal>
     </div>
   )
 }

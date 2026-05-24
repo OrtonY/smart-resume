@@ -1,5 +1,6 @@
 import { BarChartOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Empty, Input, Modal, Progress, Space, Spin, Tag, Typography } from 'antd'
+import { Alert, App, Button, Empty, Input, Progress, Space, Spin, Tag, Typography } from 'antd'
+import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { scoreAiResume } from '../api/aiApi'
@@ -88,7 +89,7 @@ function ResumeScoreButtonInner({
         {t('score.buttonLabel')}
       </Button>
 
-      <Modal
+      <ResponsiveModal
         open={open}
         title={t('score.modalTitle')}
         onCancel={handleClose}
@@ -204,7 +205,7 @@ function ResumeScoreButtonInner({
             )}
           </Spin>
         </div>
-      </Modal>
+      </ResponsiveModal>
     </>
   )
 }
