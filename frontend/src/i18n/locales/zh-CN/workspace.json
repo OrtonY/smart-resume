@@ -91,7 +91,13 @@
     "deleteEntry": "删除",
     "addEntry": "添加条目",
     "noEntries": "暂无条目",
-    "emptyPreview": "创建或打开一份简历后，这里会实时显示预览。"
+    "emptyPreview": "创建或打开一份简历后，这里会实时显示预览。",
+    "tabEdit": "编辑",
+    "tabPreview": "预览",
+    "tabStructure": "结构",
+    "tabContent": "内容",
+    "moreActions": "更多",
+    "moreActionsAria": "更多操作"
   },
   "modules": {
     "personalInfo": {
