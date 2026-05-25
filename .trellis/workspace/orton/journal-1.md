@@ -1406,3 +1406,36 @@ Implemented AI answer and scoring persistence, backend APIs, frontend modal flow
 ### Next Steps
 
 - None - task complete
+
+
+## Session 43: Resume mobile preview and AI fallback fixes
+
+**Date**: 2026-05-25
+**Task**: Resume mobile preview and AI fallback fixes
+**Branch**: `fix/resume-editor-mobile-scoring`
+
+### Summary
+
+Fixed resume AI chat fallback for mobile fetch failures, restored mobile/A4 resume preview behavior, constrained resume score modal overflow, and tightened repeatable editor card widths.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e9a5277` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
