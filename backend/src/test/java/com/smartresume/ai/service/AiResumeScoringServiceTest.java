@@ -2,17 +2,19 @@ package com.smartresume.ai.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.domain.AiResumeScoreEntity;
 import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreSuggestionGroup;
+import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiInvocationRequest;
-import com.smartresume.resume.service.ResumeService;
+import com.smartresume.ai.mapper.AiResumeScoreMapper;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.dto.ResumeDtos.CertificateItem;
 import com.smartresume.resume.dto.ResumeDtos.EducationItem;
 import com.smartresume.resume.dto.ResumeDtos.HonorItem;
@@ -22,8 +24,11 @@ import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
 import com.smartresume.resume.dto.ResumeDtos.SkillItem;
 import com.smartresume.resume.dto.ResumeDtos.WorkExperienceItem;
+import com.smartresume.resume.service.ResumeService;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,23 +44,32 @@ class AiResumeScoringServiceTest {
     @Mock
     private ResumeService resumeService;
 
+    @Mock
+    private AiResumeScoreMapper aiResumeScoreMapper;
+
     private AiResumeScoringService service;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        service = new AiResumeScoringService(aiChatService, resumeService, objectMapper);
+        CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(7L, "tester", false));
+        service = new AiResumeScoringService(aiChatService, resumeService, aiResumeScoreMapper, objectMapper);
+    }
+
+    @AfterEach
+    void tearDown() {
+        CurrentUserContext.clear();
     }
 
     @Test
     void scoresResumeWithoutJobDescription() {
         AiResumeScoreResponse mockResponse = new AiResumeScoreResponse(
             72,
-            "这份简历已有不错基础，但还可以通过补充成果细节来继续提升。",
-            List.of("工作经历模块已具备", "项目经历已具备"),
+            "The resume has a solid baseline and can improve with clearer outcomes.",
+            List.of("Complete work history", "Project experience is present"),
             List.of(
-                new AiResumeScoreSuggestionGroup("内容完整性", List.of("补充个人总结")),
-                new AiResumeScoreSuggestionGroup("表达优化", List.of("量化成果"))
+                new AiResumeScoreSuggestionGroup("Content completeness", List.of("Add a stronger personal summary")),
+                new AiResumeScoreSuggestionGroup("Expression quality", List.of("Quantify delivery outcomes"))
             ),
             false,
             Instant.now().toString(),
@@ -64,6 +78,7 @@ class AiResumeScoringServiceTest {
 
         when(aiChatService.callStructured(any(AiInvocationRequest.class), eq(AiResumeScoreResponse.class)))
             .thenReturn(mockResponse);
+        when(aiResumeScoreMapper.selectOneByQuery(any())).thenReturn(null);
 
         AiResumeScoreResponse response = service.scoreResume(new AiResumeScoreRequest(null, sampleResumeContext()));
 
@@ -79,11 +94,11 @@ class AiResumeScoringServiceTest {
     void scoresResumeWithJobDescription() {
         AiResumeScoreResponse mockResponse = new AiResumeScoreResponse(
             85,
-            "结合目标 JD 看，这份简历已经具备较强的结构完整度。",
-            List.of("工作经历模块已具备", "本次评分已结合 JD"),
+            "The resume aligns well with the target backend role and has clear structure.",
+            List.of("Work experience is relevant", "The JD context was incorporated"),
             List.of(
-                new AiResumeScoreSuggestionGroup("内容完整性", List.of("基础结构较完整")),
-                new AiResumeScoreSuggestionGroup("JD 定向优化", List.of("根据 JD 调整经历顺序"))
+                new AiResumeScoreSuggestionGroup("Content completeness", List.of("Keep the current structure")),
+                new AiResumeScoreSuggestionGroup("JD alignment", List.of("Reorder experience to match the JD"))
             ),
             true,
             Instant.now().toString(),
@@ -92,6 +107,7 @@ class AiResumeScoringServiceTest {
 
         when(aiChatService.callStructured(any(AiInvocationRequest.class), eq(AiResumeScoreResponse.class)))
             .thenReturn(mockResponse);
+        when(aiResumeScoreMapper.selectOneByQuery(any())).thenReturn(null);
 
         AiResumeScoreResponse response = service.scoreResume(new AiResumeScoreRequest(
             "Looking for a backend engineer with Spring Boot experience.",
@@ -102,8 +118,37 @@ class AiResumeScoringServiceTest {
         assertThat(response.jobDescriptionProvided()).isTrue();
         assertThat(response.score()).isEqualTo(85);
         assertThat(response.suggestionGroups())
-            .extracting(group -> group.title())
-            .contains("JD 定向优化");
+            .extracting(AiResumeScoreSuggestionGroup::title)
+            .contains("JD alignment");
+    }
+
+    @Test
+    void readsPersistedResumeScore() throws Exception {
+        AiResumeScoreResponse storedResult = new AiResumeScoreResponse(
+            88,
+            "Summary",
+            List.of("Strength"),
+            List.of(new AiResumeScoreSuggestionGroup("Group", List.of("Suggestion"))),
+            true,
+            Instant.now().toString(),
+            "ai"
+        );
+        AiResumeScoreEntity entity = new AiResumeScoreEntity();
+        entity.setResumeId("resume-1");
+        entity.setUserId(7L);
+        entity.setJobDescription("Backend JD");
+        entity.setResultJson(objectMapper.writeValueAsString(storedResult));
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+
+        when(aiResumeScoreMapper.selectOneByQuery(any())).thenReturn(entity);
+
+        PersistedAiResumeScoreResponse response = service.getPersistedScore("resume-1");
+
+        assertThat(response).isNotNull();
+        assertThat(response.jobDescription()).isEqualTo("Backend JD");
+        assertThat(response.result().score()).isEqualTo(88);
+        assertThat(response.result().mode()).isEqualTo("ai");
     }
 
     private AiResumeContext sampleResumeContext() {

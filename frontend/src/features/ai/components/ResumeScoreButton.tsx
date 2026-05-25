@@ -1,49 +1,70 @@
 import { BarChartOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Empty, Input, Progress, Space, Spin, Tag, Typography } from 'antd'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { scoreAiResume } from '../api/aiApi'
+import { getPersistedAiResumeScore, scoreAiResume } from '../api/aiApi'
 import { toAiResumeContext } from '../resumeContext'
 import type { AiResumeScoreResponse } from '../types'
 import type { ResumeDetail } from '../../resume/types'
 
 const { Paragraph, Text } = Typography
 const { TextArea } = Input
-const RESUME_SCORE_STORAGE_KEY_PREFIX = 'smart-resume:resume-score:'
-
-interface PersistedResumeScoreState {
-  version: 1
-  jobDescription: string
-  result: AiResumeScoreResponse
-}
 
 export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
-  const persistedState = loadPersistedResumeScore(draft.id)
-
-  return <ResumeScoreButtonInner key={draft.id} draft={draft} persistedState={persistedState} />
-}
-
-function ResumeScoreButtonInner({
-  draft,
-  persistedState,
-}: {
-  draft: ResumeDetail
-  persistedState: PersistedResumeScoreState | null
-}) {
   const { t } = useTranslation('ai')
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
-  const [jobDescription, setJobDescription] = useState(persistedState?.jobDescription ?? '')
-  const [savedJobDescription, setSavedJobDescription] = useState(persistedState?.jobDescription ?? '')
+  const [jobDescription, setJobDescription] = useState('')
+  const [savedJobDescription, setSavedJobDescription] = useState('')
   const [scoring, setScoring] = useState(false)
-  const [result, setResult] = useState<AiResumeScoreResponse | null>(persistedState?.result ?? null)
-  const [showJobDescriptionInput, setShowJobDescriptionInput] = useState(!persistedState)
+  const [restoring, setRestoring] = useState(false)
+  const [restored, setRestored] = useState(false)
+  const [result, setResult] = useState<AiResumeScoreResponse | null>(null)
+  const [showJobDescriptionInput, setShowJobDescriptionInput] = useState(true)
 
   const resumeContext = useMemo(() => toAiResumeContext(draft), [draft])
 
+  useEffect(() => {
+    if (!open || restored) {
+      return
+    }
+
+    let canceled = false
+    const restorePersistedScore = async () => {
+      setRestoring(true)
+      try {
+        const persisted = await getPersistedAiResumeScore(draft.id)
+        if (canceled) {
+          return
+        }
+        if (persisted) {
+          setJobDescription(persisted.jobDescription)
+          setSavedJobDescription(persisted.jobDescription)
+          setResult(persisted.result)
+          setShowJobDescriptionInput(false)
+        }
+        setRestored(true)
+      } catch (error) {
+        if (!canceled) {
+          void message.error(error instanceof Error ? error.message : t('score.scoreFailed'))
+        }
+      } finally {
+        if (!canceled) {
+          setRestoring(false)
+        }
+      }
+    }
+
+    void restorePersistedScore()
+
+    return () => {
+      canceled = true
+    }
+  }, [draft.id, message, open, restored, t])
+
   function handleClose() {
-    if (scoring) {
+    if (scoring || restoring) {
       return
     }
     setOpen(false)
@@ -70,11 +91,6 @@ function ResumeScoreButtonInner({
       setResult(response)
       setJobDescription(normalizedJobDescription)
       setSavedJobDescription(normalizedJobDescription)
-      persistResumeScore(draft.id, {
-        version: 1,
-        jobDescription: normalizedJobDescription,
-        result: response,
-      })
       setShowJobDescriptionInput(false)
     } catch (error) {
       void message.error(error instanceof Error ? error.message : t('score.scoreFailed'))
@@ -110,12 +126,13 @@ function ResumeScoreButtonInner({
                 value={jobDescription}
                 onChange={(event) => setJobDescription(event.target.value)}
                 placeholder={t('score.jdPlaceholder')}
+                disabled={restoring}
               />
               <div className="resume-score-panel__actions">
                 <Paragraph type="secondary" style={{ marginBottom: 0 }}>
                   {t('score.mockHint')}
                 </Paragraph>
-                <Button type="primary" icon={<BarChartOutlined />} loading={scoring} onClick={() => void handleScore()}>
+                <Button type="primary" icon={<BarChartOutlined />} loading={scoring} disabled={restoring} onClick={() => void handleScore()}>
                   {result ? t('score.rescore') : t('score.startScoring')}
                 </Button>
               </div>
@@ -130,17 +147,17 @@ function ResumeScoreButtonInner({
                 <Text type="secondary">{t('score.savedHint')}</Text>
               </div>
               <Space wrap>
-                <Button onClick={() => setShowJobDescriptionInput(true)}>
+                <Button disabled={restoring} onClick={() => setShowJobDescriptionInput(true)}>
                   {t('score.modifyJd')}
                 </Button>
-                <Button type="primary" icon={<BarChartOutlined />} loading={scoring} onClick={() => void handleScore()}>
+                <Button type="primary" icon={<BarChartOutlined />} loading={scoring} disabled={restoring} onClick={() => void handleScore()}>
                   {t('score.rescore')}
                 </Button>
               </Space>
             </div>
           )}
 
-          <Spin spinning={scoring}>
+          <Spin spinning={scoring || restoring}>
             {result ? (
               <div className="resume-score-result">
                 {result.mode === 'mock' ? (
@@ -208,44 +225,4 @@ function ResumeScoreButtonInner({
       </ResponsiveModal>
     </>
   )
-}
-
-function buildResumeScoreStorageKey(resumeId: string) {
-  return `${RESUME_SCORE_STORAGE_KEY_PREFIX}${resumeId}`
-}
-
-function loadPersistedResumeScore(resumeId: string): PersistedResumeScoreState | null {
-  try {
-    const raw = window.localStorage.getItem(buildResumeScoreStorageKey(resumeId))
-    if (!raw) {
-      return null
-    }
-
-    const parsed = JSON.parse(raw) as Partial<PersistedResumeScoreState>
-    if (
-      parsed.version !== 1
-      || typeof parsed.jobDescription !== 'string'
-      || !parsed.result
-      || typeof parsed.result.score !== 'number'
-      || typeof parsed.result.summary !== 'string'
-    ) {
-      return null
-    }
-
-    return {
-      version: 1,
-      jobDescription: parsed.jobDescription,
-      result: parsed.result,
-    }
-  } catch {
-    return null
-  }
-}
-
-function persistResumeScore(resumeId: string, value: PersistedResumeScoreState) {
-  try {
-    window.localStorage.setItem(buildResumeScoreStorageKey(resumeId), JSON.stringify(value))
-  } catch {
-    // Ignore storage failures so scoring UX still works when persistence is unavailable.
-  }
 }

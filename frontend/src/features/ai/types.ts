@@ -90,7 +90,12 @@ export interface AiResumeScoreResponse {
   suggestionGroups: AiResumeScoreSuggestionGroup[]
   jobDescriptionProvided: boolean
   generatedAt: string
-  mode: 'mock' | 'live'
+  mode: 'ai' | 'mock' | 'live'
+}
+
+export interface PersistedAiResumeScoreResponse {
+  jobDescription: string
+  result: AiResumeScoreResponse
 }
 
 export interface VendorMetadata {

@@ -10,6 +10,7 @@ import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.ListModelsRequest;
 import com.smartresume.ai.dto.AiDtos.ListModelsResponse;
+import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.VendorMetadataResponse;
 import com.smartresume.ai.provider.ChatModelProvider;
 import com.smartresume.ai.provider.ChatModelProviderRegistry;
@@ -75,6 +76,11 @@ public class AiController {
     @PostMapping("/resume-score")
     public ApiResponse<AiResumeScoreResponse> scoreResume(@Valid @RequestBody AiResumeScoreRequest request) {
         return ApiResponse.success(aiResumeScoringService.scoreResume(request), "Resume scored");
+    }
+
+    @GetMapping("/resumes/{resumeId}/score")
+    public ApiResponse<PersistedAiResumeScoreResponse> getPersistedResumeScore(@PathVariable String resumeId) {
+        return ApiResponse.success(aiResumeScoringService.getPersistedScore(resumeId));
     }
 
     @GetMapping("/resumes/{resumeId}/chat/conversations")

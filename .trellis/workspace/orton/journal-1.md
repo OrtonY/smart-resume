@@ -1373,3 +1373,36 @@ Implemented AI answer and scoring persistence, backend APIs, frontend modal flow
 ### Next Steps
 
 - None - task complete
+
+
+## Session 42: 完成简历评分持久化与后端跨域优化
+
+**Date**: 2026-05-25
+**Task**: 完成简历评分持久化与后端跨域优化
+**Branch**: `codex/resume-score-persistence-and-cors`
+
+### Summary
+
+为简历评分增加后端持久化与最近结果恢复接口，前端在评分弹窗恢复历史评分，同时放开后端跨域配置并补充测试、文案与规格说明。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `341f6d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
