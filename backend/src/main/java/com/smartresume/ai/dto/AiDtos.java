@@ -75,6 +75,13 @@ public final class AiDtos {
     public record AiChatEvent(String type, String content, String conversationId) {
     }
 
+    public record AiChatCompletionResponse(
+        String content,
+        String suggestionJson,
+        String conversationId
+    ) {
+    }
+
     public record AiResumeScoreSuggestionGroup(
         String title,
         List<String> suggestions

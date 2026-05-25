@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 42
+- **Total Sessions**: 43
 - **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1408 | Active |
+| `journal-1.md` | ~1441 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 43 | 2026-05-25 | Resume mobile preview and AI fallback fixes | `e9a5277` | `fix/resume-editor-mobile-scoring` |
 | 42 | 2026-05-25 | 完成简历评分持久化与后端跨域优化 | `341f6d1` | `codex/resume-score-persistence-and-cors` |
 | 41 | 2026-05-25 | Interview AI answer and scoring flow | `b664607` | `feat/interview-ai-answer` |
 | 40 | 2026-05-25 | Mobile adapt scoring and interview report pages | `f3e6d03` | `feat/mobile-adapt-scoring-pages` |

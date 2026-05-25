@@ -82,6 +82,32 @@ new EventSource('/api/interviews/123/report/events')
 
 ## Styling Patterns
 
+### Convention: Preview Scaling Must Be Container-Driven, Not Layered
+
+**What**: Components that already compute preview/page scale from their container size (for example `ResumePreview`) must be the single source of truth for the rendered scale. Do not add an extra responsive `transform: scale(...)` or `100vw`-based width calculation on top of the preview paper in page-level CSS.
+
+**Why**: Layering component-level scale with viewport-based CSS scale causes double shrinking, device-width-specific distortion, and subtle horizontal overflow on real phones. The preview should follow the width of its actual container, not a second approximation derived from the viewport.
+
+**Wrong vs Correct**:
+
+```css
+/* Wrong: the preview component already scales internally; this applies a second scale. */
+.resume-editor-preview .resume-preview-paper {
+  transform: scale(calc((100vw - 48px) / 794));
+}
+
+/* Correct: let ResumePreview own the scale and only constrain the outer container. */
+.resume-editor-preview .resume-preview-stage {
+  overflow-x: hidden;
+}
+
+.resume-editor-preview .resume-preview-pages {
+  width: 100%;
+}
+```
+
+**Related**: This is especially important for mobile editor preview, template gallery preview, and any off-screen export source that renders A4-sized content.
+
 ### Convention: Insulate Off-screen Rasterization Sources from Responsive Media Queries
 
 **What**: Any DOM subtree rendered solely to be rasterized off-screen (e.g., the PDF export source `.resume-export-source` in `frontend/src/index.css`, captured by `html2canvas` in `frontend/src/features/resume/export/pdfExport.ts`) must override every responsive rule that would otherwise mutate its layout based on the actual device viewport. Treat the rasterization container as an isolated styling scope, not a free-form preview.

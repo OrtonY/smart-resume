@@ -3,6 +3,7 @@ package com.smartresume.ai.controller;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatConversation;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
+import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
@@ -71,6 +72,11 @@ public class AiController {
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<AiChatEvent> streamChat(@Valid @RequestBody AiChatRequest request) {
         return aiAgentService.streamChat(request);
+    }
+
+    @PostMapping("/chat")
+    public ApiResponse<AiChatCompletionResponse> completeChat(@Valid @RequestBody AiChatRequest request) {
+        return ApiResponse.success(aiAgentService.completeChat(request));
     }
 
     @PostMapping("/resume-score")

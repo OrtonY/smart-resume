@@ -111,6 +111,15 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
         onCancel={handleClose}
         footer={null}
         destroyOnHidden={false}
+        width={720}
+        className="resume-score-modal"
+        styles={{
+          body: {
+            maxHeight: '70vh',
+            overflowX: 'hidden',
+            overflowY: 'auto',
+          },
+        }}
       >
         <div className="resume-score-panel">
           <div className="resume-score-panel__intro">
