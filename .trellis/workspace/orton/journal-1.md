@@ -1439,3 +1439,38 @@ Fixed resume AI chat fallback for mobile fetch failures, restored mobile/A4 resu
 ### Next Steps
 
 - None - task complete
+
+
+## Session 44: Frontend refactor: page decomposition, code splitting, and dep bumps
+
+**Date**: 2026-05-25
+**Task**: Frontend refactor: page decomposition, code splitting, and dep bumps
+**Branch**: `refactor/frontend-refactor-maintainability`
+
+### Summary
+
+Decomposed WorkspacePage, TemplateGalleryPage, InterviewPage, and ResumePreview into feature-local components/hooks. Added React.lazy route splitting and lazy syntax highlighter. Bumped antd/i18next/tooling deps. Fixed antd v6 CSS-in-JS style regression in TemplateGalleryEditorPanel.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e3e3838` | (see git log) |
+| `2269525` | (see git log) |
+| `34ad72e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

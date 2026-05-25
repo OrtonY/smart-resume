@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 43
+- **Total Sessions**: 44
 - **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1441 | Active |
+| `journal-1.md` | ~1476 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 44 | 2026-05-25 | Frontend refactor: page decomposition, code splitting, and dep bumps | `e3e3838`, `2269525`, `34ad72e` | `refactor/frontend-refactor-maintainability` |
 | 43 | 2026-05-25 | Resume mobile preview and AI fallback fixes | `e9a5277` | `fix/resume-editor-mobile-scoring` |
 | 42 | 2026-05-25 | 完成简历评分持久化与后端跨域优化 | `341f6d1` | `codex/resume-score-persistence-and-cors` |
 | 41 | 2026-05-25 | Interview AI answer and scoring flow | `b664607` | `feat/interview-ai-answer` |
