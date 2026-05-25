@@ -1100,7 +1100,7 @@ function InterviewDetailView({
         footer={null}
         destroyOnHidden
         className="interview-report-modal"
-        mobileHeight="100dvh"
+        mobileHeight="92vh"
       >
         <InterviewReportPanel
           interviewId={detail.id}

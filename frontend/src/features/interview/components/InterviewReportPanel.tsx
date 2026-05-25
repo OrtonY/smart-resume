@@ -2,6 +2,7 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Collapse, Empty, Progress, Spin, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { regenerateReport, streamReportEvents } from '../api/interviewApi'
 import type {
@@ -28,6 +29,7 @@ export function InterviewReportPanel({
   onStatusChange,
 }: InterviewReportPanelProps) {
   const { t } = useTranslation('interview')
+  const isMobile = useIsMobile()
   const [streamStatus, setStreamStatus] = useState<InterviewReportStatus | null>(null)
   const [streamReport, setStreamReport] = useState<InterviewReportData | null>(null)
   const [regenerating, setRegenerating] = useState(false)
@@ -78,8 +80,8 @@ export function InterviewReportPanel({
 
   if (activeStatus === 'PENDING') {
     return (
-      <Card className="glass-card interview-report-panel" bordered={false}>
-        <Title level={4}>{t('report.title')}</Title>
+      <ReportShell isMobile={isMobile}>
+        {!isMobile && <Title level={4}>{t('report.title')}</Title>}
         <Empty description={interviewEnded ? t('report.pendingEnded') : t('report.pendingNotEnded')}>
           {interviewEnded && (
             <Button
@@ -91,26 +93,26 @@ export function InterviewReportPanel({
             </Button>
           )}
         </Empty>
-      </Card>
+      </ReportShell>
     )
   }
 
   if (activeStatus === 'GENERATING') {
     return (
-      <Card className="glass-card interview-report-panel" bordered={false}>
-        <Title level={4}>{t('report.title')}</Title>
+      <ReportShell isMobile={isMobile}>
+        {!isMobile && <Title level={4}>{t('report.title')}</Title>}
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <Spin size="large" />
           <Paragraph style={{ marginTop: 16 }}>{t('report.generating')}</Paragraph>
         </div>
-      </Card>
+      </ReportShell>
     )
   }
 
   if (activeStatus === 'FAILED') {
     return (
-      <Card className="glass-card interview-report-panel" bordered={false}>
-        <Title level={4}>{t('report.title')}</Title>
+      <ReportShell isMobile={isMobile}>
+        {!isMobile && <Title level={4}>{t('report.title')}</Title>}
         <Empty description={t('report.failed')}>
           <Button
             type="primary"
@@ -121,42 +123,53 @@ export function InterviewReportPanel({
             {t('report.regenerate')}
           </Button>
         </Empty>
-      </Card>
+      </ReportShell>
     )
   }
 
   if (!activeReport) {
     return (
-      <Card className="glass-card interview-report-panel" bordered={false}>
-        <Title level={4}>{t('report.title')}</Title>
+      <ReportShell isMobile={isMobile}>
+        {!isMobile && <Title level={4}>{t('report.title')}</Title>}
         <Empty description={t('report.dataError')} />
-      </Card>
+      </ReportShell>
     )
   }
 
   return (
-    <Card className="glass-card interview-report-panel" bordered={false}>
-      <Title level={4}>{t('report.title')}</Title>
+    <ReportShell isMobile={isMobile}>
+      {!isMobile && <Title level={4}>{t('report.title')}</Title>}
       <div className="interview-report-content">
-        <ScoreOverview report={activeReport} />
+        <ScoreOverview report={activeReport} compact={isMobile} />
         <SkillAssessmentSection assessment={activeReport.skillAssessment} />
         <StrengthsAndImprovements strengths={activeReport.strengths} improvements={activeReport.improvements} />
         <RoundsSection rounds={activeReport.rounds} />
         <LearningResourcesSection resources={activeReport.learningResources} />
       </div>
+    </ReportShell>
+  )
+}
+
+function ReportShell({ isMobile, children }: { isMobile: boolean; children: React.ReactNode }) {
+  if (isMobile) {
+    return <div className="interview-report-panel--mobile">{children}</div>
+  }
+  return (
+    <Card className="glass-card interview-report-panel" bordered={false}>
+      {children}
     </Card>
   )
 }
 
-function ScoreOverview({ report }: { report: InterviewReportData }) {
+function ScoreOverview({ report, compact }: { report: InterviewReportData; compact?: boolean }) {
   return (
-    <div className="report-score-overview">
+    <div className={compact ? 'report-score-overview report-score-overview--compact' : 'report-score-overview'}>
       <div className="report-score-circle">
         <Progress
-          type="circle"
+          type={compact ? 'dashboard' : 'circle'}
           percent={report.overallScore}
           format={(percent) => <span className="report-score-value">{percent}</span>}
-          size={120}
+          size={compact ? 80 : 120}
           strokeColor={scoreColor(report.overallScore)}
         />
       </div>
