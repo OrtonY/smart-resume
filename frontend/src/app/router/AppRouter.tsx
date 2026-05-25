@@ -1,5 +1,5 @@
 import { Spin } from 'antd'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { invalidateManagedResumeTemplateCatalogCache } from '../../features/resume/hooks/useResumeTemplateCatalog'
 import {
@@ -19,11 +19,12 @@ import {
   persistAccessToken,
   subscribeAccessToken,
 } from '../../lib/auth/tokenStorage'
-import { AuthPage } from '../../pages/AuthPage'
-import { InterviewPage } from '../../pages/InterviewPage'
-import { PublicSharePage } from '../../pages/PublicSharePage'
-import { TemplateGalleryPage } from '../../pages/TemplateGalleryPage'
-import { WorkspacePage } from '../../pages/WorkspacePage'
+
+const AuthPage = lazy(async () => import('../../pages/AuthPage').then((module) => ({ default: module.AuthPage })))
+const InterviewPage = lazy(async () => import('../../pages/InterviewPage').then((module) => ({ default: module.InterviewPage })))
+const PublicSharePage = lazy(async () => import('../../pages/PublicSharePage').then((module) => ({ default: module.PublicSharePage })))
+const TemplateGalleryPage = lazy(async () => import('../../pages/TemplateGalleryPage').then((module) => ({ default: module.TemplateGalleryPage })))
+const WorkspacePage = lazy(async () => import('../../pages/WorkspacePage').then((module) => ({ default: module.WorkspacePage })))
 
 async function fetchSession() {
   if (!getAccessToken()) {
@@ -115,53 +116,63 @@ export function AppRouter() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/share/:shareCode" element={<PublicSharePage />} />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
+          <Route path="/share/:shareCode" element={<PublicSharePage />} />
 
-        {!accessToken || !session ? (
-          <Route path="*" element={<AuthPage bootstrapStatus={bootstrapStatus} onAuthenticated={handleAuthenticated} />} />
-        ) : (
-          <>
-            <Route path="/app/templates" element={<TemplateGalleryPage />} />
-            <Route path="/app/interviews/:interviewId" element={<InterviewPage onLogout={handleLogout} />} />
-            <Route path="/app/interviews" element={<InterviewPage onLogout={handleLogout} />} />
-            <Route
-              path="/app/recycle-bin"
-              element={(
-                <WorkspacePage
-                  currentUser={session.user}
-                  onLogout={handleLogout}
-                  registrationEnabled={session.registrationEnabled}
-                  onRegistrationEnabledChange={handleRegistrationEnabledChange}
-                />
-              )}
-            />
-            <Route
-              path="/app/resumes/:resumeId"
-              element={(
-                <WorkspacePage
-                  currentUser={session.user}
-                  onLogout={handleLogout}
-                  registrationEnabled={session.registrationEnabled}
-                  onRegistrationEnabledChange={handleRegistrationEnabledChange}
-                />
-              )}
-            />
-            <Route
-              path="/app"
-              element={(
-                <WorkspacePage
-                  currentUser={session.user}
-                  onLogout={handleLogout}
-                  registrationEnabled={session.registrationEnabled}
-                  onRegistrationEnabledChange={handleRegistrationEnabledChange}
-                />
-              )}
-            />
-            <Route path="*" element={<Navigate to="/app" replace />} />
-          </>
-        )}
-      </Routes>
+          {!accessToken || !session ? (
+            <Route path="*" element={<AuthPage bootstrapStatus={bootstrapStatus} onAuthenticated={handleAuthenticated} />} />
+          ) : (
+            <>
+              <Route path="/app/templates" element={<TemplateGalleryPage />} />
+              <Route path="/app/interviews/:interviewId" element={<InterviewPage onLogout={handleLogout} />} />
+              <Route path="/app/interviews" element={<InterviewPage onLogout={handleLogout} />} />
+              <Route
+                path="/app/recycle-bin"
+                element={(
+                  <WorkspacePage
+                    currentUser={session.user}
+                    onLogout={handleLogout}
+                    registrationEnabled={session.registrationEnabled}
+                    onRegistrationEnabledChange={handleRegistrationEnabledChange}
+                  />
+                )}
+              />
+              <Route
+                path="/app/resumes/:resumeId"
+                element={(
+                  <WorkspacePage
+                    currentUser={session.user}
+                    onLogout={handleLogout}
+                    registrationEnabled={session.registrationEnabled}
+                    onRegistrationEnabledChange={handleRegistrationEnabledChange}
+                  />
+                )}
+              />
+              <Route
+                path="/app"
+                element={(
+                  <WorkspacePage
+                    currentUser={session.user}
+                    onLogout={handleLogout}
+                    registrationEnabled={session.registrationEnabled}
+                    onRegistrationEnabledChange={handleRegistrationEnabledChange}
+                  />
+                )}
+              />
+              <Route path="*" element={<Navigate to="/app" replace />} />
+            </>
+          )}
+        </Routes>
+      </Suspense>
     </BrowserRouter>
+  )
+}
+
+function RouteLoadingFallback() {
+  return (
+    <div className="full-page-center">
+      <Spin size="large" tip="Loading page..." />
+    </div>
   )
 }
