@@ -1340,3 +1340,36 @@ Added mobile responsive adaptation for resume scoring panel and interview report
 ### Next Steps
 
 - None - task complete
+
+
+## Session 41: Interview AI answer and scoring flow
+
+**Date**: 2026-05-25
+**Task**: Interview AI answer and scoring flow
+**Branch**: `feat/interview-ai-answer`
+
+### Summary
+
+Implemented AI answer and scoring persistence, backend APIs, frontend modal flow, and scroll/page UX improvements for interview messages.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b664607` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

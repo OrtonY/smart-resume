@@ -72,7 +72,25 @@
     "composerPlaceholder": "Type your answer...",
     "disabledPlaceholder": "Cannot respond in current state.",
     "sendAnswer": "Send answer",
-    "viewingHistory": "Viewing a past round (read-only)"
+    "viewingHistory": "Viewing a past round (read-only)",
+    "aiAnswer": "AI Answer"
+  },
+  "aiAnswer": {
+    "modalTitle": "AI Answer & Scoring",
+    "answerTitle": "Reference Answer",
+    "thinking": "Thinking...",
+    "regenerate": "Regenerate",
+    "stop": "Stop",
+    "score": {
+      "title": "AI Scoring",
+      "start": "Start scoring",
+      "regenerate": "Re-score",
+      "empty": "Please enter your answer before scoring",
+      "scoreLabel": "Score: {{value}}/100",
+      "fromInput": "Source: input box",
+      "fromHistory": "Source: history answer",
+      "snapshotLabel": "Scored answer"
+    }
   },
   "report": {
     "title": "Interview Report",

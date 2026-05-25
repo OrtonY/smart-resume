@@ -56,6 +56,7 @@ import {
   streamInterviewMessage,
 } from '../features/interview/api/interviewApi'
 import { InterviewReportPanel } from '../features/interview/components/InterviewReportPanel'
+import { AiAnswerModal } from '../features/interview/components/AiAnswerModal'
 import { InterviewerRoleSorter } from '../features/interview/components/InterviewerRoleSorter'
 import { useInterviewTimer } from '../features/interview/hooks/useInterviewTimer'
 import {
@@ -753,6 +754,7 @@ function InterviewDetailView({
   const [reportDrawerOpen, setReportDrawerOpen] = useState(false)
   const [activeRoundTab, setActiveRoundTab] = useState<number>(detail?.activeRoundIndex ?? 0)
   const [nextRoundLoading, setNextRoundLoading] = useState(false)
+  const [aiAnswerModal, setAiAnswerModal] = useState<{ messageId: string; questionContent: string; candidateAnswerFromHistory: string | undefined } | null>(null)
   const safeActiveRoundTab = detail ? Math.min(activeRoundTab, Math.max(detail.interviewerRoles.length - 1, 0)) : 0
   const isViewingCurrentRound = detail ? safeActiveRoundTab === detail.activeRoundIndex : true
 
@@ -992,6 +994,18 @@ function InterviewDetailView({
                   index === filteredMessages.length - 1 &&
                   item.status === 'ABORTED'
 
+                const isInterviewerMessage = item.role === 'INTERVIEWER'
+                let candidateAnswerFromHistory: string | undefined
+                if (isInterviewerMessage) {
+                  for (let i = index + 1; i < filteredMessages.length; i++) {
+                    if (filteredMessages[i].role === 'CANDIDATE') {
+                      candidateAnswerFromHistory = filteredMessages[i].content
+                      break
+                    }
+                    if (filteredMessages[i].role === 'INTERVIEWER') break
+                  }
+                }
+
                 return (
                   <div className={`interview-message interview-message--${item.role.toLowerCase()}`} key={item.id}>
                     <div className="interview-message__role">
@@ -1006,11 +1020,24 @@ function InterviewDetailView({
                     <div className="interview-message__bubble">
                       <MarkdownMessage content={item.content} />
                       <span>{new Date(item.createdAt).toLocaleString()}</span>
-                      {isLastInterviewerMessage && canMessage && !streaming ? (
+                      {isInterviewerMessage ? (
                         <div className="interview-message__actions">
-                          <Button className="interview-regenerate-button" size="small" onClick={onRegenerate}>
-                            {t('message.regenerate')}
+                          <Button
+                            className="interview-ai-answer-button"
+                            size="small"
+                            onClick={() => setAiAnswerModal({
+                              messageId: item.id,
+                              questionContent: item.content,
+                              candidateAnswerFromHistory,
+                            })}
+                          >
+                            {t('message.aiAnswer')}
                           </Button>
+                          {isLastInterviewerMessage && canMessage && !streaming ? (
+                            <Button className="interview-regenerate-button" size="small" onClick={onRegenerate}>
+                              {t('message.regenerate')}
+                            </Button>
+                          ) : null}
                         </div>
                       ) : null}
                     </div>
@@ -1115,6 +1142,19 @@ function InterviewDetailView({
           }}
         />
       </ResponsiveModal>
+
+      {aiAnswerModal ? (
+        <AiAnswerModal
+          key={aiAnswerModal.messageId}
+          open={!!aiAnswerModal}
+          onClose={() => setAiAnswerModal(null)}
+          interviewId={detail.id}
+          messageId={aiAnswerModal.messageId}
+          questionContent={aiAnswerModal.questionContent}
+          currentInputContent={messageDraft}
+          candidateAnswerFromHistory={aiAnswerModal.candidateAnswerFromHistory}
+        />
+      ) : null}
     </div>
   )
 }
