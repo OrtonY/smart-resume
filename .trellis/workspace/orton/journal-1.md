@@ -1307,3 +1307,36 @@ Aligned server PDF export with browser preview, fixed page overflow/blank page i
 ### Next Steps
 
 - None - task complete
+
+
+## Session 40: Mobile adapt scoring and interview report pages
+
+**Date**: 2026-05-25
+**Task**: Mobile adapt scoring and interview report pages
+**Branch**: `feat/mobile-adapt-scoring-pages`
+
+### Summary
+
+Added mobile responsive adaptation for resume scoring panel and interview report panel: compact score overview, responsive grids, drawer overflow handling, and flat layout without Card wrapper on mobile.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f3e6d03` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
