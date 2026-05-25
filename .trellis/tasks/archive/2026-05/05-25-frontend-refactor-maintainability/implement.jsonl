@@ -1,0 +1,7 @@
+{"file":".trellis/tasks/05-25-frontend-refactor-maintainability/prd.md","reason":"Defines the scope and success criteria for the maintainability refactor."}
+{"file":".trellis/spec/frontend/index.md","reason":"Frontend package entry point and relevant guideline index for feature-first organization."}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"Controls where extracted page logic, hooks, and shared UI should live."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Covers i18n and mobile requirements that must remain intact during refactor."}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Documents local/server state boundaries for editor and resume list flows."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Sets expectations for feature-local typing and helper extraction around API/UI boundaries."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"This refactor centers on reducing duplication and extracting reusable logic safely."}
