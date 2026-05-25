@@ -1,0 +1,6 @@
+{"file":".trellis/tasks/05-25-frontend-refactor-maintainability/prd.md","reason":"Provides the intended validation boundary for review."}
+{"file":".trellis/spec/frontend/index.md","reason":"Frontend review context for acceptable architectural direction."}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"Lets checks verify that extracted files stay in the correct feature/shared layers."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Review must preserve i18n and mobile behavior across the refactor."}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Review must verify editor/list state ownership did not regress."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Review should confirm extracted helpers remain typed and API boundaries explicit."}

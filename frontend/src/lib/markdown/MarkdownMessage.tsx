@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { completeMarkdown } from './completeMarkdown'
+import { LazyCodeBlock } from './LazyCodeBlock'
 import './MarkdownMessage.css'
 
 interface MarkdownMessageProps {
@@ -27,15 +26,7 @@ export function MarkdownMessage({ content, streaming, className }: MarkdownMessa
             const match = /language-(\w+)/.exec(codeClassName || '')
             const codeString = String(children).replace(/\n$/, '')
             if (match) {
-              return (
-                <SyntaxHighlighter
-                  style={oneDark}
-                  language={match[1]}
-                  PreTag="div"
-                >
-                  {codeString}
-                </SyntaxHighlighter>
-              )
+              return <LazyCodeBlock code={codeString} language={match[1]} />
             }
             return (
               <code className={codeClassName} {...props}>

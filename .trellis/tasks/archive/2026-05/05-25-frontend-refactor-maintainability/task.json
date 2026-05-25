@@ -1,0 +1,27 @@
+{
+  "id": "frontend-refactor-maintainability",
+  "name": "frontend-refactor-maintainability",
+  "title": "frontend refactor for maintainability",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "orton",
+  "assignee": "orton",
+  "createdAt": "2026-05-25",
+  "completedAt": null,
+  "branch": "codex/frontend-refactor-maintainability",
+  "base_branch": "develop",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}ta": {}
+}

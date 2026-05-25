@@ -1,5 +1,5 @@
 import { Empty } from "antd";
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
@@ -7,37 +7,21 @@ import {
   resolveResumeTemplate,
   type ResumeTemplateDefinition,
 } from "../templateCatalog";
-import { parseInlineMarkdown } from "../markdown/parseInlineMarkdown";
-import type { InlineNode } from "../markdown/types";
-import { DEFAULT_RESUME_SECTION_ORDER, normalizeResumeLayout, normalizeResumeSectionOrder, type ResumeDetail, type ResumeSectionKey } from "../types";
-
-function renderInlineNodes(nodes: InlineNode[]): ReactNode {
-  return nodes.map((node, index) => {
-    switch (node.type) {
-      case "text":
-        return <Fragment key={index}>{node.text}</Fragment>;
-      case "bold":
-        return <strong key={index}>{renderInlineNodes(node.children)}</strong>;
-      case "italic":
-        return <em key={index}>{renderInlineNodes(node.children)}</em>;
-      case "code":
-        return <code key={index} style={{ padding: '0.1em 0.3em', borderRadius: 3, background: 'rgba(0,0,0,0.06)', fontSize: '0.9em' }}>{node.text}</code>;
-      case "link":
-        return <a key={index} href={node.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>{renderInlineNodes(node.children)}</a>;
-    }
-  });
-}
-
-function renderInlineMarkdown(text: string): ReactNode {
-  if (!text) {
-    return null;
-  }
-  const nodes = parseInlineMarkdown(text);
-  if (nodes.length === 0) {
-    return null;
-  }
-  return renderInlineNodes(nodes);
-}
+import { normalizeResumeLayout, normalizeResumeSectionOrder, type ResumeDetail, type ResumeSectionKey } from "../types";
+import { InlineMarkdown } from "./preview/InlineMarkdown";
+import { PreviewSection, SkillSection, TimelineSection } from "./preview/PreviewPrimitives";
+import { ClassicResumeTemplate } from "./preview/templates/ClassicResumeTemplate";
+import { EditorialResumeTemplate } from "./preview/templates/EditorialResumeTemplate";
+import { MinimalResumeTemplate } from "./preview/templates/MinimalResumeTemplate";
+import { ModernSplitResumeTemplate } from "./preview/templates/ModernSplitResumeTemplate";
+import {
+  A4_PREVIEW_HEIGHT_PX,
+  A4_PREVIEW_PAGE_GAP_PX,
+  A4_PREVIEW_WIDTH_PX,
+} from "./preview/previewPagination";
+import type { PreviewModel, SectionNodeMap } from "./preview/previewTypes";
+import { createPreviewModel } from "./preview/previewUtils";
+import { useResumePreviewMetrics } from "./preview/useResumePreviewMetrics";
 
 interface ResumePreviewProps {
   resume: Pick<ResumeDetail, "title" | "templateKey" | "content" | "layout">;
@@ -48,53 +32,6 @@ interface ResumePreviewProps {
   onClick?: () => void;
 }
 
-interface TimelineEntry {
-  title: string;
-  subtitle?: string;
-  meta?: string;
-  body?: string;
-}
-
-interface PreviewModel {
-  template: ResumeTemplateDefinition;
-  name: string;
-  headline: string;
-  summary: string;
-  avatar?: string;
-  contact: Array<{ label: string; value: string }>;
-  education: TimelineEntry[];
-  work: TimelineEntry[];
-  projects: TimelineEntry[];
-  honors: TimelineEntry[];
-  certificates: TimelineEntry[];
-  skills: string[];
-}
-
-interface PageSlice {
-  offset: number;
-  inset: number;
-  visibleHeight: number;
-}
-
-type PageItemLevel = "section" | "child" | "fragment";
-
-interface LineRect {
-  top: number;
-  bottom: number;
-}
-
-interface PageItem {
-  top: number;
-  bottom: number;
-  effectiveBottom: number;
-  level: PageItemLevel;
-  lines?: LineRect[];
-}
-
-const A4_PREVIEW_WIDTH_PX = 794;
-const A4_PREVIEW_HEIGHT_PX = 1123;
-const A4_PREVIEW_PAGE_GAP_PX = 28;
-const A4_PREVIEW_CONTINUATION_TOP_SPACING_PX = 56;
 export function ResumePreview({
   resume,
   sectionOrder,
@@ -103,14 +40,9 @@ export function ResumePreview({
   previewMode = "auto",
   onClick,
 }: ResumePreviewProps) {
-  const { t } = useTranslation('workspace');
+  const { t, i18n } = useTranslation('workspace');
   const stageRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLElement | null>(null);
-  const [previewMetrics, setPreviewMetrics] = useState({
-    scale: 1,
-    contentHeight: A4_PREVIEW_HEIGHT_PX,
-    pageSlices: [{ offset: 0, inset: 0, visibleHeight: A4_PREVIEW_HEIGHT_PX }] as PageSlice[],
-  });
   const template = resolveResumeTemplate(templates, resume.templateKey);
   const model = createPreviewModel(resume, template, t);
   const layout = normalizeResumeLayout(resume.layout);
@@ -120,6 +52,19 @@ export function ResumePreview({
   const templateStyleVariables = createTemplateStyleVariables(template);
   const isFixedA4Preview = previewMode === "a4-fit";
   const isPagedA4Preview = previewMode === "a4-paged";
+  const metricsWatchKey = JSON.stringify({
+    hiddenSections: hiddenSections ?? layout.hiddenSections,
+    language: i18n.language,
+    orderedKeys,
+    resume,
+  });
+  const previewMetrics = useResumePreviewMetrics({
+    isFixedA4Preview,
+    isPagedA4Preview,
+    measureRef,
+    stageRef,
+    watchKey: metricsWatchKey,
+  });
   const stageStyle = {
     "--resume-preview-scale": String(previewMetrics.scale),
     "--resume-preview-page-gap": `${Math.max(18, Math.round(A4_PREVIEW_PAGE_GAP_PX * previewMetrics.scale))}px`,
@@ -138,60 +83,6 @@ export function ResumePreview({
     .join(" ");
   const pageStartOffsets = isPagedA4Preview ? previewMetrics.pageSlices : [{ offset: 0, inset: 0, visibleHeight: previewMetrics.contentHeight }];
   const renderedTemplate = () => renderTemplate(model, sectionNodes, orderedKeys);
-
-  useEffect(() => {
-    const stageElement = stageRef.current;
-    const measureElement = measureRef.current;
-
-    if (!stageElement || !measureElement) {
-      return;
-    }
-
-    const updateMetrics = () => {
-      const stageWidth = stageElement.clientWidth || A4_PREVIEW_WIDTH_PX;
-      const widthScale = stageWidth / A4_PREVIEW_WIDTH_PX;
-      const nextScale = isPagedA4Preview
-        ? Math.min(1, widthScale)
-        : isFixedA4Preview
-          ? Math.min(1, widthScale, (stageElement.clientHeight || A4_PREVIEW_HEIGHT_PX) / A4_PREVIEW_HEIGHT_PX)
-          : Math.min(1, widthScale);
-      const nextContentHeight = Math.max(A4_PREVIEW_HEIGHT_PX, measureElement.scrollHeight);
-      const nextPageSlices = isPagedA4Preview
-        ? createPagedPreviewSlices(nextContentHeight, readMeasuredPageItems(measureElement), A4_PREVIEW_CONTINUATION_TOP_SPACING_PX)
-        : [{ offset: 0, inset: 0, visibleHeight: nextContentHeight }];
-
-      setPreviewMetrics((current) => {
-        if (
-          Math.abs(current.scale - nextScale) < 0.001 &&
-          current.contentHeight === nextContentHeight &&
-          arePageSlicesEqual(current.pageSlices, nextPageSlices)
-        ) {
-          return current;
-        }
-
-        return {
-          scale: nextScale,
-          contentHeight: nextContentHeight,
-          pageSlices: nextPageSlices,
-        };
-      });
-    };
-
-    updateMetrics();
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateMetrics();
-    });
-
-    resizeObserver.observe(stageElement);
-    resizeObserver.observe(measureElement);
-    window.addEventListener("resize", updateMetrics);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateMetrics);
-    };
-  }, [hiddenSections, isFixedA4Preview, isPagedA4Preview, orderedKeys, resume, sectionNodes]);
 
   function handlePreviewKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!onClick) {
@@ -272,515 +163,29 @@ export function ResumePreview({
   );
 }
 
-function readMeasuredPageItems(root: HTMLElement): PageItem[] {
-  const rootRect = root.getBoundingClientRect();
-  const selector = "[data-preview-page-item], [data-preview-page-item-child], [data-preview-page-item-fragment]";
-  const nodes = Array.from(root.querySelectorAll<HTMLElement>(selector));
-
-  const items: PageItem[] = [];
-
-  for (const node of nodes) {
-    const rect = node.getBoundingClientRect();
-    const top = rect.top - rootRect.top;
-    const bottom = rect.bottom - rootRect.top;
-
-    if (bottom <= top) continue;
-
-    let level: PageItemLevel;
-    if (node.hasAttribute("data-preview-page-item")) {
-      level = "section";
-    } else if (node.hasAttribute("data-preview-page-item-child")) {
-      level = "child";
-    } else {
-      level = "fragment";
-    }
-
-    const keepWithNext = node.dataset.previewKeepWithNext === "true";
-    let effectiveBottom = bottom;
-    if (keepWithNext) {
-      const next = node.nextElementSibling as HTMLElement | null;
-      if (next) {
-        const nextRect = next.getBoundingClientRect();
-        effectiveBottom = Math.max(bottom, nextRect.bottom - rootRect.top);
-      }
-    }
-
-    let lines: LineRect[] | undefined;
-    if (level === "fragment" && node.firstChild) {
-      try {
-        const range = node.ownerDocument!.createRange();
-        range.selectNodeContents(node);
-        const rectList = range.getClientRects();
-        const collected: LineRect[] = [];
-        for (let index = 0; index < rectList.length; index += 1) {
-          const lineRect = rectList[index];
-          if (lineRect.height <= 0) continue;
-          collected.push({
-            top: lineRect.top - rootRect.top,
-            bottom: lineRect.bottom - rootRect.top,
-          });
-        }
-        if (collected.length > 0) {
-          lines = collected;
-        }
-        range.detach?.();
-      } catch {
-        lines = undefined;
-      }
-    }
-
-    items.push({ top, bottom, effectiveBottom, level, lines });
-  }
-
-  return items;
-}
-
-function createPagedPreviewSlices(contentHeight: number, items: PageItem[], continuationTopSpacing: number) {
-  const safeContentHeight = Math.max(A4_PREVIEW_HEIGHT_PX, contentHeight);
-  const normalizedItems = items
-    .map((item) => ({
-      top: Math.max(0, Math.floor(item.top)),
-      bottom: Math.max(0, Math.ceil(item.bottom)),
-      effectiveBottom: Math.max(0, Math.ceil(item.effectiveBottom)),
-      level: item.level,
-      lines: item.lines?.map((line) => ({
-        top: Math.max(0, Math.floor(line.top)),
-        bottom: Math.max(0, Math.ceil(line.bottom)),
-      })),
-    }))
-    .sort((left, right) => left.top - right.top);
-
-  const slices: PageSlice[] = [];
-  let currentOffset = 0;
-  let pageIndex = 0;
-  let guard = 0;
-
-  while (currentOffset < safeContentHeight && guard < 200) {
-    const inset = pageIndex === 0 ? 0 : continuationTopSpacing;
-    const capacity = Math.max(1, A4_PREVIEW_HEIGHT_PX - inset);
-    const visibleLimit = currentOffset + capacity;
-
-    if (visibleLimit >= safeContentHeight) {
-      slices.push({ offset: currentOffset, inset, visibleHeight: safeContentHeight - currentOffset });
-      break;
-    }
-
-    let breakAt = visibleLimit;
-
-    const sectionNearBottom = normalizedItems.find(
-      (item) =>
-        item.level === "section" &&
-        item.top > currentOffset &&
-        item.top <= visibleLimit &&
-        item.top > visibleLimit - 80 &&
-        item.effectiveBottom > visibleLimit,
-    );
-
-    if (sectionNearBottom) {
-      breakAt = sectionNearBottom.top;
-    } else {
-      const spanning = normalizedItems.find(
-        (item) => item.level !== "section" && item.lines && item.lines.length > 0 && item.top < visibleLimit && item.bottom > visibleLimit,
-      );
-
-      if (spanning && spanning.lines) {
-        let lastFittingBottom = -1;
-        for (const line of spanning.lines) {
-          if (line.bottom <= visibleLimit && line.top >= currentOffset) {
-            lastFittingBottom = Math.max(lastFittingBottom, line.bottom);
-          }
-        }
-        if (lastFittingBottom > currentOffset) {
-          breakAt = lastFittingBottom;
-        } else {
-          breakAt = spanning.top > currentOffset ? spanning.top : visibleLimit;
-        }
-      }
-    }
-
-    const minProgress = Math.max(1, Math.floor(capacity * 0.2));
-    if (breakAt - currentOffset < minProgress) {
-      breakAt = visibleLimit;
-    }
-
-    const visibleHeight = Math.min(capacity, breakAt - currentOffset);
-    slices.push({ offset: currentOffset, inset, visibleHeight });
-    currentOffset = currentOffset + visibleHeight;
-    pageIndex += 1;
-    guard += 1;
-  }
-
-  return slices;
-}
-
-function arePageSlicesEqual(current: PageSlice[], next: PageSlice[]) {
-  if (current.length !== next.length) {
-    return false;
-  }
-
-  return current.every(
-    (slice, index) => slice.offset === next[index].offset && slice.inset === next[index].inset && slice.visibleHeight === next[index].visibleHeight,
-  );
-}
-
 function renderTemplate(model: PreviewModel, sectionNodes: Record<ResumeSectionKey, ReactNode | null>, orderedKeys: ResumeSectionKey[]) {
   switch (model.template.layout) {
     case "two-column":
-      return <ModernSplitPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
+      return <ModernSplitResumeTemplate model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
     case "minimal":
-      return <MinimalPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
+      return <MinimalResumeTemplate model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
     case "editorial":
-      return <EditorialPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
+      return <EditorialResumeTemplate model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
     case "classic":
     default:
-      return <ClassicPreview model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
+      return <ClassicResumeTemplate model={model} sectionNodes={sectionNodes} orderedKeys={orderedKeys} />;
   }
-}
-
-function IdentityBlock({ model }: { model: PreviewModel }) {
-  return (
-    <div className="resume-template__identity">
-      <h1>{model.name}</h1>
-      <p>{model.headline}</p>
-    </div>
-  );
-}
-
-function ResumeHeader({ model }: { model: PreviewModel }) {
-  const avatarNode = <ProfileAvatar avatar={model.avatar} name={model.name} compact />;
-
-  return (
-    <header className="resume-template__masthead resume-template__masthead--classic resume-template__masthead--compact">
-      <div className="resume-template__masthead-main resume-template__masthead-main--compact">
-        <div className="resume-template__identity resume-template__identity--compact">
-          <h1>{model.name}</h1>
-          <p>{model.headline}</p>
-        </div>
-        <ContactList items={model.contact} inline />
-      </div>
-      <div className="resume-template__masthead-aside">{avatarNode}</div>
-    </header>
-  );
-}
-
-function ProfileAvatar({ avatar, name, compact = false, hero = false }: { avatar?: string; name: string; compact?: boolean; hero?: boolean }) {
-  const source = (avatar ?? "").trim();
-
-  if (!source) {
-    return null;
-  }
-
-  return (
-    <div className={["resume-template__avatar", compact ? "is-compact" : "", hero ? "is-hero" : ""].filter(Boolean).join(" ")}>
-      <img src={source} alt={`${name} avatar`} loading="lazy" />
-    </div>
-  );
-}
-
-function ClassicPreview({
-  model,
-  sectionNodes,
-  orderedKeys,
-}: {
-  model: PreviewModel;
-  sectionNodes: Record<ResumeSectionKey, ReactNode | null>;
-  orderedKeys: ResumeSectionKey[];
-}) {
-  return (
-    <div className="resume-template resume-template--classic">
-      <ResumeHeader model={model} />
-
-      <main className="resume-template__content-column resume-template__content-column--classic">
-        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
-      </main>
-    </div>
-  );
-}
-
-function ModernSplitPreview({
-  model,
-  sectionNodes,
-  orderedKeys,
-}: {
-  model: PreviewModel;
-  sectionNodes: Record<ResumeSectionKey, ReactNode | null>;
-  orderedKeys: ResumeSectionKey[];
-}) {
-  return (
-    <div className="resume-template resume-template--split">
-      <aside className="resume-template__sidebar">
-        <div className="resume-template__sidebar-header">
-          <div className="resume-template__sidebar-profile">
-            <ProfileAvatar avatar={model.avatar} name={model.name} compact />
-            <div className="resume-template__sidebar-header-copy">
-              <IdentityBlock model={model} />
-            </div>
-          </div>
-        </div>
-        <ContactList items={model.contact} stacked card />
-        {renderSectionStack(orderedKeys, ["skills", "honors", "certificates"], sectionNodes)}
-      </aside>
-
-      <main className="resume-template__content-column">
-        {renderSectionStack(orderedKeys, ["summary", "workExperience", "projectExperience", "education"], sectionNodes)}
-      </main>
-    </div>
-  );
-}
-
-function MinimalPreview({
-  model,
-  sectionNodes,
-  orderedKeys,
-}: {
-  model: PreviewModel;
-  sectionNodes: Record<ResumeSectionKey, ReactNode | null>;
-  orderedKeys: ResumeSectionKey[];
-}) {
-  return (
-    <div className="resume-template resume-template--minimal">
-      <ResumeHeader model={model} />
-
-      <div className="resume-template__content-column resume-template__content-column--minimal">
-        {renderSectionStack(orderedKeys, DEFAULT_RESUME_SECTION_ORDER, sectionNodes)}
-      </div>
-    </div>
-  );
-}
-
-function EditorialPreview({
-  model,
-  sectionNodes,
-  orderedKeys,
-}: {
-  model: PreviewModel;
-  sectionNodes: Record<ResumeSectionKey, ReactNode | null>;
-  orderedKeys: ResumeSectionKey[];
-}) {
-  const { t } = useTranslation('workspace');
-  const showSummary = Boolean(sectionNodes.summary);
-
-  return (
-    <div className="resume-template resume-template--editorial">
-      <header className="resume-template__hero resume-template__hero--compact">
-        <div className="resume-template__hero-main">
-          <ResumeHeader model={model} />
-        </div>
-        <div className="resume-template__hero-panel">
-          <h2>{t('preview.summary')}</h2>
-          {showSummary ? (
-            <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
-          ) : (
-            <p className="resume-template__paragraph">{t('preview.summaryFallback')}</p>
-          )}
-        </div>
-      </header>
-
-      <div className="resume-template__editorial-grid">
-        <main className="resume-template__content-column">
-          {renderSectionStack(orderedKeys, ["workExperience", "projectExperience"], sectionNodes)}
-        </main>
-
-        <aside className="resume-template__notes-column">
-          {renderSectionStack(orderedKeys, ["education", "skills", "honors", "certificates"], sectionNodes)}
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-function ContactList({
-  items,
-  stacked = false,
-  inline = false,
-  card = false,
-  dense = false,
-  hideLabels = false,
-}: {
-  items: Array<{ label: string; value: string }>;
-  stacked?: boolean;
-  inline?: boolean;
-  card?: boolean;
-  dense?: boolean;
-  hideLabels?: boolean;
-}) {
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul
-      className={[
-        "resume-template__contact-list",
-        stacked ? "is-stacked" : "",
-        inline ? "is-inline" : "",
-        card ? "is-card" : "",
-        dense ? "is-dense" : "",
-        hideLabels ? "is-label-hidden" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      {items.map((item) => (
-        <li key={`${item.label}-${item.value}`}>
-          <span>{item.label}</span>
-          <strong>{item.value}</strong>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function TimelineSection({
-  title,
-  items,
-  compact = false,
-  minimal = false,
-  inlineSubtitle = false,
-}: {
-  title: string;
-  items: TimelineEntry[];
-  compact?: boolean;
-  minimal?: boolean;
-  inlineSubtitle?: boolean;
-}) {
-  return (
-    <PreviewSection title={title} hidden={items.length === 0} compact={compact} minimal={minimal}>
-      <div className={`resume-template__timeline${compact ? " is-compact" : ""}`}>
-        {items.map((item, index) => (
-          <article className="resume-template__entry" key={`${title}-${index}-${item.title}`} data-preview-page-item-child>
-            <div className="resume-template__entry-topline">
-              <div className={`resume-template__entry-head${inlineSubtitle ? " is-inline-subtitle" : ""}`}>
-                <h3 data-preview-page-item-fragment>{item.title}</h3>
-                {item.subtitle ? <p data-preview-page-item-fragment>{item.subtitle}</p> : null}
-              </div>
-              {item.meta ? <div className="resume-template__entry-meta">{item.meta}</div> : null}
-            </div>
-            {item.body ? (
-              <p className="resume-template__paragraph" data-preview-page-item-fragment>
-                {renderInlineMarkdown(item.body)}
-              </p>
-            ) : null}
-          </article>
-        ))}
-      </div>
-    </PreviewSection>
-  );
-}
-
-function SkillSection({ title, items, tone }: { title: string; items: string[]; tone: "soft" | "bold" | "plain" | "editorial" }) {
-  if (tone === "plain") {
-    return (
-      <PreviewSection title={title} hidden={items.length === 0}>
-        <p className="resume-template__inline-list">{items.join(" / ")}</p>
-      </PreviewSection>
-    );
-  }
-
-  return (
-    <PreviewSection title={title} hidden={items.length === 0}>
-      <div className={`resume-template__skill-cloud resume-template__skill-cloud--${tone}`}>
-        {items.map((item, index) => (
-          <span key={`${item}-${index}`}>{item}</span>
-        ))}
-      </div>
-    </PreviewSection>
-  );
-}
-
-function PreviewSection({
-  title,
-  hidden,
-  compact = false,
-  minimal = false,
-  children,
-}: {
-  title: string;
-  hidden: boolean;
-  compact?: boolean;
-  minimal?: boolean;
-  children: ReactNode;
-}) {
-  if (hidden) {
-    return null;
-  }
-
-  return (
-    <section
-      data-preview-page-item="section"
-      className={["resume-template__section", compact ? "is-compact" : "", minimal ? "is-minimal" : ""].filter(Boolean).join(" ")}
-    >
-      <div className="resume-template__section-title" data-preview-keep-with-next="true">
-        {title}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function createPreviewModel(
-  resume: Pick<ResumeDetail, "title" | "templateKey" | "content" | "layout">,
-  template: ResumeTemplateDefinition,
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): PreviewModel {
-  const { content } = resume;
-
-  return {
-    template,
-    name: content.personalInfo.fullName || resume.title,
-    headline: content.personalInfo.headline || t("preview.headlineFallback"),
-    summary: content.personalSummary.trim(),
-    avatar: (content.personalInfo.avatar ?? "").trim(),
-    contact: [
-      { label: t("preview.contact.phone"), value: content.personalInfo.phone },
-      { label: t("preview.contact.email"), value: content.personalInfo.email },
-      { label: t("preview.contact.city"), value: content.personalInfo.city },
-      { label: t("preview.contact.website"), value: content.personalInfo.website },
-      { label: t("preview.contact.expectedSalary"), value: content.personalInfo.expectedSalary },
-      { label: t("preview.contact.age"), value: formatAge(content.personalInfo.age, t) ?? "" },
-    ].filter((item) => item.value.trim().length > 0),
-    education: content.education.map((item) => ({
-      title: item.school || t("preview.fallback.school"),
-      subtitle: joinParts([item.degree, item.major]),
-      meta: formatPeriod(item.startDate, item.endDate, t),
-      body: item.description,
-    })),
-    work: content.workExperience.map((item) => ({
-      title: item.company || t("preview.fallback.company"),
-      subtitle: item.role || t("preview.fallback.role"),
-      meta: formatPeriod(item.startDate, item.endDate, t),
-      body: item.description,
-    })),
-    projects: content.projectExperience.map((item) => ({
-      title: item.name || t("preview.fallback.project"),
-      subtitle: item.role || t("preview.fallback.projectRole"),
-      meta: formatPeriod(item.startDate, item.endDate, t),
-      body: item.description,
-    })),
-    honors: content.honors.map((item) => ({
-      title: item.title || t("preview.fallback.honor"),
-      subtitle: item.issuer,
-      meta: item.awardedAt,
-      body: item.description,
-    })),
-    certificates: content.certificates.map((item) => ({
-      title: item.name || t("preview.fallback.certificate"),
-      subtitle: item.issuer,
-      meta: joinParts([item.issuedAt, item.credentialId]),
-    })),
-    skills: content.skills.map((item) => joinParts([item.name || t("preview.fallback.skill"), item.level])),
-  };
 }
 
 function createSectionNodes(
   model: PreviewModel,
   hiddenSections: Set<ResumeSectionKey>,
   t: (key: string, opts?: Record<string, unknown>) => string,
-): Record<ResumeSectionKey, ReactNode | null> {
+): SectionNodeMap {
   return {
     summary: hiddenSections.has("summary") ? null : (
       <PreviewSection title={t("preview.summary")} hidden={!model.summary}>
-        <p className="resume-template__paragraph">{renderInlineMarkdown(model.summary)}</p>
+        <p className="resume-template__paragraph"><InlineMarkdown text={model.summary} /></p>
       </PreviewSection>
     ),
     workExperience: hiddenSections.has("workExperience") ? null : <TimelineSection title={t("preview.workExperience")} items={model.work} />,
@@ -790,45 +195,6 @@ function createSectionNodes(
     honors: hiddenSections.has("honors") ? null : <TimelineSection title={t("preview.honors")} items={model.honors} compact />,
     certificates: hiddenSections.has("certificates") ? null : <TimelineSection title={t("preview.certificates")} items={model.certificates} compact />,
   };
-}
-
-function renderSectionStack(
-  orderedKeys: ResumeSectionKey[],
-  supportedKeys: ResumeSectionKey[],
-  sectionNodes: Record<ResumeSectionKey, ReactNode | null>,
-) {
-  return orderedKeys
-    .filter((key) => supportedKeys.includes(key))
-    .map((key) => sectionNodes[key])
-    .filter(Boolean);
-}
-
-function joinParts(parts: Array<string | undefined>) {
-  return parts
-    .map((part) => (part ?? "").trim())
-    .filter(Boolean)
-    .join(" · ");
-}
-
-function formatPeriod(startDate: string | undefined, endDate: string | undefined, t: (key: string) => string) {
-  const start = (startDate ?? "").trim();
-  const end = (endDate ?? "").trim();
-
-  if (!start && !end) {
-    return "";
-  }
-
-  return `${start || t("preview.period.from")} - ${end || t("preview.period.until")}`;
-}
-
-function formatAge(age: string | undefined, t: (key: string) => string): string | null {
-  const trimmed = (age ?? "").trim();
-  if (!trimmed) return null;
-  const n = Number.parseInt(trimmed, 10);
-  if (!Number.isInteger(n)) return null;
-  if (String(n) !== trimmed) return null;
-  if (n < 1 || n > 150) return null;
-  return `${n}${t("preview.ageSuffix")}`;
 }
 
 export function EmptyPreview() {
