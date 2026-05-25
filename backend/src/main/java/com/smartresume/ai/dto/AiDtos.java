@@ -92,6 +92,12 @@ public final class AiDtos {
     ) {
     }
 
+    public record PersistedAiResumeScoreResponse(
+        String jobDescription,
+        AiResumeScoreResponse result
+    ) {
+    }
+
     // --- Vendor metadata and model listing DTOs ---
 
     public record VendorMetadataResponse(
