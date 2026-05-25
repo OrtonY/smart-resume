@@ -11,6 +11,7 @@ import type {
   AiConfigurationRequest,
   ListModelsRequest,
   ListModelsResponse,
+  PersistedAiResumeScoreResponse,
   VendorMetadata,
 } from '../types'
 
@@ -38,6 +39,10 @@ export async function scoreAiResume(payload: AiResumeScoreRequest) {
     method: 'POST',
     body: payload,
   })
+}
+
+export async function getPersistedAiResumeScore(resumeId: string) {
+  return requestJson<PersistedAiResumeScoreResponse | null>('/api/ai/resumes/' + encodeURIComponent(resumeId) + '/score')
 }
 
 export function listAiChatConversations(resumeId: string) {

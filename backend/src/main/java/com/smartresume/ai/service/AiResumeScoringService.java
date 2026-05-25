@@ -2,14 +2,22 @@ package com.smartresume.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mybatisflex.core.query.QueryWrapper;
+import com.smartresume.ai.domain.AiResumeScoreEntity;
+import com.smartresume.ai.domain.table.AiResumeScoreEntityTableDef;
 import com.smartresume.ai.dto.AiDtos.AiResumeContext;
+import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiInvocationRequest;
+import com.smartresume.ai.mapper.AiResumeScoreMapper;
 import com.smartresume.ai.memory.AiConversationIdGenerator;
 import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.service.ResumeService;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,21 +46,25 @@ public class AiResumeScoringService {
 
     private final AiChatService aiChatService;
     private final ResumeService resumeService;
+    private final AiResumeScoreMapper aiResumeScoreMapper;
     private final ObjectMapper objectMapper;
 
     public AiResumeScoringService(
         AiChatService aiChatService,
         ResumeService resumeService,
+        AiResumeScoreMapper aiResumeScoreMapper,
         ObjectMapper objectMapper
     ) {
         this.aiChatService = aiChatService;
         this.resumeService = resumeService;
+        this.aiResumeScoreMapper = aiResumeScoreMapper;
         this.objectMapper = objectMapper;
     }
 
     public AiResumeScoreResponse scoreResume(AiResumeScoreRequest request) {
         AiResumeContext resume = request.resume();
         resumeService.validResume(resume.id());
+        long userId = CurrentUserContext.requireUserId();
         boolean jobDescriptionProvided = StringUtils.hasText(request.jobDescription());
 
         String conversationId = AiConversationIdGenerator.generate(resume.id(), AiFeatureType.RESUME_SCORE);
@@ -80,7 +92,21 @@ public class AiResumeScoringService {
         );
 
         log.info("Resume {} scored: {} (mode={})", resume.id(), response.score(), response.mode());
+        persistScore(resume.id(), userId, request.jobDescription(), response);
         return response;
+    }
+
+    public PersistedAiResumeScoreResponse getPersistedScore(String resumeId) {
+        resumeService.validResume(resumeId);
+        long userId = CurrentUserContext.requireUserId();
+        AiResumeScoreEntity entity = findPersistedScore(resumeId, userId);
+        if (entity == null) {
+            return null;
+        }
+        return new PersistedAiResumeScoreResponse(
+            entity.getJobDescription(),
+            fromJson(entity.getResultJson(), AiResumeScoreResponse.class)
+        );
     }
 
     private String buildScoringUserMessage(AiResumeContext resume, String jobDescription, boolean jobDescriptionProvided) {
@@ -98,5 +124,52 @@ public class AiResumeScoringService {
         }
 
         return sb.toString();
+    }
+
+    private void persistScore(String resumeId, long userId, String jobDescription, AiResumeScoreResponse response) {
+        LocalDateTime now = LocalDateTime.now();
+        AiResumeScoreEntity entity = findPersistedScore(resumeId, userId);
+        boolean existing = entity != null;
+        if (entity == null) {
+            entity = new AiResumeScoreEntity();
+            entity.setResumeId(resumeId);
+            entity.setUserId(userId);
+            entity.setCreatedAt(now);
+        }
+        entity.setJobDescription(jobDescription == null ? "" : jobDescription.trim());
+        entity.setResultJson(toJson(response));
+        entity.setUpdatedAt(now);
+        if (entity.getCreatedAt() == null) {
+            entity.setCreatedAt(now);
+        }
+        if (!existing) {
+            aiResumeScoreMapper.insert(entity);
+            return;
+        }
+        aiResumeScoreMapper.update(entity);
+    }
+
+    private AiResumeScoreEntity findPersistedScore(String resumeId, long userId) {
+        AiResumeScoreEntityTableDef table = AiResumeScoreEntityTableDef.AI_RESUME_SCORE_ENTITY;
+        QueryWrapper query = QueryWrapper.create()
+            .where(table.RESUME_ID.eq(resumeId))
+            .and(table.USER_ID.eq(userId));
+        return aiResumeScoreMapper.selectOneByQuery(query);
+    }
+
+    private String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.resumeScoreSerializeFailed");
+        }
+    }
+
+    private <T> T fromJson(String value, Class<T> type) {
+        try {
+            return objectMapper.readValue(value, type);
+        } catch (IOException e) {
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.ai.resumeScoreParseFailed");
+        }
     }
 }
