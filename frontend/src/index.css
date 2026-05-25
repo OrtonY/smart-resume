@@ -652,6 +652,27 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.resume-editor-repeatable-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.resume-editor-repeatable-list > .ant-card,
+.resume-editor-repeatable-list .ant-card-head,
+.resume-editor-repeatable-list .ant-card-head-wrapper,
+.resume-editor-repeatable-list .ant-card-head-title,
+.resume-editor-repeatable-list .ant-card-extra,
+.resume-editor-repeatable-list .ant-card-body,
+.resume-editor-repeatable-list .resume-editor-section-grid,
+.resume-editor-repeatable-list .resume-editor-section-grid > *,
+.resume-editor-repeatable-list .markdown-composer {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .resume-editor-section-grid__full {
   grid-column: 1 / -1;
 }
@@ -928,17 +949,29 @@ a {
 .resume-preview-modal {
   display: grid;
   place-items: start center;
+  width: 100%;
+  min-width: 0;
   max-height: min(78vh, 960px);
   overflow: auto;
 }
 
 .resume-preview-modal .resume-preview-stage {
   width: 100%;
+  min-width: 0;
   min-height: min(78vh, 960px);
 }
 
 .resume-preview-modal .resume-preview-stage--paged {
   height: auto;
+}
+
+.resume-preview-modal .resume-preview-pages,
+.resume-preview-modal .resume-preview-paper,
+.resume-preview-modal .resume-preview-paper--page,
+.resume-preview-modal .resume-preview-page-viewport,
+.resume-preview-modal .resume-preview-page-window {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .resume-export-source {
@@ -1919,9 +1952,19 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   justify-self: end;
 }
 
+.resume-score-modal .ant-modal-content {
+  overflow: hidden;
+}
+
+.resume-score-modal .ant-modal-body {
+  overflow-x: hidden;
+}
+
 .resume-score-panel {
   display: grid;
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .resume-score-panel__intro {
@@ -1932,6 +1975,21 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   padding: 10px 12px;
   border-radius: 16px;
   background: rgba(49, 87, 164, 0.08);
+}
+
+.resume-score-panel__intro > *,
+.resume-score-panel__composer,
+.resume-score-panel__collapsed,
+.resume-score-panel__collapsed-copy,
+.resume-score-panel__actions,
+.resume-score-result,
+.resume-score-result__hero,
+.resume-score-result__summary,
+.resume-score-result__strengths,
+.resume-score-result__groups,
+.resume-score-group {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .resume-score-panel__composer {
@@ -1967,6 +2025,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-result {
   display: grid;
   gap: 16px;
+  width: 100%;
 }
 
 .resume-score-result__hero,
@@ -1990,6 +2049,19 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-result__summary {
   display: grid;
   gap: 10px;
+}
+
+.resume-score-result .ant-alert,
+.resume-score-result .ant-alert-content,
+.resume-score-result .ant-space,
+.resume-score-result .ant-space-item,
+.resume-score-result__summary .ant-typography,
+.resume-score-group li,
+.resume-score-panel .ant-tag {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .resume-score-result__summary .ant-typography {
@@ -2023,9 +2095,13 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   display: grid;
   gap: 8px;
   color: var(--text-secondary);
+  width: 100%;
+  min-width: 0;
 }
 
 .resume-score-empty {
+  display: grid;
+  place-items: center;
   padding: 12px 0 4px;
 }
 
@@ -3296,7 +3372,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .resume-editor-layout {
     display: block;
     height: auto;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .resume-editor-layout--mobile-edit .resume-editor-preview,
@@ -3312,11 +3388,23 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .resume-editor-preview__sticky {
     height: auto;
     min-height: 0;
-    overflow: visible;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .resume-editor-section-grid {
     grid-template-columns: 1fr;
+  }
+
+  .resume-editor-repeatable-list .ant-card-head-wrapper {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .resume-editor-repeatable-list .ant-card-extra {
+    margin-inline-start: 0;
   }
 
   .resume-editor-module-row {
@@ -3529,16 +3617,16 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   /* Resume editor preview scale-to-fit on mobile */
   .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-stage {
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-paper {
-    transform: scale(calc((100vw - 48px) / 794));
-    transform-origin: top left;
+    transform: none;
   }
 
   .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-pages {
-    width: calc(100vw - 48px);
+    width: 100%;
   }
 
   .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template--split {
@@ -3567,6 +3655,18 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     padding: 20px 28px 30px;
     border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
     background: var(--template-rail-background);
+  }
+
+  .resume-editor-shell,
+  .resume-editor-mobile-tabs,
+  .resume-editor-layout--mobile-content,
+  .resume-editor-layout--mobile-content .resume-editor-stack,
+  .resume-editor-layout--mobile-content .resume-editor-stack__card,
+  .resume-editor-layout--mobile-content .resume-editor-collapse,
+  .resume-editor-layout--mobile-content .ant-collapse-content-box {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   /* Issue 4: Collapse top actions */
@@ -3658,6 +3758,100 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .responsive-modal-drawer .ant-drawer-body * {
     max-width: 100%;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-stage,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-pages,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-paper,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-paper--page,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-page-viewport,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-page-window {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-stage {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 0;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-pages {
+    gap: clamp(8px, calc(var(--resume-preview-scale, 1) * 28px), 28px);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview--page {
+    max-width: none;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template--split {
+    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__editorial-grid {
+    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__hero:not(.resume-template__hero--compact) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead,
+  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead--minimal {
+    flex-direction: row;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__hero-identity-row {
+    flex-direction: row;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead-aside {
+    justify-items: end;
+    min-width: 240px;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead {
+    padding: 28px;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead--classic {
+    padding: 26px 34px 18px;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__hero {
+    padding: 24px;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__main,
+  .responsive-modal-drawer .resume-preview-modal .resume-template__content-column {
+    padding: 24px 28px 30px;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__sidebar {
+    padding: 30px 24px 30px 26px;
+    border-right: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+    border-left: none;
+    background: var(--template-rail-background);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__notes-column {
+    padding: 24px 28px 30px;
+    border-right: none;
+    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+    background: var(--template-rail-background);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-template__avatar {
+    width: 112px;
   }
 
   /* Interview report modal: full width on mobile drawer */

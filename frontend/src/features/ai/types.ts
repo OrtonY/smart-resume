@@ -41,6 +41,12 @@ export interface AiChatEvent {
   conversationId?: string
 }
 
+export interface AiChatCompletionResponse {
+  content: string
+  suggestionJson: string
+  conversationId: string
+}
+
 export type AiResumeSuggestionSection =
   | 'personalInfo'
   | 'personalSummary'
