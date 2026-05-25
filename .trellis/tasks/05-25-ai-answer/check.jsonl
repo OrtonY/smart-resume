@@ -1,9 +1,0 @@
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality check criteria"}
-{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality check criteria"}
-{"file": ".trellis/spec/backend/interview-simulation.md", "reason": "Verify new code follows existing interview patterns"}
-{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Verify AI streaming integration correctness"}
-{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Verify migration follows DB conventions"}
-{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Type safety verification for new types/interfaces"}
-{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Check for code reuse opportunities vs duplication"}
-{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer data flow consistency check"}
-{"file": ".trellis/tasks/05-25-ai-answer/prd.md", "reason": "Verify implementation against acceptance criteria"}
