@@ -1,6 +1,7 @@
 import { request } from '../../../lib/http/apiClient'
 import { streamEvents, streamGetEvents, type SseEvent } from '../../../lib/sse/streamEvents'
 import type {
+  InterviewAssistDto,
   InterviewCreatePayload,
   InterviewDetail,
   InterviewListQuery,
@@ -107,6 +108,39 @@ export function streamReportEvents(
 ) {
   return streamGetEvents<ReportStatusEvent>(
     `/api/interviews/${interviewId}/report/events`,
+    onEvent,
+    options,
+  )
+}
+
+export function getAssist(interviewId: string, messageId: string) {
+  return request<InterviewAssistDto>(`/api/interviews/${interviewId}/messages/${messageId}/assist`)
+}
+
+export function streamAssistAnswer(
+  interviewId: string,
+  messageId: string,
+  onEvent: (event: InterviewStreamEvent) => void,
+  options?: { signal?: AbortSignal },
+) {
+  return streamEvents<InterviewStreamEvent>(
+    `/api/interviews/${interviewId}/messages/${messageId}/answer-stream`,
+    {},
+    onEvent,
+    options,
+  )
+}
+
+export function streamAssistScore(
+  interviewId: string,
+  messageId: string,
+  candidateAnswer: string,
+  onEvent: (event: InterviewStreamEvent) => void,
+  options?: { signal?: AbortSignal },
+) {
+  return streamEvents<InterviewStreamEvent>(
+    `/api/interviews/${interviewId}/messages/${messageId}/score-stream`,
+    { candidateAnswer },
     onEvent,
     options,
   )

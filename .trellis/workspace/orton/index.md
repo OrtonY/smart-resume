@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 40
+- **Total Sessions**: 41
 - **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1342 | Active |
+| `journal-1.md` | ~1375 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 41 | 2026-05-25 | Interview AI answer and scoring flow | `b664607` | `feat/interview-ai-answer` |
 | 40 | 2026-05-25 | Mobile adapt scoring and interview report pages | `f3e6d03` | `feat/mobile-adapt-scoring-pages` |
 | 39 | 2026-05-24 | Fix server PDF export parity | `e18bf50` | `codex/fix-export-preview-mismatch` |
 | 38 | 2026-05-24 | Mobile responsive adaptation | `ab472e0` | `feat/mobile-responsive` |

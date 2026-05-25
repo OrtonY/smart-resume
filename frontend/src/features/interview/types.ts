@@ -152,3 +152,19 @@ export interface ReportStatusEvent {
   reportStatus: InterviewReportStatus
   reportContent: string | null
 }
+
+export type AssistStatus = 'PENDING' | 'GENERATING' | 'READY' | 'FAILED'
+
+export interface InterviewAssistDto {
+  id: string | null
+  messageId: string
+  sessionId: string
+  answerContent: string | null
+  answerStatus: AssistStatus
+  candidateAnswer: string | null
+  score: number | null
+  feedback: string | null
+  scoreStatus: AssistStatus
+  createdAt: string | null
+  updatedAt: string | null
+}
