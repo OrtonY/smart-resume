@@ -3510,4 +3510,236 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     padding: 6px 12px;
     font-size: 12px;
   }
+
+  /* Drawer body: prevent horizontal scroll, allow vertical only */
+  .responsive-modal-drawer .ant-drawer-body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .responsive-modal-drawer .ant-drawer-body * {
+    max-width: 100%;
+  }
+
+  /* Interview report modal: full width on mobile drawer */
+  .interview-report-modal.ant-drawer-section {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* Resume score panel mobile */
+  .resume-score-panel {
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .resume-score-panel__intro {
+    padding: 8px 10px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+
+  .resume-score-panel__composer,
+  .resume-score-panel__collapsed,
+  .resume-score-result,
+  .resume-score-result__hero,
+  .resume-score-result__strengths,
+  .resume-score-result__groups,
+  .resume-score-group {
+    min-width: 0;
+  }
+
+  .resume-score-panel__collapsed {
+    padding: 12px;
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-score-panel__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-score-result__hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .resume-score-result__hero,
+  .resume-score-result__strengths,
+  .resume-score-group {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .resume-score-result__summary {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .resume-score-result__summary .ant-space {
+    justify-content: center;
+  }
+
+  .resume-score-group ul {
+    padding-left: 16px;
+    word-break: break-word;
+  }
+
+  .resume-score-result__tag-list .ant-tag,
+  .resume-score-panel__intro .ant-tag {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  /* Interview report: mobile uses flat layout without Card wrapper */
+  .interview-report-panel--mobile {
+    display: grid;
+    gap: 12px;
+    flex-shrink: 0;
+    min-height: auto;
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .interview-report-panel--mobile .interview-report-content {
+    display: grid;
+    gap: 12px;
+    overflow-x: hidden;
+    min-height: auto;
+    flex: none;
+    height: auto;
+    min-width: 0;
+  }
+
+  /* Compact score overview: horizontal layout like resume score hero */
+  .report-score-overview--compact {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    margin-bottom: 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(20, 33, 61, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 255, 0.8)),
+      radial-gradient(circle at top right, rgba(255, 140, 66, 0.1), transparent 28%);
+  }
+
+  .report-score-overview--compact .report-score-circle {
+    margin-bottom: 0;
+  }
+
+  .report-score-overview--compact .report-summary {
+    max-width: 100%;
+    font-size: 13px;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .report-section {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .interview-report-panel--mobile .ant-collapse {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-item {
+    min-width: 0;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-content-box {
+    min-width: 0;
+    overflow-x: hidden;
+    word-break: break-word;
+  }
+
+  /* Interview report panel mobile */
+  .report-score-overview {
+    margin-bottom: 16px;
+  }
+
+  .report-score-value {
+    font-size: 22px;
+  }
+
+  .report-summary {
+    max-width: 100%;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .report-section {
+    margin-bottom: 14px;
+  }
+
+  .report-skills {
+    min-width: 0;
+  }
+
+  .report-skill-item {
+    grid-template-columns: 72px 1fr;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .report-skill-label {
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .report-two-col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .report-stacked-list {
+    min-width: 0;
+  }
+
+  .report-tag-list .ant-tag,
+  .interview-report-panel--mobile .report-section .ant-tag {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  .report-question-detail {
+    min-width: 0;
+  }
+
+  .report-question-detail > div {
+    margin-bottom: 6px;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .ant-collapse {
+    min-width: 0;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-header {
+    padding: 8px 12px !important;
+    font-size: 13px;
+    flex-wrap: wrap;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-content-box {
+    padding: 8px 12px !important;
+  }
 }
