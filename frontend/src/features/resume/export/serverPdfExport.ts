@@ -8,7 +8,7 @@ async function downloadPdf(path: string, headers: Record<string, string>, title:
   const response = await fetch(`${API_BASE_URL}${path}`, { headers })
 
   if (!response.ok) {
-    let serverMessage: string | null = null
+    let serverMessage: string | null
     try {
       const text = await response.text()
       const parsed = JSON.parse(text) as { message?: string }
