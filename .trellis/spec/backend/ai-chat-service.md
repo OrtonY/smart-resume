@@ -57,9 +57,19 @@ public final class AiConversationIdGenerator {
 ### 3. Contracts
 
 - `AiInvocationRequest.conversationId` — required, non-null, non-blank. Callers MUST obtain it through `AiConversationIdGenerator.generate(...)`, never hand-roll. **Exception**: the interview feature uses per-round conversationIds (`"interview-{sessionId}-round-{roundIndex}"`) for multi-round context isolation — this is an intentional deviation documented in the interview module spec.
+- **Auxiliary-feature conversationId isolation**: when a feature adds AI-powered helpers that operate alongside a primary conversation (e.g., AI answer generation or scoring for an interview question), the helper MUST use a distinct conversationId namespace that cannot collide with the primary flow. Convention: `"{feature}-{primaryId}-{helper}-{targetId}"` (e.g., `"interview-{sessionId}-answer-{messageId}"`, `"interview-{sessionId}-score-{messageId}"`). This prevents auxiliary context from leaking into the primary conversation's chat memory window and confusing subsequent prompts.
 - All three methods write to `spring_ai_chat_memory` unconditionally so every interaction is auditable.
 - **No double-write of the user turn.** `AiChatServiceImpl.buildPromptWithMemory` already calls `chatMemory.add(conversationId, userMessage)` before invoking the provider. A feature module that mirrors AI turns into its own domain table (e.g. `interview_messages`) MUST persist DB-only for the user message and MUST NOT also call `chatMemoryRepository.saveAll(...)` / `chatMemory.add(...)` for that same turn. The convention in `InterviewService` is to keep two helpers: `appendMessage` (DB + chat memory, used by non-streaming code paths that bypass `AiChatService`) and `persistMessage` (DB only, used inside `streamMessage`/anything else that delegates to `aiChatService.stream/call`). Failing to split these results in duplicate user messages in `spring_ai_chat_memory`, which then replay into the next prompt and confuse the model.
 - **Persisting the assistant turn from a stream consumer.** When a feature's controller exposes its own SSE endpoint that delegates to `aiChatService.stream(...)`, accumulate the `message`-typed event content into a `StringBuilder` and persist the full assistant text in `doOnComplete`. Do not persist per chunk. The shared service still writes the assistant turn to `spring_ai_chat_memory` on its own — the feature's `doOnComplete` is responsible only for the feature's domain table (e.g. `interview_messages`).
+- **Stream lifecycle status tracking.** When a feature persists AI-generated content with a status field (e.g., `PENDING → GENERATING → READY/FAILED`), the stream hooks (`doOnComplete`, `doOnCancel`, `doOnError`) must all transition the status out of `GENERATING`. Use a `boolean[] completed = {false}` guard to ensure exactly one hook fires the persistence write — Reactor may invoke multiple terminal signals in edge cases (cancel + error). Pattern:
+  ```java
+  boolean[] completed = { false };
+  return aiChatService.stream(request)
+      .doOnNext(event -> { if ("message".equals(event.type())) sb.append(event.content()); })
+      .doOnComplete(() -> { if (completed[0]) return; completed[0] = true; persistReady(entity, sb); })
+      .doOnCancel(() -> { if (completed[0]) return; completed[0] = true; persistPartial(entity, sb); })
+      .doOnError(err -> { if (completed[0]) return; completed[0] = true; persistFailed(entity, sb); });
+  ```
 - `stream()` — server-sent character-level deltas; consumers (`AiAgentService`) may apply UI delay (resume chat uses 12ms/char).
 - `call()` — synchronous free-text return; for prose-style outputs (e.g. future interview-report prose).
 - `callStructured(request, T.class)` — synchronous structured return using Spring AI `BeanOutputConverter<T>`. Internal policy:

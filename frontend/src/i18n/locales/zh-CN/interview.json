@@ -72,7 +72,25 @@
     "composerPlaceholder": "输入你的回答...",
     "disabledPlaceholder": "当前状态下无法继续作答。",
     "sendAnswer": "发送回答",
-    "viewingHistory": "当前正在查看历史轮次，只读模式"
+    "viewingHistory": "当前正在查看历史轮次，只读模式",
+    "aiAnswer": "AI 答案"
+  },
+  "aiAnswer": {
+    "modalTitle": "AI 答案与评分",
+    "answerTitle": "参考答案",
+    "thinking": "思考中...",
+    "regenerate": "重新生成",
+    "stop": "停止",
+    "score": {
+      "title": "AI 评分",
+      "start": "开始评分",
+      "regenerate": "重新评分",
+      "empty": "请先输入回答内容再进行评分",
+      "scoreLabel": "评分：{{value}}/100",
+      "fromInput": "来源：输入框",
+      "fromHistory": "来源：历史回答",
+      "snapshotLabel": "被评分的回答"
+    }
   },
   "report": {
     "title": "面试报告",

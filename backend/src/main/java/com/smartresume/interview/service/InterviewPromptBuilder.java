@@ -26,7 +26,7 @@ public class InterviewPromptBuilder {
         "项目深挖", """
             你是一位专注于项目经历深挖的面试官。你的面试侧重点：
             - 深入追问候选人简历中项目的背景、目标、方案和结果
-            - 区分“参与”与“主导”，核实真实职责和关键贡献
+            - 区分"参与"与"主导"，核实真实职责和关键贡献
             - 追问技术难点、故障排查、性能优化和权衡过程
             - 优先关注可量化结果和工程化细节，而不是泛泛而谈
             """,
@@ -54,13 +54,13 @@ public class InterviewPromptBuilder {
         "EASY", """
             ## 难度：简单
             - 以基础概念和常见实践为主，不刻意深入底层原理
-            - 优先考察“是什么”“怎么用”和“为什么这样做”
+            - 优先考察"是什么""怎么用"和"为什么这样做"
             - 可以适当给候选人留出解释空间和提示
             """,
         "MEDIUM", """
             ## 难度：中等
             - 兼顾基础与进阶，考察理解深度和实战经验
-            - 问题覆盖“是什么”“为什么”“怎么做”和“如何权衡”
+            - 问题覆盖"是什么""为什么""怎么做"和"如何权衡"
             - 期望候选人能结合实际经历给出有条理的回答
             """,
         "HARD", """
@@ -201,11 +201,147 @@ public class InterviewPromptBuilder {
         return """
             ## 输出格式要求
 
-            - 直接输出面试官的话，不要添加“面试官：”前缀
+            - 直接输出面试官的话，不要添加"面试官："前缀
             - 使用自然、专业的表达
             - 必要时可以适度使用 markdown（例如短列表或代码块）辅助表达
             - 不要输出 JSON 或其他结构化数据
             - 不要替候选人作答，也不要自问自答
             """;
+    }
+
+    public static String buildAnswerSystemPrompt(
+        String role,
+        String difficulty,
+        String resumeJson,
+        String jobDescription,
+        String targetCompany,
+        List<String> companyContextSummary,
+        String questionContent
+    ) {
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("# 角色设定\n\n");
+        prompt.append("""
+            你是一位理想候选人，正在参加一场模拟面试。你需要基于提供的简历信息、岗位 JD 和面试上下文，
+            给出一份高质量的参考答案。你的回答应该：
+            - 结构清晰，逻辑严密
+            - 结合简历中的真实经历和项目细节
+            - 展示深度思考和专业素养
+            - 适当使用 STAR 法则（情境、任务、行动、结果）
+            - 体现对技术原理的理解，而不仅仅是表面描述
+            """);
+        prompt.append("\n\n");
+
+        prompt.append("# 面试上下文\n\n");
+        prompt.append("- 面试官角色：").append(role).append("\n");
+        prompt.append("- 面试难度：").append(difficulty).append("\n\n");
+
+        prompt.append("# 候选人简历\n\n");
+        prompt.append(resumeJson);
+        prompt.append("\n\n");
+
+        if (jobDescription != null && !jobDescription.isBlank()) {
+            prompt.append("# 目标岗位 JD\n\n");
+            prompt.append(jobDescription);
+            prompt.append("\n\n");
+        }
+
+        String companyContext = buildTargetCompanyContext(targetCompany, companyContextSummary);
+        if (!companyContext.isBlank()) {
+            prompt.append(companyContext);
+            prompt.append("\n\n");
+        }
+
+        prompt.append("# 面试官的问题\n\n");
+        prompt.append(questionContent);
+        prompt.append("\n\n");
+
+        prompt.append("""
+            ## 输出要求
+
+            - 直接输出候选人的回答内容，不要添加"候选人："前缀
+            - 使用自然、专业的表达，像真实面试中的优秀回答
+            - 可以使用 markdown 格式（列表、代码块等）让回答更清晰
+            - 回答长度适中，既要有深度又不要冗长
+            - 不要输出 JSON 或其他结构化数据
+            """);
+
+        return prompt.toString();
+    }
+
+    public static String buildScoreSystemPrompt(
+        String role,
+        String difficulty,
+        String resumeJson,
+        String jobDescription,
+        String targetCompany,
+        List<String> companyContextSummary,
+        String questionContent,
+        String candidateAnswer
+    ) {
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("# 角色设定\n\n");
+        prompt.append("""
+            你是一位资深面试教练，需要对候选人的面试回答进行评分和反馈。
+            评分标准：
+            - 内容完整性：是否覆盖了问题的核心要点
+            - 技术深度：是否展示了对技术原理的理解
+            - 逻辑清晰度：回答是否有条理、层次分明
+            - 实践结合：是否结合了真实项目经验
+            - 表达质量：语言是否专业、简洁、有说服力
+            """);
+        prompt.append("\n\n");
+
+        prompt.append("# 面试上下文\n\n");
+        prompt.append("- 面试官角色：").append(role).append("\n");
+        prompt.append("- 面试难度：").append(difficulty).append("\n\n");
+
+        prompt.append("# 候选人简历\n\n");
+        prompt.append(resumeJson);
+        prompt.append("\n\n");
+
+        if (jobDescription != null && !jobDescription.isBlank()) {
+            prompt.append("# 目标岗位 JD\n\n");
+            prompt.append(jobDescription);
+            prompt.append("\n\n");
+        }
+
+        String companyContext = buildTargetCompanyContext(targetCompany, companyContextSummary);
+        if (!companyContext.isBlank()) {
+            prompt.append(companyContext);
+            prompt.append("\n\n");
+        }
+
+        prompt.append("# 面试官的问题\n\n");
+        prompt.append(questionContent);
+        prompt.append("\n\n");
+
+        prompt.append("# 候选人的回答\n\n");
+        prompt.append(candidateAnswer);
+        prompt.append("\n\n");
+
+        prompt.append("""
+            ## 输出格式要求
+
+            第一行必须是评分，格式为：SCORE: <0-100的整数>
+
+            空一行后输出 markdown 格式的反馈，包含以下部分：
+            ### 优点
+            - 列出回答中的亮点
+
+            ### 不足
+            - 列出回答中的问题或遗漏
+
+            ### 改进建议
+            - 给出具体可操作的改进方向
+
+            注意：
+            - 评分要客观公正，不要过于宽松或严苛
+            - 反馈要具体，避免空泛的评价
+            - 改进建议要可操作，最好能给出示例方向
+            """);
+
+        return prompt.toString();
     }
 }

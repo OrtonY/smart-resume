@@ -2588,6 +2588,8 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 .interview-message__actions {
   display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-start;
   margin-top: 10px;
   padding-top: 10px;
@@ -2618,6 +2620,29 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 .interview-regenerate-button.ant-btn:hover,
 .interview-regenerate-button.ant-btn:focus-visible {
+  border-color: rgba(49, 87, 164, 0.38);
+  background: rgba(49, 87, 164, 0.14);
+  color: #24457f;
+}
+
+.interview-ai-answer-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 13px;
+  border-color: rgba(49, 87, 164, 0.22);
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.08);
+  box-shadow: none;
+  color: #3157a4;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.interview-ai-answer-button.ant-btn:hover,
+.interview-ai-answer-button.ant-btn:focus-visible {
   border-color: rgba(49, 87, 164, 0.38);
   background: rgba(49, 87, 164, 0.14);
   color: #24457f;
@@ -2838,6 +2863,120 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.ai-answer-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  height: 100%;
+}
+
+.ai-answer-modal__question {
+  padding: 12px;
+  background: rgba(49, 87, 164, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(49, 87, 164, 0.1);
+}
+
+.ai-answer-modal__view-switch {
+  display: inline-flex;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.08);
+}
+
+.ai-answer-modal__view-button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.ai-answer-modal__view-button:hover,
+.ai-answer-modal__view-button:focus-visible {
+  color: var(--text-primary);
+  outline: none;
+}
+
+.ai-answer-modal__view-button--active {
+  background: rgba(255, 255, 255, 0.96);
+  color: #3157a4;
+  box-shadow: 0 10px 24px rgba(49, 87, 164, 0.12);
+}
+
+.ai-answer-modal__panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-answer-modal__section {
+  padding: 12px 0 20px;
+}
+
+.ai-answer-modal__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ai-answer-modal__body {
+  min-height: 60px;
+}
+
+.ai-answer-modal__thinking {
+  color: rgba(20, 33, 61, 0.5);
+  font-style: italic;
+}
+
+.ai-answer-modal__score-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  background: rgba(49, 87, 164, 0.08);
+  border-radius: 8px;
+}
+
+.ai-answer-modal__score-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3157a4;
+}
+
+.ai-answer-modal__score-label {
+  font-size: 13px;
+  color: rgba(20, 33, 61, 0.6);
+}
+
+.ai-answer-modal__candidate-snapshot {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(20, 33, 61, 0.03);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ai-answer-modal__candidate-snapshot summary {
+  cursor: pointer;
+  color: rgba(20, 33, 61, 0.6);
+  font-weight: 500;
 }
 
 @media (max-width: 1280px) {
@@ -3741,5 +3880,24 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .interview-report-panel--mobile .ant-collapse-content-box {
     padding: 8px 12px !important;
+  }
+
+  .ai-answer-modal__score-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .ai-answer-modal__view-switch {
+    width: 100%;
+  }
+
+  .ai-answer-modal__view-button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .ai-answer-modal__score-value {
+    font-size: 24px;
   }
 }
