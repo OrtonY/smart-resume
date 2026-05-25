@@ -3,6 +3,7 @@ package com.smartresume.ai.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
+import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiInvocationRequest;
@@ -86,20 +87,9 @@ public class AiAgentService {
 
     public Flux<AiChatEvent> streamChat(AiChatRequest request) {
         return Flux.defer(() -> {
-            resumeService.validResume(request.resume().id());
-            String conversationId = aiChatHistoryService.resolveConversationId(
-                request.resume().id(),
-                request.conversationId(),
-                request.message()
-            );
-
-            String systemPrompt = buildSystemPrompt(request.resume());
-            AiInvocationRequest invocationRequest = new AiInvocationRequest(
-                systemPrompt,
-                request.message(),
-                conversationId,
-                AiAgentService::stripSuggestionSentinel
-            );
+            PreparedChat preparedChat = prepareChat(request);
+            String conversationId = preparedChat.conversationId();
+            AiInvocationRequest invocationRequest = preparedChat.invocationRequest();
 
             // Approach B: collect full upstream text, strip sentinel, then emit characters + suggestion event.
             // If an upstream error event arrives, forward it immediately and skip the text pipeline.
@@ -136,18 +126,32 @@ public class AiAgentService {
         ));
     }
 
+    public AiChatCompletionResponse completeChat(AiChatRequest request) {
+        PreparedChat preparedChat = prepareChat(request);
+        String fullText = aiChatService.call(preparedChat.invocationRequest());
+        return toChatCompletionResponse(fullText, preparedChat.conversationId());
+    }
+
+    private PreparedChat prepareChat(AiChatRequest request) {
+        resumeService.validResume(request.resume().id());
+        String conversationId = aiChatHistoryService.resolveConversationId(
+            request.resume().id(),
+            request.conversationId(),
+            request.message()
+        );
+        String systemPrompt = buildSystemPrompt(request.resume());
+        AiInvocationRequest invocationRequest = new AiInvocationRequest(
+            systemPrompt,
+            request.message(),
+            conversationId,
+            AiAgentService::stripSuggestionSentinel
+        );
+        return new PreparedChat(conversationId, invocationRequest);
+    }
+
     private Flux<AiChatEvent> buildResponseFlux(String fullText, String conversationId) {
         String visibleText = stripSuggestionSentinel(fullText);
-        String suggestionJson;
-
-        int sentinelIndex = fullText.indexOf(SUGGESTIONS_SENTINEL);
-        if (sentinelIndex >= 0) {
-            String rawJson = fullText.substring(sentinelIndex + SUGGESTIONS_SENTINEL.length()).strip();
-            suggestionJson = parseSuggestionJson(rawJson, conversationId);
-        } else {
-            log.warn("No suggestion sentinel found in AI response (conversationId={})", conversationId);
-            suggestionJson = EMPTY_SUGGESTIONS_JSON;
-        }
+        String suggestionJson = extractSuggestionJson(fullText, conversationId);
 
         Flux<AiChatEvent> textFlux;
         if (visibleText.isEmpty()) {
@@ -160,6 +164,25 @@ public class AiAgentService {
         AiChatEvent doneEvent = new AiChatEvent("done", "", conversationId);
 
         return textFlux.concatWithValues(suggestionEvent, doneEvent);
+    }
+
+    private AiChatCompletionResponse toChatCompletionResponse(String fullText, String conversationId) {
+        return new AiChatCompletionResponse(
+            stripSuggestionSentinel(fullText),
+            extractSuggestionJson(fullText, conversationId),
+            conversationId
+        );
+    }
+
+    private String extractSuggestionJson(String fullText, String conversationId) {
+        int sentinelIndex = fullText.indexOf(SUGGESTIONS_SENTINEL);
+        if (sentinelIndex >= 0) {
+            String rawJson = fullText.substring(sentinelIndex + SUGGESTIONS_SENTINEL.length()).strip();
+            return parseSuggestionJson(rawJson, conversationId);
+        }
+
+        log.warn("No suggestion sentinel found in AI response (conversationId={})", conversationId);
+        return EMPTY_SUGGESTIONS_JSON;
     }
 
     /**
@@ -224,5 +247,8 @@ public class AiAgentService {
             return appException.getMessage();
         }
         return exception.getMessage() == null ? "AI stream failed" : exception.getMessage();
+    }
+
+    private record PreparedChat(String conversationId, AiInvocationRequest invocationRequest) {
     }
 }

@@ -3,7 +3,7 @@ import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, 
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
+import { completeAiChat, getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
@@ -36,6 +36,40 @@ const SECTION_LABEL_KEYS: Record<string, string> = {
   skills: 'section.skills',
   honors: 'section.honors',
   certificates: 'section.certificates',
+}
+
+function createClientMessageId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+  return `ai-msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function parseSuggestionPlan(raw: string) {
+  try {
+    const plan = JSON.parse(raw) as AiResumeSuggestionPlan
+    return Array.isArray(plan?.suggestions) ? plan.suggestions : []
+  } catch (error) {
+    console.warn('Failed to parse AI suggestion plan', error)
+    return []
+  }
+}
+
+function isStreamBootstrapError(error: unknown) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return false
+  }
+
+  const rawMessage = error instanceof Error ? error.message : String(error)
+  const message = rawMessage.toLowerCase()
+  return (
+    message.includes('failed to fetch')
+    || message.includes('fetch failed')
+    || message.includes('networkerror')
+    || message.includes('network request failed')
+    || message.includes('load failed')
+    || message.includes('stream request failed')
+  )
 }
 
 function truncate(text: string, max: number) {
@@ -335,8 +369,8 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       return next
     })
 
-    const userMessage: AiChatUiMessage = { id: crypto.randomUUID(), role: 'user', content: augmentedContent }
-    const assistantId = crypto.randomUUID()
+    const userMessage: AiChatUiMessage = { id: createClientMessageId(), role: 'user', content: augmentedContent }
+    const assistantId = createClientMessageId()
     const assistantMessage: AiChatUiMessage = { id: assistantId, role: 'assistant', content: '' }
 
     setMessages([...baseMessages, userMessage, assistantMessage])
@@ -344,6 +378,30 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     shouldAutoScrollRef.current = true
     setStreaming(true)
     let activeConversationId = selectedConversationId
+    let receivedAnyEvent = false
+    let streamCompleted = false
+
+    const applyAssistantRound = (content: string | undefined, suggestions: AiResumeSuggestion[]) => {
+      setMessages((current) => current.map((item) => (
+        item.id === assistantId
+          ? {
+              ...item,
+              content: content ?? item.content,
+              suggestions: suggestions.length > 0 ? suggestions : undefined,
+            }
+          : item
+      )))
+
+      setSuggestionStatus((prev) => {
+        const next = { ...prev }
+        suggestions.forEach((suggestion) => {
+          if (!next[suggestion.id]) {
+            next[suggestion.id] = 'pending'
+          }
+        })
+        return next
+      })
+    }
 
     try {
       await streamAiChat({
@@ -351,6 +409,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         conversationId: selectedConversationId ?? undefined,
         resume: resumeContext,
       }, (event) => {
+        receivedAnyEvent = true
         if (event.type === 'error') {
           throw new Error(event.content || t('assistant.chatFailed'))
         }
@@ -361,29 +420,11 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           activeConversationId = event.conversationId
         }
         if (event.type === 'suggestion') {
-          let plan: AiResumeSuggestionPlan
-          try {
-            plan = JSON.parse(event.content) as AiResumeSuggestionPlan
-          } catch (error) {
-            console.warn('Failed to parse AI suggestion plan', error)
-            return
-          }
-          const list = Array.isArray(plan?.suggestions) ? plan.suggestions : []
+          const list = parseSuggestionPlan(event.content)
           if (list.length === 0) {
             return
           }
-          setMessages((current) => current.map((item) => (
-            item.id === assistantId ? { ...item, suggestions: list } : item
-          )))
-          setSuggestionStatus((prev) => {
-            const next = { ...prev }
-            list.forEach((s) => {
-              if (!next[s.id]) {
-                next[s.id] = 'pending'
-              }
-            })
-            return next
-          })
+          applyAssistantRound(undefined, list)
           return
         }
         if (event.type === 'message') {
@@ -392,16 +433,42 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           )))
         }
       })
+      streamCompleted = true
       // Skip the immediate history reload that selectedConversationId change would trigger,
       // so the in-memory assistant message (with suggestions) is not overwritten by the
       // historical version that has no suggestions attached.
       skipNextHistoryReloadRef.current = true
-      await refreshConversations(activeConversationId)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
-      setMessages((current) => current.filter((item) => item.id !== assistantId))
+      if (!receivedAnyEvent && isStreamBootstrapError(error)) {
+        try {
+          const response = await completeAiChat({
+            message: augmentedContent,
+            conversationId: selectedConversationId ?? undefined,
+            resume: resumeContext,
+          })
+          const suggestions = parseSuggestionPlan(response.suggestionJson)
+          activeConversationId = response.conversationId || activeConversationId
+          applyAssistantRound(response.content, suggestions)
+          streamCompleted = true
+          skipNextHistoryReloadRef.current = true
+        } catch (fallbackError) {
+          void message.error(fallbackError instanceof Error ? fallbackError.message : t('assistant.chatFailed'))
+          setMessages((current) => current.filter((item) => item.id !== assistantId))
+        }
+      } else {
+        void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        setMessages((current) => current.filter((item) => item.id !== assistantId))
+      }
     } finally {
       setStreaming(false)
+      if (streamCompleted) {
+        if (activeConversationId) {
+          setSelectedConversationId(activeConversationId)
+        }
+        void refreshConversations(activeConversationId).catch((error) => {
+          console.warn('Failed to refresh AI chat conversations after send', error)
+        })
+      }
     }
   }
 

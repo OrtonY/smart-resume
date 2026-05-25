@@ -2288,7 +2288,7 @@ function renderRepeatableCards<T>(
   t: (key: string) => string,
 ) {
   return (
-    <Space direction="vertical" size={12} style={{ width: '100%' }}>
+    <div className="resume-editor-repeatable-list">
       {items.length === 0 ? (
         <div className="empty-state">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('editor.noEntries')} />
@@ -2313,7 +2313,7 @@ function renderRepeatableCards<T>(
       <Button onClick={addItem} icon={<PlusOutlined />}>
         {t('editor.addEntry')}
       </Button>
-    </Space>
+    </div>
   )
 }
 
