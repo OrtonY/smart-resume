@@ -103,5 +103,5 @@ When merging `develop` into `master` for a release, use **Create a merge commit*
 Steps:
 1. Create a `release/vX.Y.Z` branch from `develop`, commit version bump, PR into `develop` (rebase merge).
 2. After merge, create a PR from `develop` → `master`, merge with **Create a merge commit**.
-3. Create tag `vX.Y.Z` and branch `vX.Y.Z` from the merge commit on `master`.
+3. Create tag `vX.Y.Z` from the merge commit on `master`.
 4. Create a GitHub Release from the tag with release notes.
