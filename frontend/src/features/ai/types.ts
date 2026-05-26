@@ -27,6 +27,7 @@ export interface AiResumeContext {
 export interface AiChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  suggestions?: AiResumeSuggestion[]
 }
 
 export interface AiChatRequest {
@@ -47,6 +48,8 @@ export interface AiChatCompletionResponse {
   conversationId: string
 }
 
+export type AiResumeSuggestionStatus = 'pending' | 'applied' | 'dismissed'
+
 export type AiResumeSuggestionSection =
   | 'personalInfo'
   | 'personalSummary'
@@ -65,6 +68,7 @@ export interface AiResumeSuggestion {
   currentValue?: string
   suggestedValue: string
   rationale: string
+  status?: AiResumeSuggestionStatus
 }
 
 export interface AiResumeSuggestionPlan {

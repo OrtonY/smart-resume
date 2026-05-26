@@ -1,5 +1,6 @@
 package com.smartresume.ai.dto;
 
+import com.smartresume.ai.dto.suggestion.AiResumeSuggestion;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
 import jakarta.validation.Valid;
@@ -61,7 +62,7 @@ public final class AiDtos {
     ) {
     }
 
-    public record AiChatMessage(String role, String content) {
+    public record AiChatMessage(String role, String content, List<AiResumeSuggestion> suggestions) {
     }
 
     public record AiChatConversation(
@@ -79,6 +80,12 @@ public final class AiDtos {
         String content,
         String suggestionJson,
         String conversationId
+    ) {
+    }
+
+    public record AiSuggestionStatusUpdateRequest(
+        @NotBlank(message = "{validation.ai.suggestionStatusRequired}")
+        String status
     ) {
     }
 

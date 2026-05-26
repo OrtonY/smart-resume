@@ -3,7 +3,17 @@ import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, 
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { completeAiChat, getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
+import {
+  completeAiChat,
+  getAiConfiguration,
+  getAiVendors,
+  listAiChatConversations,
+  listAiChatMessages,
+  listAiModels,
+  saveAiConfiguration,
+  streamAiChat,
+  updateAiChatSuggestionStatus,
+} from '../api/aiApi'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
@@ -12,6 +22,7 @@ import type {
   AiConfigurationRequest,
   AiResumeContext,
   AiResumeSuggestion,
+  AiResumeSuggestionStatus,
   AiResumeSuggestionPlan,
   VendorMetadata,
 } from '../types'
@@ -20,12 +31,9 @@ import { toAiResumeContext } from '../resumeContext'
 
 const { Text } = Typography
 
-type SuggestionStatus = 'pending' | 'applied' | 'dismissed'
+type SuggestionStatus = AiResumeSuggestionStatus
 
-type AiChatUiMessage = AiChatMessage & {
-  id: string
-  suggestions?: AiResumeSuggestion[]
-}
+type AiChatUiMessage = AiChatMessage & { id: string }
 
 const SECTION_LABEL_KEYS: Record<string, string> = {
   personalInfo: 'section.personalInfo',
@@ -53,6 +61,23 @@ function parseSuggestionPlan(raw: string) {
     console.warn('Failed to parse AI suggestion plan', error)
     return []
   }
+}
+
+function normalizeSuggestionStatus(status?: string): SuggestionStatus {
+  if (status === 'applied' || status === 'dismissed') {
+    return status
+  }
+  return 'pending'
+}
+
+function buildSuggestionStatusMap(items: AiChatMessage[]) {
+  const next: Record<string, SuggestionStatus> = {}
+  items.forEach((item) => {
+    item.suggestions?.forEach((suggestion) => {
+      next[suggestion.id] = normalizeSuggestionStatus(suggestion.status)
+    })
+  })
+  return next
 }
 
 function isStreamBootstrapError(error: unknown) {
@@ -114,13 +139,14 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
   const dragState = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const conversationIdRef = useRef<string | null>(null)
   const shouldAutoScrollRef = useRef(true)
   const lastMessageCountRef = useRef(0)
   // After a streaming round completes we call refreshConversations(...), which sets
   // selectedConversationId to the newly-created backend conversation. The history-reload
   // useEffect listens on selectedConversationId and would then overwrite the in-memory
-  // assistant message (with its suggestions) with the historical version that has no
-  // suggestions, making the cards vanish. Skip that one immediate reload.
+  // assistant message (with its suggestions) with the historical version. Skip that one
+  // immediate reload so the optimistic in-memory round stays intact.
   const skipNextHistoryReloadRef = useRef(false)
 
   const resumeContext = useMemo<AiResumeContext>(() => toAiResumeContext(draft), [draft])
@@ -145,11 +171,16 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     setSelectedConversationId(null)
     setMessages([])
     setSuggestionStatus({})
+    conversationIdRef.current = null
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
     lastMessageCountRef.current = 0
     setOpen(true)
   }
+
+  useEffect(() => {
+    conversationIdRef.current = selectedConversationId
+  }, [selectedConversationId])
 
   useEffect(() => {
     if (!open) {
@@ -211,8 +242,9 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           id: `${selectedConversationId}-${index}-${item.role}`,
           role: item.role,
           content: item.content,
+          suggestions: item.suggestions,
         })))
-        setSuggestionStatus({})
+        setSuggestionStatus(buildSuggestionStatusMap(history))
       })
       .catch((error) => {
         void message.error(error instanceof Error ? error.message : t('assistant.loadHistoryFailed'))
@@ -248,6 +280,19 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     return () => window.cancelAnimationFrame(frame)
   }, [activeTab, messages, open])
 
+  const persistSuggestionStatuses = useCallback(
+    async (updates: Array<{ suggestionId: string; status: SuggestionStatus }>) => {
+      const conversationId = conversationIdRef.current ?? selectedConversationId
+      if (!conversationId) {
+        throw new Error(t('assistant.chatFailed'))
+      }
+      await Promise.all(updates.map(({ suggestionId, status }) => (
+        updateAiChatSuggestionStatus(draft.id, conversationId, suggestionId, status)
+      )))
+    },
+    [draft.id, selectedConversationId, t],
+  )
+
   const handleApplySuggestion = useCallback(
     (suggestion: AiResumeSuggestion) => {
       const status = suggestionStatus[suggestion.id] ?? 'pending'
@@ -255,9 +300,16 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         return
       }
       setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'applied' }))
-      onApplyPatch(suggestion)
+      void persistSuggestionStatuses([{ suggestionId: suggestion.id, status: 'applied' }])
+        .then(() => {
+          onApplyPatch(suggestion)
+        })
+        .catch((error) => {
+          setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: status }))
+          void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        })
     },
-    [onApplyPatch, suggestionStatus],
+    [message, onApplyPatch, persistSuggestionStatuses, suggestionStatus, t],
   )
 
   const handleSkipSuggestion = useCallback(
@@ -267,8 +319,13 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         return
       }
       setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'dismissed' }))
+      void persistSuggestionStatuses([{ suggestionId: suggestion.id, status: 'dismissed' }])
+        .catch((error) => {
+          setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: status }))
+          void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        })
     },
-    [suggestionStatus],
+    [message, persistSuggestionStatuses, suggestionStatus, t],
   )
 
   const handleUndoSkipSuggestion = useCallback(
@@ -277,8 +334,13 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         return
       }
       setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'pending' }))
+      void persistSuggestionStatuses([{ suggestionId: suggestion.id, status: 'pending' }])
+        .catch((error) => {
+          setSuggestionStatus((prev) => ({ ...prev, [suggestion.id]: 'dismissed' }))
+          void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        })
     },
-    [suggestionStatus],
+    [message, persistSuggestionStatuses, suggestionStatus, t],
   )
 
   const handleApplyAllSuggestions = useCallback(
@@ -292,9 +354,23 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         pending.forEach((s) => { next[s.id] = 'applied' })
         return next
       })
-      pending.forEach((s) => onApplyPatch(s))
+      void persistSuggestionStatuses(pending.map((suggestion) => ({
+        suggestionId: suggestion.id,
+        status: 'applied',
+      })))
+        .then(() => {
+          pending.forEach((suggestion) => onApplyPatch(suggestion))
+        })
+        .catch((error) => {
+          setSuggestionStatus((prev) => {
+            const next = { ...prev }
+            pending.forEach((suggestion) => { next[suggestion.id] = 'pending' })
+            return next
+          })
+          void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        })
     },
-    [onApplyPatch, suggestionStatus],
+    [message, onApplyPatch, persistSuggestionStatuses, suggestionStatus, t],
   )
 
   const handleSkipAllSuggestions = useCallback(
@@ -308,8 +384,20 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         pending.forEach((s) => { next[s.id] = 'dismissed' })
         return next
       })
+      void persistSuggestionStatuses(pending.map((suggestion) => ({
+        suggestionId: suggestion.id,
+        status: 'dismissed',
+      })))
+        .catch((error) => {
+          setSuggestionStatus((prev) => {
+            const next = { ...prev }
+            pending.forEach((suggestion) => { next[suggestion.id] = 'pending' })
+            return next
+          })
+          void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        })
     },
-    [suggestionStatus],
+    [message, persistSuggestionStatuses, suggestionStatus, t],
   )
 
   async function handleSend() {
@@ -318,66 +406,15 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       return
     }
 
-    // Settle previous round suggestions before sending the next message.
-    const dismissedFromPrevRound: AiResumeSuggestion[] = []
-    let baseMessages = messages
-    let lastRoundIdx = -1
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const candidate = messages[i]
-      if (candidate.role === 'assistant' && candidate.suggestions && candidate.suggestions.length > 0) {
-        lastRoundIdx = i
-        break
-      }
-    }
-
-    if (lastRoundIdx >= 0) {
-      const prev = messages[lastRoundIdx]
-      const kept: AiResumeSuggestion[] = [];
-      (prev.suggestions ?? []).forEach((s) => {
-        const status = suggestionStatus[s.id] ?? 'pending'
-        if (status === 'applied') {
-          kept.push(s)
-        } else if (status === 'dismissed') {
-          dismissedFromPrevRound.push(s)
-        }
-        // pending → drop (vanish on next send)
-      })
-      baseMessages = messages.map((m, idx) => (idx === lastRoundIdx ? { ...m, suggestions: kept } : m))
-    }
-
-    let augmentedContent = trimmed
-    if (dismissedFromPrevRound.length > 0) {
-      const lines = dismissedFromPrevRound.map((s) => {
-        const indexPart = typeof s.index === 'number' ? `#${s.index}` : ''
-        return `- ${s.section}${indexPart}.${s.field}: ${s.rationale}`
-      })
-      augmentedContent = `${trimmed}\n\n${t('assistant.skippedSystemHint', { lines: lines.join('\n') })}`
-    }
-
-    // Clear status entries that are no longer attached to a visible card.
-    setSuggestionStatus((prev) => {
-      const next = { ...prev }
-      if (lastRoundIdx >= 0) {
-        const prevSuggestions = messages[lastRoundIdx].suggestions ?? []
-        prevSuggestions.forEach((s) => {
-          const status = next[s.id] ?? 'pending'
-          if (status !== 'applied') {
-            delete next[s.id]
-          }
-        })
-      }
-      return next
-    })
-
-    const userMessage: AiChatUiMessage = { id: createClientMessageId(), role: 'user', content: augmentedContent }
+    const userMessage: AiChatUiMessage = { id: createClientMessageId(), role: 'user', content: trimmed }
     const assistantId = createClientMessageId()
     const assistantMessage: AiChatUiMessage = { id: assistantId, role: 'assistant', content: '' }
 
-    setMessages([...baseMessages, userMessage, assistantMessage])
+    setMessages([...messages, userMessage, assistantMessage])
     setInput('')
     shouldAutoScrollRef.current = true
     setStreaming(true)
-    let activeConversationId = selectedConversationId
+    let activeConversationId = conversationIdRef.current ?? selectedConversationId
     let receivedAnyEvent = false
     let streamCompleted = false
 
@@ -395,9 +432,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       setSuggestionStatus((prev) => {
         const next = { ...prev }
         suggestions.forEach((suggestion) => {
-          if (!next[suggestion.id]) {
-            next[suggestion.id] = 'pending'
-          }
+          next[suggestion.id] = normalizeSuggestionStatus(suggestion.status)
         })
         return next
       })
@@ -405,7 +440,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
 
     try {
       await streamAiChat({
-        message: augmentedContent,
+        message: trimmed,
         conversationId: selectedConversationId ?? undefined,
         resume: resumeContext,
       }, (event) => {
@@ -418,6 +453,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         }
         if (event.conversationId && event.conversationId !== selectedConversationId) {
           activeConversationId = event.conversationId
+          conversationIdRef.current = event.conversationId
         }
         if (event.type === 'suggestion') {
           const list = parseSuggestionPlan(event.content)
@@ -442,7 +478,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       if (!receivedAnyEvent && isStreamBootstrapError(error)) {
         try {
           const response = await completeAiChat({
-            message: augmentedContent,
+            message: trimmed,
             conversationId: selectedConversationId ?? undefined,
             resume: resumeContext,
           })
@@ -463,6 +499,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       setStreaming(false)
       if (streamCompleted) {
         if (activeConversationId) {
+          conversationIdRef.current = activeConversationId
           setSelectedConversationId(activeConversationId)
         }
         void refreshConversations(activeConversationId).catch((error) => {
@@ -487,6 +524,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       return
     }
     setSelectedConversationId(null)
+    conversationIdRef.current = null
     setMessages([])
     setSuggestionStatus({})
     setActiveTab('chat')
@@ -498,6 +536,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     if (streaming) {
       return
     }
+    conversationIdRef.current = conversationId
     setSelectedConversationId(conversationId)
     setSuggestionStatus({})
     setActiveTab('chat')

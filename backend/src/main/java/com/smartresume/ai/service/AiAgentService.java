@@ -9,6 +9,7 @@ import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.suggestion.AiResumeSuggestionPlan;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.service.ResumeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +89,9 @@ public class AiAgentService {
     public Flux<AiChatEvent> streamChat(AiChatRequest request) {
         return Flux.defer(() -> {
             PreparedChat preparedChat = prepareChat(request);
+            String resumeId = request.resume().id();
             String conversationId = preparedChat.conversationId();
+            long userId = preparedChat.userId();
             AiInvocationRequest invocationRequest = preparedChat.invocationRequest();
 
             // Approach B: collect full upstream text, strip sentinel, then emit characters + suggestion event.
@@ -117,7 +120,7 @@ public class AiAgentService {
                         .reduce(new StringBuilder(), StringBuilder::append, StringBuilder::append)
                         .toString();
 
-                    return buildResponseFlux(fullText, conversationId);
+                    return buildResponseFlux(fullText, resumeId, conversationId, userId);
                 });
         })
         .onErrorResume(exception -> Flux.just(
@@ -129,10 +132,16 @@ public class AiAgentService {
     public AiChatCompletionResponse completeChat(AiChatRequest request) {
         PreparedChat preparedChat = prepareChat(request);
         String fullText = aiChatService.call(preparedChat.invocationRequest());
-        return toChatCompletionResponse(fullText, preparedChat.conversationId());
+        return toChatCompletionResponse(
+            fullText,
+            request.resume().id(),
+            preparedChat.conversationId(),
+            preparedChat.userId()
+        );
     }
 
     private PreparedChat prepareChat(AiChatRequest request) {
+        long userId = CurrentUserContext.requireUserId();
         resumeService.validResume(request.resume().id());
         String conversationId = aiChatHistoryService.resolveConversationId(
             request.resume().id(),
@@ -146,12 +155,17 @@ public class AiAgentService {
             conversationId,
             AiAgentService::stripSuggestionSentinel
         );
-        return new PreparedChat(conversationId, invocationRequest);
+        return new PreparedChat(conversationId, userId, invocationRequest);
     }
 
-    private Flux<AiChatEvent> buildResponseFlux(String fullText, String conversationId) {
+    private Flux<AiChatEvent> buildResponseFlux(String fullText, String resumeId, String conversationId, long userId) {
         String visibleText = stripSuggestionSentinel(fullText);
-        String suggestionJson = extractSuggestionJson(fullText, conversationId);
+        String suggestionJson = aiChatHistoryService.persistSuggestionPlan(
+            resumeId,
+            conversationId,
+            extractSuggestionJson(fullText, conversationId),
+            userId
+        );
 
         Flux<AiChatEvent> textFlux;
         if (visibleText.isEmpty()) {
@@ -166,10 +180,20 @@ public class AiAgentService {
         return textFlux.concatWithValues(suggestionEvent, doneEvent);
     }
 
-    private AiChatCompletionResponse toChatCompletionResponse(String fullText, String conversationId) {
+    private AiChatCompletionResponse toChatCompletionResponse(
+        String fullText,
+        String resumeId,
+        String conversationId,
+        long userId
+    ) {
         return new AiChatCompletionResponse(
             stripSuggestionSentinel(fullText),
-            extractSuggestionJson(fullText, conversationId),
+            aiChatHistoryService.persistSuggestionPlan(
+                resumeId,
+                conversationId,
+                extractSuggestionJson(fullText, conversationId),
+                userId
+            ),
             conversationId
         );
     }
@@ -243,12 +267,13 @@ public class AiAgentService {
     }
 
     private String streamErrorMessage(Throwable exception) {
+        log.error(exception.getLocalizedMessage(), exception);
         if (exception instanceof AppException appException) {
             return appException.getMessage();
         }
         return exception.getMessage() == null ? "AI stream failed" : exception.getMessage();
     }
 
-    private record PreparedChat(String conversationId, AiInvocationRequest invocationRequest) {
+    private record PreparedChat(String conversationId, long userId, AiInvocationRequest invocationRequest) {
     }
 }
