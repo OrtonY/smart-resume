@@ -79,6 +79,7 @@
     "modalTitle": "AI Answer & Scoring",
     "answerTitle": "Reference Answer",
     "thinking": "Thinking...",
+    "generate": "Generate Answer",
     "regenerate": "Regenerate",
     "stop": "Stop",
     "score": {

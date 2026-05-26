@@ -59,6 +59,7 @@ import { resolveResumeTemplate } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
 import { WorkspaceSessionCard } from '../features/system/components/WorkspaceSessionCard'
 import type { RegistrationSettingsResponse, SessionUser } from '../features/system/types'
+import { copyToClipboard } from '../lib/copyToClipboard'
 import { useIsMobile } from '../lib/hooks/useIsMobile'
 import type {
   ResumeDetail,
@@ -313,7 +314,7 @@ export function WorkspacePage({
     }
 
     const share = await createShare(resumeId, title, mode, password)
-    await navigator.clipboard.writeText(`${window.location.origin}${share.sharePath}`)
+    await copyToClipboard(`${window.location.origin}${share.sharePath}`)
     void message.success(mode === 'LATEST' ? t('feedback.shareCopiedLatest') : t('feedback.shareCopiedSnapshot'))
   }
 
@@ -918,7 +919,7 @@ function ShareLinksModal({
                       icon={<CopyOutlined />}
                       size="small"
                       onClick={async () => {
-                        await navigator.clipboard.writeText(fullUrl)
+                        await copyToClipboard(fullUrl)
                         void message.success(t('share.feedback2.linkCopied'))
                       }}
                     >

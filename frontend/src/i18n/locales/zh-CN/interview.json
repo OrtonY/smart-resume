@@ -79,6 +79,7 @@
     "modalTitle": "AI 答案与评分",
     "answerTitle": "参考答案",
     "thinking": "思考中...",
+    "generate": "生成答案",
     "regenerate": "重新生成",
     "stop": "停止",
     "score": {

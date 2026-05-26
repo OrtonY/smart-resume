@@ -120,9 +120,9 @@ export function PublicSharePage() {
   }
 
   return (
-    <div className="full-page-center">
+    <div className="public-share-page">
       {contextHolder}
-      <Card className="auth-card" bordered={false} style={{ width: 'min(960px, 100%)' }}>
+      <Card className="public-share-page__card" bordered={false}>
         {loading ? (
           <div className="full-page-center" style={{ minHeight: 320 }}>
             <Spin size="large" tip={t('page.loading')} />
