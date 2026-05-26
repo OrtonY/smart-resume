@@ -16,6 +16,8 @@ The frontend sends only the current user message and bound resume context; Sprin
 ## Persistence Rules
 
 * Use `ai_chat_conversations` as the resume-scoped conversation metadata table.
+* Persist per-assistant-round suggestion cards in `ai_chat_suggestions`, keyed by `user_id + resume_id + conversation_id + suggestion_id`.
+* Build server-owned `suggestion_id` values from `(conversationId, assistantMessageIndex, displayOrder)` as `"{conversationId}-a{assistantMessageIndex}-s{displayOrder}"` so one assistant reply can safely persist multiple cards.
 * Use `ChatMemory.CONVERSATION_ID` as the selected conversation id, not as the resume id.
 * All AI features generate conversation ids uniformly through `AiConversationIdGenerator.generate(resumeId, AiFeatureType)` → `{resumeId|default}_{featureCode}_{yyyyMMddHHmmssSSS}`. See [ai-chat-service.md](./ai-chat-service.md). Distinguishing per-feature behavior is done via the `featureCode` segment, not via separate id schemes.
   * Resume chat uses `AiFeatureType.RESUME_CHAT` and additionally writes a row into `ai_chat_conversations` so the user can list/switch threads from the editor.
@@ -23,6 +25,10 @@ The frontend sends only the current user message and bound resume context; Sprin
   * Pre-refactor resume-chat rows in `ai_chat_conversations` may carry the legacy `resume-{resumeId}-{uuid}` id; these stay valid — no migration needed.
 * Use `MessageWindowChatMemory` with a bounded message window for prompt reuse.
 * Keep read APIs for listing a resume's conversations and loading messages for a selected conversation. Filtering by `resumeId` (the metadata column) is the source of truth — do NOT rely on parsing the conversation-id string to recognise threads.
+* Resume-chat history reads should attach persisted suggestions back onto the matching assistant message so the frontend can restore cards and statuses after refresh or conversation switch without rebuilding them heuristically.
+* Persisting suggestions from a streaming response must not rely on `CurrentUserContext` inside Reactor worker threads. Capture `userId` before entering the async stream and pass it explicitly into persistence methods.
+* Persist suggestion status transitions as product state, not just transient UI state. Supported states: `pending`, `applied`, `dismissed`, and `dismissed -> pending` undo.
+* Never delete earlier suggestions when a later assistant turn produces more cards in the same conversation. Each turn appends its own persisted set, and replays should reuse the existing row when the same normalized `suggestion_id` already exists.
 * Prefer `stream().content()` for SSE text output; the frontend can render each content chunk directly.
 * Do not switch the frontend to a newly-created conversation until the current stream is complete, otherwise the history reload can overwrite the in-progress streamed assistant message.
 
