@@ -92,3 +92,16 @@ After all commits are in place on the task branch:
 - The PR merge strategy is **rebase merge** (configured on the remote to enforce linear history).
 - Do NOT auto-merge or wait for merge — just create the PR and report the URL.
 - If `git push` fails (e.g., branch already exists on remote), report the error and let the user decide.
+
+## Release merge (develop → master)
+
+When merging `develop` into `master` for a release, use **Create a merge commit** (not squash or rebase). This ensures:
+- Git correctly recognizes that `master` contains all of `develop`'s commits.
+- GitHub does not show "N commits behind develop" on the master branch.
+- The merge commit itself serves as a clear release marker in the history.
+
+Steps:
+1. Create a `release/vX.Y.Z` branch from `develop`, commit version bump, PR into `develop` (rebase merge).
+2. After merge, create a PR from `develop` → `master`, merge with **Create a merge commit**.
+3. Create tag `vX.Y.Z` and branch `vX.Y.Z` from the merge commit on `master`.
+4. Create a GitHub Release from the tag with release notes.
