@@ -70,6 +70,38 @@ a {
   width: 100%;
 }
 
+.public-share-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-x: hidden;
+}
+
+.public-share-page__card {
+  width: min(960px, 100%);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 251, 255, 0.82));
+  box-shadow: var(--shadow-soft);
+}
+
+.public-share-page__card .ant-card-body {
+  padding: 30px;
+  overflow: hidden;
+}
+
+.public-share-page__card .resume-template__masthead {
+  flex-direction: row;
+}
+
+.public-share-page__card .resume-template__masthead-aside {
+  justify-items: end;
+  min-width: 240px;
+}
+
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -381,6 +413,14 @@ a {
 
 .resume-list-card__preview .resume-preview-paper {
   margin: 0 auto;
+}
+
+.resume-list-card__preview .resume-template__masthead--compact {
+  align-items: flex-start;
+}
+
+.resume-list-card__preview .resume-template__masthead {
+  flex-direction: row;
 }
 
 .resume-list-card__preview-fallback {
@@ -3215,6 +3255,22 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .resume-editor-avatar-field {
     grid-template-columns: 1fr;
     justify-items: start;
+  }
+
+  .public-share-page {
+    padding: 12px;
+  }
+
+  .public-share-page__card {
+    border-radius: 16px;
+  }
+
+  .public-share-page__card .ant-card-body {
+    padding: 12px;
+  }
+
+  .public-share-page__card .resume-template__masthead-aside {
+    min-width: 0;
   }
 }
 

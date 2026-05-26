@@ -99,30 +99,16 @@ export function AiAnswerModal({
       })
   }, [interviewId, messageId, loadAssist])
 
-  const shouldAutoStartRef = useRef(false)
-
   useEffect(() => {
     if (!open) return
-    let cancelled = false
     ;(async () => {
-      const data = await loadAssist()
-      if (!cancelled && data && data.answerStatus !== 'READY' && data.answerStatus !== 'GENERATING') {
-        shouldAutoStartRef.current = true
-      }
+      await loadAssist()
     })()
     return () => {
-      cancelled = true
       answerAbortRef.current?.abort()
       scoreAbortRef.current?.abort()
     }
   }, [open, loadAssist])
-
-  useEffect(() => {
-    if (shouldAutoStartRef.current && !answerStreaming && !loading) {
-      shouldAutoStartRef.current = false
-      startAnswerStream()
-    }
-  }, [loading, answerStreaming, startAnswerStream])
 
   function handleRegenerate() {
     answerAbortRef.current?.abort()
@@ -325,7 +311,11 @@ export function AiAnswerModal({
                   <MarkdownMessage content={assist!.answerContent!} />
                 ) : loading ? (
                   <div className="ai-answer-modal__thinking">{t('aiAnswer.thinking')}</div>
-                ) : null}
+                ) : (
+                  <Button type="primary" onClick={startAnswerStream}>
+                    {t('aiAnswer.generate')}
+                  </Button>
+                )}
               </div>
             </div>
           ) : (

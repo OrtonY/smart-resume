@@ -573,7 +573,12 @@ function MoreActionsMenu({
             key: 'modifyTemplate',
             label: <Link to={`/app/templates?resumeId=${draftId}`}>{t('editor.modifyTemplate')}</Link>,
           },
-          ...interviewMenuItems.map((item) => ({ ...item, key: `interview-${item.key}` })),
+          {
+            key: 'interview',
+            label: t('editor.interview'),
+            icon: <MessageOutlined />,
+            children: interviewMenuItems,
+          },
           {
             key: 'share',
             label: t('editor.share'),
@@ -581,18 +586,23 @@ function MoreActionsMenu({
             onClick: onOpenShare,
           },
           {
-            key: 'exportServerPdf',
-            label: t('editor.exportServerPdf'),
+            key: 'export',
+            label: t('editor.exportPdf'),
             icon: <DownloadOutlined />,
-            disabled: exportingPdf,
-            onClick: onExportServerPdf,
-          },
-          {
-            key: 'exportQuickPdf',
-            label: t('editor.exportQuickPdf'),
-            icon: <DownloadOutlined />,
-            disabled: exportingPdf,
-            onClick: onExportPdf,
+            children: [
+              {
+                key: 'exportServerPdf',
+                label: t('editor.exportServerPdf'),
+                disabled: exportingPdf,
+                onClick: onExportServerPdf,
+              },
+              {
+                key: 'exportQuickPdf',
+                label: t('editor.exportQuickPdf'),
+                disabled: exportingPdf,
+                onClick: onExportPdf,
+              },
+            ],
           },
         ],
       }}
