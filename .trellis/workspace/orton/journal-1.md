@@ -1540,3 +1540,37 @@ Pinned font-size/line-height/text-size-adjust on .resume-preview to eliminate re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 47: Remove branch creation from release merge rule
+
+**Date**: 2026-05-26
+**Task**: Remove branch creation from release merge rule
+**Branch**: `docs/release-merge-rule`
+
+### Summary
+
+Documented release merge strategy (develop→master uses merge commit) and removed the unnecessary step of creating a branch with the same name as the release tag.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `92a79bd` | (see git log) |
+| `fac2d39` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
