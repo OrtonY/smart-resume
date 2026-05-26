@@ -1574,3 +1574,36 @@ Documented release merge strategy (develop→master uses merge commit) and remov
 ### Next Steps
 
 - None - task complete
+
+
+## Session 48: Persist AI resume suggestions
+
+**Date**: 2026-05-26
+**Task**: Persist AI resume suggestions
+**Branch**: `codex/persist-ai-resume-suggestions`
+
+### Summary
+
+Persisted AI resume suggestion cards with durable statuses, fixed stream user context handling, kept multi-turn suggestion cards actionable, and removed hidden suggestion prompt injection.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ca7f27` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
