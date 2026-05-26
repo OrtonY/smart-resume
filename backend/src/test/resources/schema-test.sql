@@ -121,6 +121,25 @@ CREATE TABLE IF NOT EXISTS ai_resume_scores (
     updated_at TIMESTAMP NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ai_chat_suggestions (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    resume_id VARCHAR(64) NOT NULL,
+    conversation_id VARCHAR(128) NOT NULL,
+    assistant_message_index INTEGER NOT NULL,
+    display_order INTEGER NOT NULL,
+    suggestion_id VARCHAR(200) NOT NULL,
+    section VARCHAR(64) NOT NULL,
+    section_index INTEGER NULL,
+    field VARCHAR(64) NOT NULL,
+    current_value TEXT NULL,
+    suggested_value TEXT NOT NULL,
+    rationale TEXT NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS SPRING_AI_CHAT_MEMORY (
     conversation_id VARCHAR(128) NOT NULL,
     content TEXT NOT NULL,
@@ -234,6 +253,12 @@ CREATE INDEX IF NOT EXISTS idx_ai_chat_conversations_user_resume_updated
 
 CREATE INDEX IF NOT EXISTS idx_ai_resume_scores_user_updated
     ON ai_resume_scores (user_id, updated_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_ai_chat_suggestions_user_conversation_suggestion
+    ON ai_chat_suggestions (user_id, conversation_id, suggestion_id);
+
+CREATE INDEX IF NOT EXISTS idx_ai_chat_suggestions_user_conversation_order
+    ON ai_chat_suggestions (user_id, conversation_id, assistant_message_index, display_order);
 
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_resume_updated
     ON interview_sessions (resume_id, updated_at DESC);

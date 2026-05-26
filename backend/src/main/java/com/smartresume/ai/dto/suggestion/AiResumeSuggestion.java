@@ -11,6 +11,7 @@ public record AiResumeSuggestion(
     String field,
     String currentValue,
     String suggestedValue,
-    String rationale
+    String rationale,
+    String status
 ) {
 }

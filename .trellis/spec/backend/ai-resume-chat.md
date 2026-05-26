@@ -87,11 +87,14 @@ Emission order on a single stream: `message`* → `suggestion` → `done`.
 - Sentinel found but JSON parse fails → log WARN with `conversationId`, emit `AiChatEvent("suggestion", "{\"suggestions\":[]}", conversationId)`. **Do NOT throw.**
 - Sentinel missing entirely → log WARN with `conversationId`, emit empty-list suggestion event, then `done`. **Do NOT throw.**
 
-#### 3.4 Multi-turn dismissed-summary contract (frontend → backend)
+#### 3.4 Suggestion persistence + multi-turn chat contract (frontend → backend)
 
-- The frontend appends a `[系统提示：用户在上一轮主动跳过了以下建议，请不要再重复提出： ...]` block to the next `userMessage` for any patches the user dismissed in the previous turn.
-- The system prompt acknowledges this convention and instructs the AI to avoid re-proposing the same field with the same change.
-- This task only **consumes** the convention; backend does NOT persist dismissed suggestions. The dismissed summary is single-turn, not cumulative.
+- The frontend sends only the user's typed chat content as the next `userMessage`; suggestion card content, rationales, and statuses must not be appended as hidden prompt text.
+- The backend persists each suggestion card to `ai_chat_suggestions` using the tuple `(conversationId, assistantMessageIndex, displayOrder)` as the stable per-round identity source. Returned `suggestion.id` values are normalized server-side to `"{conversationId}-a{assistantMessageIndex}-s{displayOrder}"`; do not trust model-provided ids for persistence.
+- `AiAgentService` must capture `userId` before entering the stream / SSE pipeline and pass it into suggestion persistence explicitly, because `CurrentUserContext` is thread-local and is not safe to read from Reactor worker threads.
+- Suggestion status is durable across refresh / history reload with the enum: `pending`, `applied`, `dismissed`. Undoing a dismissal writes `dismissed -> pending`.
+- Sending a new user message must not prune prior rounds' pending or dismissed cards from frontend state. The chat timeline keeps all rounds, and prior suggestion cards remain visible and actionable until the user applies or skips them.
+- Persisted suggestion status is for UI/history restoration, not prompt replay.
 
 ### 4. Section → field whitelist
 
@@ -130,7 +133,7 @@ Note on `personalInfo.index`: although it is an object section, the model may ei
 - **Base**: user asks "你是什么"; agent self-introduces as "智慧简历 AI" + empty-list suggestion event.
 - **Bad**: agent emits `<<<SUGGESTIONS_JSON>>>{...}` mid-paragraph and the frontend bubble shows raw JSON characters. Caused by either an Approach A leakage or the model violating the "single line at the tail" rule.
 - **Bad**: agent decides to fabricate a sample patch because parsing failed. Forbidden — empty list is the only correct fallback.
-- **Bad**: agent persists "dismissed suggestions" server-side to support cross-session memory. Out of scope; the frontend's per-turn summary is the only conduit.
+- **Bad**: frontend invents ad hoc suggestion ids or reattaches persisted suggestions to the wrong assistant message after reload. The backend-owned normalized id and `assistantMessageIndex` mapping are the source of truth.
 
 ### 7. Tests Required
 

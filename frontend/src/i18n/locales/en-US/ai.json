@@ -46,8 +46,7 @@
     "send": "Send",
     "loadConversationsFailed": "Failed to load AI chat conversations",
     "loadHistoryFailed": "Failed to load AI chat history",
-    "chatFailed": "AI chat failed",
-    "skippedSystemHint": "[System note: the user skipped the following suggestions in the previous round, please do not propose them again:\n{{lines}}\n]"
+    "chatFailed": "AI chat failed"
   },
   "suggestion": {
     "groupTitle": "AI Suggestions ({{count}})",
