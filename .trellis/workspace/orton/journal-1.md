@@ -1507,3 +1507,36 @@ Fixed 5 issues: clipboard writeText fallback for mobile share, resume card perso
 ### Next Steps
 
 - None - task complete
+
+
+## Session 46: Fix resume preview layout isolation and font-size consistency
+
+**Date**: 2026-05-26
+**Task**: Fix resume preview layout isolation and font-size consistency
+**Branch**: `fix/resume-preview-layout-isolation`
+
+### Summary
+
+Pinned font-size/line-height/text-size-adjust on .resume-preview to eliminate rendering divergence between quick export (16px inherited), high-quality Playwright export (14px body), and mobile preview (15px body). Added missing contact-list isolation rule. Removed redundant per-context overrides now covered by the unified isolation block.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8c383df` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

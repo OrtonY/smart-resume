@@ -93,15 +93,6 @@ a {
   overflow: hidden;
 }
 
-.public-share-page__card .resume-template__masthead {
-  flex-direction: row;
-}
-
-.public-share-page__card .resume-template__masthead-aside {
-  justify-items: end;
-  min-width: 240px;
-}
-
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -986,6 +977,93 @@ a {
   background: transparent;
 }
 
+/* Desktop layout isolation: ensure the resume template always renders in
+   desktop layout regardless of viewport width. The preview is scaled via
+   transform to fit narrow screens. This single block replaces per-site
+   overrides that were previously scattered across media queries. */
+.resume-preview {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.resume-preview .resume-template--split {
+  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.resume-preview .resume-template__editorial-grid {
+  grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+}
+
+.resume-preview .resume-template__hero:not(.resume-template__hero--compact) {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+
+.resume-preview .resume-template__masthead,
+.resume-preview .resume-template__masthead--minimal {
+  flex-direction: row;
+}
+
+.resume-preview .resume-template__hero-identity-row {
+  flex-direction: row;
+}
+
+.resume-preview .resume-template__masthead-aside {
+  justify-items: end;
+  min-width: 240px;
+}
+
+.resume-preview .resume-template__sidebar {
+  padding: 30px 24px 30px 26px;
+  border-right: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+  background: var(--template-rail-background);
+}
+
+.resume-preview .resume-template__notes-column {
+  padding: 24px 28px 30px;
+  border-right: none;
+  border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+  background: var(--template-rail-background);
+}
+
+.resume-preview .resume-template__masthead {
+  padding: 28px;
+}
+
+.resume-preview .resume-template__masthead--classic {
+  padding: 26px 34px 18px;
+}
+
+.resume-preview .resume-template__hero {
+  padding: 24px;
+}
+
+.resume-preview .resume-template__main,
+.resume-preview .resume-template__content-column {
+  padding: 24px 28px 30px;
+}
+
+.resume-preview .resume-template__avatar {
+  width: 112px;
+}
+
+.resume-preview .resume-template__section-title {
+  font-size: 18px;
+}
+
+.resume-preview .resume-template__identity h1 {
+  font-size: 38px;
+}
+
+.resume-preview .resume-template__identity--dense h1 {
+  font-size: 40px;
+}
+
+.resume-preview .resume-template__contact-list.is-inline.is-dense {
+  justify-content: center;
+}
+
 .resume-preview-modal {
   display: grid;
   place-items: start center;
@@ -1022,7 +1100,6 @@ a {
   height: auto;
   pointer-events: none;
   overflow: visible;
-  font-size: 16px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -1032,106 +1109,13 @@ html.resume-export-document .resume-preview-stage {
   width: 794px;
 }
 
-/* Insulate the off-screen PDF source from responsive media queries
-   (max-width: 1280px / 900px / 480px) so html2canvas always rasterizes
-   the desktop layout regardless of the device viewport. */
-.resume-export-source .resume-template__identity h1,
-html.resume-export-document .resume-template__identity h1 {
-  font-size: 38px;
-}
-
-.resume-export-source .resume-template__identity--dense h1,
-html.resume-export-document .resume-template__identity--dense h1 {
-  font-size: 40px;
-}
-
-.resume-export-source .resume-template--split,
-html.resume-export-document .resume-template--split {
-  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
-}
-
-.resume-export-source .resume-template__editorial-grid,
-html.resume-export-document .resume-template__editorial-grid {
-  grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
-}
-
-.resume-export-source .resume-template__hero:not(.resume-template__hero--compact),
-html.resume-export-document .resume-template__hero:not(.resume-template__hero--compact) {
-  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-}
-
-.resume-export-source .resume-template__masthead,
-.resume-export-source .resume-template__masthead--minimal,
-html.resume-export-document .resume-template__masthead,
-html.resume-export-document .resume-template__masthead--minimal {
-  flex-direction: row;
-}
-
-.resume-export-source .resume-template__hero-identity-row,
-html.resume-export-document .resume-template__hero-identity-row {
-  flex-direction: row;
-}
-
-.resume-export-source .resume-template__masthead-aside,
-html.resume-export-document .resume-template__masthead-aside {
-  justify-items: end;
-  min-width: 240px;
-}
-
-.resume-export-source .resume-template__sidebar,
-.resume-export-source .resume-template__notes-column,
-html.resume-export-document .resume-template__sidebar,
-html.resume-export-document .resume-template__notes-column {
-  padding: 30px 24px 30px 26px;
-  border-right: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-  background: var(--template-rail-background);
-}
-
-.resume-export-source .resume-template__notes-column,
-html.resume-export-document .resume-template__notes-column {
-  padding: 24px 28px 30px;
-  border-right: none;
-  border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-}
-
-.resume-export-source .resume-template__masthead,
-html.resume-export-document .resume-template__masthead {
-  padding: 28px;
-}
-
-.resume-export-source .resume-template__masthead--classic,
-html.resume-export-document .resume-template__masthead--classic {
-  padding: 26px 34px 18px;
-}
-
-.resume-export-source .resume-template__hero,
-html.resume-export-document .resume-template__hero {
-  padding: 24px;
-}
-
-.resume-export-source .resume-template__main,
-.resume-export-source .resume-template__content-column,
-html.resume-export-document .resume-template__main,
-html.resume-export-document .resume-template__content-column {
-  padding: 24px 28px 30px;
-}
-
-.resume-export-source .resume-template__avatar,
-html.resume-export-document .resume-template__avatar {
-  width: 112px;
-}
-
-.resume-export-source .resume-template__section-title,
-html.resume-export-document .resume-template__section-title {
-  font-size: 18px;
-}
-
 html.resume-export-document {
   background: #ffffff;
 }
 
 html.resume-export-document body {
   background: #ffffff;
+  font-size: 14px;
 }
 
 html.resume-export-document .resume-preview-stage {
@@ -3268,10 +3252,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .public-share-page__card .ant-card-body {
     padding: 12px;
   }
-
-  .public-share-page__card .resume-template__masthead-aside {
-    min-width: 0;
-  }
 }
 
 /* ===== Mobile (≤480px) ===== */
@@ -3475,23 +3455,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     background: rgba(20, 33, 61, 0.04);
   }
 
-  /* A4 preview scale-to-fit on mobile */
-  .resume-preview-stage--mobile-fit {
-    overflow: visible;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 0;
-  }
-
-  .resume-preview-stage--mobile-fit .resume-preview-paper {
-    transform: scale(var(--mobile-preview-scale, 1));
-    transform-origin: top left;
-  }
-
-  .resume-preview-stage--mobile-fit .resume-preview-pages {
-    width: var(--mobile-preview-paper-width, 100%);
-  }
-
   /* Auth */
   .auth-shell {
     padding: 16px;
@@ -3553,35 +3516,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .template-gallery-preview .resume-preview-pages {
     width: calc(100vw - 56px);
-  }
-
-  /* Restore desktop template layouts inside scaled preview */
-  .template-gallery-preview .resume-template--split {
-    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
-  }
-
-  .template-gallery-preview .resume-template__editorial-grid {
-    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
-  }
-
-  .template-gallery-preview .resume-template__hero:not(.resume-template__hero--compact) {
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-  }
-
-  .template-gallery-preview .resume-template__masthead,
-  .template-gallery-preview .resume-template__masthead--minimal {
-    flex-direction: row;
-  }
-
-  .template-gallery-preview .resume-template__hero-identity-row {
-    flex-direction: column;
-  }
-
-  .template-gallery-preview .resume-template__sidebar,
-  .template-gallery-preview .resume-template__notes-column {
-    padding: 20px 28px 30px;
-    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-    background: var(--template-rail-background);
   }
 
   .template-gallery-page__head {
@@ -3683,34 +3617,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-pages {
     width: 100%;
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template--split {
-    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__editorial-grid {
-    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__hero:not(.resume-template__hero--compact) {
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__masthead,
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__masthead--minimal {
-    flex-direction: row;
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__hero-identity-row {
-    flex-direction: column;
-  }
-
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__sidebar,
-  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-template__notes-column {
-    padding: 20px 28px 30px;
-    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-    background: var(--template-rail-background);
   }
 
   .resume-editor-shell,
@@ -3847,67 +3753,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .responsive-modal-drawer .resume-preview-modal .resume-preview,
   .responsive-modal-drawer .resume-preview-modal .resume-preview--page {
     max-width: none;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template--split {
-    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__editorial-grid {
-    grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__hero:not(.resume-template__hero--compact) {
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead,
-  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead--minimal {
-    flex-direction: row;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__hero-identity-row {
-    flex-direction: row;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead-aside {
-    justify-items: end;
-    min-width: 240px;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead {
-    padding: 28px;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__masthead--classic {
-    padding: 26px 34px 18px;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__hero {
-    padding: 24px;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__main,
-  .responsive-modal-drawer .resume-preview-modal .resume-template__content-column {
-    padding: 24px 28px 30px;
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__sidebar {
-    padding: 30px 24px 30px 26px;
-    border-right: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-    border-left: none;
-    background: var(--template-rail-background);
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__notes-column {
-    padding: 24px 28px 30px;
-    border-right: none;
-    border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
-    background: var(--template-rail-background);
-  }
-
-  .responsive-modal-drawer .resume-preview-modal .resume-template__avatar {
-    width: 112px;
   }
 
   /* Interview report modal: full width on mobile drawer */
