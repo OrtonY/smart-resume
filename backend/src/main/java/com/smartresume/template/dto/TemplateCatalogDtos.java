@@ -12,9 +12,9 @@ public final class TemplateCatalogDtos {
 
     public record TemplateCatalogResponse(
         String key,
-        String name,
-        String summary,
-        String category,
+        Object name,
+        Object summary,
+        Object category,
         String layout,
         TemplateTheme theme,
         TemplatePreview preview,
@@ -24,79 +24,79 @@ public final class TemplateCatalogDtos {
     }
 
     public record TemplateCreateRequest(
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.template.keyRequired}")
         String key,
-        @NotBlank(message = "Template name is required")
+        @NotBlank(message = "{validation.template.nameRequired}")
         String name,
-        @NotBlank(message = "Template summary is required")
+        @NotBlank(message = "{validation.template.summaryRequired}")
         String summary,
-        @NotBlank(message = "Template category is required")
+        @NotBlank(message = "{validation.template.categoryRequired}")
         String category,
-        @NotBlank(message = "Template layout is required")
+        @NotBlank(message = "{validation.template.layoutRequired}")
         String layout,
-        @NotNull(message = "Template theme is required")
+        @NotNull(message = "{validation.template.themeRequired}")
         @Valid
         TemplateTheme theme,
-        @NotNull(message = "Template preview is required")
+        @NotNull(message = "{validation.template.previewRequired}")
         @Valid
         TemplatePreview preview
     ) {
     }
 
     public record TemplateUpdateRequest(
-        @NotBlank(message = "Template name is required")
+        @NotBlank(message = "{validation.template.nameRequired}")
         String name,
-        @NotBlank(message = "Template summary is required")
+        @NotBlank(message = "{validation.template.summaryRequired}")
         String summary,
-        @NotBlank(message = "Template category is required")
+        @NotBlank(message = "{validation.template.categoryRequired}")
         String category,
-        @NotBlank(message = "Template layout is required")
+        @NotBlank(message = "{validation.template.layoutRequired}")
         String layout,
-        @NotNull(message = "Template theme is required")
+        @NotNull(message = "{validation.template.themeRequired}")
         @Valid
         TemplateTheme theme,
-        @NotNull(message = "Template preview is required")
+        @NotNull(message = "{validation.template.previewRequired}")
         @Valid
         TemplatePreview preview
     ) {
     }
 
     public record TemplateTheme(
-        @NotBlank(message = "Theme pageBackground is required")
+        @NotBlank(message = "{validation.template.theme.pageBackgroundRequired}")
         String pageBackground,
-        @NotBlank(message = "Theme borderColor is required")
+        @NotBlank(message = "{validation.template.theme.borderColorRequired}")
         String borderColor,
-        @NotBlank(message = "Theme mutedText is required")
+        @NotBlank(message = "{validation.template.theme.mutedTextRequired}")
         String mutedText,
-        @NotBlank(message = "Theme accent is required")
+        @NotBlank(message = "{validation.template.theme.accentRequired}")
         String accent,
-        @NotBlank(message = "Theme accentSoft is required")
+        @NotBlank(message = "{validation.template.theme.accentSoftRequired}")
         String accentSoft,
-        @NotBlank(message = "Theme accentText is required")
+        @NotBlank(message = "{validation.template.theme.accentTextRequired}")
         String accentText,
-        @NotBlank(message = "Theme heroBackground is required")
+        @NotBlank(message = "{validation.template.theme.heroBackgroundRequired}")
         String heroBackground,
-        @NotBlank(message = "Theme heroText is required")
+        @NotBlank(message = "{validation.template.theme.heroTextRequired}")
         String heroText,
-        @NotBlank(message = "Theme heroMuted is required")
+        @NotBlank(message = "{validation.template.theme.heroMutedRequired}")
         String heroMuted,
-        @NotBlank(message = "Theme railBackground is required")
+        @NotBlank(message = "{validation.template.theme.railBackgroundRequired}")
         String railBackground,
-        @NotBlank(message = "Theme panelBackground is required")
+        @NotBlank(message = "{validation.template.theme.panelBackgroundRequired}")
         String panelBackground
     ) {
     }
 
     public record TemplatePreview(
-        @NotBlank(message = "Preview canvasBackground is required")
+        @NotBlank(message = "{validation.template.preview.canvasBackgroundRequired}")
         String canvasBackground,
-        @NotBlank(message = "Preview sheetBackground is required")
+        @NotBlank(message = "{validation.template.preview.sheetBackgroundRequired}")
         String sheetBackground,
-        @NotBlank(message = "Preview heroBackground is required")
+        @NotBlank(message = "{validation.template.preview.heroBackgroundRequired}")
         String heroBackground,
-        @NotBlank(message = "Preview asideBackground is required")
+        @NotBlank(message = "{validation.template.preview.asideBackgroundRequired}")
         String asideBackground,
-        @NotBlank(message = "Preview lineColor is required")
+        @NotBlank(message = "{validation.template.preview.lineColorRequired}")
         String lineColor
     ) {
     }

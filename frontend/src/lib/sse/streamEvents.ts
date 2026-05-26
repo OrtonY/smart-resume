@@ -1,3 +1,4 @@
+import i18n from '../../i18n'
 import { clearAccessToken, getAccessToken } from '../auth/tokenStorage'
 
 export interface SseEvent {
@@ -19,6 +20,7 @@ export async function streamEvents<T extends SseEvent>(
   const headers = new Headers({
     'Content-Type': 'application/json',
     Accept: 'text/event-stream',
+    'Accept-Language': i18n.language,
     'Cache-Control': 'no-cache',
   })
   const token = getAccessToken()
@@ -50,6 +52,7 @@ export async function streamGetEvents<T>(
 ) {
   const headers = new Headers({
     Accept: 'text/event-stream',
+    'Accept-Language': i18n.language,
     'Cache-Control': 'no-cache',
   })
   const token = getAccessToken()

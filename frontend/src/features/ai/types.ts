@@ -41,6 +41,12 @@ export interface AiChatEvent {
   conversationId?: string
 }
 
+export interface AiChatCompletionResponse {
+  content: string
+  suggestionJson: string
+  conversationId: string
+}
+
 export type AiResumeSuggestionSection =
   | 'personalInfo'
   | 'personalSummary'
@@ -90,7 +96,12 @@ export interface AiResumeScoreResponse {
   suggestionGroups: AiResumeScoreSuggestionGroup[]
   jobDescriptionProvided: boolean
   generatedAt: string
-  mode: 'mock' | 'live'
+  mode: 'ai' | 'mock' | 'live'
+}
+
+export interface PersistedAiResumeScoreResponse {
+  jobDescription: string
+  result: AiResumeScoreResponse
 }
 
 export interface VendorMetadata {

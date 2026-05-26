@@ -1,0 +1,36 @@
+{
+  "session": {
+    "openButton": "系统设置",
+    "modalTitle": "系统设置",
+    "registration": {
+      "label": "注册开关",
+      "description": "控制新用户是否可以在登录页自助注册",
+      "on": "开",
+      "off": "关",
+      "enabled": "已开启注册",
+      "disabled": "已关闭注册",
+      "updateFailed": "注册开关更新失败"
+    },
+    "password": {
+      "title": "修改密码",
+      "currentLabel": "当前密码",
+      "currentPlaceholder": "请输入当前密码",
+      "currentRequired": "请输入当前密码",
+      "newLabel": "新密码",
+      "newPlaceholder": "请输入新密码",
+      "newRequired": "请输入新密码",
+      "newMin": "新密码至少 6 位",
+      "newMax": "新密码不能超过 64 位",
+      "confirmLabel": "确认新密码",
+      "confirmPlaceholder": "请再次输入新密码",
+      "confirmRequired": "请再次输入新密码",
+      "mismatch": "两次输入的新密码不一致",
+      "submit": "保存新密码",
+      "success": "密码修改成功，请重新登录",
+      "failed": "修改密码失败"
+    }
+  },
+  "errors": {
+    "requestFailed": "请求失败"
+  }
+}

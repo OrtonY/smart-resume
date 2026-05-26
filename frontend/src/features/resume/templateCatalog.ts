@@ -1,5 +1,16 @@
 import type { CSSProperties } from 'react'
 
+export { getLocalizedField } from '../../i18n/utils'
+
+/**
+ * A field that may be either a plain string or a locale-keyed object (e.g.
+ * `{ "zh-CN": "北极星", "en-US": "North Star" }`). Per i18n D7, backend-served
+ * template metadata may use either form. Use `getLocalizedField` to resolve.
+ *
+ * User-created template fields are always plain strings.
+ */
+export type LocalizedField = string | Record<string, string>
+
 export const RESUME_TEMPLATE_LAYOUTS = ['classic', 'two-column', 'minimal', 'editorial'] as const
 
 export type ResumeTemplateLayout = (typeof RESUME_TEMPLATE_LAYOUTS)[number]

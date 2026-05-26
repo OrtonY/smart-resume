@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
-- **Last Active**: 2026-05-21
+- **Total Sessions**: 46
+- **Last Active**: 2026-05-26
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1108 | Active |
+| `journal-1.md` | ~1542 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,21 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 46 | 2026-05-26 | Fix resume preview layout isolation and font-size consistency | `8c383df` | `fix/resume-preview-layout-isolation` |
+| 45 | 2026-05-26 | Fix mobile share, resume display, AI answer UX, and share page adaptation | `2227635` | `fix/mobile-share-resume-display-ai-answer` |
+| 44 | 2026-05-25 | Frontend refactor: page decomposition, code splitting, and dep bumps | `e3e3838`, `2269525`, `34ad72e` | `refactor/frontend-refactor-maintainability` |
+| 43 | 2026-05-25 | Resume mobile preview and AI fallback fixes | `e9a5277` | `fix/resume-editor-mobile-scoring` |
+| 42 | 2026-05-25 | 完成简历评分持久化与后端跨域优化 | `341f6d1` | `codex/resume-score-persistence-and-cors` |
+| 41 | 2026-05-25 | Interview AI answer and scoring flow | `b664607` | `feat/interview-ai-answer` |
+| 40 | 2026-05-25 | Mobile adapt scoring and interview report pages | `f3e6d03` | `feat/mobile-adapt-scoring-pages` |
+| 39 | 2026-05-24 | Fix server PDF export parity | `e18bf50` | `codex/fix-export-preview-mismatch` |
+| 38 | 2026-05-24 | Mobile responsive adaptation | `ab472e0` | `feat/mobile-responsive` |
+| 37 | 2026-05-23 | i18n: frontend and backend internationalization | `c0e2b1b` | `feat/i18n` |
+| 36 | 2026-05-22 | Multi-user README and spec update | `4085da4`, `b76e7f5` | `docs/update-readme-multi-user` |
+| 35 | 2026-05-22 | Share link title required | `ce4cacf` | `codex/share-link-title-required` |
+
+| 35 | 2026-05-22 | Multi-user support implementation and wrap-up | `4ad90b4` | `codex/multi-user-support` |
+| 34 | 2026-05-21 | Implement push-branch + PR workflow | `70751c5` | `fix/git-push-workflow` |
 | 33 | 2026-05-21 | Optimize project readmes | `db60f6c` | `master` |
 | 32 | 2026-05-21 | Interview company context and modal UX | `1847311`, `04997b6` | `master` |
 | 31 | 2026-05-20 | Add Apache 2.0 open-source metadata | `ced803f` | `master` |

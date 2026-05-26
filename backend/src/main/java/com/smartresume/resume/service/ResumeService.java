@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.domain.ResumeSectionEntity;
 import com.smartresume.resume.domain.ResumeVersionEntity;
 import com.smartresume.resume.domain.table.ResumeEntityTableDef;
+import com.smartresume.resume.domain.table.ResumeSectionEntityTableDef;
+import com.smartresume.resume.domain.table.ResumeVersionEntityTableDef;
 import com.smartresume.resume.dto.ResumeDtos;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCopyRequest;
@@ -21,6 +24,8 @@ import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
 import com.smartresume.resume.mapper.ResumeMapper;
 import com.smartresume.resume.mapper.ResumeSectionMapper;
 import com.smartresume.resume.mapper.ResumeVersionMapper;
+import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
+import com.smartresume.template.service.TemplateCatalogService;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -63,26 +68,31 @@ public class ResumeService {
     private final ResumeMapper resumeMapper;
     private final ResumeSectionMapper resumeSectionMapper;
     private final ResumeVersionMapper resumeVersionMapper;
+    private final TemplateCatalogService templateCatalogService;
     private final ObjectMapper objectMapper;
 
     public ResumeService(
         ResumeMapper resumeMapper,
         ResumeSectionMapper resumeSectionMapper,
         ResumeVersionMapper resumeVersionMapper,
+        TemplateCatalogService templateCatalogService,
         ObjectMapper objectMapper
     ) {
         this.resumeMapper = resumeMapper;
         this.resumeSectionMapper = resumeSectionMapper;
         this.resumeVersionMapper = resumeVersionMapper;
+        this.templateCatalogService = templateCatalogService;
         this.objectMapper = objectMapper;
     }
 
     public ResumePageResponse listResumes(boolean includeDeleted, boolean deletedOnly, int page, int pageSize) {
         int safePageSize = Math.max(1, pageSize);
         int safePage = Math.max(1, page);
+        long userId = CurrentUserContext.requireUserId();
         ResumeEntityTableDef resume = ResumeEntityTableDef.RESUME_ENTITY;
         QueryWrapper query = QueryWrapper.create()
-            .where(deletedOnly ? resume.DELETED.eq(true) : resume.DELETED.eq(false, !includeDeleted))
+            .where(resume.USER_ID.eq(userId))
+            .and(deletedOnly ? resume.DELETED.eq(true) : resume.DELETED.eq(false, !includeDeleted))
             .orderBy(resume.UPDATED_AT, false);
         Page<ResumeEntity> pagedResumes = resumeMapper.paginate(safePage, safePageSize, query);
         List<ResumeSummaryResponse> items = pagedResumes.getRecords().stream()
@@ -100,9 +110,12 @@ public class ResumeService {
 
     @Transactional
     public ResumeDetailResponse createResume(ResumeCreateRequest request) {
+        long userId = CurrentUserContext.requireUserId();
+        templateCatalogService.validateCurrentUserTemplateAccess(request.templateKey());
         LocalDateTime now = LocalDateTime.now();
         ResumeEntity resume = new ResumeEntity();
         resume.setId(UUID.randomUUID().toString());
+        resume.setUserId(userId);
         resume.setTitle(request.title());
         resume.setTemplateKey(request.templateKey());
         resume.setLayoutJson(toJson(defaultLayout()));
@@ -110,23 +123,33 @@ public class ResumeService {
         resume.setCreatedAt(now);
         resume.setUpdatedAt(now);
         resumeMapper.insert(resume);
-        saveSections(resume.getId(), defaultContent(), now);
+        saveSections(resume.getId(), userId, defaultContent(), now);
         return getResume(resume.getId());
     }
 
+    public void validResume(String resumeId) {
+        requireResume(resumeId, CurrentUserContext.requireUserId());
+    }
+
     public ResumeDetailResponse getResume(String resumeId) {
-        ResumeEntity resume = requireResume(resumeId);
-        return toDetail(resume, loadContent(resumeId));
+        return getResumeForUser(resumeId, CurrentUserContext.requireUserId());
+    }
+
+    public ResumeDetailResponse getResumeForUser(String resumeId, long userId) {
+        ResumeEntity resume = requireResume(resumeId, userId);
+        return toDetail(resume, loadContent(resumeId, userId));
     }
 
     @Transactional
     public ResumeDetailResponse copyResume(String sourceResumeId, ResumeCopyRequest request) {
-        ResumeEntity source = requireActiveResume(sourceResumeId);
-        ResumeContentPayload sourceContent = loadContent(sourceResumeId);
+        long userId = CurrentUserContext.requireUserId();
+        ResumeEntity source = requireActiveResume(sourceResumeId, userId);
+        ResumeContentPayload sourceContent = loadContent(sourceResumeId, userId);
         LocalDateTime now = LocalDateTime.now();
 
         ResumeEntity copy = new ResumeEntity();
         copy.setId(UUID.randomUUID().toString());
+        copy.setUserId(userId);
         copy.setTitle(request.title());
         copy.setTemplateKey(source.getTemplateKey());
         copy.setLayoutJson(toJson(readLayoutOrDefault(source.getLayoutJson())));
@@ -135,26 +158,28 @@ public class ResumeService {
         copy.setUpdatedAt(now);
         resumeMapper.insert(copy);
 
-        saveSections(copy.getId(), sourceContent, now);
+        saveSections(copy.getId(), userId, sourceContent, now);
         return getResume(copy.getId());
     }
 
     @Transactional
     public ResumeDetailResponse updateResume(String resumeId, ResumeUpdateRequest request) {
-        ResumeEntity resume = requireActiveResume(resumeId);
+        long userId = CurrentUserContext.requireUserId();
+        ResumeEntity resume = requireActiveResume(resumeId, userId);
+        templateCatalogService.validateCurrentUserTemplateAccess(request.templateKey());
         LocalDateTime now = LocalDateTime.now();
         resume.setTitle(request.title());
         resume.setTemplateKey(request.templateKey());
         resume.setLayoutJson(toJson(normalizeLayout(request.layout())));
         resume.setUpdatedAt(now);
         resumeMapper.update(resume);
-        saveSections(resumeId, request.content(), now);
+        saveSections(resumeId, userId, request.content(), now);
         return getResume(resumeId);
     }
 
     @Transactional
     public void softDeleteResume(String resumeId) {
-        ResumeEntity resume = requireActiveResume(resumeId);
+        ResumeEntity resume = requireActiveResume(resumeId, CurrentUserContext.requireUserId());
         LocalDateTime now = LocalDateTime.now();
         resume.setDeleted(true);
         resume.setDeletedAt(now);
@@ -164,7 +189,7 @@ public class ResumeService {
 
     @Transactional
     public void restoreResume(String resumeId) {
-        ResumeEntity resume = requireResume(resumeId);
+        ResumeEntity resume = requireResume(resumeId, CurrentUserContext.requireUserId());
         if (!Boolean.TRUE.equals(resume.getDeleted())) {
             return;
         }
@@ -177,10 +202,15 @@ public class ResumeService {
 
     @Transactional
     public ResumeVersionEntity captureSnapshot(String resumeId) {
-        ResumeEntity resume = requireResume(resumeId);
-        ResumeContentPayload content = loadContent(resumeId);
-        int nextVersion = resumeVersionMapper.selectAll().stream()
-            .filter(version -> resumeId.equals(version.getResumeId()))
+        long userId = CurrentUserContext.requireUserId();
+        ResumeEntity resume = requireResume(resumeId, userId);
+        ResumeContentPayload content = loadContent(resumeId, userId);
+        ResumeVersionEntityTableDef versionTable = ResumeVersionEntityTableDef.RESUME_VERSION_ENTITY;
+        QueryWrapper versionQuery = QueryWrapper.create()
+            .where(versionTable.RESUME_ID.eq(resumeId))
+            .and(versionTable.USER_ID.eq(userId))
+            .orderBy(versionTable.VERSION_NUMBER, false);
+        int nextVersion = resumeVersionMapper.selectListByQuery(versionQuery).stream()
             .map(ResumeVersionEntity::getVersionNumber)
             .filter(Objects::nonNull)
             .max(Integer::compareTo)
@@ -189,6 +219,7 @@ public class ResumeService {
         ResumeVersionEntity version = new ResumeVersionEntity();
         version.setId(UUID.randomUUID().toString());
         version.setResumeId(resumeId);
+        version.setUserId(userId);
         version.setVersionNumber(nextVersion);
         version.setTitle(resume.getTitle());
         version.setTemplateKey(resume.getTemplateKey());
@@ -200,9 +231,13 @@ public class ResumeService {
     }
 
     public ResumeDetailResponse getVersionSnapshot(String versionId) {
+        return getVersionSnapshotForUser(versionId, CurrentUserContext.requireUserId());
+    }
+
+    public ResumeDetailResponse getVersionSnapshotForUser(String versionId, long userId) {
         ResumeVersionEntity version = resumeVersionMapper.selectOneById(versionId);
-        if (version == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Resume snapshot not found");
+        if (version == null || !Long.valueOf(userId).equals(version.getUserId())) {
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.resume.snapshotNotFound");
         }
         return new ResumeDetailResponse(
             version.getResumeId(),
@@ -211,7 +246,8 @@ public class ResumeService {
             fromJson(version.getContentJson(), ResumeContentPayload.class),
             readLayoutOrDefault(version.getLayoutJson()),
             version.getCreatedAt(),
-            null
+            null,
+            templateCatalogService.resolveTemplateForUser(version.getTemplateKey(), userId)
         );
     }
 
@@ -226,6 +262,10 @@ public class ResumeService {
     }
 
     private ResumeDetailResponse toDetail(ResumeEntity resume, ResumeContentPayload content) {
+        TemplateCatalogResponse resolvedTemplate = templateCatalogService.resolveTemplateForUser(
+            resume.getTemplateKey(),
+            resume.getUserId()
+        );
         return new ResumeDetailResponse(
             resume.getId(),
             resume.getTitle(),
@@ -233,7 +273,8 @@ public class ResumeService {
             content,
             loadLayout(resume),
             resume.getUpdatedAt(),
-            resume.getDeletedAt()
+            resume.getDeletedAt(),
+            resolvedTemplate
         );
     }
 
@@ -241,25 +282,29 @@ public class ResumeService {
         return readLayoutOrDefault(resume.getLayoutJson());
     }
 
-    private ResumeEntity requireResume(String resumeId) {
+    private ResumeEntity requireResume(String resumeId, long userId) {
         ResumeEntity resume = resumeMapper.selectOneById(resumeId);
-        if (resume == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Resume not found");
+        if (resume == null || !Long.valueOf(userId).equals(resume.getUserId())) {
+            throw AppException.of(HttpStatus.NOT_FOUND, "error.resume.notFound");
         }
         return resume;
     }
 
-    private ResumeEntity requireActiveResume(String resumeId) {
-        ResumeEntity resume = requireResume(resumeId);
+    private ResumeEntity requireActiveResume(String resumeId, long userId) {
+        ResumeEntity resume = requireResume(resumeId, userId);
         if (Boolean.TRUE.equals(resume.getDeleted())) {
-            throw new AppException(HttpStatus.CONFLICT, "Resume has been deleted");
+            throw AppException.of(HttpStatus.CONFLICT, "error.resume.alreadyDeleted");
         }
         return resume;
     }
 
-    private ResumeContentPayload loadContent(String resumeId) {
-        Map<String, String> sectionJsonByType = resumeSectionMapper.selectAll().stream()
-            .filter(section -> resumeId.equals(section.getResumeId()))
+    private ResumeContentPayload loadContent(String resumeId, long userId) {
+        ResumeSectionEntityTableDef sectionTable = ResumeSectionEntityTableDef.RESUME_SECTION_ENTITY;
+        QueryWrapper sectionQuery = QueryWrapper.create()
+            .where(sectionTable.RESUME_ID.eq(resumeId))
+            .and(sectionTable.USER_ID.eq(userId))
+            .orderBy(sectionTable.SORT_ORDER, true);
+        Map<String, String> sectionJsonByType = resumeSectionMapper.selectListByQuery(sectionQuery).stream()
             .collect(Collectors.toMap(ResumeSectionEntity::getSectionType, ResumeSectionEntity::getContentJson, (left, right) -> right));
 
         return new ResumeContentPayload(
@@ -281,7 +326,7 @@ public class ResumeService {
         try {
             return objectMapper.readerForListOf(itemClass).readValue(json);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse stored resume section");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.sectionParseFailed");
         }
     }
 
@@ -292,11 +337,11 @@ public class ResumeService {
         try {
             return objectMapper.readValue(json, targetClass);
         } catch (IOException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse stored resume content");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.contentParseFailed");
         }
     }
 
-    private void saveSections(String resumeId, ResumeContentPayload content, LocalDateTime now) {
+    private void saveSections(String resumeId, long userId, ResumeContentPayload content, LocalDateTime now) {
         Map<String, Object> sectionValues = new LinkedHashMap<>();
         ResumeContentPayload normalizedContent = content == null ? defaultContent() : content;
         sectionValues.put("personal_info", normalizedContent.personalInfo());
@@ -308,8 +353,12 @@ public class ResumeService {
         sectionValues.put("honors", normalizeList(normalizedContent.honors()));
         sectionValues.put("certificates", normalizeList(normalizedContent.certificates()));
 
-        Map<String, ResumeSectionEntity> existingByType = resumeSectionMapper.selectAll().stream()
-            .filter(section -> resumeId.equals(section.getResumeId()))
+        ResumeSectionEntityTableDef sectionTable = ResumeSectionEntityTableDef.RESUME_SECTION_ENTITY;
+        QueryWrapper sectionQuery = QueryWrapper.create()
+            .where(sectionTable.RESUME_ID.eq(resumeId))
+            .and(sectionTable.USER_ID.eq(userId))
+            .orderBy(sectionTable.SORT_ORDER, true);
+        Map<String, ResumeSectionEntity> existingByType = resumeSectionMapper.selectListByQuery(sectionQuery).stream()
             .collect(Collectors.toMap(ResumeSectionEntity::getSectionType, section -> section, (left, right) -> right));
 
         for (int index = 0; index < STORED_SECTION_TYPES.size(); index++) {
@@ -318,6 +367,7 @@ public class ResumeService {
             if (section.getId() == null) {
                 section.setId(UUID.randomUUID().toString());
                 section.setResumeId(resumeId);
+                section.setUserId(userId);
                 section.setCreatedAt(now);
             }
             section.setSectionType(sectionType);
@@ -397,7 +447,7 @@ public class ResumeService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to serialize resume content");
+            throw AppException.of(HttpStatus.INTERNAL_SERVER_ERROR, "error.resume.contentSerializeFailed");
         }
     }
 }

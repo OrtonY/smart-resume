@@ -3,6 +3,8 @@ package com.smartresume.interview.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
@@ -10,9 +12,13 @@ import com.smartresume.ai.memory.AiConversationIdGenerator;
 import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.domain.InterviewMessageEntity;
 import com.smartresume.interview.domain.InterviewRoundTopicEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
+import com.smartresume.interview.domain.table.InterviewMessageEntityTableDef;
+import com.smartresume.interview.domain.table.InterviewRoundTopicEntityTableDef;
+import com.smartresume.interview.domain.table.InterviewSessionEntityTableDef;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
@@ -37,6 +43,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
+
+import static com.mybatisflex.core.query.QueryMethods.lower;
 
 @Service
 public class InterviewService {
@@ -92,40 +100,48 @@ public class InterviewService {
     public InterviewPageResponse listInterviews(String resumeId, String status, String targetCompany, String keyword, int page, int pageSize) {
         int safePage = Math.max(1, page);
         int safePageSize = Math.max(1, pageSize);
+        long userId = CurrentUserContext.requireUserId();
         String normalizedStatus = normalizeOptionalStatus(status);
         String normalizedTargetCompany = normalizeOptionalText(targetCompany);
-        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
 
-        List<InterviewSessionEntity> filtered = interviewSessionMapper.selectAll().stream()
-            .filter(session -> resumeId == null || resumeId.isBlank() || resumeId.equals(session.getResumeId()))
-            .filter(session -> normalizedStatus == null || normalizedStatus.equals(session.getStatus()))
-            .filter(session -> normalizedTargetCompany == null
-                || containsIgnoreCase(session.getTargetCompany(), normalizedTargetCompany))
-            .filter(session -> normalizedKeyword.isBlank()
-                || containsIgnoreCase(session.getTitle(), normalizedKeyword)
-                || containsIgnoreCase(session.getJobDescription(), normalizedKeyword)
-                || containsIgnoreCase(session.getTargetCompany(), normalizedKeyword))
-            .sorted(Comparator.comparing(InterviewSessionEntity::getUpdatedAt).reversed())
-            .toList();
+        InterviewSessionEntityTableDef sessionTable = InterviewSessionEntityTableDef.INTERVIEW_SESSION_ENTITY;
+        QueryWrapper query = QueryWrapper.create().where(sessionTable.USER_ID.eq(userId));
+        if (resumeId != null && !resumeId.isBlank()) {
+            query.and(sessionTable.RESUME_ID.eq(resumeId));
+        }
+        if (normalizedStatus != null) {
+            query.and(sessionTable.STATUS.eq(normalizedStatus));
+        }
+        if (normalizedTargetCompany != null) {
+            query.and(lower(sessionTable.TARGET_COMPANY).like(normalizedTargetCompany.toLowerCase(Locale.ROOT)));
+        }
+        if (!normalizedKeyword.isBlank()) {
+            String pattern = normalizedKeyword.toLowerCase(Locale.ROOT);
+            QueryCondition keywordCondition = lower(sessionTable.TITLE).like(pattern)
+                .or(lower(sessionTable.JOB_DESCRIPTION).like(pattern))
+                .or(lower(sessionTable.TARGET_COMPANY).like(pattern));
+            query.and(keywordCondition);
+        }
+        query.orderBy(sessionTable.UPDATED_AT, false);
+        Page<InterviewSessionEntity> pagedSessions = interviewSessionMapper.paginate(safePage, safePageSize, query);
 
-        int fromIndex = Math.min((safePage - 1) * safePageSize, filtered.size());
-        int toIndex = Math.min(fromIndex + safePageSize, filtered.size());
-        List<InterviewSummaryResponse> items = filtered.subList(fromIndex, toIndex).stream()
+        List<InterviewSummaryResponse> items = pagedSessions.getRecords().stream()
             .map(this::toSummary)
             .toList();
-        int totalPages = Math.max(1, (int) Math.ceil((double) filtered.size() / safePageSize));
 
         return new InterviewPageResponse(
             items,
-            filtered.size(),
-            safePage,
-            safePageSize,
-            totalPages
+            pagedSessions.getTotalRow(),
+            (int) pagedSessions.getPageNumber(),
+            (int) pagedSessions.getPageSize(),
+            Math.max(1, (int) pagedSessions.getTotalPage())
         );
     }
 
     @Transactional
     public InterviewDetailResponse createInterview(InterviewCreateRequest request) {
+        long userId = CurrentUserContext.requireUserId();
         String resumeId = normalizeOptionalText(request.resumeId());
         String jobDescription = normalizeOptionalText(request.jobDescription());
         String targetCompany = normalizeOptionalText(request.targetCompany());
@@ -134,11 +150,12 @@ public class InterviewService {
             throw new AppException(HttpStatus.BAD_REQUEST, "简历和 JD 至少填写一个");
         }
 
-        ResumeEntity resume = resumeId != null ? requireActiveResume(resumeId) : null;
+        ResumeEntity resume = resumeId != null ? requireActiveResume(resumeId, userId) : null;
         LocalDateTime now = LocalDateTime.now();
 
         InterviewSessionEntity session = new InterviewSessionEntity();
         session.setId(UUID.randomUUID().toString());
+        session.setUserId(userId);
         session.setResumeId(resume != null ? resume.getId() : null);
         session.setTitle(request.title().trim());
         session.setAiConversationId("interview-" + session.getId());
@@ -173,7 +190,7 @@ public class InterviewService {
 
     public InterviewDetailResponse getInterview(String interviewId) {
         InterviewSessionEntity session = requireSession(interviewId);
-        return toDetail(session, listMessages(session.getId()));
+        return toDetail(session, listMessages(session));
     }
 
     @Transactional
@@ -212,7 +229,7 @@ public class InterviewService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        int nextOrder = listMessageEntities(session.getId()).stream()
+        int nextOrder = listMessageEntities(session.getId(), session.getUserId()).stream()
             .map(InterviewMessageEntity::getSortOrder)
             .filter(Objects::nonNull)
             .max(Integer::compareTo)
@@ -228,6 +245,7 @@ public class InterviewService {
             if (!topics.isEmpty()) {
                 InterviewRoundTopicEntity topicEntity = new InterviewRoundTopicEntity();
                 topicEntity.setId(UUID.randomUUID().toString());
+                topicEntity.setUserId(session.getUserId());
                 topicEntity.setSessionId(session.getId());
                 topicEntity.setRoundIndex(currentIndex);
                 topicEntity.setTopicsJson(toJson(topics));
@@ -238,8 +256,8 @@ public class InterviewService {
                 session.getId(), currentIndex, e.getMessage());
         }
 
-        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
-        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), currentIndex + 1);
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId(), session.getUserId()) : null;
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), session.getUserId(), currentIndex + 1);
         String roundOpeningMessage = generateAiResponse(session, resume,
             "你是新一轮的面试官，请做简短自我介绍并提出第一个面试问题。", 0, previousRoundTopics);
         appendMessage(session, "INTERVIEWER", roundOpeningMessage, nextOrder, now.plusNanos(1));
@@ -251,7 +269,7 @@ public class InterviewService {
         InterviewSessionEntity session = requireSession(interviewId);
         requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews accept new messages");
 
-        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId(), session.getUserId());
         int nextOrder = currentMessages.stream()
             .map(InterviewMessageEntity::getSortOrder)
             .filter(Objects::nonNull)
@@ -262,7 +280,7 @@ public class InterviewService {
         appendMessage(session, "CANDIDATE", request.content().trim(), nextOrder, now);
 
         int questionCount = countQuestionsInCurrentRound(currentMessages, session.getActiveRoundIndex());
-        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId(), session.getUserId()) : null;
         String aiResponse = generateAiResponse(session, resume, request.content().trim(), questionCount);
         appendMessage(session, "INTERVIEWER", aiResponse, nextOrder + 1, now.plusNanos(1));
 
@@ -275,7 +293,7 @@ public class InterviewService {
         InterviewSessionEntity session = requireSession(interviewId);
         requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews accept new messages");
 
-        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId(), session.getUserId());
         int nextOrder = currentMessages.stream()
             .map(InterviewMessageEntity::getSortOrder)
             .filter(Objects::nonNull)
@@ -286,14 +304,14 @@ public class InterviewService {
         persistMessage(session, "CANDIDATE", request.content().trim(), nextOrder, now);
 
         int questionCount = countQuestionsInCurrentRound(currentMessages, session.getActiveRoundIndex());
-        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId(), session.getUserId()) : null;
 
         List<String> roles = readInterviewerRoles(session);
         int roundIndex = currentRoundIndex(session);
         String currentRole = roles.get(roundIndex);
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
-        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), session.getUserId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
             currentRole,
             session.getDifficulty(),
@@ -354,7 +372,7 @@ public class InterviewService {
         InterviewSessionEntity session = requireSession(interviewId);
         requireStatus(session, STATUS_IN_PROGRESS, "Only in-progress interviews can regenerate messages");
 
-        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> currentMessages = listMessageEntities(session.getId(), session.getUserId());
         InterviewMessageEntity lastCandidate = null;
         for (int i = currentMessages.size() - 1; i >= 0; i--) {
             if ("CANDIDATE".equals(currentMessages.get(i).getRole())) {
@@ -373,14 +391,14 @@ public class InterviewService {
             .orElse(0) + 1;
 
         int questionCount = countQuestionsInCurrentRound(currentMessages, session.getActiveRoundIndex());
-        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId()) : null;
+        ResumeEntity resume = session.getResumeId() != null ? requireActiveResume(session.getResumeId(), session.getUserId()) : null;
 
         List<String> roles = readInterviewerRoles(session);
         int roundIndex = currentRoundIndex(session);
         String currentRole = roles.get(roundIndex);
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
-        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), roundIndex);
+        List<String> previousRoundTopics = getPreviousRoundTopics(session.getId(), session.getUserId(), roundIndex);
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
             currentRole,
             session.getDifficulty(),
@@ -456,22 +474,23 @@ public class InterviewService {
         session.setUpdatedAt(now);
         updateSessionWithNulls(session);
 
-        interviewReportService.generateReportAsync(session.getId());
+        interviewReportService.generateReportAsync(session.getId(), session.getUserId());
 
         return getInterview(session.getId());
     }
 
     private InterviewSessionEntity requireSession(String interviewId) {
+        long userId = CurrentUserContext.requireUserId();
         InterviewSessionEntity session = interviewSessionMapper.selectOneById(interviewId);
-        if (session == null) {
+        if (session == null || !Long.valueOf(userId).equals(session.getUserId())) {
             throw new AppException(HttpStatus.NOT_FOUND, "Interview not found");
         }
         return session;
     }
 
-    private ResumeEntity requireActiveResume(String resumeId) {
+    private ResumeEntity requireActiveResume(String resumeId, long userId) {
         ResumeEntity resume = resumeMapper.selectOneById(resumeId);
-        if (resume == null) {
+        if (resume == null || !Long.valueOf(userId).equals(resume.getUserId())) {
             throw new AppException(HttpStatus.NOT_FOUND, "Resume not found");
         }
         if (Boolean.TRUE.equals(resume.getDeleted())) {
@@ -537,11 +556,6 @@ public class InterviewService {
         return value.trim();
     }
 
-    private boolean containsIgnoreCase(String value, String expectedPart) {
-        return value != null && expectedPart != null
-            && value.toLowerCase(Locale.ROOT).contains(expectedPart.toLowerCase(Locale.ROOT));
-    }
-
     private boolean companyContextEnabled(InterviewSessionEntity session) {
         return COMPANY_CONTEXT_READY.equals(normalizeCompanyContextStatus(session.getCompanyContextStatus()))
             && session.getTargetCompany() != null
@@ -563,6 +577,7 @@ public class InterviewService {
     private void appendMessage(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt) {
         InterviewMessageEntity message = new InterviewMessageEntity();
         message.setId(UUID.randomUUID().toString());
+        message.setUserId(session.getUserId());
         message.setSessionId(session.getId());
         message.setRole(role);
         message.setContent(content);
@@ -581,6 +596,7 @@ public class InterviewService {
     private void persistMessageWithStatus(InterviewSessionEntity session, String role, String content, int sortOrder, LocalDateTime createdAt, String status) {
         InterviewMessageEntity message = new InterviewMessageEntity();
         message.setId(UUID.randomUUID().toString());
+        message.setUserId(session.getUserId());
         message.setSessionId(session.getId());
         message.setRole(role);
         message.setContent(content);
@@ -591,15 +607,17 @@ public class InterviewService {
         interviewMessageMapper.insert(message);
     }
 
-    private List<InterviewMessageEntity> listMessageEntities(String sessionId) {
+    private List<InterviewMessageEntity> listMessageEntities(String sessionId, long userId) {
+        InterviewMessageEntityTableDef messageTable = InterviewMessageEntityTableDef.INTERVIEW_MESSAGE_ENTITY;
         QueryWrapper query = QueryWrapper.create()
-            .where("session_id = ?", sessionId)
-            .orderBy("sort_order", true);
+            .where(messageTable.SESSION_ID.eq(sessionId))
+            .and(messageTable.USER_ID.eq(userId))
+            .orderBy(messageTable.SORT_ORDER, true);
         return interviewMessageMapper.selectListByQuery(query);
     }
 
-    private List<InterviewMessageResponse> listMessages(String sessionId) {
-        return listMessageEntities(sessionId).stream()
+    private List<InterviewMessageResponse> listMessages(InterviewSessionEntity session) {
+        return listMessageEntities(session.getId(), session.getUserId()).stream()
             .sorted(Comparator.comparing(InterviewMessageEntity::getSortOrder))
             .map(message -> new InterviewMessageResponse(
                 message.getId(),
@@ -664,7 +682,7 @@ public class InterviewService {
     }
 
     private InterviewSummaryResponse toSummary(InterviewSessionEntity session) {
-        ResumeEntity resume = session.getResumeId() == null ? null : resumeMapper.selectOneById(session.getResumeId());
+        ResumeEntity resume = loadOwnedResumeForSession(session);
         return new InterviewSummaryResponse(
             session.getId(),
             session.getResumeId(),
@@ -687,7 +705,7 @@ public class InterviewService {
     }
 
     private InterviewDetailResponse toDetail(InterviewSessionEntity session, List<InterviewMessageResponse> messages) {
-        ResumeEntity resume = session.getResumeId() == null ? null : resumeMapper.selectOneById(session.getResumeId());
+        ResumeEntity resume = loadOwnedResumeForSession(session);
         long totalElapsed = session.getTotalElapsedSeconds() == null ? 0L : session.getTotalElapsedSeconds();
         return new InterviewDetailResponse(
             session.getId(),
@@ -763,7 +781,7 @@ public class InterviewService {
     }
 
     private List<String> extractRoundTopics(InterviewSessionEntity session, int roundIndex) {
-        List<InterviewMessageEntity> allMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> allMessages = listMessageEntities(session.getId(), session.getUserId());
         List<InterviewMessageEntity> roundMessages = allMessages.stream()
             .filter(msg -> msg.getRoundIndex() != null && msg.getRoundIndex() == roundIndex)
             .toList();
@@ -881,10 +899,12 @@ public class InterviewService {
         return new ArrayList<>(normalized);
     }
 
-    private List<String> getPreviousRoundTopics(String sessionId, int currentRoundIndex) {
+    private List<String> getPreviousRoundTopics(String sessionId, long userId, int currentRoundIndex) {
+        InterviewRoundTopicEntityTableDef roundTopicTable = InterviewRoundTopicEntityTableDef.INTERVIEW_ROUND_TOPIC_ENTITY;
         QueryWrapper query = QueryWrapper.create()
-            .where("session_id = ?", sessionId)
-            .and("round_index < ?", currentRoundIndex);
+            .where(roundTopicTable.SESSION_ID.eq(sessionId))
+            .and(roundTopicTable.USER_ID.eq(userId))
+            .and(roundTopicTable.ROUND_INDEX.lt(currentRoundIndex));
         List<InterviewRoundTopicEntity> entities = interviewRoundTopicMapper.selectListByQuery(query);
 
         Set<String> allTopics = new LinkedHashSet<>();
@@ -908,5 +928,16 @@ public class InterviewService {
             messages.add(new AssistantMessage(content));
         }
         chatMemoryRepository.saveAll(conversationId, messages);
+    }
+
+    private ResumeEntity loadOwnedResumeForSession(InterviewSessionEntity session) {
+        if (session.getResumeId() == null) {
+            return null;
+        }
+        ResumeEntity resume = resumeMapper.selectOneById(session.getResumeId());
+        if (resume == null || !Objects.equals(session.getUserId(), resume.getUserId())) {
+            return null;
+        }
+        return resume;
     }
 }

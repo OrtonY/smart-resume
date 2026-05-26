@@ -1,0 +1,176 @@
+{
+  "gallery": {
+    "title": {
+      "catalog": "模板目录",
+      "changeTemplate": "修改模板"
+    },
+    "nav": {
+      "backToWorkspace": "返回工作区",
+      "backToCatalog": "返回模板目录"
+    },
+    "summary": {
+      "linkedResume": "当前关联简历",
+      "createEntry": "创建入口",
+      "previewThenCreate": "预览后创建简历",
+      "currentTemplate": "当前模板：{{name}}",
+      "newDraft": "新建模板草稿",
+      "editExisting": "编辑已有模板"
+    },
+    "catalog": {
+      "title": "模板目录",
+      "newTemplate": "新建模板",
+      "refreshCatalog": "刷新目录",
+      "refreshFailed": "模板目录最近一次刷新失败",
+      "selectTemplate": "选择简历模板",
+      "viewTemplate": "查看模板"
+    },
+    "editor": {
+      "title": {
+        "create": "新建模板",
+        "edit": "模板配置"
+      },
+      "tag": {
+        "builtIn": "内置模板",
+        "custom": "自定义模板"
+      },
+      "builtInReadonly": {
+        "title": "内置模板不可编辑",
+        "subtitle": "内置模板为只读，如需自定义请点击「新建模板」基于当前模板创建副本。"
+      },
+      "selectFirst": {
+        "title": "请选择一个模板后再编辑。"
+      },
+      "section": {
+        "basic": "基础信息",
+        "theme": "主题样式",
+        "preview": "预览样式"
+      },
+      "field": {
+        "key": "模板标识",
+        "keyPlaceholder": "例如 modern-ops",
+        "name": "名称",
+        "category": "分类",
+        "layout": "布局",
+        "summary": "说明"
+      },
+      "save": {
+        "createTemplate": "保存为新模板",
+        "updateTemplate": "保存修改",
+        "cancelCreate": "取消新建"
+      },
+      "delete": {
+        "title": "删除自定义模板",
+        "description": "删除后不会自动修改仍引用这个模板 key 的简历。",
+        "confirm": "删除",
+        "button": "删除自定义模板"
+      }
+    },
+    "preview": {
+      "tagBuiltIn": "内置",
+      "tagCustom": "自定义",
+      "applyToResume": "应用到当前简历",
+      "backToResume": "返回当前简历",
+      "createFromTemplate": "使用此模板创建简历",
+      "lastUpdated": "最近更新：{{time}}",
+      "lastUpdatedBuiltIn": "内置备份"
+    },
+    "loading": {
+      "changeTemplate": "正在加载修改模板...",
+      "catalog": "正在加载模板目录..."
+    },
+    "error": {
+      "catalogUnavailable": "模板目录暂时不可用",
+      "loadCatalog": "无法加载模板目录",
+      "loadResume": "无法加载关联简历",
+      "loadingResume": "正在加载关联简历...",
+      "resumeLoadFailed": "关联简历加载失败，已切换为示例预览。"
+    },
+    "message": {
+      "resumeCreated": "简历已创建。",
+      "createResumeFailed": "无法创建简历。",
+      "templateCreated": "模板已创建，已写入数据库。",
+      "templateUpdated": "模板已更新。",
+      "templateSaveFailed": "模板保存失败",
+      "templateDeleted": "自定义模板已删除。",
+      "templateDeleteFailed": "模板删除失败",
+      "templateApplied": "已应用到当前简历。",
+      "templateApplyFailed": "模板应用失败"
+    },
+    "validation": {
+      "keyRequired": "请先填写模板 key。",
+      "basicRequired": "请补全模板的基础信息。",
+      "themeRequired": "主题样式不能为空。",
+      "previewRequired": "预览样式不能为空。"
+    },
+    "draft": {
+      "copyName": "{{name}} - 副本",
+      "defaultResumeName": "{{name}}简历",
+      "untitledResume": "未命名简历"
+    }
+  },
+  "layout": {
+    "classic": "经典专业",
+    "twoColumn": "现代双栏",
+    "minimal": "极简 ATS",
+    "editorial": "编辑创意"
+  },
+  "theme": {
+    "pageBackground": "页面背景",
+    "borderColor": "边框颜色",
+    "mutedText": "弱化文字",
+    "accent": "主强调色",
+    "accentSoft": "浅强调色",
+    "accentText": "强调色上的文字",
+    "heroBackground": "头部背景",
+    "heroText": "头部文字",
+    "heroMuted": "头部弱化文字",
+    "railBackground": "侧栏背景",
+    "panelBackground": "面板背景"
+  },
+  "previewStyle": {
+    "canvasBackground": "画布背景",
+    "sheetBackground": "纸张背景",
+    "heroBackground": "预览头部背景",
+    "asideBackground": "预览侧栏背景",
+    "lineColor": "分隔线颜色"
+  },
+  "picker": {
+    "ariaLabel": "选择简历模板",
+    "currentTag": "当前"
+  },
+  "gradient": {
+    "resetTooltip": "撤销该字段未保存的修改",
+    "resetAriaLabel": "重置{{label}}",
+    "startColor": "起始色",
+    "endColor": "结束色",
+    "angle": "角度 {{degrees}}°",
+    "fallbackPlaceholder": "当前值不是两段式 linear-gradient，无法在可视化编辑器中编辑"
+  },
+  "color": {
+    "resetTooltip": "撤销该字段未保存的修改",
+    "resetAriaLabel": "重置{{label}}",
+    "fallbackPlaceholder": "无法识别为颜色，可手动编辑"
+  },
+  "markdown": {
+    "toolbar": {
+      "bold": "粗体",
+      "italic": "斜体",
+      "inlineCode": "行内代码",
+      "codeBlock": "代码块",
+      "unorderedList": "无序列表",
+      "orderedList": "有序列表",
+      "link": "链接",
+      "linkText": "链接文本",
+      "ariaLabel": "格式工具栏",
+      "boldButton": "加粗"
+    },
+    "mode": {
+      "edit": "编辑",
+      "preview": "预览"
+    },
+    "emptyPreview": "暂无内容"
+  },
+  "export": {
+    "noPreviewError": "未找到可导出的简历预览。"
+  }
+}

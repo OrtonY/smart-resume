@@ -8,6 +8,7 @@ import {
   OrderedListOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { MarkdownMessage } from './MarkdownMessage'
 import './MarkdownComposer.css'
@@ -39,6 +40,7 @@ export function MarkdownComposer({
   hidePreview,
   submitOnEnter = false,
 }: MarkdownComposerProps) {
+  const { t } = useTranslation('template')
   const [mode, setMode] = useState<Mode>('edit')
   const textAreaRef = useRef<TextAreaRef>(null)
 
@@ -100,25 +102,25 @@ export function MarkdownComposer({
     <div className="markdown-composer">
       <div className="markdown-composer__toolbar">
         <Space size={4}>
-          <Tooltip title="粗体">
+          <Tooltip title={t('markdown.toolbar.bold')}>
             <Button
               size="small"
               type="text"
               icon={<BoldOutlined />}
               disabled={disabled || mode === 'preview'}
-              onClick={() => applyFormat('**', '**', '粗体')}
+              onClick={() => applyFormat('**', '**', t('markdown.toolbar.bold'))}
             />
           </Tooltip>
-          <Tooltip title="斜体">
+          <Tooltip title={t('markdown.toolbar.italic')}>
             <Button
               size="small"
               type="text"
               icon={<ItalicOutlined />}
               disabled={disabled || mode === 'preview'}
-              onClick={() => applyFormat('_', '_', '斜体')}
+              onClick={() => applyFormat('_', '_', t('markdown.toolbar.italic'))}
             />
           </Tooltip>
-          <Tooltip title="行内代码">
+          <Tooltip title={t('markdown.toolbar.inlineCode')}>
             <Button
               size="small"
               type="text"
@@ -127,7 +129,7 @@ export function MarkdownComposer({
               onClick={() => applyFormat('`', '`', 'code')}
             />
           </Tooltip>
-          <Tooltip title="代码块">
+          <Tooltip title={t('markdown.toolbar.codeBlock')}>
             <Button
               size="small"
               type="text"
@@ -137,7 +139,7 @@ export function MarkdownComposer({
               {'</>'}
             </Button>
           </Tooltip>
-          <Tooltip title="无序列表">
+          <Tooltip title={t('markdown.toolbar.unorderedList')}>
             <Button
               size="small"
               type="text"
@@ -146,7 +148,7 @@ export function MarkdownComposer({
               onClick={() => applyBlock('-')}
             />
           </Tooltip>
-          <Tooltip title="有序列表">
+          <Tooltip title={t('markdown.toolbar.orderedList')}>
             <Button
               size="small"
               type="text"
@@ -155,13 +157,13 @@ export function MarkdownComposer({
               onClick={() => applyBlock('1.')}
             />
           </Tooltip>
-          <Tooltip title="链接">
+          <Tooltip title={t('markdown.toolbar.link')}>
             <Button
               size="small"
               type="text"
               icon={<LinkOutlined />}
               disabled={disabled || mode === 'preview'}
-              onClick={() => applyFormat('[', '](url)', '链接文本')}
+              onClick={() => applyFormat('[', '](url)', t('markdown.toolbar.linkText'))}
             />
           </Tooltip>
         </Space>
@@ -171,8 +173,8 @@ export function MarkdownComposer({
             value={mode}
             onChange={(v) => setMode(v as Mode)}
             options={[
-              { label: '编辑', value: 'edit' },
-              { label: '预览', value: 'preview' },
+              { label: t('markdown.mode.edit'), value: 'edit' },
+              { label: t('markdown.mode.preview'), value: 'preview' },
             ]}
           />
         )}
@@ -199,7 +201,7 @@ export function MarkdownComposer({
           {value ? (
             <MarkdownMessage content={value} />
           ) : (
-            <span className="markdown-composer__preview-empty">暂无内容</span>
+            <span className="markdown-composer__preview-empty">{t('markdown.emptyPreview')}</span>
           )}
         </div>
       )}

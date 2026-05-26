@@ -1,7 +1,9 @@
 import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Card, Empty, Form, Input, List, Modal, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
+import { useTranslation } from 'react-i18next'
+import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
+import { completeAiChat, getAiConfiguration, getAiVendors, listAiChatConversations, listAiChatMessages, listAiModels, saveAiConfiguration, streamAiChat } from '../api/aiApi'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
@@ -25,15 +27,49 @@ type AiChatUiMessage = AiChatMessage & {
   suggestions?: AiResumeSuggestion[]
 }
 
-const SECTION_LABELS: Record<string, string> = {
-  personalInfo: '个人信息',
-  personalSummary: '个人总结',
-  education: '教育经历',
-  workExperience: '工作经历',
-  projectExperience: '项目经历',
-  skills: '技能',
-  honors: '荣誉奖项',
-  certificates: '证书',
+const SECTION_LABEL_KEYS: Record<string, string> = {
+  personalInfo: 'section.personalInfo',
+  personalSummary: 'section.personalSummary',
+  education: 'section.education',
+  workExperience: 'section.workExperience',
+  projectExperience: 'section.projectExperience',
+  skills: 'section.skills',
+  honors: 'section.honors',
+  certificates: 'section.certificates',
+}
+
+function createClientMessageId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+  return `ai-msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function parseSuggestionPlan(raw: string) {
+  try {
+    const plan = JSON.parse(raw) as AiResumeSuggestionPlan
+    return Array.isArray(plan?.suggestions) ? plan.suggestions : []
+  } catch (error) {
+    console.warn('Failed to parse AI suggestion plan', error)
+    return []
+  }
+}
+
+function isStreamBootstrapError(error: unknown) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return false
+  }
+
+  const rawMessage = error instanceof Error ? error.message : String(error)
+  const message = rawMessage.toLowerCase()
+  return (
+    message.includes('failed to fetch')
+    || message.includes('fetch failed')
+    || message.includes('networkerror')
+    || message.includes('network request failed')
+    || message.includes('load failed')
+    || message.includes('stream request failed')
+  )
 }
 
 function truncate(text: string, max: number) {
@@ -44,12 +80,13 @@ function truncate(text: string, max: number) {
 }
 
 export function AiConfigurationButton() {
+  const { t } = useTranslation('ai')
   const [open, setOpen] = useState(false)
 
   return (
     <>
       <Button icon={<SettingOutlined />} onClick={() => setOpen(true)}>
-        AI 配置
+        {t('configuration.buttonLabel')}
       </Button>
       <AiConfigurationModal open={open} onClose={() => setOpen(false)} />
     </>
@@ -62,6 +99,7 @@ interface AiResumeAssistantProps {
 }
 
 export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProps) {
+  const { t } = useTranslation('ai')
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
@@ -133,7 +171,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         setConversations(items)
       })
       .catch((error) => {
-        void message.error(error instanceof Error ? error.message : 'Failed to load AI chat conversations')
+        void message.error(error instanceof Error ? error.message : t('assistant.loadConversationsFailed'))
       })
       .finally(() => {
         if (!cancelled) {
@@ -144,7 +182,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     return () => {
       cancelled = true
     }
-  }, [draft.id, message, open])
+  }, [draft.id, message, open, t])
 
   useEffect(() => {
     if (!open || !selectedConversationId || streaming) {
@@ -177,7 +215,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         setSuggestionStatus({})
       })
       .catch((error) => {
-        void message.error(error instanceof Error ? error.message : 'Failed to load AI chat history')
+        void message.error(error instanceof Error ? error.message : t('assistant.loadHistoryFailed'))
       })
       .finally(() => {
         if (!cancelled) {
@@ -188,7 +226,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     return () => {
       cancelled = true
     }
-  }, [draft.id, message, open, selectedConversationId, streaming])
+  }, [draft.id, message, open, selectedConversationId, streaming, t])
 
   useEffect(() => {
     if (!open || activeTab !== 'chat') {
@@ -313,7 +351,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         const indexPart = typeof s.index === 'number' ? `#${s.index}` : ''
         return `- ${s.section}${indexPart}.${s.field}: ${s.rationale}`
       })
-      augmentedContent = `${trimmed}\n\n[系统提示：用户在上一轮主动跳过了以下建议，请不要再重复提出：\n${lines.join('\n')}\n]`
+      augmentedContent = `${trimmed}\n\n${t('assistant.skippedSystemHint', { lines: lines.join('\n') })}`
     }
 
     // Clear status entries that are no longer attached to a visible card.
@@ -331,8 +369,8 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       return next
     })
 
-    const userMessage: AiChatUiMessage = { id: crypto.randomUUID(), role: 'user', content: augmentedContent }
-    const assistantId = crypto.randomUUID()
+    const userMessage: AiChatUiMessage = { id: createClientMessageId(), role: 'user', content: augmentedContent }
+    const assistantId = createClientMessageId()
     const assistantMessage: AiChatUiMessage = { id: assistantId, role: 'assistant', content: '' }
 
     setMessages([...baseMessages, userMessage, assistantMessage])
@@ -340,6 +378,30 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     shouldAutoScrollRef.current = true
     setStreaming(true)
     let activeConversationId = selectedConversationId
+    let receivedAnyEvent = false
+    let streamCompleted = false
+
+    const applyAssistantRound = (content: string | undefined, suggestions: AiResumeSuggestion[]) => {
+      setMessages((current) => current.map((item) => (
+        item.id === assistantId
+          ? {
+              ...item,
+              content: content ?? item.content,
+              suggestions: suggestions.length > 0 ? suggestions : undefined,
+            }
+          : item
+      )))
+
+      setSuggestionStatus((prev) => {
+        const next = { ...prev }
+        suggestions.forEach((suggestion) => {
+          if (!next[suggestion.id]) {
+            next[suggestion.id] = 'pending'
+          }
+        })
+        return next
+      })
+    }
 
     try {
       await streamAiChat({
@@ -347,8 +409,9 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         conversationId: selectedConversationId ?? undefined,
         resume: resumeContext,
       }, (event) => {
+        receivedAnyEvent = true
         if (event.type === 'error') {
-          throw new Error(event.content || 'AI chat failed')
+          throw new Error(event.content || t('assistant.chatFailed'))
         }
         if (event.type === 'done') {
           return
@@ -357,29 +420,11 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           activeConversationId = event.conversationId
         }
         if (event.type === 'suggestion') {
-          let plan: AiResumeSuggestionPlan
-          try {
-            plan = JSON.parse(event.content) as AiResumeSuggestionPlan
-          } catch (error) {
-            console.warn('Failed to parse AI suggestion plan', error)
-            return
-          }
-          const list = Array.isArray(plan?.suggestions) ? plan.suggestions : []
+          const list = parseSuggestionPlan(event.content)
           if (list.length === 0) {
             return
           }
-          setMessages((current) => current.map((item) => (
-            item.id === assistantId ? { ...item, suggestions: list } : item
-          )))
-          setSuggestionStatus((prev) => {
-            const next = { ...prev }
-            list.forEach((s) => {
-              if (!next[s.id]) {
-                next[s.id] = 'pending'
-              }
-            })
-            return next
-          })
+          applyAssistantRound(undefined, list)
           return
         }
         if (event.type === 'message') {
@@ -388,16 +433,42 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           )))
         }
       })
+      streamCompleted = true
       // Skip the immediate history reload that selectedConversationId change would trigger,
       // so the in-memory assistant message (with suggestions) is not overwritten by the
       // historical version that has no suggestions attached.
       skipNextHistoryReloadRef.current = true
-      await refreshConversations(activeConversationId)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : 'AI chat failed')
-      setMessages((current) => current.filter((item) => item.id !== assistantId))
+      if (!receivedAnyEvent && isStreamBootstrapError(error)) {
+        try {
+          const response = await completeAiChat({
+            message: augmentedContent,
+            conversationId: selectedConversationId ?? undefined,
+            resume: resumeContext,
+          })
+          const suggestions = parseSuggestionPlan(response.suggestionJson)
+          activeConversationId = response.conversationId || activeConversationId
+          applyAssistantRound(response.content, suggestions)
+          streamCompleted = true
+          skipNextHistoryReloadRef.current = true
+        } catch (fallbackError) {
+          void message.error(fallbackError instanceof Error ? fallbackError.message : t('assistant.chatFailed'))
+          setMessages((current) => current.filter((item) => item.id !== assistantId))
+        }
+      } else {
+        void message.error(error instanceof Error ? error.message : t('assistant.chatFailed'))
+        setMessages((current) => current.filter((item) => item.id !== assistantId))
+      }
     } finally {
       setStreaming(false)
+      if (streamCompleted) {
+        if (activeConversationId) {
+          setSelectedConversationId(activeConversationId)
+        }
+        void refreshConversations(activeConversationId).catch((error) => {
+          console.warn('Failed to refresh AI chat conversations after send', error)
+        })
+      }
     }
   }
 
@@ -462,7 +533,9 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     }
     event.currentTarget.releasePointerCapture(event.pointerId)
     if (Math.abs(event.clientX - drag.startX) < 4 && Math.abs(event.clientY - drag.startY) < 4) {
-      handleOpen()
+      event.preventDefault()
+      event.stopPropagation()
+      window.setTimeout(handleOpen, 50)
     }
   }
 
@@ -475,20 +548,21 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        aria-label="AI resume assistant"
+        aria-label={t('trigger.ariaLabel')}
       >
         <RobotOutlined />
-        <span>AI</span>
+        <span>{t('trigger.label')}</span>
       </button>
 
-      <Modal
+      <ResponsiveModal
         open={open}
-        title="AI 简历助手"
+        title={t('assistant.modalTitle')}
         onCancel={() => setOpen(false)}
         footer={null}
         width={900}
         destroyOnHidden={false}
         centered
+        mobileHeight="100dvh"
         styles={{
           body: {
             height: 'calc(100vh - 140px)',
@@ -504,19 +578,19 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
               value={activeTab}
               onChange={(value) => setActiveTab(value as 'chat' | 'history')}
               options={[
-                { label: <span><MessageOutlined /> 当前对话</span>, value: 'chat' },
-                { label: <span><HistoryOutlined /> 历史记录</span>, value: 'history' },
+                { label: <span><MessageOutlined /> {t('assistant.tabChat')}</span>, value: 'chat' },
+                { label: <span><HistoryOutlined /> {t('assistant.tabHistory')}</span>, value: 'history' },
               ]}
             />
             <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
-              新对话
+              {t('assistant.newChat')}
             </Button>
           </div>
 
           <div className="ai-chat-context">
-            <Tag color="blue">已绑定当前简历</Tag>
+            <Tag color="blue">{t('assistant.boundResume')}</Tag>
             <Text strong>{draft.title}</Text>
-            {selectedConversationId ? <Tag color="default">续聊中</Tag> : <Tag color="green">新对话</Tag>}
+            {selectedConversationId ? <Tag color="default">{t('assistant.continuingChat')}</Tag> : <Tag color="green">{t('assistant.newChatTag')}</Tag>}
           </div>
 
           {activeTab === 'history' ? (
@@ -524,7 +598,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
               <List
                 className="ai-chat-conversation-list"
                 dataSource={conversations}
-                locale={{ emptyText: '暂无历史对话' }}
+                locale={{ emptyText: t('assistant.historyEmpty') }}
                 renderItem={(item) => (
                   <List.Item
                     className={item.conversationId === selectedConversationId ? 'is-active' : ''}
@@ -543,7 +617,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
               <Spin spinning={loadingMessages}>
                 <div className="ai-chat-messages" ref={messagesContainerRef} onScroll={handleMessagesScroll}>
                   {messages.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="向 AI 提问以审阅或优化当前简历。" />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('assistant.chatEmpty')} />
                   ) : null}
                   {messages.map((item) => {
                     const isStreamingThis = streaming && item.role === 'assistant' && item.id === messages[messages.length - 1]?.id
@@ -553,7 +627,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                         {item.content ? (
                           <MarkdownMessage content={item.content} streaming={isStreamingThis} />
                         ) : (
-                          item.role === 'assistant' ? 'AI 正在回复...' : ''
+                          item.role === 'assistant' ? t('assistant.replyingPlaceholder') : ''
                         )}
                       </div>
                       {item.role === 'assistant' && item.suggestions && item.suggestions.length > 0 ? (
@@ -577,7 +651,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                   value={input}
                   onChange={setInput}
                   onSubmit={() => void handleSend()}
-                  placeholder="向 AI 提问关于当前简历的问题..."
+                  placeholder={t('assistant.composerPlaceholder')}
                   disabled={streaming}
                   autoSize={{ minRows: 3, maxRows: 10 }}
                 />
@@ -587,13 +661,13 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                   loading={streaming}
                   onClick={() => void handleSend()}
                 >
-                  发送
+                  {t('assistant.send')}
                 </Button>
               </div>
             </div>
           )}
         </div>
-      </Modal>
+      </ResponsiveModal>
     </>
   )
 }
@@ -617,18 +691,19 @@ function SuggestionList({
   onApplyAll,
   onSkipAll,
 }: SuggestionListProps) {
+  const { t } = useTranslation('ai')
   const hasPending = suggestions.some((s) => (statusMap[s.id] ?? 'pending') === 'pending')
 
   return (
     <div className="ai-chat-suggestion-list" style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text strong>AI 建议（{suggestions.length}）</Text>
+        <Text strong>{t('suggestion.groupTitle', { count: suggestions.length })}</Text>
         <Space size={6}>
           <Button size="small" type="primary" disabled={!hasPending} onClick={() => onApplyAll(suggestions)}>
-            全部应用
+            {t('suggestion.applyAll')}
           </Button>
           <Button size="small" disabled={!hasPending} onClick={() => onSkipAll(suggestions)}>
-            全部跳过
+            {t('suggestion.skipAll')}
           </Button>
         </Space>
       </div>
@@ -655,8 +730,10 @@ interface SuggestionCardProps {
 }
 
 function SuggestionCard({ suggestion, status, onApply, onSkip, onUndoSkip }: SuggestionCardProps) {
-  const sectionLabel = SECTION_LABELS[suggestion.section] ?? suggestion.section
-  const indexPart = typeof suggestion.index === 'number' ? ` · 第 ${suggestion.index + 1} 项` : ''
+  const { t } = useTranslation('ai')
+  const sectionLabelKey = SECTION_LABEL_KEYS[suggestion.section]
+  const sectionLabel = sectionLabelKey ? t(sectionLabelKey) : suggestion.section
+  const indexPart = typeof suggestion.index === 'number' ? t('suggestion.indexSuffix', { index: suggestion.index + 1 }) : ''
   const currentSummary = suggestion.currentValue ? truncate(suggestion.currentValue, 50) : ''
   const dimmed = status === 'dismissed'
 
@@ -670,37 +747,37 @@ function SuggestionCard({ suggestion, status, onApply, onSkip, onUndoSkip }: Sug
         <Space size={4} wrap>
           <Tag color="blue">{sectionLabel}{indexPart}</Tag>
           <Tag color="default">{suggestion.field}</Tag>
-          {status === 'applied' ? <Tag color="success">已应用</Tag> : null}
-          {status === 'dismissed' ? <Tag color="default">已跳过</Tag> : null}
+          {status === 'applied' ? <Tag color="success">{t('suggestion.applied')}</Tag> : null}
+          {status === 'dismissed' ? <Tag color="default">{t('suggestion.dismissed')}</Tag> : null}
         </Space>
         <Space size={4}>
           {status === 'pending' ? (
             <>
-              <Button size="small" type="primary" onClick={onApply}>应用</Button>
-              <Button size="small" onClick={onSkip}>跳过</Button>
+              <Button size="small" type="primary" onClick={onApply}>{t('suggestion.apply')}</Button>
+              <Button size="small" onClick={onSkip}>{t('suggestion.skip')}</Button>
             </>
           ) : null}
           {status === 'applied' ? (
-            <Button size="small" type="primary" disabled>已应用</Button>
+            <Button size="small" type="primary" disabled>{t('suggestion.applied')}</Button>
           ) : null}
           {status === 'dismissed' ? (
-            <Button size="small" onClick={onUndoSkip}>撤销跳过</Button>
+            <Button size="small" onClick={onUndoSkip}>{t('suggestion.undoSkip')}</Button>
           ) : null}
         </Space>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
         {currentSummary ? (
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>当前内容：</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('suggestion.currentLabel')}</Text>
             <Text delete style={{ marginLeft: 4 }}>{currentSummary}</Text>
           </div>
         ) : null}
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>建议改为：</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('suggestion.suggestedLabel')}</Text>
           <Text style={{ marginLeft: 4 }}>{suggestion.suggestedValue}</Text>
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>理由：</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('suggestion.rationaleLabel')}</Text>
           <Text style={{ marginLeft: 4 }}>{suggestion.rationale}</Text>
         </div>
       </div>
@@ -709,6 +786,7 @@ function SuggestionCard({ suggestion, status, onApply, onSkip, onUndoSkip }: Sug
 }
 
 function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation('ai')
   const { message } = App.useApp()
   const [form] = Form.useForm<AiConfigurationRequest>()
   const selectedVendor = Form.useWatch('vendor', form)
@@ -767,7 +845,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
         })
       })
       .catch((error) => {
-        void message.error(error instanceof Error ? error.message : '加载 AI 配置失败')
+        void message.error(error instanceof Error ? error.message : t('configuration.loadFailed'))
       })
       .finally(() => {
         if (!cancelled) {
@@ -778,7 +856,7 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
     return () => {
       cancelled = true
     }
-  }, [form, message, open])
+  }, [form, message, open, t])
 
   async function handleFetchModels() {
     const values = form.getFieldsValue()
@@ -791,10 +869,10 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
       })
       setFetchedModels(response.models)
       if (response.models.length === 0) {
-        void message.info('未找到可用模型，请检查凭据和接口地址。')
+        void message.info(t('configuration.modelsEmpty'))
       }
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '获取模型列表失败')
+      void message.error(error instanceof Error ? error.message : t('configuration.fetchModelsFailed'))
     } finally {
       setFetchingModels(false)
     }
@@ -805,56 +883,56 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
     setSaving(true)
     try {
       await saveAiConfiguration(values)
-      void message.success('AI 配置已保存')
+      void message.success(t('configuration.saveSuccess'))
       onClose()
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '保存 AI 配置失败')
+      void message.error(error instanceof Error ? error.message : t('configuration.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Modal
+    <ResponsiveModal
       open={open}
-      title="AI 配置"
+      title={t('configuration.modalTitle')}
       onCancel={onClose}
       onOk={() => void handleSave()}
-      okText="保存"
-      cancelText="取消"
+      okText={t('configuration.saveOk')}
+      cancelText={t('configuration.cancel')}
       confirmLoading={saving}
       destroyOnHidden
     >
       <Spin spinning={loading}>
         <Form form={form} layout="vertical" initialValues={{ vendor: 'OpenAI' }}>
-          <Form.Item name="vendor" label="AI 供应商" rules={[{ required: true, message: '请选择 AI 供应商' }]}>
+          <Form.Item name="vendor" label={t('configuration.vendorLabel')} rules={[{ required: true, message: t('configuration.vendorRequired') }]}>
             <Select options={vendorOptions} onChange={() => setFetchedModels(null)} />
           </Form.Item>
-          <Form.Item name="baseUrl" label="接口地址">
+          <Form.Item name="baseUrl" label={t('configuration.baseUrlLabel')}>
             <Input placeholder={currentVendorMeta?.baseUrlPlaceholder ?? 'https://api.openai.com'} />
           </Form.Item>
           <Form.Item
             name="apiKey"
-            label="API 密钥"
-            rules={configured || currentVendorMeta?.apiKeyRequired === false ? [] : [{ required: true, message: '首次配置需要填写 API 密钥' }]}
-            extra={configured ? '留空则保留已有密钥。' : (currentVendorMeta?.apiKeyRequired === false ? '该供应商无需 API 密钥。' : undefined)}
+            label={t('configuration.apiKeyLabel')}
+            rules={configured || currentVendorMeta?.apiKeyRequired === false ? [] : [{ required: true, message: t('configuration.apiKeyRequired') }]}
+            extra={configured ? t('configuration.apiKeyKeepHint') : (currentVendorMeta?.apiKeyRequired === false ? t('configuration.apiKeyNotRequired') : undefined)}
           >
             <Input.Password
               autoComplete="off"
-              placeholder={currentVendorMeta?.apiKeyPlaceholder ?? (configured ? '留空保留已有密钥' : 'sk-...')}
+              placeholder={currentVendorMeta?.apiKeyPlaceholder ?? (configured ? t('configuration.apiKeyKeepPlaceholder') : t('configuration.apiKeyPlaceholderDefault'))}
             />
           </Form.Item>
-          <Form.Item label="模型名称" required>
+          <Form.Item label={t('configuration.modelLabel')} required>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Form.Item name="modelName" noStyle rules={[{ required: true, message: '请输入模型名称' }]}>
-                <Input placeholder={currentVendorMeta?.modelNamePlaceholder ?? 'gpt-4o-mini'} />
+              <Form.Item name="modelName" noStyle rules={[{ required: true, message: t('configuration.modelRequired') }]}>
+                <Input placeholder={currentVendorMeta?.modelNamePlaceholder ?? t('configuration.modelPlaceholderDefault')} />
               </Form.Item>
               <Button
                 icon={<CloudDownloadOutlined />}
                 loading={fetchingModels}
                 onClick={() => void handleFetchModels()}
               >
-                获取模型
+                {t('configuration.fetchModels')}
               </Button>
             </div>
             {modelOptions.length > 0 && (
@@ -863,11 +941,12 @@ function AiConfigurationModal({ open, onClose }: { open: boolean; onClose: () =>
           </Form.Item>
         </Form>
       </Spin>
-    </Modal>
+    </ResponsiveModal>
   )
 }
 
 function ModelList({ models, onSelect }: { models: string[]; onSelect: (model: string) => void }) {
+  const { t } = useTranslation('ai')
   const [filter, setFilter] = useState('')
 
   const filtered = useMemo(() => {
@@ -880,7 +959,7 @@ function ModelList({ models, onSelect }: { models: string[]; onSelect: (model: s
     <div style={{ marginTop: 8, border: '1px solid #d9d9d9', borderRadius: 6, padding: 8, maxHeight: 180, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <Input
         size="small"
-        placeholder="搜索模型..."
+        placeholder={t('modelList.searchPlaceholder')}
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         allowClear
@@ -888,7 +967,7 @@ function ModelList({ models, onSelect }: { models: string[]; onSelect: (model: s
       />
       <div style={{ overflowY: 'auto', flex: 1 }}>
         {filtered.length === 0 ? (
-          <Text type="secondary" style={{ fontSize: 12 }}>无匹配模型</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('modelList.noMatch')}</Text>
         ) : (
           filtered.map((model) => (
             <div

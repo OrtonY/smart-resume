@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.13</version>
+		<version>3.5.14</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.smartresume</groupId>
 	<artifactId>backend</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>smart-resume-backend</name>
 	<description>Smart Resume Backend</description>
 	<url/>
@@ -28,9 +28,11 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<mybatis-flex.version>1.11.6</mybatis-flex.version>
-		<spring-ai.version>1.1.5</spring-ai.version>
-		<spring-ai-alibaba.version>1.1.2.1</spring-ai-alibaba.version>
+		<mybatis-flex.version>1.11.7</mybatis-flex.version>
+		<spring-ai.version>1.1.7</spring-ai.version>
+		<spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
+		<dotenv.version>5.1.0</dotenv.version>
+		<playwright.version>1.60.0</playwright.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -123,8 +125,13 @@
 		</dependency>
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
-			<artifactId>spring-dotenv</artifactId>
-			<version>4.0.0</version>
+			<artifactId>springboot3-dotenv</artifactId>
+			<version>${dotenv.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>${playwright.version}</version>
 		</dependency>
 	</dependencies>
 

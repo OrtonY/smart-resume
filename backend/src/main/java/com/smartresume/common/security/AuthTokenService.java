@@ -27,11 +27,12 @@ public class AuthTokenService {
         this.properties = properties;
     }
 
-    public String createToken(long credentialVersion) {
+    public String createToken(long userId, long credentialVersion) {
         Instant now = Instant.now();
         TokenPayload payload = new TokenPayload(
             now.getEpochSecond(),
             now.plusSeconds(properties.tokenValidityDays() * 24 * 60 * 60).getEpochSecond(),
+            userId,
             credentialVersion,
             UUID.randomUUID().toString()
         );
@@ -41,29 +42,29 @@ public class AuthTokenService {
 
     public TokenPayload verifyToken(String token) {
         if (token == null || token.isBlank()) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Missing access token");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenMissing");
         }
 
         String[] segments = token.split("\\.");
         if (segments.length != 2) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid access token");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenInvalid");
         }
 
         String payload = segments[0];
         String expectedSignature = sign(payload);
         if (!expectedSignature.equals(segments[1])) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid access token signature");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenSignatureInvalid");
         }
 
         try {
             String json = new String(Base64.getUrlDecoder().decode(payload), StandardCharsets.UTF_8);
             TokenPayload tokenPayload = objectMapper.readValue(json, TokenPayload.class);
             if (tokenPayload.expiresAtEpochSecond() < Instant.now().getEpochSecond()) {
-                throw new AppException(HttpStatus.UNAUTHORIZED, "Access token has expired");
+                throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenExpired");
             }
             return tokenPayload;
         } catch (JsonProcessingException | IllegalArgumentException exception) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, "Unable to decode access token");
+            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.auth.tokenUndecodable");
         }
     }
 
@@ -87,6 +88,12 @@ public class AuthTokenService {
         }
     }
 
-    public record TokenPayload(long issuedAtEpochSecond, long expiresAtEpochSecond, long credentialVersion, String nonce) {
+    public record TokenPayload(
+        long issuedAtEpochSecond,
+        long expiresAtEpochSecond,
+        long userId,
+        long credentialVersion,
+        String nonce
+    ) {
     }
 }

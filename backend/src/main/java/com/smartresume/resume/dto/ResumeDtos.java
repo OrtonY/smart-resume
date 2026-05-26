@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
 
 public final class ResumeDtos {
 
@@ -36,33 +37,34 @@ public final class ResumeDtos {
         ResumeContentPayload content,
         ResumeLayoutPayload layout,
         LocalDateTime updatedAt,
-        LocalDateTime deletedAt
+        LocalDateTime deletedAt,
+        TemplateCatalogResponse resolvedTemplate
     ) {
     }
 
     public record ResumeCreateRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title,
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.resume.templateKeyRequired}")
         String templateKey
     ) {
     }
 
     public record ResumeCopyRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title
     ) {
     }
 
     public record ResumeUpdateRequest(
-        @NotBlank(message = "Resume title is required")
+        @NotBlank(message = "{validation.resume.titleRequired}")
         String title,
-        @NotBlank(message = "Template key is required")
+        @NotBlank(message = "{validation.resume.templateKeyRequired}")
         String templateKey,
-        @NotNull(message = "Resume content is required")
+        @NotNull(message = "{validation.resume.contentRequired}")
         @Valid
         ResumeContentPayload content,
-        @NotNull(message = "Resume layout is required")
+        @NotNull(message = "{validation.resume.layoutRequired}")
         @Valid
         ResumeLayoutPayload layout
     ) {
@@ -81,8 +83,8 @@ public final class ResumeDtos {
     }
 
     public record ResumeLayoutPayload(
-        List<@NotBlank(message = "Section key cannot be blank") String> sectionOrder,
-        List<@NotBlank(message = "Hidden section key cannot be blank") String> hiddenSections
+        List<@NotBlank(message = "{validation.resume.sectionKeyRequired}") String> sectionOrder,
+        List<@NotBlank(message = "{validation.resume.hiddenSectionKeyRequired}") String> hiddenSections
     ) {
     }
 

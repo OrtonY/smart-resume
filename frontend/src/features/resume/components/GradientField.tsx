@@ -1,6 +1,7 @@
 import { UndoOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, Input, Slider, Tooltip, Typography } from 'antd'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   parseLinearGradient,
   stringifyLinearGradient,
@@ -28,6 +29,7 @@ interface GradientFieldProps {
  * into a gradient with two identical stops, which would mutate the data.
  */
 export function GradientField({ label, value, onChange, onReset, canReset }: GradientFieldProps) {
+  const { t } = useTranslation('template')
   const parsed = useMemo(() => parseLinearGradient(value), [value])
 
   function emit(next: LinearGradientParts) {
@@ -39,12 +41,12 @@ export function GradientField({ label, value, onChange, onReset, canReset }: Gra
       <div className="template-editor-field__label-row">
         <Text type="secondary">{label}</Text>
         {canReset && onReset ? (
-          <Tooltip title="撤销该字段未保存的修改">
+          <Tooltip title={t('gradient.resetTooltip')}>
             <Button
               type="text"
               size="small"
               icon={<UndoOutlined />}
-              aria-label={`重置${label}`}
+              aria-label={t('gradient.resetAriaLabel', { label })}
               onClick={onReset}
             />
           </Tooltip>
@@ -61,7 +63,7 @@ export function GradientField({ label, value, onChange, onReset, canReset }: Gra
           <div className="template-editor-gradient__stops">
             <div className="template-editor-gradient__row">
               <Text type="secondary" className="template-editor-gradient__row-label">
-                起始色
+                {t('gradient.startColor')}
               </Text>
               <ColorPicker
                 value={parsed.from}
@@ -73,7 +75,7 @@ export function GradientField({ label, value, onChange, onReset, canReset }: Gra
             </div>
             <div className="template-editor-gradient__row">
               <Text type="secondary" className="template-editor-gradient__row-label">
-                结束色
+                {t('gradient.endColor')}
               </Text>
               <ColorPicker
                 value={parsed.to}
@@ -85,7 +87,7 @@ export function GradientField({ label, value, onChange, onReset, canReset }: Gra
             </div>
             <div className="template-editor-gradient__row">
               <Text type="secondary" className="template-editor-gradient__row-label">
-                角度 {parsed.angleDeg}°
+                {t('gradient.angle', { degrees: parsed.angleDeg })}
               </Text>
               <Slider
                 min={0}
@@ -100,7 +102,7 @@ export function GradientField({ label, value, onChange, onReset, canReset }: Gra
         <Input
           value={value}
           readOnly
-          placeholder="当前值不是两段式 linear-gradient，无法在可视化编辑器中编辑"
+          placeholder={t('gradient.fallbackPlaceholder')}
         />
       )}
     </div>

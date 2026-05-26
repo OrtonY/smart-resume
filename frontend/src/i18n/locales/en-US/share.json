@@ -1,0 +1,20 @@
+{
+  "page": {
+    "loading": "Loading shared resume...",
+    "loadFailed": "Failed to load shared resume.",
+    "verifyFailed": "Password verification failed",
+    "downloadPdf": "Download PDF",
+    "downloadFailed": "Download failed. Please try again."
+  },
+  "passwordGate": {
+    "title": "This share link requires a password",
+    "subtitle": "Please enter the password to view the resume",
+    "passwordRequired": "Please enter the password",
+    "passwordPlaceholder": "Enter password",
+    "verifyButton": "Verify"
+  },
+  "notFound": {
+    "title": "Share link unavailable",
+    "subtitle": "This public share may have expired or no longer exists."
+  }
+}

@@ -66,6 +66,33 @@ a {
   padding: 30px;
 }
 
+.auth-card--wide {
+  width: 100%;
+}
+
+.public-share-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-x: hidden;
+}
+
+.public-share-page__card {
+  width: min(960px, 100%);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 251, 255, 0.82));
+  box-shadow: var(--shadow-soft);
+}
+
+.public-share-page__card .ant-card-body {
+  padding: 30px;
+  overflow: hidden;
+}
+
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -84,6 +111,68 @@ a {
 .auth-subtitle {
   margin: 12px 0 0;
   color: var(--text-secondary);
+}
+
+.auth-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-help-trigger {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.1);
+  color: var(--accent-cool);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.auth-help-trigger:hover,
+.auth-help-trigger:focus-visible {
+  background: rgba(49, 87, 164, 0.18);
+  outline: none;
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.75fr);
+  gap: 24px;
+  width: min(1100px, 100%);
+  align-items: stretch;
+}
+
+.auth-segmented {
+  width: 100%;
+}
+
+.auth-segmented .ant-segmented-group {
+  width: 100%;
+}
+
+.auth-segmented .ant-segmented-item {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.auth-side-card {
+  align-self: stretch;
+}
+
+.auth-side-card__section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 255, 0.74)),
+    radial-gradient(circle at top right, rgba(49, 87, 164, 0.08), transparent 30%);
 }
 
 .workspace-layout,
@@ -192,6 +281,45 @@ a {
   align-items: center;
 }
 
+.workspace-session-card {
+  display: grid;
+  gap: 10px;
+  min-width: 260px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.78)),
+    radial-gradient(circle at top right, rgba(255, 140, 66, 0.09), transparent 28%);
+}
+
+.workspace-session-card__identity {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-session-card__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-session-card__settings {
+  justify-self: end;
+}
+
+.workspace-session-card__setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(255, 255, 255, 0.66);
+}
+
 .workspace-hub__toolbar {
   padding: 16px 18px;
   border-radius: 22px;
@@ -276,6 +404,14 @@ a {
 
 .resume-list-card__preview .resume-preview-paper {
   margin: 0 auto;
+}
+
+.resume-list-card__preview .resume-template__masthead--compact {
+  align-items: flex-start;
+}
+
+.resume-list-card__preview .resume-template__masthead {
+  flex-direction: row;
 }
 
 .resume-list-card__preview-fallback {
@@ -545,6 +681,27 @@ a {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.resume-editor-repeatable-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.resume-editor-repeatable-list > .ant-card,
+.resume-editor-repeatable-list .ant-card-head,
+.resume-editor-repeatable-list .ant-card-head-wrapper,
+.resume-editor-repeatable-list .ant-card-head-title,
+.resume-editor-repeatable-list .ant-card-extra,
+.resume-editor-repeatable-list .ant-card-body,
+.resume-editor-repeatable-list .resume-editor-section-grid,
+.resume-editor-repeatable-list .resume-editor-section-grid > *,
+.resume-editor-repeatable-list .markdown-composer {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .resume-editor-section-grid__full {
@@ -820,20 +977,119 @@ a {
   background: transparent;
 }
 
+/* Desktop layout isolation: ensure the resume template always renders in
+   desktop layout regardless of viewport width. The preview is scaled via
+   transform to fit narrow screens. This single block replaces per-site
+   overrides that were previously scattered across media queries. */
+.resume-preview {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.resume-preview .resume-template--split {
+  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.resume-preview .resume-template__editorial-grid {
+  grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+}
+
+.resume-preview .resume-template__hero:not(.resume-template__hero--compact) {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+
+.resume-preview .resume-template__masthead,
+.resume-preview .resume-template__masthead--minimal {
+  flex-direction: row;
+}
+
+.resume-preview .resume-template__hero-identity-row {
+  flex-direction: row;
+}
+
+.resume-preview .resume-template__masthead-aside {
+  justify-items: end;
+  min-width: 240px;
+}
+
+.resume-preview .resume-template__sidebar {
+  padding: 30px 24px 30px 26px;
+  border-right: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+  background: var(--template-rail-background);
+}
+
+.resume-preview .resume-template__notes-column {
+  padding: 24px 28px 30px;
+  border-right: none;
+  border-left: 1px solid var(--template-border-color, rgba(20, 33, 61, 0.08));
+  background: var(--template-rail-background);
+}
+
+.resume-preview .resume-template__masthead {
+  padding: 28px;
+}
+
+.resume-preview .resume-template__masthead--classic {
+  padding: 26px 34px 18px;
+}
+
+.resume-preview .resume-template__hero {
+  padding: 24px;
+}
+
+.resume-preview .resume-template__main,
+.resume-preview .resume-template__content-column {
+  padding: 24px 28px 30px;
+}
+
+.resume-preview .resume-template__avatar {
+  width: 112px;
+}
+
+.resume-preview .resume-template__section-title {
+  font-size: 18px;
+}
+
+.resume-preview .resume-template__identity h1 {
+  font-size: 38px;
+}
+
+.resume-preview .resume-template__identity--dense h1 {
+  font-size: 40px;
+}
+
+.resume-preview .resume-template__contact-list.is-inline.is-dense {
+  justify-content: center;
+}
+
 .resume-preview-modal {
   display: grid;
   place-items: start center;
+  width: 100%;
+  min-width: 0;
   max-height: min(78vh, 960px);
   overflow: auto;
 }
 
 .resume-preview-modal .resume-preview-stage {
   width: 100%;
+  min-width: 0;
   min-height: min(78vh, 960px);
 }
 
 .resume-preview-modal .resume-preview-stage--paged {
   height: auto;
+}
+
+.resume-preview-modal .resume-preview-pages,
+.resume-preview-modal .resume-preview-paper,
+.resume-preview-modal .resume-preview-paper--page,
+.resume-preview-modal .resume-preview-page-viewport,
+.resume-preview-modal .resume-preview-page-window {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .resume-export-source {
@@ -844,10 +1100,48 @@ a {
   height: auto;
   pointer-events: none;
   overflow: visible;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-.resume-export-source .resume-preview-stage {
+.resume-export-source .resume-preview-stage,
+html.resume-export-document .resume-preview-stage {
   width: 794px;
+}
+
+html.resume-export-document {
+  background: #ffffff;
+}
+
+html.resume-export-document body {
+  background: #ffffff;
+  font-size: 14px;
+}
+
+html.resume-export-document .resume-preview-stage {
+  display: block;
+  overflow: visible;
+  padding-right: 0;
+}
+
+html.resume-export-document .resume-preview-stage--paged {
+  overflow: visible;
+  padding-right: 0;
+}
+
+html.resume-export-document .resume-preview-pages {
+  gap: 0;
+}
+
+html.resume-export-document .resume-preview-paper--page {
+  break-after: page;
+  page-break-after: always;
+  box-shadow: none;
+}
+
+html.resume-export-document .resume-preview-paper--page:last-child {
+  break-after: auto;
+  page-break-after: auto;
 }
 
 .resume-template {
@@ -1682,9 +1976,19 @@ a {
   justify-self: end;
 }
 
+.resume-score-modal .ant-modal-content {
+  overflow: hidden;
+}
+
+.resume-score-modal .ant-modal-body {
+  overflow-x: hidden;
+}
+
 .resume-score-panel {
   display: grid;
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .resume-score-panel__intro {
@@ -1695,6 +1999,21 @@ a {
   padding: 10px 12px;
   border-radius: 16px;
   background: rgba(49, 87, 164, 0.08);
+}
+
+.resume-score-panel__intro > *,
+.resume-score-panel__composer,
+.resume-score-panel__collapsed,
+.resume-score-panel__collapsed-copy,
+.resume-score-panel__actions,
+.resume-score-result,
+.resume-score-result__hero,
+.resume-score-result__summary,
+.resume-score-result__strengths,
+.resume-score-result__groups,
+.resume-score-group {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .resume-score-panel__composer {
@@ -1730,6 +2049,7 @@ a {
 .resume-score-result {
   display: grid;
   gap: 16px;
+  width: 100%;
 }
 
 .resume-score-result__hero,
@@ -1753,6 +2073,19 @@ a {
 .resume-score-result__summary {
   display: grid;
   gap: 10px;
+}
+
+.resume-score-result .ant-alert,
+.resume-score-result .ant-alert-content,
+.resume-score-result .ant-space,
+.resume-score-result .ant-space-item,
+.resume-score-result__summary .ant-typography,
+.resume-score-group li,
+.resume-score-panel .ant-tag {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .resume-score-result__summary .ant-typography {
@@ -1786,9 +2119,13 @@ a {
   display: grid;
   gap: 8px;
   color: var(--text-secondary);
+  width: 100%;
+  min-width: 0;
 }
 
 .resume-score-empty {
+  display: grid;
+  place-items: center;
   padding: 12px 0 4px;
 }
 
@@ -2351,6 +2688,8 @@ a {
 
 .interview-message__actions {
   display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-start;
   margin-top: 10px;
   padding-top: 10px;
@@ -2381,6 +2720,29 @@ a {
 
 .interview-regenerate-button.ant-btn:hover,
 .interview-regenerate-button.ant-btn:focus-visible {
+  border-color: rgba(49, 87, 164, 0.38);
+  background: rgba(49, 87, 164, 0.14);
+  color: #24457f;
+}
+
+.interview-ai-answer-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 13px;
+  border-color: rgba(49, 87, 164, 0.22);
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.08);
+  box-shadow: none;
+  color: #3157a4;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.interview-ai-answer-button.ant-btn:hover,
+.interview-ai-answer-button.ant-btn:focus-visible {
   border-color: rgba(49, 87, 164, 0.38);
   background: rgba(49, 87, 164, 0.14);
   color: #24457f;
@@ -2603,6 +2965,120 @@ a {
   overflow-y: auto;
 }
 
+.ai-answer-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  height: 100%;
+}
+
+.ai-answer-modal__question {
+  padding: 12px;
+  background: rgba(49, 87, 164, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(49, 87, 164, 0.1);
+}
+
+.ai-answer-modal__view-switch {
+  display: inline-flex;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(49, 87, 164, 0.08);
+}
+
+.ai-answer-modal__view-button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.ai-answer-modal__view-button:hover,
+.ai-answer-modal__view-button:focus-visible {
+  color: var(--text-primary);
+  outline: none;
+}
+
+.ai-answer-modal__view-button--active {
+  background: rgba(255, 255, 255, 0.96);
+  color: #3157a4;
+  box-shadow: 0 10px 24px rgba(49, 87, 164, 0.12);
+}
+
+.ai-answer-modal__panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-answer-modal__section {
+  padding: 12px 0 20px;
+}
+
+.ai-answer-modal__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ai-answer-modal__body {
+  min-height: 60px;
+}
+
+.ai-answer-modal__thinking {
+  color: rgba(20, 33, 61, 0.5);
+  font-style: italic;
+}
+
+.ai-answer-modal__score-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  background: rgba(49, 87, 164, 0.08);
+  border-radius: 8px;
+}
+
+.ai-answer-modal__score-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3157a4;
+}
+
+.ai-answer-modal__score-label {
+  font-size: 13px;
+  color: rgba(20, 33, 61, 0.6);
+}
+
+.ai-answer-modal__candidate-snapshot {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(20, 33, 61, 0.03);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ai-answer-modal__candidate-snapshot summary {
+  cursor: pointer;
+  color: rgba(20, 33, 61, 0.6);
+  font-weight: 500;
+}
+
 @media (max-width: 1280px) {
   .resume-editor-layout,
   .workspace-columns,
@@ -2663,6 +3139,11 @@ a {
   .workspace-layout,
   .template-gallery-page {
     padding: 0;
+  }
+
+  .auth-shell {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .workspace-layout {
@@ -2758,5 +3239,760 @@ a {
   .resume-editor-avatar-field {
     grid-template-columns: 1fr;
     justify-items: start;
+  }
+
+  .public-share-page {
+    padding: 12px;
+  }
+
+  .public-share-page__card {
+    border-radius: 16px;
+  }
+
+  .public-share-page__card .ant-card-body {
+    padding: 12px;
+  }
+}
+
+/* ===== Mobile (≤480px) ===== */
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
+    padding-right: 0 !important;
+  }
+
+  /* Prevent iOS Safari auto-zoom on focus */
+  input,
+  textarea,
+  select,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-select-selector,
+  .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+
+  .workspace-hub,
+  .resume-editor-shell,
+  .interview-center,
+  .interview-detail {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+
+  .workspace-hub__hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .workspace-hub__copy {
+    gap: 6px;
+  }
+
+  .workspace-hub__copy h1 {
+    font-size: clamp(24px, 7.5vw, 30px);
+    line-height: 1.15;
+  }
+
+  .workspace-hub__copy p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .workspace-hub__actions {
+    gap: 8px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .workspace-hub__actions .workspace-session-card {
+    display: none;
+  }
+
+  .workspace-hub__toolbar {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .resume-list-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .resume-list-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  /* Hamburger drawer */
+  .workspace-mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .workspace-mobile-drawer .ant-drawer-body {
+    padding: 16px 12px;
+  }
+
+  .workspace-mobile-drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .workspace-mobile-drawer-list .ant-btn {
+    height: 48px;
+    justify-content: flex-start;
+    width: 100%;
+    text-align: left;
+  }
+
+  .workspace-mobile-drawer__divider {
+    height: 1px;
+    background: rgba(20, 33, 61, 0.08);
+    margin: 8px 0;
+  }
+
+  /* Editor mobile tabs */
+  .resume-editor-shell {
+    height: auto;
+    min-height: 100dvh;
+    padding: 12px;
+  }
+
+  .resume-editor-shell__topbar,
+  .resume-editor-shell__meta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-editor-shell__title {
+    min-width: 0;
+  }
+
+  .resume-editor-shell__actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .resume-editor-mobile-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    border: 1px solid rgba(20, 33, 61, 0.08);
+    padding: 4px;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-group {
+    display: flex;
+    width: 100%;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-button-wrapper {
+    flex: 1;
+    text-align: center;
+    height: 40px;
+    line-height: 38px;
+    border-radius: 10px !important;
+    border: none !important;
+  }
+
+  .resume-editor-mobile-tabs .ant-radio-button-wrapper::before {
+    display: none;
+  }
+
+  .resume-editor-layout {
+    display: block;
+    height: auto;
+    overflow: hidden;
+  }
+
+  .resume-editor-layout--mobile-edit .resume-editor-preview,
+  .resume-editor-layout--mobile-preview .resume-editor-rail,
+  .resume-editor-layout--mobile-preview .resume-editor-stack {
+    display: none;
+  }
+
+  .resume-editor-rail,
+  .resume-editor-stack,
+  .resume-editor-stack__card,
+  .resume-editor-preview,
+  .resume-editor-preview__sticky {
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .resume-editor-section-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-editor-repeatable-list .ant-card-head-wrapper {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .resume-editor-repeatable-list .ant-card-extra {
+    margin-inline-start: 0;
+  }
+
+  .resume-editor-module-row {
+    padding: 14px;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .resume-editor-module-row__handle {
+    width: 44px;
+    height: 44px;
+    color: rgba(20, 33, 61, 0.55);
+    background: rgba(20, 33, 61, 0.04);
+  }
+
+  /* Auth */
+  .auth-shell {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  /* Interview */
+  .interview-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-detail {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 12px;
+    overflow: auto;
+  }
+
+  .interview-detail__topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .interview-message {
+    max-width: 100%;
+  }
+
+  .interview-composer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Template gallery */
+  .template-gallery-page,
+  .template-gallery-layout {
+    padding: 0;
+  }
+
+  .template-gallery-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .template-gallery-preview {
+    position: static;
+  }
+
+  .template-gallery-preview .resume-preview-stage {
+    overflow: visible;
+  }
+
+  .template-gallery-preview .resume-preview-paper {
+    transform: scale(calc((100vw - 56px) / 794));
+    transform-origin: top left;
+  }
+
+  .template-gallery-preview .resume-preview-pages {
+    width: calc(100vw - 56px);
+  }
+
+  .template-gallery-page__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Modal -> bottom sheet (when wrapper detects mobile, it switches to Drawer; this rules apply if a Modal still slips through) */
+  .ant-modal.is-mobile-sheet {
+    max-width: 100vw;
+    margin: 0;
+    top: auto;
+    padding-bottom: 0;
+  }
+
+  .ant-modal.is-mobile-sheet .ant-modal-content {
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* Touch target floor */
+  .ant-btn:not(.ant-btn-sm):not(.ant-btn-link):not(.ant-btn-text) {
+    min-height: 40px;
+  }
+
+  .ant-tag {
+    font-size: 13px;
+  }
+
+  /* Issue 1: Template gallery top display */
+  .template-gallery-page__head {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .template-gallery-page__head .ant-typography h2 {
+    font-size: 22px;
+  }
+
+  .template-gallery-summary .ant-card-body {
+    padding: 14px;
+  }
+
+  .template-card__sheet {
+    min-height: 120px;
+  }
+
+  .template-card__body strong {
+    font-size: 14px;
+  }
+
+  .template-card__body p {
+    font-size: 13px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .template-card {
+    padding: 10px;
+  }
+
+  .template-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Issue 2: Template gallery mobile expand-on-click */
+  .template-gallery-layout--mobile-collapsed .template-gallery-preview,
+  .template-gallery-layout--mobile-collapsed > .ant-space > .ant-space-item:nth-child(2) {
+    display: none;
+  }
+
+  /* Issue 3: Resume editor structure/content split */
+  .resume-editor-layout--mobile-structure .resume-editor-stack,
+  .resume-editor-layout--mobile-structure .resume-editor-preview {
+    display: none;
+  }
+
+  .resume-editor-layout--mobile-content .resume-editor-rail,
+  .resume-editor-layout--mobile-content .resume-editor-preview {
+    display: none;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-rail,
+  .resume-editor-layout--mobile-preview .resume-editor-stack {
+    display: none;
+  }
+
+  /* Resume editor preview scale-to-fit on mobile */
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-stage {
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-paper {
+    transform: none;
+  }
+
+  .resume-editor-layout--mobile-preview .resume-editor-preview .resume-preview-pages {
+    width: 100%;
+  }
+
+  .resume-editor-shell,
+  .resume-editor-mobile-tabs,
+  .resume-editor-layout--mobile-content,
+  .resume-editor-layout--mobile-content .resume-editor-stack,
+  .resume-editor-layout--mobile-content .resume-editor-stack__card,
+  .resume-editor-layout--mobile-content .resume-editor-collapse,
+  .resume-editor-layout--mobile-content .ant-collapse-content-box {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Issue 4: Collapse top actions */
+  .resume-editor-shell__actions--desktop {
+    display: none !important;
+  }
+
+  .resume-editor-shell__actions--mobile {
+    display: flex !important;
+  }
+
+  /* Issue 5: AI Chat panel in drawer */
+  .responsive-modal-drawer .ai-chat-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .responsive-modal-drawer .ai-chat-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .responsive-modal-drawer .ai-chat-messages {
+    min-height: 120px;
+  }
+
+  /* Issue 6: Fix AI floating trigger position on mobile */
+  .ai-floating-trigger {
+    left: auto !important;
+    top: auto !important;
+    right: 16px;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Issue 7: Interview filter card */
+  .interview-filter-card .ant-space {
+    width: 100%;
+  }
+
+  .interview-filter-card .ant-space .ant-space-item {
+    width: 100%;
+  }
+
+  .interview-filter-card .ant-input-search,
+  .interview-filter-card .ant-select {
+    width: 100% !important;
+  }
+
+  /* Issue 8: Interview detail topbar */
+  .interview-detail__topbar {
+    gap: 6px;
+  }
+
+  .interview-detail__topbar > .ant-space {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .interview-detail__topbar--actions-desktop {
+    display: none !important;
+  }
+
+  .interview-detail__topbar--actions-mobile {
+    display: flex !important;
+  }
+
+  .interview-message-list {
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  .interview-round-tabs {
+    padding: 0;
+  }
+
+  .interview-round-tab {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* Drawer body: prevent horizontal scroll, allow vertical only */
+  .responsive-modal-drawer .ant-drawer-body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .responsive-modal-drawer .ant-drawer-body * {
+    max-width: 100%;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-stage,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-pages,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-paper,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-paper--page,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-page-viewport,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-page-window {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-stage {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 0;
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview-pages {
+    gap: clamp(8px, calc(var(--resume-preview-scale, 1) * 28px), 28px);
+  }
+
+  .responsive-modal-drawer .resume-preview-modal .resume-preview,
+  .responsive-modal-drawer .resume-preview-modal .resume-preview--page {
+    max-width: none;
+  }
+
+  /* Interview report modal: full width on mobile drawer */
+  .interview-report-modal.ant-drawer-section {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* Resume score panel mobile */
+  .resume-score-panel {
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .resume-score-panel__intro {
+    padding: 8px 10px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+
+  .resume-score-panel__composer,
+  .resume-score-panel__collapsed,
+  .resume-score-result,
+  .resume-score-result__hero,
+  .resume-score-result__strengths,
+  .resume-score-result__groups,
+  .resume-score-group {
+    min-width: 0;
+  }
+
+  .resume-score-panel__collapsed {
+    padding: 12px;
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-score-panel__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-score-result__hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .resume-score-result__hero,
+  .resume-score-result__strengths,
+  .resume-score-group {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .resume-score-result__summary {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .resume-score-result__summary .ant-space {
+    justify-content: center;
+  }
+
+  .resume-score-group ul {
+    padding-left: 16px;
+    word-break: break-word;
+  }
+
+  .resume-score-result__tag-list .ant-tag,
+  .resume-score-panel__intro .ant-tag {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  /* Interview report: mobile uses flat layout without Card wrapper */
+  .interview-report-panel--mobile {
+    display: grid;
+    gap: 12px;
+    flex-shrink: 0;
+    min-height: auto;
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .interview-report-panel--mobile .interview-report-content {
+    display: grid;
+    gap: 12px;
+    overflow-x: hidden;
+    min-height: auto;
+    flex: none;
+    height: auto;
+    min-width: 0;
+  }
+
+  /* Compact score overview: horizontal layout like resume score hero */
+  .report-score-overview--compact {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    margin-bottom: 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(20, 33, 61, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 255, 0.8)),
+      radial-gradient(circle at top right, rgba(255, 140, 66, 0.1), transparent 28%);
+  }
+
+  .report-score-overview--compact .report-score-circle {
+    margin-bottom: 0;
+  }
+
+  .report-score-overview--compact .report-summary {
+    max-width: 100%;
+    font-size: 13px;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .report-section {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .interview-report-panel--mobile .ant-collapse {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-item {
+    min-width: 0;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-content-box {
+    min-width: 0;
+    overflow-x: hidden;
+    word-break: break-word;
+  }
+
+  /* Interview report panel mobile */
+  .report-score-overview {
+    margin-bottom: 16px;
+  }
+
+  .report-score-value {
+    font-size: 22px;
+  }
+
+  .report-summary {
+    max-width: 100%;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .report-section {
+    margin-bottom: 14px;
+  }
+
+  .report-skills {
+    min-width: 0;
+  }
+
+  .report-skill-item {
+    grid-template-columns: 72px 1fr;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .report-skill-label {
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .report-two-col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .report-stacked-list {
+    min-width: 0;
+  }
+
+  .report-tag-list .ant-tag,
+  .interview-report-panel--mobile .report-section .ant-tag {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  .report-question-detail {
+    min-width: 0;
+  }
+
+  .report-question-detail > div {
+    margin-bottom: 6px;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .ant-collapse {
+    min-width: 0;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-header {
+    padding: 8px 12px !important;
+    font-size: 13px;
+    flex-wrap: wrap;
+    word-break: break-word;
+  }
+
+  .interview-report-panel--mobile .ant-collapse-content-box {
+    padding: 8px 12px !important;
+  }
+
+  .ai-answer-modal__score-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .ai-answer-modal__view-switch {
+    width: 100%;
+  }
+
+  .ai-answer-modal__view-button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .ai-answer-modal__score-value {
+    font-size: 24px;
   }
 }

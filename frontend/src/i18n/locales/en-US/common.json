@@ -1,0 +1,57 @@
+{
+  "actions": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "copy": "Copy",
+    "close": "Close",
+    "submit": "Submit",
+    "retry": "Retry",
+    "reload": "Reload",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "create": "Create",
+    "add": "Add",
+    "remove": "Remove",
+    "restore": "Restore",
+    "upload": "Upload",
+    "download": "Download",
+    "send": "Send",
+    "stop": "Stop",
+    "search": "Search",
+    "details": "Details",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "switch": "Switch",
+    "apply": "Apply",
+    "loading": "Loading..."
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
+    "pending": "Pending",
+    "success": "Success",
+    "failed": "Failed"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "loadFailed": "Failed to load. Please try again.",
+    "requestFailed": "Request failed"
+  },
+  "language": {
+    "label": "Language",
+    "zh": "中",
+    "en": "EN",
+    "switchTo": "Switch to {{language}}"
+  },
+  "app": {
+    "title": "Smart Resume",
+    "loading": "Loading Smart Resume..."
+  }
+}

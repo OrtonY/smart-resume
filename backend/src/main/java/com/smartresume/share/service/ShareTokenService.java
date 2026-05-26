@@ -41,18 +41,18 @@ public class ShareTokenService {
 
     public ShareTokenPayload verifyShareToken(String token, String expectedShareCode) {
         if (token == null || token.isBlank()) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Password required");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenPasswordRequired");
         }
 
         String[] segments = token.split("\\.");
         if (segments.length != 2) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Invalid share token");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenInvalid");
         }
 
         String payloadSegment = segments[0];
         String expectedSignature = sign(payloadSegment);
         if (!expectedSignature.equals(segments[1])) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Invalid share token");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenInvalid");
         }
 
         try {
@@ -60,16 +60,16 @@ public class ShareTokenService {
             ShareTokenPayload payload = objectMapper.readValue(json, ShareTokenPayload.class);
 
             if (payload.expiresAt() < Instant.now().getEpochSecond()) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Share token has expired, please re-enter password");
+                throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenExpired");
             }
 
             if (!expectedShareCode.equals(payload.shareCode())) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Invalid share token");
+                throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenInvalid");
             }
 
             return payload;
         } catch (JsonProcessingException | IllegalArgumentException exception) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Invalid share token");
+            throw AppException.of(HttpStatus.FORBIDDEN, "error.share.tokenInvalid");
         }
     }
 

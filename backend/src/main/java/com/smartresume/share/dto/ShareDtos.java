@@ -1,6 +1,7 @@
 package com.smartresume.share.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -10,17 +11,21 @@ public final class ShareDtos {
     }
 
     public record CreateShareRequest(
-        @NotBlank(message = "Share mode is required") String mode,
+        @NotBlank(message = "{validation.share.titleRequired}")
+        @Size(max = 50, message = "{validation.share.titleMaxLength}")
+        String title,
+        @NotBlank(message = "{validation.share.modeRequired}") String mode,
         String password
     ) {
     }
 
     public record VerifySharePasswordRequest(
-        @NotBlank(message = "Password is required") String password
+        @NotBlank(message = "{validation.share.passwordRequired}") String password
     ) {
     }
 
     public record ShareLinkResponse(
+        String title,
         String shareCode,
         String shareMode,
         String sharePath,

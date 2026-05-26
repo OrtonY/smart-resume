@@ -1106,3 +1106,437 @@ Refreshed the English and Chinese project READMEs, rewrote the frontend README, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: Multi-user support implementation and wrap-up
+
+**Date**: 2026-05-22
+**Task**: Multi-user support implementation and wrap-up
+**Branch**: `codex/multi-user-support`
+
+### Summary
+
+Implemented multi-user account isolation across backend and frontend, added auth/workspace flow updates, then archived task 05-21-multi-user-support.
+
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ad90b4` | (see git log) |
+
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 35: Share link title required
+
+**Date**: 2026-05-22
+**Task**: Share link title required
+**Branch**: `codex/share-link-title-required`
+
+### Summary
+
+Implemented mandatory title for resume share links across DB migration, backend DTO/service validation, and frontend share form request payload updates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ce4cacf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 36: Multi-user README and spec update
+
+**Date**: 2026-05-22
+**Task**: Multi-user README and spec update
+**Branch**: `docs/update-readme-multi-user`
+
+### Summary
+
+Updated README (EN/CN) to reflect multi-user auth flow, added System-Config screenshot, created auth-multi-user spec and added migration pattern to database guidelines.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4085da4` | (see git log) |
+| `b76e7f5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 37: i18n: frontend and backend internationalization
+
+**Date**: 2026-05-23
+**Task**: i18n: frontend and backend internationalization
+**Branch**: `feat/i18n`
+
+### Summary
+
+Added react-i18next with zh-CN/en-US locales (8 namespaces), Spring MessageSource with Accept-Language resolution, migrated all hardcoded Chinese to translation keys, bilingual template catalog, and fixed test/lint issues.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c0e2b1b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 38: Mobile responsive adaptation
+
+**Date**: 2026-05-24
+**Task**: Mobile responsive adaptation
+**Branch**: `feat/mobile-responsive`
+
+### Summary
+
+Full mobile adaptation: template gallery expand-on-click, resume editor 3-tab split, action button collapse, AI chat drawer fix, interview filter/topbar optimization, A4 preview scaling
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ab472e0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 39: Fix server PDF export parity
+
+**Date**: 2026-05-24
+**Task**: Fix server PDF export parity
+**Branch**: `codex/fix-export-preview-mismatch`
+
+### Summary
+
+Aligned server PDF export with browser preview, fixed page overflow/blank page issues, and verified all four templates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e18bf50` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 40: Mobile adapt scoring and interview report pages
+
+**Date**: 2026-05-25
+**Task**: Mobile adapt scoring and interview report pages
+**Branch**: `feat/mobile-adapt-scoring-pages`
+
+### Summary
+
+Added mobile responsive adaptation for resume scoring panel and interview report panel: compact score overview, responsive grids, drawer overflow handling, and flat layout without Card wrapper on mobile.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f3e6d03` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 41: Interview AI answer and scoring flow
+
+**Date**: 2026-05-25
+**Task**: Interview AI answer and scoring flow
+**Branch**: `feat/interview-ai-answer`
+
+### Summary
+
+Implemented AI answer and scoring persistence, backend APIs, frontend modal flow, and scroll/page UX improvements for interview messages.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b664607` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 42: 完成简历评分持久化与后端跨域优化
+
+**Date**: 2026-05-25
+**Task**: 完成简历评分持久化与后端跨域优化
+**Branch**: `codex/resume-score-persistence-and-cors`
+
+### Summary
+
+为简历评分增加后端持久化与最近结果恢复接口，前端在评分弹窗恢复历史评分，同时放开后端跨域配置并补充测试、文案与规格说明。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `341f6d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 43: Resume mobile preview and AI fallback fixes
+
+**Date**: 2026-05-25
+**Task**: Resume mobile preview and AI fallback fixes
+**Branch**: `fix/resume-editor-mobile-scoring`
+
+### Summary
+
+Fixed resume AI chat fallback for mobile fetch failures, restored mobile/A4 resume preview behavior, constrained resume score modal overflow, and tightened repeatable editor card widths.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e9a5277` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 44: Frontend refactor: page decomposition, code splitting, and dep bumps
+
+**Date**: 2026-05-25
+**Task**: Frontend refactor: page decomposition, code splitting, and dep bumps
+**Branch**: `refactor/frontend-refactor-maintainability`
+
+### Summary
+
+Decomposed WorkspacePage, TemplateGalleryPage, InterviewPage, and ResumePreview into feature-local components/hooks. Added React.lazy route splitting and lazy syntax highlighter. Bumped antd/i18next/tooling deps. Fixed antd v6 CSS-in-JS style regression in TemplateGalleryEditorPanel.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e3e3838` | (see git log) |
+| `2269525` | (see git log) |
+| `34ad72e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 45: Fix mobile share, resume display, AI answer UX, and share page adaptation
+
+**Date**: 2026-05-26
+**Task**: Fix mobile share, resume display, AI answer UX, and share page adaptation
+**Branch**: `fix/mobile-share-resume-display-ai-answer`
+
+### Summary
+
+Fixed 5 issues: clipboard writeText fallback for mobile share, resume card personal info left-alignment, AI answer on-demand generation, public share page mobile responsive layout, and mobile editor menu submenu grouping.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2227635` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 46: Fix resume preview layout isolation and font-size consistency
+
+**Date**: 2026-05-26
+**Task**: Fix resume preview layout isolation and font-size consistency
+**Branch**: `fix/resume-preview-layout-isolation`
+
+### Summary
+
+Pinned font-size/line-height/text-size-adjust on .resume-preview to eliminate rendering divergence between quick export (16px inherited), high-quality Playwright export (14px body), and mobile preview (15px body). Added missing contact-list isolation rule. Removed redundant per-context overrides now covered by the unified isolation block.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8c383df` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -1,0 +1,349 @@
+{
+  "hero": {
+    "tag": "Smart Resume",
+    "title": "智慧简历",
+    "subtitle": "选择简历开始编辑，实时预览效果。"
+  },
+  "actions": {
+    "templateGallery": "模板目录",
+    "interviewCenter": "面试中心",
+    "recycleBin": "回收桶",
+    "lockWorkspace": "锁定工作区",
+    "backToList": "返回列表",
+    "backToHome": "返回首页",
+    "backToWorkspace": "返回工作区",
+    "backToResumeList": "返回简历列表",
+    "openShareDialog": "查看分享链接",
+    "openResume": "打开简历",
+    "previewLabel": "预览简历"
+  },
+  "list": {
+    "myResumes": "我的简历",
+    "totalCount": "{{count}} 份",
+    "perPageHint": "每页最多展示 {{count}} 份简历",
+    "empty": "还没有简历，先创建一份试试。",
+    "previewGenerating": "正在生成预览",
+    "openResume": "打开 {{title}}",
+    "previewLabel": "{{title}} 预览",
+    "tagDeleted": "已删除",
+    "tagEditable": "可编辑",
+    "deletedAt": "删除于",
+    "updatedAt": "更新于"
+  },
+  "card": {
+    "restore": "恢复",
+    "copy": "复制",
+    "delete": "删除"
+  },
+  "copyDialog": {
+    "title": "复制简历",
+    "okText": "复制",
+    "cancelText": "取消",
+    "prompt": "请输入新简历的名称：",
+    "placeholder": "新简历名称",
+    "copySuffix": "副本",
+    "warningEmpty": "请输入简历名称。",
+    "errorFailed": "复制简历失败。"
+  },
+  "feedback": {
+    "loadListFailed": "无法加载简历列表。",
+    "loadDetailFailed": "无法加载简历详情。",
+    "saveAutoFailed": "自动保存失败。",
+    "moveToBinSuccess": "简历已移至回收站。",
+    "copySuccess": "简历已复制。",
+    "restoreSuccess": "简历已恢复。",
+    "exportPdfStart": "PDF 已开始下载。",
+    "exportPdfFailed": "导出失败，请重试。",
+    "exportPreviewMissing": "未找到可导出的简历预览。",
+    "shareCopiedLatest": "最新版本分享链接已复制。",
+    "shareCopiedSnapshot": "快照分享链接已复制。",
+    "loadShareLinksFailed": "无法加载分享链接。",
+    "refreshShareLinksFailed": "无法刷新分享链接。"
+  },
+  "saveState": {
+    "saving": "保存中...",
+    "saved": "已保存",
+    "saveFailed": "保存失败",
+    "idle": "待保存"
+  },
+  "editor": {
+    "loading": "正在加载简历编辑器...",
+    "missing": "没有找到这份简历，返回列表后重新选择。",
+    "templateSyncing": "模板目录同步中",
+    "titlePlaceholder": "简历标题",
+    "modifyTemplate": "修改模板",
+    "interview": "面试",
+    "interviewMenu": {
+      "create": "发起面试",
+      "related": "相关面试"
+    },
+    "share": "分享",
+    "exportPdf": "导出 PDF",
+    "exportServerPdf": "高质量导出",
+    "exportQuickPdf": "快速导出（截图）",
+    "moduleCount": "{{count}} 个模块",
+    "structureTitle": "简历结构",
+    "structureDescription": "直接在这里调整顺序和显隐，右侧预览会同步更新。",
+    "fixedTag": "固定",
+    "hiddenTag": "已隐藏",
+    "previewHidden": "预览已隐藏",
+    "previewHint": "点击右侧预览，可在屏幕中间打开标准 A4 视图。",
+    "previewModalTitle": "标准 A4 预览",
+    "dragHandleAria": "拖动 {{title}}",
+    "deleteEntry": "删除",
+    "addEntry": "添加条目",
+    "noEntries": "暂无条目",
+    "emptyPreview": "创建或打开一份简历后，这里会实时显示预览。",
+    "tabEdit": "编辑",
+    "tabPreview": "预览",
+    "tabStructure": "结构",
+    "tabContent": "内容",
+    "moreActions": "更多",
+    "moreActionsAria": "更多操作"
+  },
+  "modules": {
+    "personalInfo": {
+      "title": "个人信息",
+      "description": "姓名、职位、电话、邮箱和个人链接。",
+      "avatarTitle": "头像",
+      "avatarHint": "上传后会自动转换为 base64 保存。建议使用 1 MB 以内的方形职业头像。",
+      "uploadAvatar": "上传头像",
+      "changeAvatar": "更换头像",
+      "removeAvatar": "移除头像",
+      "avatarOnlyImage": "仅支持上传图片文件。",
+      "avatarTooLarge": "头像图片需控制在 1 MB 以内。",
+      "avatarUpdated": "头像已更新。",
+      "avatarReadFailed": "头像读取失败，请重试。",
+      "fields": {
+        "fullName": "姓名",
+        "headline": "职位/头衔",
+        "phone": "电话",
+        "email": "邮箱",
+        "city": "所在城市",
+        "website": "个人网站",
+        "expectedSalary": "期望薪资",
+        "age": "年龄"
+      },
+      "placeholder": {
+        "fullName": "姓名",
+        "headline": "职位 / 头衔",
+        "phone": "电话",
+        "email": "邮箱",
+        "city": "所在城市",
+        "website": "个人网站 / 作品集",
+        "expectedSalary": "期望薪资",
+        "age": "年龄"
+      }
+    },
+    "summary": {
+      "title": "个人简介",
+      "description": "用一小段文字快速交代你的定位和亮点。",
+      "label": "个人简介",
+      "placeholder": "用一段短文概括你的优势、方向和关键成果。（支持 Markdown 格式）"
+    },
+    "workExperience": {
+      "title": "工作经历",
+      "description": "按时间组织公司、岗位和成果。",
+      "entryTitle": "工作经历 {{index}}",
+      "fields": {
+        "company": "公司",
+        "role": "职位",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "工作内容"
+      },
+      "placeholder": {
+        "company": "公司",
+        "role": "职位",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "工作内容、范围和成果（支持 Markdown 格式）"
+      }
+    },
+    "projectExperience": {
+      "title": "项目经历",
+      "description": "突出关键项目、角色和影响。",
+      "entryTitle": "项目经历 {{index}}",
+      "fields": {
+        "name": "项目名称",
+        "role": "角色",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "项目描述"
+      },
+      "placeholder": {
+        "name": "项目名称",
+        "role": "角色",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "项目描述、技术栈和成果（支持 Markdown 格式）"
+      }
+    },
+    "education": {
+      "title": "教育经历",
+      "description": "展示学校、学位和专业背景。",
+      "entryTitle": "教育经历 {{index}}",
+      "fields": {
+        "school": "学校",
+        "degree": "学位",
+        "major": "专业",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "亮点描述"
+      },
+      "placeholder": {
+        "school": "学校",
+        "degree": "学位",
+        "major": "专业",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "description": "亮点描述（支持 Markdown 格式）"
+      }
+    },
+    "skills": {
+      "title": "技能特长",
+      "description": "放置技能标签和熟练度。",
+      "entryTitle": "技能 {{index}}",
+      "fields": {
+        "name": "技能名称",
+        "level": "熟练度"
+      },
+      "placeholder": {
+        "name": "技能名称",
+        "level": "熟练度 / 等级"
+      }
+    },
+    "honors": {
+      "title": "荣誉奖项",
+      "description": "补充外部认可或内部荣誉。",
+      "entryTitle": "奖项 {{index}}",
+      "fields": {
+        "title": "奖项名称",
+        "issuer": "颁发机构",
+        "awardedAt": "获奖时间",
+        "description": "奖项说明"
+      },
+      "placeholder": {
+        "title": "奖项名称",
+        "issuer": "颁发机构",
+        "awardedAt": "获奖时间",
+        "description": "奖项说明（支持 Markdown 格式）"
+      }
+    },
+    "certificates": {
+      "title": "资格证书",
+      "description": "展示资质、证书和编号信息。",
+      "entryTitle": "证书 {{index}}",
+      "fields": {
+        "name": "证书名称",
+        "issuer": "签发机构",
+        "issuedAt": "签发时间",
+        "credentialId": "证书编号"
+      },
+      "placeholder": {
+        "name": "证书名称",
+        "issuer": "签发机构",
+        "issuedAt": "签发时间",
+        "credentialId": "证书编号"
+      }
+    }
+  },
+  "preview": {
+    "summary": "个人简介",
+    "workExperience": "工作经历",
+    "projectExperience": "项目经历",
+    "education": "教育经历",
+    "skills": "技能特长",
+    "honors": "荣誉奖项",
+    "certificates": "资格证书",
+    "headlineFallback": "用结构化表达讲清你的职业价值。",
+    "summaryFallback": "让结构保持克制，把最强的经历和成果放到最前面。",
+    "contact": {
+      "phone": "电话",
+      "email": "邮箱",
+      "city": "城市",
+      "website": "链接",
+      "expectedSalary": "期望薪资",
+      "age": "年龄"
+    },
+    "fallback": {
+      "school": "学校",
+      "company": "公司",
+      "role": "职位",
+      "project": "项目",
+      "projectRole": "角色",
+      "honor": "荣誉奖项",
+      "certificate": "证书",
+      "skill": "技能"
+    },
+    "period": {
+      "from": "开始时间",
+      "until": "至今"
+    },
+    "ageSuffix": "岁",
+    "empty": "创建或打开一份简历后，这里会实时显示预览。",
+    "ariaAvatar": "{{name}} 头像"
+  },
+  "share": {
+    "createTitle": "创建分享链接",
+    "okText": "创建并复制链接",
+    "cancelText": "取消",
+    "titleLabel": "分享标题",
+    "titlePlaceholder": "例如：投递后端岗位（5月）",
+    "titleHint": "标题用于区分分享用途，创建后会展示在分享列表中。",
+    "modeLabel": "分享类型",
+    "modeLatest": "最新版本",
+    "modeSnapshot": "当前快照",
+    "modeLatestHint": "链接始终展示简历的最新内容",
+    "modeSnapshotHint": "链接展示此刻的简历内容，后续编辑不影响",
+    "passwordLabel": "密码保护",
+    "passwordPlaceholder": "设置访问密码",
+    "passwordHint": "开启后，访问者需输入密码才能查看",
+    "warning": {
+      "titleEmpty": "请输入分享标题",
+      "titleTooLong": "分享标题最多 50 个字符",
+      "passwordEmpty": "请输入密码"
+    },
+    "feedback": {
+      "createFailed": "创建分享失败"
+    },
+    "linksTitle": "{{title}} 的分享链接",
+    "linksTitleFallback": "分享链接",
+    "linksEmpty": "还没有分享链接，进入编辑页后可以创建最新版或快照链接。",
+    "linkUntitled": "未命名分享",
+    "modeTagLatest": "最新版",
+    "modeTagSnapshot": "快照",
+    "passwordProtected": "密码保护",
+    "disabled": "已禁用",
+    "viewCount": "{{count}} 次访问",
+    "createdAt": "创建: {{value}}",
+    "lastAccessedAt": "最近访问: {{value}}",
+    "noVisits": "暂无访问",
+    "toggleEnable": "启用",
+    "toggleDisable": "禁用",
+    "deleteConfirmTitle": "确定删除此分享链接？",
+    "deleteConfirmDescription": "删除后访问记录也会一并清除，无法恢复。",
+    "deleteOk": "删除",
+    "feedback2": {
+      "enabled": "已启用分享链接",
+      "disabled": "已禁用分享链接",
+      "operationFailed": "操作失败",
+      "deleted": "分享链接已删除",
+      "deleteFailed": "删除失败",
+      "loadLogsFailed": "无法加载访问记录",
+      "linkCopied": "分享链接已复制。"
+    },
+    "noLogs": "暂无访问记录"
+  },
+  "recycle": {
+    "tag": "Recycle Bin",
+    "title": "回收桶",
+    "subtitle": "这里仅展示已删除简历。恢复后，简历会重新回到首页列表。",
+    "deletedHeading": "已删除简历",
+    "totalCount": "{{count}} 份",
+    "empty": "回收桶为空。"
+  },
+  "footer": {
+    "footerHint": ""
+  }
+}

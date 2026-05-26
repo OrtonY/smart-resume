@@ -21,6 +21,7 @@ These guides help you **ask the right questions before coding**.
 
 | Guide | Purpose | When to Use |
 |-------|---------|-------------|
+| [Git Branching Workflow Guide](./git-branching-workflow.md) | Keep development on `develop` and protect release flow | When creating branches, merging work, or preparing a release |
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
 
@@ -47,6 +48,15 @@ These guides help you **ask the right questions before coding**.
 
 → Read [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)
 
+### When to Think About i18n & Mobile Adaptation
+
+- [ ] You're adding any user-facing text (label, message, placeholder, error)
+- [ ] You're building a new page, modal, or panel
+- [ ] You're adding buttons or interactive elements
+- [ ] You're writing CSS that uses viewport units (`vw`, `vh`) or media queries
+
+→ Read [Quality Guidelines → Required Patterns](../frontend/quality-guidelines.md#required-patterns)
+
 ---
 
 ## Pre-Modification Rule (CRITICAL)
@@ -61,6 +71,15 @@ grep -r "value_to_change" .
 This single habit prevents most "forgot to update X" bugs.
 
 ---
+
+### When to Think About Git Branching
+
+- [ ] You're starting a new requirement or bugfix
+- [ ] You're about to merge into `develop` or `master`
+- [ ] You're unsure whether the current branch is allowed
+- [ ] You're preparing a release
+
+→ Read [Git Branching Workflow Guide](./git-branching-workflow.md)
 
 ## How to Use This Directory
 

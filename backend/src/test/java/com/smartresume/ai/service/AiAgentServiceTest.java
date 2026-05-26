@@ -12,6 +12,7 @@ import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiInvocationRequest;
+import com.smartresume.resume.service.ResumeService;
 import com.smartresume.resume.dto.ResumeDtos.CertificateItem;
 import com.smartresume.resume.dto.ResumeDtos.EducationItem;
 import com.smartresume.resume.dto.ResumeDtos.HonorItem;
@@ -39,12 +40,15 @@ class AiAgentServiceTest {
     @Mock
     private AiChatHistoryService aiChatHistoryService;
 
+    @Mock
+    private ResumeService resumeService;
+
     private AiAgentService aiAgentService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        aiAgentService = new AiAgentService(aiChatService, aiChatHistoryService, objectMapper);
+        aiAgentService = new AiAgentService(aiChatService, aiChatHistoryService, resumeService, objectMapper);
         when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString()))
             .thenReturn("conv-test-1");
     }

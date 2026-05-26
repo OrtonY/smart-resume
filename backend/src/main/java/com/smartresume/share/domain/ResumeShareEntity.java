@@ -10,8 +10,10 @@ public class ResumeShareEntity {
 
     @Id(keyType = KeyType.None)
     private String id;
+    private Long userId;
     private String resumeId;
     private String shareCode;
+    private String title;
     private String shareMode;
     private String targetVersionId;
     private String passwordHash;
@@ -25,6 +27,14 @@ public class ResumeShareEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getResumeId() {
@@ -41,6 +51,14 @@ public class ResumeShareEntity {
 
     public void setShareCode(String shareCode) {
         this.shareCode = shareCode;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getShareMode() {

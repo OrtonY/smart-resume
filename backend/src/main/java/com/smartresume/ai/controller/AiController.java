@@ -3,6 +3,7 @@ package com.smartresume.ai.controller;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatConversation;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
+import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
@@ -10,6 +11,7 @@ import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.ListModelsRequest;
 import com.smartresume.ai.dto.AiDtos.ListModelsResponse;
+import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.VendorMetadataResponse;
 import com.smartresume.ai.provider.ChatModelProvider;
 import com.smartresume.ai.provider.ChatModelProviderRegistry;
@@ -72,9 +74,19 @@ public class AiController {
         return aiAgentService.streamChat(request);
     }
 
+    @PostMapping("/chat")
+    public ApiResponse<AiChatCompletionResponse> completeChat(@Valid @RequestBody AiChatRequest request) {
+        return ApiResponse.success(aiAgentService.completeChat(request));
+    }
+
     @PostMapping("/resume-score")
     public ApiResponse<AiResumeScoreResponse> scoreResume(@Valid @RequestBody AiResumeScoreRequest request) {
         return ApiResponse.success(aiResumeScoringService.scoreResume(request), "Resume scored");
+    }
+
+    @GetMapping("/resumes/{resumeId}/score")
+    public ApiResponse<PersistedAiResumeScoreResponse> getPersistedResumeScore(@PathVariable String resumeId) {
+        return ApiResponse.success(aiResumeScoringService.getPersistedScore(resumeId));
     }
 
     @GetMapping("/resumes/{resumeId}/chat/conversations")
@@ -110,12 +122,12 @@ public class AiController {
     public ApiResponse<ListModelsResponse> listModels(@Valid @RequestBody ListModelsRequest request) {
         ChatModelProvider provider = chatModelProviderRegistry.findProvider(request.vendor())
             .orElseGet(() -> chatModelProviderRegistry.findProvider("OpenAI")
-                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Unsupported vendor: " + request.vendor())));
+                .orElseThrow(() -> AppException.of(HttpStatus.BAD_REQUEST, "error.ai.unsupportedVendor", request.vendor())));
         try {
             List<String> models = provider.listModels(request.baseUrl(), request.apiKey());
             return ApiResponse.success(new ListModelsResponse(models));
         } catch (Exception e) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Failed to fetch models: " + e.getMessage());
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.ai.modelsFetchFailed", e.getMessage());
         }
     }
 }

@@ -2,6 +2,7 @@ import { clearAccessToken, getAccessToken } from '../../../lib/auth/tokenStorage
 import { streamEvents } from '../../../lib/sse/streamEvents'
 import type {
   AiChatConversation,
+  AiChatCompletionResponse,
   AiChatMessage,
   AiChatEvent,
   AiChatRequest,
@@ -11,6 +12,7 @@ import type {
   AiConfigurationRequest,
   ListModelsRequest,
   ListModelsResponse,
+  PersistedAiResumeScoreResponse,
   VendorMetadata,
 } from '../types'
 
@@ -40,6 +42,10 @@ export async function scoreAiResume(payload: AiResumeScoreRequest) {
   })
 }
 
+export async function getPersistedAiResumeScore(resumeId: string) {
+  return requestJson<PersistedAiResumeScoreResponse | null>('/api/ai/resumes/' + encodeURIComponent(resumeId) + '/score')
+}
+
 export function listAiChatConversations(resumeId: string) {
   return requestJson<AiChatConversation[]>('/api/ai/resumes/' + encodeURIComponent(resumeId) + '/chat/conversations')
 }
@@ -54,6 +60,13 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
 
 export function streamAiChat(payload: AiChatRequest, onEvent: (event: AiChatEvent) => void) {
   return streamEvents<AiChatEvent>('/api/ai/chat/stream', payload, onEvent)
+}
+
+export function completeAiChat(payload: AiChatRequest) {
+  return requestJson<AiChatCompletionResponse>('/api/ai/chat', {
+    method: 'POST',
+    body: payload,
+  })
 }
 
 export async function getAiVendors() {

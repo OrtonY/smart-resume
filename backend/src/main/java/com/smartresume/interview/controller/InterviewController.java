@@ -2,10 +2,14 @@ package com.smartresume.interview.controller;
 
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.common.api.ApiResponse;
+import com.smartresume.common.security.CurrentUserContext;
+import com.smartresume.interview.dto.InterviewAssistDtos.InterviewAssistResponse;
+import com.smartresume.interview.dto.InterviewAssistDtos.InterviewScoreRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewPageResponse;
+import com.smartresume.interview.service.InterviewAssistService;
 import com.smartresume.interview.service.InterviewReportService;
 import com.smartresume.interview.service.InterviewService;
 import jakarta.validation.Valid;
@@ -26,10 +30,12 @@ public class InterviewController {
 
     private final InterviewService interviewService;
     private final InterviewReportService interviewReportService;
+    private final InterviewAssistService interviewAssistService;
 
-    public InterviewController(InterviewService interviewService, InterviewReportService interviewReportService) {
+    public InterviewController(InterviewService interviewService, InterviewReportService interviewReportService, InterviewAssistService interviewAssistService) {
         this.interviewService = interviewService;
         this.interviewReportService = interviewReportService;
+        this.interviewAssistService = interviewAssistService;
     }
 
     @GetMapping
@@ -102,7 +108,32 @@ public class InterviewController {
 
     @PostMapping("/{interviewId}/report/regenerate")
     public ApiResponse<Void> regenerateReport(@PathVariable String interviewId) {
-        interviewReportService.generateReportAsync(interviewId);
+        interviewReportService.generateReportAsync(interviewId, CurrentUserContext.requireUserId());
         return ApiResponse.success(null, "Report regeneration started");
+    }
+
+    @GetMapping("/{interviewId}/messages/{messageId}/assist")
+    public ApiResponse<InterviewAssistResponse> getAssist(
+        @PathVariable String interviewId,
+        @PathVariable String messageId
+    ) {
+        return ApiResponse.success(interviewAssistService.getAssist(interviewId, messageId));
+    }
+
+    @PostMapping(value = "/{interviewId}/messages/{messageId}/answer-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<AiChatEvent> streamAnswer(
+        @PathVariable String interviewId,
+        @PathVariable String messageId
+    ) {
+        return interviewAssistService.streamAnswer(interviewId, messageId);
+    }
+
+    @PostMapping(value = "/{interviewId}/messages/{messageId}/score-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<AiChatEvent> streamScore(
+        @PathVariable String interviewId,
+        @PathVariable String messageId,
+        @Valid @RequestBody InterviewScoreRequest request
+    ) {
+        return interviewAssistService.streamScore(interviewId, messageId, request.candidateAnswer());
     }
 }

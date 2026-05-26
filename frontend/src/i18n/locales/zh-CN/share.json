@@ -1,0 +1,20 @@
+{
+  "page": {
+    "loading": "正在加载分享的简历...",
+    "loadFailed": "无法加载分享的简历。",
+    "verifyFailed": "密码验证失败",
+    "downloadPdf": "下载 PDF",
+    "downloadFailed": "下载失败，请重试。"
+  },
+  "passwordGate": {
+    "title": "此分享链接需要密码",
+    "subtitle": "请输入密码以查看简历内容",
+    "passwordRequired": "请输入密码",
+    "passwordPlaceholder": "输入密码",
+    "verifyButton": "验证"
+  },
+  "notFound": {
+    "title": "分享链接不可用",
+    "subtitle": "此公开分享可能已过期或不存在。"
+  }
+}

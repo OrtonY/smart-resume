@@ -14,16 +14,19 @@
 
 - Frontend API:
   - `scoreAiResume(payload: AiResumeScoreRequest): Promise<AiResumeScoreResponse>`
+  - `getPersistedAiResumeScore(resumeId: string): Promise<PersistedAiResumeScoreResponse | null>`
 - Frontend component entry:
   - `ResumeScoreButton({ draft }: { draft: ResumeDetail })`
 - Shared frontend mapper:
   - `toAiResumeContext(draft: ResumeDetail): AiResumeContext`
-- Frontend local persistence:
-  - `localStorage["smart-resume:resume-score:{resumeId}"] -> PersistedResumeScoreState`
 - Backend API:
   - `POST /api/ai/resume-score`
+  - `GET /api/ai/resumes/{resumeId}/score`
 - Backend service:
   - `AiResumeScoringService.scoreResume(AiResumeScoreRequest request): AiResumeScoreResponse`
+  - `AiResumeScoringService.getPersistedScore(String resumeId): PersistedAiResumeScoreResponse | null`
+- Database:
+  - `ai_resume_scores`
 
 ### 3. Contracts
 
@@ -51,14 +54,21 @@
     - ISO-8601 timestamp
   - `mode: "ai"`
     - constant since the mock path was removed; reserved as an enum-shaped field for future variants (e.g. `"ai-cached"`)
+- Persisted-score read response:
+  - `jobDescription: string`
+  - `result: AiResumeScoreResponse`
 - Ownership:
   - backend DTO naming is the source of truth for cross-layer field names
   - frontend must not reshape the response into ad hoc JSX-only objects before state storage
-  - frontend stores only the last successful score per resume in browser local storage
-  - persisted frontend state includes:
-    - `jobDescription: string`
-    - `result: AiResumeScoreResponse`
-    - `version: 1`
+  - backend stores only the last successful score per `(user_id, resume_id)`
+  - `ai_resume_scores` columns:
+    - `resume_id: varchar(64)` primary key
+    - `user_id: bigint`
+    - `job_description: text`
+    - `result_json: text`
+    - `created_at: timestamp`
+    - `updated_at: timestamp`
+  - frontend restores persisted score data from the backend when the scoring modal is opened
 
 ### 4. Validation & Error Matrix
 
@@ -67,29 +77,32 @@
 - Partially filled resume sections -> accepted; the scoring prompt derives suggestions from available content
 - AI provider parse failure -> `AiChatService.callStructured` retries once silently; if the retry also fails, the service throws and the controller maps it to a 5xx error. **Do NOT** fall back to a mock score.
 - AI provider unavailable / configuration missing -> propagate as a service error with the existing error envelope; frontend should display the error rather than render a fabricated score.
-- Local storage unavailable or JSON malformed -> frontend falls back to in-memory modal state and still allows fresh scoring
+- No persisted row for the resume -> `GET /api/ai/resumes/{resumeId}/score` returns `null` data and the modal starts empty
+- Persisted row belongs to another user or the resume is inaccessible -> treat as resume access failure through `ResumeService.validResume`
+- Persisted `result_json` malformed -> throw a 5xx parse error rather than silently fabricating a fallback score
 
 ### 5. Good/Base/Bad Cases
 
 - Good: user fills JD, submits scoring, sees `jobDescriptionProvided = true` and JD-oriented suggestion groups.
 - Base: user leaves JD empty, still receives score, summary, strengths, and structured suggestions.
-- Good: user closes the modal and reopens it later for the same resume, and the last successful score plus last scored JD are restored from local storage.
+- Good: user closes the modal and reopens it later for the same resume, and the last successful score plus last scored JD are restored from backend persistence.
+- Good: user logs in on another browser/device and can still restore the latest score for the same resume.
 - Bad: backend returns free-form text only, forcing the frontend to parse or heuristically split advice cards.
 - Bad: scoring flow reuses chat-stream payloads or SSE semantics, making a simple one-shot modal harder to manage.
 
 ### 6. Tests Required
 
 - Frontend:
-  - `npm run lint`
   - `npm run build`
   - assertion points:
     - score modal compiles with typed request/response
     - shared resume context mapper is reused by both chat and scoring entry points
-    - last successful score can be restored per resume from local storage
+    - persisted score response can hydrate JD + result state when the modal opens
 - Backend:
   - `mvn test`
   - assertion points:
     - `AiResumeScoringServiceTest` covers JD provided and JD omitted cases
+    - `AiResumeScoringServiceTest` covers persisted-score readback
     - response always contains non-empty summary, strengths, and suggestion groups
     - response always has `mode = "ai"`
     - each call uses a freshly generated `conversationId` via `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)`
@@ -103,12 +116,14 @@
 - Return only a single markdown blob from the backend and let the modal split sections heuristically.
 - Call `ChatModel` / `ChatClient` directly from `AiResumeScoringService` and skip `AiChatService.callStructured` — loses memory persistence, vendor branching, and the retry-once policy.
 - Catch the structured-output exception and synthesise a mock-shaped response so the UI "still works" — silently hides AI regressions in production.
+- Keep score persistence only in browser local storage when the product requirement is cross-device recovery.
 
 #### Correct
 
 - Reuse one `AiResumeContext` mapping path for both AI chat and scoring.
 - Keep scoring as a normal JSON request/response flow with explicit DTOs.
 - Build an `AiInvocationRequest` with a fresh `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)` id and invoke `aiChatService.callStructured(req, AiResumeScoreResponse.class)`; let exceptions bubble.
+- Persist the normalized `AiResumeScoreResponse` plus the last-used JD to `ai_resume_scores`, and expose a dedicated read endpoint for modal restoration.
 
 ---
 

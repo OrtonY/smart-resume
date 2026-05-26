@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import {
   createTemplateStyleVariables,
+  getLocalizedField,
   type ResumeTemplateDefinition,
 } from '../templateCatalog'
 
@@ -16,13 +18,17 @@ export function ResumeTemplatePicker({
   value,
   onChange,
   compact = false,
-  ariaLabel = '选择简历模板',
+  ariaLabel,
 }: ResumeTemplatePickerProps) {
+  const { t, i18n } = useTranslation('template')
+  const locale = i18n.language
+  const resolvedAriaLabel = ariaLabel ?? t('picker.ariaLabel')
+
   return (
     <div
       className={`template-picker${compact ? ' template-picker--compact' : ''}`}
       role="radiogroup"
-      aria-label={ariaLabel}
+      aria-label={resolvedAriaLabel}
     >
       {templates.map((template) => {
         const selected = template.key === value
@@ -57,11 +63,11 @@ export function ResumeTemplatePicker({
 
             <div className="template-card__body">
               <div className="template-card__topline">
-                <span className="template-card__category">{template.category}</span>
-                {selected ? <span className="template-card__selected">当前</span> : null}
+                <span className="template-card__category">{getLocalizedField(template.category, locale)}</span>
+                {selected ? <span className="template-card__selected">{t('picker.currentTag')}</span> : null}
               </div>
-              <strong>{template.name}</strong>
-              <p>{template.summary}</p>
+              <strong>{getLocalizedField(template.name, locale)}</strong>
+              <p>{getLocalizedField(template.summary, locale)}</p>
             </div>
           </button>
         )

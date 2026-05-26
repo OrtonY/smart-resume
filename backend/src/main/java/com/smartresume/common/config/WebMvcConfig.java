@@ -36,7 +36,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-            .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+            .allowedOriginPatterns("*")
             .allowedMethods("*")
             .allowedHeaders("*")
             .exposedHeaders("X-Access-Token")
@@ -49,8 +49,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
             .addPathPatterns("/api/**")
             .excludePathPatterns(List.of(
                 "/api/system/bootstrap",
-                "/api/system/password/setup",
-                "/api/system/password/verify",
+                "/api/system/login",
+                "/api/system/register",
                 "/api/public/**",
                 "/actuator/health",
                 "/error"

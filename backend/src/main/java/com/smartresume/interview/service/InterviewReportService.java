@@ -8,8 +8,12 @@ import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.memory.AiConversationIdGenerator;
 import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.ai.service.AiChatService;
+import com.smartresume.common.exception.AppException;
+import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.domain.InterviewMessageEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
+import com.smartresume.interview.domain.table.InterviewMessageEntityTableDef;
+import com.smartresume.interview.domain.table.InterviewSessionEntityTableDef;
 import com.smartresume.interview.dto.InterviewReportDtos.InterviewReport;
 import com.smartresume.interview.dto.InterviewReportDtos.LearningResource;
 import com.smartresume.interview.dto.InterviewReportDtos.QuestionEvaluation;
@@ -22,11 +26,13 @@ import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -72,7 +78,7 @@ public class InterviewReportService {
     private final InterviewMessageMapper interviewMessageMapper;
     private final AiChatService aiChatService;
     private final ObjectMapper objectMapper;
-    private final List<SseEmitter> emitters = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private final Map<String, CopyOnWriteArrayList<SseEmitter>> emittersByInterviewId = new ConcurrentHashMap<>();
 
     public InterviewReportService(
         InterviewSessionMapper interviewSessionMapper,
@@ -88,8 +94,8 @@ public class InterviewReportService {
 
     @PostConstruct
     public void recoverStuckGeneratingReports() {
-        QueryWrapper query = QueryWrapper.create()
-            .where("report_status = ?", REPORT_GENERATING);
+        InterviewSessionEntityTableDef sessionTable = InterviewSessionEntityTableDef.INTERVIEW_SESSION_ENTITY;
+        QueryWrapper query = QueryWrapper.create().where(sessionTable.REPORT_STATUS.eq(REPORT_GENERATING));
         List<InterviewSessionEntity> stuckSessions = interviewSessionMapper.selectListByQuery(query);
         for (InterviewSessionEntity session : stuckSessions) {
             log.warn("Resetting stuck GENERATING report to FAILED for interview session {}", session.getId());
@@ -101,43 +107,37 @@ public class InterviewReportService {
     }
 
     public SseEmitter subscribe(String interviewId) {
+        InterviewSessionEntity session = requireOwnedSession(interviewId);
         SseEmitter emitter = new SseEmitter(300_000L);
+        CopyOnWriteArrayList<SseEmitter> emitters = emittersByInterviewId.computeIfAbsent(interviewId, key -> new CopyOnWriteArrayList<>());
         emitters.add(emitter);
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> emitters.remove(emitter));
-        emitter.onError(e -> emitters.remove(emitter));
+        emitter.onCompletion(() -> removeEmitter(interviewId, emitter));
+        emitter.onTimeout(() -> removeEmitter(interviewId, emitter));
+        emitter.onError(e -> removeEmitter(interviewId, emitter));
 
-        InterviewSessionEntity session = interviewSessionMapper.selectOneById(interviewId);
-        if (session != null) {
-            try {
-                ReportStatusEvent event = new ReportStatusEvent(
-                    interviewId, session.getReportStatus(), session.getReportContent());
-                emitter.send(SseEmitter.event().name("report-status").data(event));
-            } catch (Exception ignored) {
-            }
+        try {
+            ReportStatusEvent event = new ReportStatusEvent(
+                interviewId, session.getReportStatus(), session.getReportContent());
+            emitter.send(SseEmitter.event().name("report-status").data(event));
+        } catch (Exception ignored) {
         }
         return emitter;
     }
 
     @Async("reportExecutor")
-    public void generateReportAsync(String interviewId) {
+    public void generateReportAsync(String interviewId, long userId) {
         log.info("Starting report generation for interview {}", interviewId);
-        InterviewSessionEntity session = interviewSessionMapper.selectOneById(interviewId);
-        if (session == null) {
-            log.warn("Interview {} not found, skipping report generation", interviewId);
-            return;
-        }
-
-        String currentStatus = session.getReportStatus();
-        if (REPORT_GENERATING.equals(currentStatus) || REPORT_READY.equals(currentStatus)) {
-            log.warn("Skipping report generation for interview {}: report status is already {}", interviewId, currentStatus);
-            return;
-        }
-
-        updateReportStatus(interviewId, REPORT_GENERATING, null);
-        broadcastStatus(interviewId, REPORT_GENERATING, null);
-
         try {
+            CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(userId, "interview-report", false));
+            InterviewSessionEntity session = requireOwnedSession(interviewId);
+            String currentStatus = session.getReportStatus();
+            if (REPORT_GENERATING.equals(currentStatus) || REPORT_READY.equals(currentStatus)) {
+                log.warn("Skipping report generation for interview {}: report status is already {}", interviewId, currentStatus);
+                return;
+            }
+
+            updateReportStatus(interviewId, REPORT_GENERATING, null);
+            broadcastStatus(interviewId, REPORT_GENERATING, null);
             InterviewReport report = generateReport(session);
             String reportJson = objectMapper.writeValueAsString(report);
 
@@ -148,6 +148,8 @@ public class InterviewReportService {
             log.error("Report generation failed for interview {}: {}", interviewId, e.getMessage(), e);
             updateReportStatus(interviewId, REPORT_FAILED, null);
             broadcastStatus(interviewId, REPORT_FAILED, null);
+        } finally {
+            CurrentUserContext.clear();
         }
     }
 
@@ -157,12 +159,13 @@ public class InterviewReportService {
         partial.setReportStatus(reportStatus);
         partial.setReportContent(reportContent);
         partial.setUpdatedAt(LocalDateTime.now());
-        QueryWrapper where = QueryWrapper.create().where("id = ?", interviewId);
+        InterviewSessionEntityTableDef sessionTable = InterviewSessionEntityTableDef.INTERVIEW_SESSION_ENTITY;
+        QueryWrapper where = QueryWrapper.create().where(sessionTable.ID.eq(interviewId));
         interviewSessionMapper.updateByQuery(partial, where);
     }
 
     private InterviewReport generateReport(InterviewSessionEntity session) {
-        List<InterviewMessageEntity> allMessages = listMessageEntities(session.getId());
+        List<InterviewMessageEntity> allMessages = listMessageEntities(session.getId(), session.getUserId());
         List<String> roles = readInterviewerRoles(session);
         List<List<InterviewMessageEntity>> roundMessages = splitMessagesByRound(allMessages, roles.size());
 
@@ -250,6 +253,10 @@ public class InterviewReportService {
 
     private void broadcastStatus(String interviewId, String status, String reportContent) {
         ReportStatusEvent event = new ReportStatusEvent(interviewId, status, reportContent);
+        CopyOnWriteArrayList<SseEmitter> emitters = emittersByInterviewId.get(interviewId);
+        if (emitters == null || emitters.isEmpty()) {
+            return;
+        }
         List<SseEmitter> deadEmitters = new ArrayList<>();
         for (SseEmitter emitter : emitters) {
             try {
@@ -259,12 +266,17 @@ public class InterviewReportService {
             }
         }
         emitters.removeAll(deadEmitters);
+        if (emitters.isEmpty()) {
+            emittersByInterviewId.remove(interviewId, emitters);
+        }
     }
 
-    private List<InterviewMessageEntity> listMessageEntities(String sessionId) {
+    private List<InterviewMessageEntity> listMessageEntities(String sessionId, Long userId) {
+        InterviewMessageEntityTableDef messageTable = InterviewMessageEntityTableDef.INTERVIEW_MESSAGE_ENTITY;
         QueryWrapper query = QueryWrapper.create()
-            .where("session_id = ?", sessionId)
-            .orderBy("sort_order", true);
+            .where(messageTable.SESSION_ID.eq(sessionId))
+            .and(messageTable.USER_ID.eq(userId))
+            .orderBy(messageTable.SORT_ORDER, true);
         return interviewMessageMapper.selectListByQuery(query);
     }
 
@@ -288,5 +300,25 @@ public class InterviewReportService {
         SkillAssessment skillAssessment,
         List<LearningResource> learningResources
     ) {
+    }
+
+    private InterviewSessionEntity requireOwnedSession(String interviewId) {
+        long userId = CurrentUserContext.requireUserId();
+        InterviewSessionEntity session = interviewSessionMapper.selectOneById(interviewId);
+        if (session == null || !Long.valueOf(userId).equals(session.getUserId())) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Interview not found");
+        }
+        return session;
+    }
+
+    private void removeEmitter(String interviewId, SseEmitter emitter) {
+        CopyOnWriteArrayList<SseEmitter> emitters = emittersByInterviewId.get(interviewId);
+        if (emitters == null) {
+            return;
+        }
+        emitters.remove(emitter);
+        if (emitters.isEmpty()) {
+            emittersByInterviewId.remove(interviewId, emitters);
+        }
     }
 }
