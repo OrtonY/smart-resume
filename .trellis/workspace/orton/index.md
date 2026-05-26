@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 46
+- **Total Sessions**: 47
 - **Last Active**: 2026-05-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1542 | Active |
+| `journal-1.md` | ~1576 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 47 | 2026-05-26 | Remove branch creation from release merge rule | `92a79bd`, `fac2d39` | `docs/release-merge-rule` |
 | 46 | 2026-05-26 | Fix resume preview layout isolation and font-size consistency | `8c383df` | `fix/resume-preview-layout-isolation` |
 | 45 | 2026-05-26 | Fix mobile share, resume display, AI answer UX, and share page adaptation | `2227635` | `fix/mobile-share-resume-display-ai-answer` |
 | 44 | 2026-05-25 | Frontend refactor: page decomposition, code splitting, and dep bumps | `e3e3838`, `2269525`, `34ad72e` | `refactor/frontend-refactor-maintainability` |
