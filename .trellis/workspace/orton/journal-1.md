@@ -1744,3 +1744,36 @@ Added authenticated resume version APIs, responsive version timeline UI with dif
 ### Next Steps
 
 - None - task complete
+
+
+## Session 53: Snapshot share uses latest snapshot
+
+**Date**: 2026-05-27
+**Task**: Snapshot share uses latest snapshot
+**Branch**: `fix/share-snapshot-dedup`
+
+### Summary
+
+Adjusted snapshot sharing to bind new links to the latest existing snapshot (or create one if none), kept password at share-link level, added backend regression tests, and updated share hint copy in zh/en locales.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5c04bd6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
