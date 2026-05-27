@@ -1641,3 +1641,37 @@ Prevent backend PDF export availability checks from triggering Playwright browse
 ### Next Steps
 
 - None - task complete
+
+
+## Session 50: 修复改密后会话失效与失败提示
+
+**Date**: 2026-05-27
+**Task**: 修复改密后会话失效与失败提示
+**Branch**: `codex/logout-all-sessions-on-password-change`
+
+### Summary
+
+修复密码修改后旧 token 在同秒场景下可能不失效的问题，并将当前密码错误调整为 400，避免前端在修改失败时跳回登录页。补充认证回归测试并同步后端认证规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `583ffb4` | (see git log) |
+| `fee28d3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
