@@ -195,7 +195,7 @@ The script will:
 2. Install frontend dependencies and build the frontend (multi-entry: `index.html` for the app, `export.html` for server-side PDF rendering).
 3. Sync the built frontend `dist/` into `backend/src/main/resources/static/` so Spring Boot can serve it.
 4. Build the backend JAR.
-5. Install Playwright's bundled Chromium (required for high-quality PDF export).
+5. Check whether Playwright's bundled Chromium is already installed, and install it only when missing (required for high-quality PDF export).
 6. Launch the backend, which now serves both the API and the frontend on the configured port.
 
 If you only want to build without launching, use:
@@ -260,7 +260,7 @@ Typical use cases include resume chat, resume scoring, interview generation, and
 - Public share pages can be open or password-protected. Logged-in viewers and public share visitors can both download the high-quality PDF if the server is configured for it.
 - PDF export has two paths:
   - **Quick export** (client-side, `html2canvas` + `jspdf`): always available, generated entirely in the browser. The output is image-based, so the text inside is not selectable or ATS-parsable.
-  - **High-quality export** (server-side, Playwright + Chromium): produces real-text, ATS-friendly PDFs that match the live preview pixel-for-pixel. Requires the steps performed by `start.sh` / `build.sh` (frontend `dist/` synced into `static/` and Chromium installed).
+  - **High-quality export** (server-side, Playwright + Chromium): produces real-text, ATS-friendly PDFs that match the live preview pixel-for-pixel. Requires the steps performed by `start.sh` / `build.sh` (frontend `dist/` synced into `static/` and Chromium checked/installed when missing).
   - If the server is missing either piece, the backend still starts normally and only the high-quality export endpoint returns a 503 with a localized message; all other features keep working.
 - The frontend has its own package-level guide in [frontend/README.md](./frontend/README.md).
 
