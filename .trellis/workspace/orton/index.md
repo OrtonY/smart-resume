@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 48
-- **Last Active**: 2026-05-26
+- **Total Sessions**: 49
+- **Last Active**: 2026-05-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1609 | Active |
+| `journal-1.md` | ~1643 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 49 | 2026-05-27 | Fix Playwright export dependency checks | `2756bdb`, `b4e4230` | `fix/playwright-env-check` |
 | 48 | 2026-05-26 | Persist AI resume suggestions | `4ca7f27` | `codex/persist-ai-resume-suggestions` |
 | 47 | 2026-05-26 | Remove branch creation from release merge rule | `92a79bd`, `fac2d39` | `docs/release-merge-rule` |
 | 46 | 2026-05-26 | Fix resume preview layout isolation and font-size consistency | `8c383df` | `fix/resume-preview-layout-isolation` |
