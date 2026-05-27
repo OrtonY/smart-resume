@@ -62,7 +62,7 @@
     "exportPdfFailed": "Export failed. Please try again.",
     "exportPreviewMissing": "No resume preview found to export.",
     "shareCopiedLatest": "Latest version share link copied.",
-    "shareCopiedSnapshot": "Snapshot share link copied and saved to version history.",
+    "shareCopiedSnapshot": "Snapshot share link copied.",
     "loadShareLinksFailed": "Unable to load share links.",
     "refreshShareLinksFailed": "Unable to refresh share links."
   },
@@ -340,7 +340,7 @@
     "modeLatest": "Latest version",
     "modeSnapshot": "Current snapshot",
     "modeLatestHint": "The link always shows the latest content of the resume",
-    "modeSnapshotHint": "A historical version is saved when the link is created, and later edits do not affect this share",
+    "modeSnapshotHint": "The latest snapshot is shared first; if none exists, one is created automatically, and later edits do not affect this share link",
     "passwordLabel": "Password protection",
     "passwordPlaceholder": "Set an access password",
     "passwordHint": "When enabled, viewers must enter the password to view",

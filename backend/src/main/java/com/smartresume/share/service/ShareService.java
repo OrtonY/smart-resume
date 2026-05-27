@@ -4,6 +4,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
 import com.smartresume.resume.service.ResumeService;
 import com.smartresume.share.domain.ResumeShareEntity;
 import com.smartresume.share.domain.ShareAccessLogEntity;
@@ -58,11 +59,15 @@ public class ShareService {
             throw AppException.of(HttpStatus.BAD_REQUEST, "error.share.invalidMode");
         }
 
+        String normalizedPassword = normalizePassword(request.password());
+        resumeService.validResume(resumeId);
+
         String targetVersionId = null;
         if ("SNAPSHOT".equals(normalizedMode)) {
-            targetVersionId = resumeService.captureSnapshot(resumeId).getId();
-        } else {
-            resumeService.validResume(resumeId);
+            targetVersionId = latestSnapshotVersionId(resumeId);
+            if (targetVersionId == null) {
+                targetVersionId = resumeService.captureSnapshot(resumeId).getId();
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -78,8 +83,8 @@ public class ShareService {
         share.setCreatedAt(now);
         share.setUpdatedAt(now);
 
-        if (request.password() != null && !request.password().isBlank()) {
-            share.setPasswordHash(passwordEncoder.encode(request.password()));
+        if (normalizedPassword != null) {
+            share.setPasswordHash(passwordEncoder.encode(normalizedPassword));
         }
 
         resumeShareMapper.insert(share);
@@ -217,6 +222,21 @@ public class ShareService {
             throw AppException.of(HttpStatus.NOT_FOUND, "error.share.notFound");
         }
         return share;
+    }
+
+    private String normalizePassword(String password) {
+        if (password == null) {
+            return null;
+        }
+        String trimmed = password.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String latestSnapshotVersionId(String resumeId) {
+        return resumeService.listVersions(resumeId).stream()
+            .map(ResumeVersionSummaryResponse::id)
+            .findFirst()
+            .orElse(null);
     }
 
     private ShareLinkResponse toResponse(ResumeShareEntity share) {
