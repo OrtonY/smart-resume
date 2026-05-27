@@ -14,10 +14,12 @@ import com.smartresume.system.dto.SystemAccessDtos.SessionResponse;
 import com.smartresume.system.dto.SystemAccessDtos.SessionUserResponse;
 import com.smartresume.system.mapper.SystemSettingMapper;
 import com.smartresume.system.mapper.UserMapper;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,16 +32,28 @@ public class SystemAccessService {
     private final UserMapper userMapper;
     private final SystemSettingMapper systemSettingMapper;
     private final AuthTokenService authTokenService;
+    private final Clock clock;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    @Autowired
     public SystemAccessService(
         UserMapper userMapper,
         SystemSettingMapper systemSettingMapper,
         AuthTokenService authTokenService
     ) {
+        this(userMapper, systemSettingMapper, authTokenService, Clock.systemUTC());
+    }
+
+    SystemAccessService(
+        UserMapper userMapper,
+        SystemSettingMapper systemSettingMapper,
+        AuthTokenService authTokenService,
+        Clock clock
+    ) {
         this.userMapper = userMapper;
         this.systemSettingMapper = systemSettingMapper;
         this.authTokenService = authTokenService;
+        this.clock = clock;
     }
 
     @Transactional
@@ -64,7 +78,7 @@ public class SystemAccessService {
             throw AppException.of(HttpStatus.CONFLICT, "error.system.usernameExists");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         UserEntity user = new UserEntity();
         user.setUsername(normalizedUsername);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
@@ -88,10 +102,10 @@ public class SystemAccessService {
     public void changePassword(String currentPassword, String newPassword) {
         UserEntity user = requireUser(CurrentUserContext.requireUserId());
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw AppException.of(HttpStatus.UNAUTHORIZED, "error.system.currentPasswordIncorrect");
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.system.currentPasswordIncorrect");
         }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
+        user.setUpdatedAt(nextCredentialMarker(user));
         userMapper.update(user);
     }
 
@@ -100,7 +114,7 @@ public class SystemAccessService {
         CurrentUserContext.requireAdmin();
         SystemSettingEntity settings = requireSettings();
         settings.setRegistrationEnabled(registrationEnabled);
-        settings.setUpdatedAt(LocalDateTime.now());
+        settings.setUpdatedAt(LocalDateTime.now(clock));
         systemSettingMapper.update(settings);
         return new RegistrationSettingsResponse(Boolean.TRUE.equals(settings.getRegistrationEnabled()));
     }
@@ -138,7 +152,7 @@ public class SystemAccessService {
             return settings;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         SystemSettingEntity created = new SystemSettingEntity();
         created.setId(SETTINGS_ID);
         created.setRegistrationEnabled(true);
@@ -173,6 +187,11 @@ public class SystemAccessService {
     private long credentialVersion(UserEntity user) {
         LocalDateTime marker = user.getUpdatedAt() == null ? user.getCreatedAt() : user.getUpdatedAt();
         return marker.toEpochSecond(ZoneOffset.UTC);
+    }
+
+    private LocalDateTime nextCredentialMarker(UserEntity user) {
+        long nextVersion = Math.max(LocalDateTime.now(clock).toEpochSecond(ZoneOffset.UTC), credentialVersion(user) + 1);
+        return LocalDateTime.ofEpochSecond(nextVersion, 0, ZoneOffset.UTC);
     }
 
     private String normalizeUsername(String username) {
