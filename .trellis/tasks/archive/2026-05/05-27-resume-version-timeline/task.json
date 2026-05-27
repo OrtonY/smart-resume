@@ -1,0 +1,29 @@
+{
+  "id": "resume-version-timeline",
+  "name": "resume-version-timeline",
+  "title": "Implement resume version timeline, diff, and restore",
+  "description": "Expose resume snapshots through a version timeline with manual snapshot creation, diff comparison, restore workflow, and responsive fixed-height scrolling layout.",
+  "status": "completed",
+  "dev_type": "feature",
+  "scope": "frontend-backend",
+  "package": null,
+  "priority": "P2",
+  "creator": "orton",
+  "assignee": "orton",
+  "createdAt": "2026-05-27",
+  "completedAt": "2026-05-27",
+  "branch": "codex/resume-version-timeline",
+  "base_branch": "develop",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "Task was renamed from explore-resume-features after implementation scope converged on resume version timeline, diff, restore, and responsive modal scrolling.",
+  "meta": {
+    "previous_id": "explore-resume-features",
+    "previous_branch": "codex/explore-resume-features"
+  }
+}
