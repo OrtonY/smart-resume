@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { changePassword } from '../api/systemApi'
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../constants'
 import type { RegistrationSettingsResponse, SessionUser } from '../types'
 
 const { Text } = Typography
@@ -120,8 +121,8 @@ export function WorkspaceSessionCard({
                 label={t('session.password.newLabel')}
                 rules={[
                   { required: true, message: t('session.password.newRequired') },
-                  { min: 6, message: t('session.password.newMin') },
-                  { max: 64, message: t('session.password.newMax') },
+                  { min: PASSWORD_MIN_LENGTH, message: t('session.password.newMin') },
+                  { max: PASSWORD_MAX_LENGTH, message: t('session.password.newMax') },
                 ]}
               >
                 <Input.Password autoComplete={'new-password'} placeholder={t('session.password.newPlaceholder')} />

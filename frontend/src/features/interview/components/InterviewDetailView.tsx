@@ -30,6 +30,11 @@ import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { getInterview } from '../api/interviewApi'
+import {
+  INTERVIEW_COMPOSER_MAX_ROWS,
+  INTERVIEW_COMPOSER_MIN_ROWS,
+  INTERVIEW_SCROLL_BOTTOM_THRESHOLD,
+} from '../constants'
 import { useInterviewTimer } from '../hooks/useInterviewTimer'
 import { AiAnswerModal } from './AiAnswerModal'
 import { InterviewReportPanel } from './InterviewReportPanel'
@@ -113,7 +118,7 @@ export function InterviewDetailView({
   }, [detail, safeActiveRoundTab])
 
   function isNearBottom(target: HTMLDivElement) {
-    return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
+    return target.scrollHeight - target.scrollTop - target.clientHeight <= INTERVIEW_SCROLL_BOTTOM_THRESHOLD
   }
 
   function scrollMessagesToBottom(behavior: ScrollBehavior = 'auto') {
@@ -415,7 +420,7 @@ export function InterviewDetailView({
                   onSubmit={onSubmitMessage}
                   placeholder={t('message.composerPlaceholder')}
                   disabled={false}
-                  autoSize={{ minRows: 3, maxRows: 8 }}
+                  autoSize={{ minRows: INTERVIEW_COMPOSER_MIN_ROWS, maxRows: INTERVIEW_COMPOSER_MAX_ROWS }}
                 />
                 {streaming ? (
                   <Button danger icon={<StopOutlined />} onClick={onStopStreaming}>
@@ -439,7 +444,7 @@ export function InterviewDetailView({
                   onSubmit={undefined}
                   placeholder={t('message.disabledPlaceholder')}
                   disabled
-                  autoSize={{ minRows: 3, maxRows: 8 }}
+                  autoSize={{ minRows: INTERVIEW_COMPOSER_MIN_ROWS, maxRows: INTERVIEW_COMPOSER_MAX_ROWS }}
                 />
                 <Button type="primary" icon={<SendOutlined />} disabled>
                   {t('message.sendAnswer')}
