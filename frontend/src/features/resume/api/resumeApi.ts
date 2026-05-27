@@ -1,6 +1,14 @@
 import { request } from '../../../lib/http/apiClient'
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../lib/http/pageDefaults'
-import type { ResumeDetail, ResumePage, ShareAccessLogsPage, ShareLink, ShareMode } from '../types'
+import type {
+  ResumeDetail,
+  ResumePage,
+  ResumeVersionDetail,
+  ResumeVersionSummary,
+  ShareAccessLogsPage,
+  ShareLink,
+  ShareMode,
+} from '../types'
 
 export function listResumes(includeDeleted = false, page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return request<ResumePage>(`/api/resumes?includeDeleted=${includeDeleted}&page=${page}&pageSize=${pageSize}`)
@@ -46,6 +54,26 @@ export function deleteResume(resumeId: string) {
 
 export function restoreResume(resumeId: string) {
   return request<void>(`/api/resumes/${resumeId}/recover`, {
+    method: 'POST',
+  })
+}
+
+export function createResumeSnapshot(resumeId: string) {
+  return request<ResumeVersionSummary>(`/api/resumes/${resumeId}/versions`, {
+    method: 'POST',
+  })
+}
+
+export function listResumeVersions(resumeId: string) {
+  return request<ResumeVersionSummary[]>(`/api/resumes/${resumeId}/versions`)
+}
+
+export function getResumeVersion(resumeId: string, versionId: string) {
+  return request<ResumeVersionDetail>(`/api/resumes/${resumeId}/versions/${versionId}`)
+}
+
+export function restoreResumeFromVersion(resumeId: string, versionId: string) {
+  return request<ResumeDetail>(`/api/resumes/${resumeId}/versions/${versionId}/restore`, {
     method: 'POST',
   })
 }

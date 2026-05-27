@@ -113,6 +113,23 @@ export interface ResumeDetail {
   resolvedTemplate?: ResumeTemplateDefinition | null
 }
 
+export interface ResumeVersionSummary {
+  id: string
+  resumeId: string
+  versionNumber: number
+  title: string
+  templateKey: string
+  createdAt: string
+}
+
+export interface ResumeVersionDetail {
+  id: string
+  resumeId: string
+  versionNumber: number
+  createdAt: string
+  snapshot: ResumeDetail
+}
+
 export type ShareMode = 'LATEST' | 'SNAPSHOT'
 
 export interface ShareLink {

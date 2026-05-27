@@ -7,6 +7,8 @@ import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
+import com.smartresume.resume.dto.ResumeDtos.ResumeVersionDetailResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
 import com.smartresume.resume.service.ResumeService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -63,6 +65,35 @@ public class ResumeController {
         return ApiResponse.success(resumeService.updateResume(resumeId, request), "Resume auto-saved");
     }
 
+    @PostMapping("/{resumeId}/versions")
+    public ApiResponse<ResumeVersionSummaryResponse> createResumeVersion(@PathVariable String resumeId) {
+        return ApiResponse.success(
+            toVersionSummary(resumeService.captureSnapshot(resumeId)),
+            "Resume snapshot created"
+        );
+    }
+
+    @GetMapping("/{resumeId}/versions")
+    public ApiResponse<List<ResumeVersionSummaryResponse>> listResumeVersions(@PathVariable String resumeId) {
+        return ApiResponse.success(resumeService.listVersions(resumeId));
+    }
+
+    @GetMapping("/{resumeId}/versions/{versionId}")
+    public ApiResponse<ResumeVersionDetailResponse> getResumeVersion(
+        @PathVariable String resumeId,
+        @PathVariable String versionId
+    ) {
+        return ApiResponse.success(resumeService.getVersionDetail(resumeId, versionId));
+    }
+
+    @PostMapping("/{resumeId}/versions/{versionId}/restore")
+    public ApiResponse<ResumeDetailResponse> restoreResumeFromVersion(
+        @PathVariable String resumeId,
+        @PathVariable String versionId
+    ) {
+        return ApiResponse.success(resumeService.restoreFromVersion(resumeId, versionId), "Resume version restored");
+    }
+
     @DeleteMapping("/{resumeId}")
     public ApiResponse<Void> softDeleteResume(@PathVariable String resumeId) {
         resumeService.softDeleteResume(resumeId);
@@ -73,5 +104,16 @@ public class ResumeController {
     public ApiResponse<Void> restoreResume(@PathVariable String resumeId) {
         resumeService.restoreResume(resumeId);
         return ApiResponse.success(null, "Resume restored");
+    }
+
+    private ResumeVersionSummaryResponse toVersionSummary(com.smartresume.resume.domain.ResumeVersionEntity version) {
+        return new ResumeVersionSummaryResponse(
+            version.getId(),
+            version.getResumeId(),
+            version.getVersionNumber() == null ? 0 : version.getVersionNumber(),
+            version.getTitle(),
+            version.getTemplateKey(),
+            version.getCreatedAt()
+        );
     }
 }

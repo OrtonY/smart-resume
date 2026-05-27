@@ -42,6 +42,25 @@ public final class ResumeDtos {
     ) {
     }
 
+    public record ResumeVersionSummaryResponse(
+        String id,
+        String resumeId,
+        int versionNumber,
+        String title,
+        String templateKey,
+        LocalDateTime createdAt
+    ) {
+    }
+
+    public record ResumeVersionDetailResponse(
+        String id,
+        String resumeId,
+        int versionNumber,
+        LocalDateTime createdAt,
+        ResumeDetailResponse snapshot
+    ) {
+    }
+
     public record ResumeCreateRequest(
         @NotBlank(message = "{validation.resume.titleRequired}")
         String title,
