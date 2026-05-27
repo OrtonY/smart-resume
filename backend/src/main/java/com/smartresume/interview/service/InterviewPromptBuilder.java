@@ -164,7 +164,7 @@ public class InterviewPromptBuilder {
             """);
 
         int remaining = maxQuestions - currentQuestionCount;
-        if (remaining <= 3 && remaining > 0) {
+        if (remaining <= InterviewConstants.QUESTION_LIMIT_WARNING_THRESHOLD && remaining > 0) {
             rules.append("\n注意：本轮面试题量已接近上限，剩余约 ")
                 .append(remaining)
                 .append(" 题，请开始自然收尾。\n");

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/templates")
+@RequestMapping("/templates")
 public class TemplateCatalogController {
 
     private final TemplateCatalogService templateCatalogService;

@@ -243,6 +243,40 @@ class InterviewAssistServiceTest {
         assertThat(response.feedback()).contains("没有 SCORE 前缀");
     }
 
+    @Test
+    void streamAnswerIgnoresMalformedSessionJson() {
+        when(aiChatService.stream(any(AiInvocationRequest.class)))
+            .thenReturn(Flux.just(
+                new AiChatEvent("message", "This is ", null),
+                new AiChatEvent("message", "a fallback answer.", null),
+                new AiChatEvent("done", "", null)
+            ));
+
+        jdbcTemplate.update(
+            """
+                update interview_sessions
+                set interviewer_roles_json = ?,
+                    company_context_summary_json = ?,
+                    company_context_status = ?,
+                    target_company = ?
+                where id = ?
+                """,
+            "{bad roles",
+            "{bad summary",
+            "READY",
+            "Acme",
+            interviewId
+        );
+
+        StepVerifier.create(interviewAssistService.streamAnswer(interviewId, interviewerMessageId))
+            .expectNextCount(3)
+            .verifyComplete();
+
+        InterviewAssistResponse response = interviewAssistService.getAssist(interviewId, interviewerMessageId);
+        assertThat(response.answerStatus()).isEqualTo("READY");
+        assertThat(response.answerContent()).isEqualTo("This is a fallback answer.");
+    }
+
     private String createResume(String title) {
         LocalDateTime now = LocalDateTime.now();
         ResumeEntity resume = new ResumeEntity();

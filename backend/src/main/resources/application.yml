@@ -28,6 +28,7 @@ management:
         include: health,info
 
 app:
+  api-prefix: /api
   auth:
     token-secret: ${SMART_RESUME_TOKEN_SECRET:smart-resume-dev-secret-change-me}
     token-validity-days: 30

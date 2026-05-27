@@ -1,11 +1,12 @@
 import { request } from '../../../lib/http/apiClient'
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../lib/http/pageDefaults'
 import type { ResumeDetail, ResumePage, ShareAccessLogsPage, ShareLink, ShareMode } from '../types'
 
-export function listResumes(includeDeleted = false, page = 1, pageSize = 6) {
+export function listResumes(includeDeleted = false, page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return request<ResumePage>(`/api/resumes?includeDeleted=${includeDeleted}&page=${page}&pageSize=${pageSize}`)
 }
 
-export function listDeletedResumes(page = 1, pageSize = 6) {
+export function listDeletedResumes(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return request<ResumePage>(`/api/resumes?deletedOnly=true&page=${page}&pageSize=${pageSize}`)
 }
 

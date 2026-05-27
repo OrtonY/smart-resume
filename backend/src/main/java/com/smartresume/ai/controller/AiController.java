@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/ai")
 public class AiController {
 
     private final AiConfigurationService aiConfigurationService;

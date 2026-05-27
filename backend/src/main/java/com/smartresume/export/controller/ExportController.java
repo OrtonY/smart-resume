@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/resumes/{resumeId}/exports")
+@RequestMapping("/resumes/{resumeId}/exports")
 public class ExportController {
 
     private final ResumeService resumeService;
