@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 52
+- **Total Sessions**: 53
 - **Last Active**: 2026-05-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1746 | Active |
+| `journal-1.md` | ~1779 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 53 | 2026-05-27 | Snapshot share uses latest snapshot | `5c04bd6` | `fix/share-snapshot-dedup` |
 | 52 | 2026-05-27 | Resume version timeline | `679d479` | `codex/resume-version-timeline` |
 | 51 | 2026-05-27 | Refactor extensibility and centralize magic values | `351f9ce`, `1b8439d`, `580eee3`, `18861f1` | `codex/extensibility-and-magic-values-refactor` |
 | 50 | 2026-05-27 | 修复改密后会话失效与失败提示 | `583ffb4`, `fee28d3` | `codex/logout-all-sessions-on-password-change` |

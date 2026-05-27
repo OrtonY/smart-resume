@@ -62,7 +62,7 @@
     "exportPdfFailed": "导出失败，请重试。",
     "exportPreviewMissing": "未找到可导出的简历预览。",
     "shareCopiedLatest": "最新版本分享链接已复制。",
-    "shareCopiedSnapshot": "快照分享链接已复制，并已保存到版本历史。",
+    "shareCopiedSnapshot": "快照分享链接已复制。",
     "loadShareLinksFailed": "无法加载分享链接。",
     "refreshShareLinksFailed": "无法刷新分享链接。"
   },
@@ -340,7 +340,7 @@
     "modeLatest": "最新版本",
     "modeSnapshot": "当前快照",
     "modeLatestHint": "链接始终展示简历的最新内容",
-    "modeSnapshotHint": "创建链接时会自动保存一个历史版本，后续编辑不会影响这份分享内容",
+    "modeSnapshotHint": "优先分享最近一次快照；如果不存在快照则自动创建一个，后续编辑不会影响该分享链接",
     "passwordLabel": "密码保护",
     "passwordPlaceholder": "设置访问密码",
     "passwordHint": "开启后，访问者需输入密码才能查看",
