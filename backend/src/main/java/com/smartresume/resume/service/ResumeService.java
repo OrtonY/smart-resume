@@ -13,6 +13,8 @@ import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeSummaryResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
+import com.smartresume.resume.dto.ResumeDtos.ResumeVersionDetailResponse;
+import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
 import com.smartresume.resume.mapper.ResumeMapper;
 import com.smartresume.template.dto.TemplateCatalogDtos.TemplateCatalogResponse;
 import com.smartresume.template.service.TemplateCatalogService;
@@ -171,6 +173,19 @@ public class ResumeService {
 
     public ResumeDetailResponse getVersionSnapshotForUser(String versionId, long userId) {
         return resumeVersionService.getVersionSnapshotForUser(versionId, userId);
+    }
+
+    public List<ResumeVersionSummaryResponse> listVersions(String resumeId) {
+        return resumeVersionService.listVersions(resumeId);
+    }
+
+    public ResumeVersionDetailResponse getVersionDetail(String resumeId, String versionId) {
+        return resumeVersionService.getVersionDetail(resumeId, versionId);
+    }
+
+    @Transactional
+    public ResumeDetailResponse restoreFromVersion(String resumeId, String versionId) {
+        return resumeVersionService.restoreFromVersion(resumeId, versionId);
     }
 
     private ResumeSummaryResponse toSummary(ResumeEntity resume) {

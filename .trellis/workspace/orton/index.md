@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 51
+- **Total Sessions**: 52
 - **Last Active**: 2026-05-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1713 | Active |
+| `journal-1.md` | ~1746 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 52 | 2026-05-27 | Resume version timeline | `679d479` | `codex/resume-version-timeline` |
 | 51 | 2026-05-27 | Refactor extensibility and centralize magic values | `351f9ce`, `1b8439d`, `580eee3`, `18861f1` | `codex/extensibility-and-magic-values-refactor` |
 | 50 | 2026-05-27 | 修复改密后会话失效与失败提示 | `583ffb4`, `fee28d3` | `codex/logout-all-sessions-on-password-change` |
 | 49 | 2026-05-27 | Fix Playwright export dependency checks | `2756bdb`, `b4e4230` | `fix/playwright-env-check` |

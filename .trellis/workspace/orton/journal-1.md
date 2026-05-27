@@ -1711,3 +1711,36 @@ Split oversized resume/interview backend services into focused collaborators, mo
 ### Next Steps
 
 - None - task complete
+
+
+## Session 52: Resume version timeline
+
+**Date**: 2026-05-27
+**Task**: Resume version timeline
+**Branch**: `codex/resume-version-timeline`
+
+### Summary
+
+Added authenticated resume version APIs, responsive version timeline UI with diff and restore workflow, localized copy, and documented the cross-layer restore contract.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `679d479` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

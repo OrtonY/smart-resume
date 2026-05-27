@@ -48,6 +48,12 @@
   "feedback": {
     "loadListFailed": "无法加载简历列表。",
     "loadDetailFailed": "无法加载简历详情。",
+    "versionLoadListFailed": "无法加载版本历史。",
+    "versionLoadDetailFailed": "无法加载版本详情。",
+    "versionSnapshotCreated": "快照已创建。",
+    "versionSnapshotCreateFailed": "创建快照失败。",
+    "versionRestoreSuccess": "快照已恢复到当前简历。",
+    "versionRestoreFailed": "恢复该快照失败。",
     "saveAutoFailed": "自动保存失败。",
     "moveToBinSuccess": "简历已移至回收站。",
     "copySuccess": "简历已复制。",
@@ -56,7 +62,7 @@
     "exportPdfFailed": "导出失败，请重试。",
     "exportPreviewMissing": "未找到可导出的简历预览。",
     "shareCopiedLatest": "最新版本分享链接已复制。",
-    "shareCopiedSnapshot": "快照分享链接已复制。",
+    "shareCopiedSnapshot": "快照分享链接已复制，并已保存到版本历史。",
     "loadShareLinksFailed": "无法加载分享链接。",
     "refreshShareLinksFailed": "无法刷新分享链接。"
   },
@@ -73,6 +79,7 @@
     "titlePlaceholder": "简历标题",
     "modifyTemplate": "修改模板",
     "interview": "面试",
+    "versionTimeline": "版本",
     "interviewMenu": {
       "create": "发起面试",
       "related": "相关面试"
@@ -100,6 +107,44 @@
     "tabContent": "内容",
     "moreActions": "更多",
     "moreActionsAria": "更多操作"
+  },
+  "versionTimeline": {
+    "title": "版本历史",
+    "subtitle": "时间线与差异对比",
+    "description": "可以手动创建快照，查看早期版本，并与当前草稿对比，也可以将快照直接恢复到当前简历。",
+    "refresh": "刷新",
+    "createSnapshot": "创建快照",
+    "empty": "还没有快照，可以在大改之前先保存一个版本。",
+    "selectVersion": "请先在时间线中选择一个版本。",
+    "versionTag": "版本 V{{number}}",
+    "restore": "恢复快照",
+    "restoreConfirmTitle": "确认恢复这个快照吗？",
+    "restoreConfirmDescription": "恢复版本 V{{number}} 会覆盖当前简历的标题、模板、布局以及相关内容。",
+    "restoreConfirmRecommendation": "建议先为当前简历创建一个快照，避免最新编辑内容丢失。",
+    "restoreConfirmOk": "确认恢复",
+    "snapshotTitle": "快照标题",
+    "snapshotTemplate": "模板",
+    "snapshotTimestamp": "快照时间",
+    "diffTitle": "与当前草稿的差异",
+    "noDiff": "该版本与当前草稿一致。",
+    "untitled": "未命名简历",
+    "diffSections": {
+      "metadata": "元信息与布局"
+    },
+    "diffItems": {
+      "titleChanged": "简历标题已变更。",
+      "templateChanged": "使用的模板已变更。",
+      "sectionOrderChanged": "模块排序已变更。",
+      "hiddenSectionsChanged": "隐藏模块设置已变更。",
+      "personalInfoChanged": "已更新字段：{{fields}}。",
+      "summaryChanged": "个人简介内容已变更。",
+      "changedEntries_one": "有 {{count}} 条既有条目发生变更。",
+      "changedEntries_other": "有 {{count}} 条既有条目发生变更。",
+      "currentOnlyEntries_one": "当前草稿新增了 {{count}} 条条目。",
+      "currentOnlyEntries_other": "当前草稿新增了 {{count}} 条条目。",
+      "versionOnlyEntries_one": "所选版本比当前多 {{count}} 条条目。",
+      "versionOnlyEntries_other": "所选版本比当前多 {{count}} 条条目。"
+    }
   },
   "modules": {
     "personalInfo": {
@@ -295,7 +340,7 @@
     "modeLatest": "最新版本",
     "modeSnapshot": "当前快照",
     "modeLatestHint": "链接始终展示简历的最新内容",
-    "modeSnapshotHint": "链接展示此刻的简历内容，后续编辑不影响",
+    "modeSnapshotHint": "创建链接时会自动保存一个历史版本，后续编辑不会影响这份分享内容",
     "passwordLabel": "密码保护",
     "passwordPlaceholder": "设置访问密码",
     "passwordHint": "开启后，访问者需输入密码才能查看",

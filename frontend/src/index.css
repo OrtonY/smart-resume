@@ -782,6 +782,124 @@ a {
   text-align: center;
 }
 
+.resume-version-modal-shell .ant-modal-body {
+  height: min(680px, calc(100dvh - 180px));
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.resume-version-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.resume-version-modal__toolbar,
+.resume-version-modal__summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-version-modal__layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__timeline-card,
+.resume-version-modal__detail {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__timeline-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-version-modal__timeline-card .ant-card-body,
+.resume-version-modal__detail {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.resume-version-modal__timeline-card .ant-card-body {
+  flex: 1;
+}
+
+.resume-version-modal__timeline-button {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.resume-version-modal__timeline-button:hover,
+.resume-version-modal__timeline-button:focus-visible {
+  border-color: rgba(49, 87, 164, 0.28);
+  box-shadow: 0 10px 26px rgba(49, 87, 164, 0.12);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.resume-version-modal__timeline-button--active {
+  border-color: rgba(49, 87, 164, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 248, 255, 0.88)),
+    radial-gradient(circle at top right, rgba(49, 87, 164, 0.08), transparent 36%);
+}
+
+.resume-version-modal__empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+}
+
+.resume-version-modal__descriptions .ant-descriptions-item-label {
+  width: 112px;
+}
+
+.resume-version-modal__diff-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.resume-version-modal__diff-card {
+  border-radius: 18px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__diff-items {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.resume-version-modal__diff-items li + li {
+  margin-top: 8px;
+}
+
 .resume-editor-rail,
 .resume-editor-stack__card {
   padding-right: 4px;
@@ -3241,6 +3359,15 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     justify-items: start;
   }
 
+  .resume-version-modal-shell .ant-modal-body {
+    height: min(680px, calc(100dvh - 160px));
+  }
+
+  .resume-version-modal__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(160px, 0.42fr) minmax(0, 1fr);
+  }
+
   .public-share-page {
     padding: 12px;
   }
@@ -3453,6 +3580,50 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     height: 44px;
     color: rgba(20, 33, 61, 0.55);
     background: rgba(20, 33, 61, 0.04);
+  }
+
+  .resume-version-modal__toolbar,
+  .resume-version-modal__summary-head {
+    align-items: stretch;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .ant-drawer-body {
+    overflow: hidden;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .resume-version-modal {
+    min-height: 0;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .resume-version-modal__layout {
+    grid-template-rows: minmax(140px, 0.38fr) minmax(0, 1fr);
+  }
+
+  .resume-version-modal__toolbar {
+    gap: 10px;
+  }
+
+  .resume-version-modal__toolbar > div {
+    min-width: 0;
+  }
+
+  .resume-version-modal__timeline-card .ant-timeline {
+    padding-inline-start: 0;
+  }
+
+  .resume-version-modal__toolbar .ant-space,
+  .resume-version-modal__summary-head .ant-space {
+    width: 100%;
+  }
+
+  .resume-version-modal__toolbar .ant-space .ant-space-item,
+  .resume-version-modal__summary-head .ant-space .ant-space-item {
+    flex: 1;
+  }
+
+  .resume-version-modal__toolbar .ant-btn,
+  .resume-version-modal__summary-head .ant-btn {
+    width: 100%;
   }
 
   /* Auth */
