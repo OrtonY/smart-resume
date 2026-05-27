@@ -7,6 +7,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.security.CurrentUserContext;
@@ -30,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 @SpringBootTest
 class InterviewServiceTest {
@@ -252,7 +255,7 @@ class InterviewServiceTest {
                 Class<?> responseType = invocation.getArgument(1);
                 if ("CompanyContextSummaryResult".equals(responseType.getSimpleName())) {
                     return instantiatePrivateRecord(
-                        "com.smartresume.interview.service.InterviewService$CompanyContextSummaryResult",
+                        "com.smartresume.interview.service.InterviewAiOrchestrationService$CompanyContextSummaryResult",
                         List.of("主营云基础设施与企业数字化服务", "重视稳定性、规模化和复杂业务场景")
                     );
                 }
@@ -352,6 +355,79 @@ class InterviewServiceTest {
             .contains("即使候选人回答中提到了技术栈，也不要记录")
             .contains("{\"topics\":[\"Spring Boot\",\"Redis\"]}")
             .contains("CANDIDATE: 我在自我介绍中提到过 Spring Boot 和 Redis");
+    }
+
+    @Test
+    void streamMessageCarriesPreviousRoundTopicsIntoPrompt() {
+        when(aiChatService.callStructured(any(AiInvocationRequest.class), any()))
+            .thenAnswer((invocation) -> {
+                Class<?> responseType = invocation.getArgument(1);
+                if ("RoundTopicExtractionResult".equals(responseType.getSimpleName())) {
+                    return instantiatePrivateRecord(
+                        "com.smartresume.interview.service.InterviewAiOrchestrationService$RoundTopicExtractionResult",
+                        List.of("KafkaTopicAlpha", "RedisTopicBeta")
+                    );
+                }
+                return null;
+            });
+        when(aiChatService.stream(any(AiInvocationRequest.class)))
+            .thenReturn(Flux.just(
+                new AiChatEvent("message", "Follow-up question", null),
+                new AiChatEvent("done", "", null)
+            ));
+
+        String resumeId = createResume("Stream Prompt Resume");
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Stream Prompt Interview",
+            "Focus on API design and stability",
+            "MEDIUM",
+            List.of("Leader", "椤圭洰娣辨寲")
+        ));
+        interviewService.submitMessage(created.id(), new InterviewMessageRequest("I improved order throughput."));
+        interviewService.nextRound(created.id());
+
+        StepVerifier.create(
+                interviewService.streamMessage(created.id(), new InterviewMessageRequest("I would add retries and tracing."))
+            )
+            .expectNextCount(2)
+            .verifyComplete();
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService, atLeastOnce()).stream(captor.capture());
+
+        AiInvocationRequest streamRequest = captor.getValue();
+        assertThat(streamRequest.conversationId()).isEqualTo("interview-" + created.id() + "-round-1");
+        assertThat(streamRequest.systemPrompt()).contains("KafkaTopicAlpha", "RedisTopicBeta");
+    }
+
+    @Test
+    void nextRoundIgnoresMalformedPreviousRoundTopics() {
+        String resumeId = createResume("Malformed Topic Resume");
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Malformed Topic Interview",
+            "Focus on distributed systems",
+            "MEDIUM",
+            List.of("Leader", "椤圭洰娣辨寲", "HR")
+        ));
+
+        interviewService.nextRound(created.id());
+        jdbcTemplate.update(
+            "insert into interview_round_topics (id, user_id, session_id, round_index, topics_json) values (?, ?, ?, ?, ?)",
+            UUID.randomUUID().toString(),
+            1L,
+            created.id(),
+            0,
+            "{bad json"
+        );
+
+        InterviewDetailResponse thirdRound = interviewService.nextRound(created.id());
+
+        assertThat(thirdRound.activeRoundIndex()).isEqualTo(2);
     }
 
     private String createResume(String title) {
