@@ -195,7 +195,7 @@ cd ..
 2. 安装前端依赖并构建前端（多入口：`index.html` 用于应用，`export.html` 用于服务端 PDF 渲染）。
 3. 把构建好的 `frontend/dist/` 同步到 `backend/src/main/resources/static/`，让 Spring Boot 直接 serve。
 4. 打包后端 JAR。
-5. 安装 Playwright 自带的 Chromium（高质量 PDF 导出所需）。
+5. 检查 Playwright 自带的 Chromium 是否已安装，只有缺失时才安装（高质量 PDF 导出所需）。
 6. 启动后端，同一端口同时提供 API 和前端页面。
 
 如果只想构建不启动，可使用：
@@ -260,7 +260,7 @@ AI 功能通过应用内界面进行配置。当前后端支持：
 - 公开分享页既支持无密码访问，也支持密码保护。已登录用户和分享访客都可以下载高质量 PDF（前提是服务端已配置好导出能力）。
 - PDF 导出有两条路径：
   - **快速导出**（前端 `html2canvas` + `jspdf`）：始终可用，浏览器端生成。输出是图片型 PDF，文本不可选、ATS 无法解析。
-  - **高质量导出**（服务端 Playwright + Chromium）：输出真实文本、ATS 友好、与前端预览像素级一致的 PDF。需要先执行 `start.sh` / `build.sh`，把前端 `dist/` 同步到 `static/` 并安装 Chromium。
+  - **高质量导出**（服务端 Playwright + Chromium）：输出真实文本、ATS 友好、与前端预览像素级一致的 PDF。需要先执行 `start.sh` / `build.sh`，把前端 `dist/` 同步到 `static/`，并检查 Chromium，缺失时才安装。
   - 如果服务器缺少其中任意一项（前端资源未复制、或 Chromium 未安装），后端仍可正常启动；只有高质量导出接口会返回 503 并附带本地化错误提示，其他功能不受影响。
 - 前端还有单独的包级文档可参考：[frontend/README.md](./frontend/README.md)。
 

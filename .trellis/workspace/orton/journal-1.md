@@ -1607,3 +1607,37 @@ Persisted AI resume suggestion cards with durable statuses, fixed stream user co
 ### Next Steps
 
 - None - task complete
+
+
+## Session 49: Fix Playwright export dependency checks
+
+**Date**: 2026-05-27
+**Task**: Fix Playwright export dependency checks
+**Branch**: `fix/playwright-env-check`
+
+### Summary
+
+Prevent backend PDF export availability checks from triggering Playwright browser downloads, make build/start install Chromium only when missing, and sync the frontend lockfile version.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2756bdb` | (see git log) |
+| `b4e4230` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
