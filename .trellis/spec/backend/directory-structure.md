@@ -62,7 +62,39 @@ Use these placement rules:
 
 When a feature grows beyond one or two services, prefer introducing its own package instead of extending `common`.
 
----
+### Refactor Baseline (Resume / Interview)
+
+The current extensibility baseline keeps feature boundaries unchanged (`resume`, `interview`) while splitting oversized services into narrower collaborators.
+
+`resume` module service roles:
+
+* `ResumeService`: feature entry orchestration used by controllers.
+* `ResumeLookupService`: owned-resume lookup and active-state validation.
+* `ResumeContentService`: section payload read/write, layout normalization, JSON conversion.
+* `ResumeVersionService`: snapshot capture and version-detail reconstruction.
+
+`interview` module service roles:
+
+* `InterviewService`: workflow orchestration for create, pause, continue, next-round, submit, stream, and end.
+* `InterviewQueryService`: list/detail query composition and response assembly.
+* `InterviewSessionSupportService`: shared session/message/round-topic persistence helpers and status guards.
+* `InterviewAiOrchestrationService`: AI prompt composition, normal call/stream call, topic/context extraction.
+* `InterviewConstants`: feature-local business thresholds and enumerated status values.
+
+Boundary rule:
+
+* Controllers call only feature entry/orchestration services; they do not compose mapper-level details directly.
+* Feature-local constants stay inside the feature package unless reused across features.
+* Cross-feature defaults (for example common paging defaults) should live under `common` with explicit ownership.
+
+### Routing Convention
+
+* External API examples in specs continue to use `/api/...` paths.
+* Backend controllers should declare feature-local mappings only, for example `@RequestMapping("/resumes")`, and should not hardcode the shared `/api` prefix.
+* The shared API prefix is configured through `app.api-prefix` in `application.yml` and applied centrally by `common/config/WebMvcConfig`.
+* Interceptor path patterns that protect API routes must derive from the same configured prefix instead of duplicating literal `/api/**` strings.
+
+--- 
 
 ## Naming Conventions
 

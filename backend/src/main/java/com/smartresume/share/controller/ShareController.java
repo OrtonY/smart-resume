@@ -36,34 +36,34 @@ public class ShareController {
         this.pdfExportService = pdfExportService;
     }
 
-    @PostMapping("/api/resumes/{resumeId}/shares")
+    @PostMapping("/resumes/{resumeId}/shares")
     public ApiResponse<ShareLinkResponse> createShare(@PathVariable String resumeId, @Valid @RequestBody CreateShareRequest request) {
         return ApiResponse.success(shareService.createShare(resumeId, request), "Share link created");
     }
 
-    @GetMapping("/api/resumes/{resumeId}/shares")
+    @GetMapping("/resumes/{resumeId}/shares")
     public ApiResponse<List<ShareLinkResponse>> listShares(@PathVariable String resumeId) {
         return ApiResponse.success(shareService.listShares(resumeId));
     }
 
-    @GetMapping("/api/resumes/{resumeId}/shares/{shareCode}/access-logs")
+    @GetMapping("/resumes/{resumeId}/shares/{shareCode}/access-logs")
     public ApiResponse<ShareAccessLogsPage> getAccessLogs(@PathVariable String resumeId, @PathVariable String shareCode) {
         return ApiResponse.success(shareService.getAccessLogs(resumeId, shareCode));
     }
 
-    @PutMapping("/api/resumes/{resumeId}/shares/{shareCode}/toggle")
+    @PutMapping("/resumes/{resumeId}/shares/{shareCode}/toggle")
     public ApiResponse<Void> toggleShare(@PathVariable String resumeId, @PathVariable String shareCode) {
         shareService.deactivateShare(resumeId, shareCode);
         return ApiResponse.success(null, "Share link toggled");
     }
 
-    @DeleteMapping("/api/resumes/{resumeId}/shares/{shareCode}")
+    @DeleteMapping("/resumes/{resumeId}/shares/{shareCode}")
     public ApiResponse<Void> deleteShare(@PathVariable String resumeId, @PathVariable String shareCode) {
         shareService.deleteShare(resumeId, shareCode);
         return ApiResponse.success(null, "Share link deleted");
     }
 
-    @GetMapping("/api/public/shares/{shareCode}")
+    @GetMapping("/public/shares/{shareCode}")
     public ApiResponse<ResumeDetailResponse> getPublicShare(
             @PathVariable String shareCode,
             @RequestHeader(value = SHARE_TOKEN_HEADER, required = false) String shareToken,
@@ -72,14 +72,14 @@ public class ShareController {
         return ApiResponse.success(shareService.getPublicShare(shareCode, shareToken, ipAddress));
     }
 
-    @PostMapping("/api/public/shares/{shareCode}/verify")
+    @PostMapping("/public/shares/{shareCode}/verify")
     public ApiResponse<ShareTokenResponse> verifySharePassword(
             @PathVariable String shareCode,
             @Valid @RequestBody VerifySharePasswordRequest request) {
         return ApiResponse.success(shareService.verifyPassword(shareCode, request.password()), "Password verified");
     }
 
-    @GetMapping("/api/public/shares/{shareCode}/export/pdf")
+    @GetMapping("/public/shares/{shareCode}/export/pdf")
     public ResponseEntity<byte[]> exportSharePdf(
             @PathVariable String shareCode,
             @RequestHeader(value = SHARE_TOKEN_HEADER, required = false) String shareToken,

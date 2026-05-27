@@ -1,5 +1,6 @@
 package com.smartresume.resume.controller;
 
+import com.smartresume.common.api.ApiPageDefaults;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCopyRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeCreateRequest;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/resumes")
+@RequestMapping("/resumes")
 public class ResumeController {
 
     private final ResumeService resumeService;
@@ -33,8 +34,8 @@ public class ResumeController {
     public ApiResponse<ResumePageResponse> listResumes(
         @RequestParam(defaultValue = "false") boolean includeDeleted,
         @RequestParam(defaultValue = "false") boolean deletedOnly,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "6") int pageSize
+        @RequestParam(defaultValue = ApiPageDefaults.DEFAULT_PAGE) int page,
+        @RequestParam(defaultValue = ApiPageDefaults.DEFAULT_PAGE_SIZE) int pageSize
     ) {
         return ApiResponse.success(resumeService.listResumes(includeDeleted, deletedOnly, page, pageSize));
     }

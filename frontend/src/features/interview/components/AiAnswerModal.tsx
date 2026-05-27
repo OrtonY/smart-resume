@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { getAssist, streamAssistAnswer, streamAssistScore } from '../api/interviewApi'
+import { INTERVIEW_MODAL_WIDTH, INTERVIEW_SCROLL_BOTTOM_THRESHOLD } from '../constants'
 import type { AssistStatus, InterviewAssistDto } from '../types'
 
 interface AiAnswerModalProps {
@@ -181,7 +182,7 @@ export function AiAnswerModal({
   }
 
   function isNearBottom(target: HTMLDivElement) {
-    return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
+    return target.scrollHeight - target.scrollTop - target.clientHeight <= INTERVIEW_SCROLL_BOTTOM_THRESHOLD
   }
 
   function scrollContentToBottom(behavior: ScrollBehavior = 'auto') {
@@ -250,7 +251,7 @@ export function AiAnswerModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      width={720}
+      width={INTERVIEW_MODAL_WIDTH}
       destroyOnHidden
       className="ai-answer-modal"
       mobileHeight="92vh"

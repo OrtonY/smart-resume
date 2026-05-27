@@ -7,6 +7,7 @@ import com.smartresume.common.security.AuthTokenProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import javax.crypto.Mac;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class ShareTokenService {
 
     private static final String HMAC_SHA_256 = "HmacSHA256";
-    private static final long TOKEN_VALIDITY_SECONDS = 24 * 60 * 60; // 24 hours
+    private static final Duration TOKEN_VALIDITY = Duration.ofHours(24);
 
     private final ObjectMapper objectMapper;
     private final AuthTokenProperties properties;
@@ -33,7 +34,7 @@ public class ShareTokenService {
         ShareTokenPayload payload = new ShareTokenPayload(
             shareCode,
             now.getEpochSecond(),
-            now.plusSeconds(TOKEN_VALIDITY_SECONDS).getEpochSecond()
+            now.plusSeconds(TOKEN_VALIDITY.getSeconds()).getEpochSecond()
         );
         String encodedPayload = encodePayload(payload);
         return encodedPayload + "." + sign(encodedPayload);

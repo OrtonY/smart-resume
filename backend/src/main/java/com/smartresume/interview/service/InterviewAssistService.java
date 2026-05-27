@@ -1,24 +1,17 @@
 package com.smartresume.interview.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
-import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.domain.InterviewAiAssistEntity;
 import com.smartresume.interview.domain.InterviewMessageEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
 import com.smartresume.interview.domain.table.InterviewAiAssistEntityTableDef;
-import com.smartresume.interview.domain.table.InterviewMessageEntityTableDef;
 import com.smartresume.interview.dto.InterviewAssistDtos.InterviewAssistResponse;
 import com.smartresume.interview.mapper.InterviewAiAssistMapper;
-import com.smartresume.interview.mapper.InterviewMessageMapper;
-import com.smartresume.interview.mapper.InterviewSessionMapper;
 import com.smartresume.resume.domain.ResumeEntity;
-import com.smartresume.resume.mapper.ResumeMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,65 +29,65 @@ public class InterviewAssistService {
     private static final Logger log = LoggerFactory.getLogger(InterviewAssistService.class);
     private static final Pattern SCORE_PATTERN = Pattern.compile("^SCORE:\\s*(\\d+)");
 
-    private final InterviewSessionMapper interviewSessionMapper;
-    private final InterviewMessageMapper interviewMessageMapper;
     private final InterviewAiAssistMapper interviewAiAssistMapper;
-    private final ResumeMapper resumeMapper;
-    private final ObjectMapper objectMapper;
     private final AiChatService aiChatService;
+    private final InterviewSessionSupportService sessionSupportService;
 
     public InterviewAssistService(
-        InterviewSessionMapper interviewSessionMapper,
-        InterviewMessageMapper interviewMessageMapper,
         InterviewAiAssistMapper interviewAiAssistMapper,
-        ResumeMapper resumeMapper,
-        ObjectMapper objectMapper,
-        AiChatService aiChatService
+        AiChatService aiChatService,
+        InterviewSessionSupportService sessionSupportService
     ) {
-        this.interviewSessionMapper = interviewSessionMapper;
-        this.interviewMessageMapper = interviewMessageMapper;
         this.interviewAiAssistMapper = interviewAiAssistMapper;
-        this.resumeMapper = resumeMapper;
-        this.objectMapper = objectMapper;
         this.aiChatService = aiChatService;
+        this.sessionSupportService = sessionSupportService;
     }
 
     public InterviewAssistResponse getAssist(String sessionId, String messageId) {
-        InterviewSessionEntity session = requireSession(sessionId);
-        requireInterviewerMessage(messageId, session);
+        InterviewSessionEntity session = sessionSupportService.requireSession(sessionId);
+        sessionSupportService.requireInterviewerMessage(messageId, session);
 
         InterviewAiAssistEntity entity = findByMessageId(messageId);
         if (entity == null) {
             return new InterviewAssistResponse(
-                null, messageId, sessionId,
-                null, "PENDING",
-                null, null, null, "PENDING",
-                null, null
+                null,
+                messageId,
+                sessionId,
+                null,
+                "PENDING",
+                null,
+                null,
+                null,
+                "PENDING",
+                null,
+                null
             );
         }
         return toResponse(entity);
     }
 
     public Flux<AiChatEvent> streamAnswer(String sessionId, String messageId) {
-        InterviewSessionEntity session = requireSession(sessionId);
-        InterviewMessageEntity questionMessage = requireInterviewerMessage(messageId, session);
+        InterviewSessionEntity session = sessionSupportService.requireSession(sessionId);
+        InterviewMessageEntity questionMessage = sessionSupportService.requireInterviewerMessage(messageId, session);
 
         InterviewAiAssistEntity entity = findOrCreateAssist(messageId, sessionId, session.getUserId());
         entity.setAnswerStatus("GENERATING");
         entity.setUpdatedAt(LocalDateTime.now());
         interviewAiAssistMapper.update(entity);
 
-        ResumeEntity resume = session.getResumeId() != null ? loadResume(session.getResumeId(), session.getUserId()) : null;
+        ResumeEntity resume = session.getResumeId() != null
+            ? sessionSupportService.loadOwnedResume(session.getResumeId(), session.getUserId())
+            : null;
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
-        List<String> roles = readInterviewerRoles(session);
+        List<String> roles = sessionSupportService.readInterviewerRolesBestEffort(session);
         int roundIndex = questionMessage.getRoundIndex() != null ? questionMessage.getRoundIndex() : 0;
         String currentRole = roundIndex < roles.size() ? roles.get(roundIndex) : roles.isEmpty() ? "面试官" : roles.getFirst();
 
-        boolean companyContextEnabled = "READY".equals(session.getCompanyContextStatus())
-            && session.getTargetCompany() != null
-            && session.getCompanyContextSummaryJson() != null;
-        List<String> companySummary = companyContextEnabled ? readCompanyContextSummary(session) : List.of();
+        boolean companyContextEnabled = sessionSupportService.companyContextEnabled(session);
+        List<String> companySummary = companyContextEnabled
+            ? sessionSupportService.readCompanyContextSummaryBestEffort(session)
+            : List.of();
         String targetCompany = companyContextEnabled ? session.getTargetCompany() : null;
 
         String systemPrompt = InterviewPromptBuilder.buildAnswerSystemPrompt(
@@ -120,7 +113,9 @@ public class InterviewAssistService {
                 }
             })
             .doOnComplete(() -> {
-                if (completed[0]) return;
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
                 entity.setAnswerContent(assistantText.toString());
                 entity.setAnswerStatus(assistantText.isEmpty() ? "FAILED" : "READY");
@@ -128,17 +123,21 @@ public class InterviewAssistService {
                 interviewAiAssistMapper.update(entity);
             })
             .doOnCancel(() -> {
-                if (completed[0]) return;
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
                 entity.setAnswerContent(assistantText.toString());
                 entity.setAnswerStatus(assistantText.isEmpty() ? "FAILED" : "READY");
                 entity.setUpdatedAt(LocalDateTime.now());
                 interviewAiAssistMapper.update(entity);
             })
-            .doOnError(err -> {
-                if (completed[0]) return;
+            .doOnError(error -> {
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
-                log.error("AI answer stream error for session {} message {}: {}", sessionId, messageId, err.getMessage());
+                log.error("AI answer stream error for session {} message {}: {}", sessionId, messageId, error.getMessage());
                 entity.setAnswerContent(assistantText.isEmpty() ? null : assistantText.toString());
                 entity.setAnswerStatus("FAILED");
                 entity.setUpdatedAt(LocalDateTime.now());
@@ -151,8 +150,8 @@ public class InterviewAssistService {
             throw new AppException(HttpStatus.BAD_REQUEST, "请先输入回答内容再进行评分");
         }
 
-        InterviewSessionEntity session = requireSession(sessionId);
-        InterviewMessageEntity questionMessage = requireInterviewerMessage(messageId, session);
+        InterviewSessionEntity session = sessionSupportService.requireSession(sessionId);
+        InterviewMessageEntity questionMessage = sessionSupportService.requireInterviewerMessage(messageId, session);
 
         InterviewAiAssistEntity entity = findOrCreateAssist(messageId, sessionId, session.getUserId());
         entity.setScoreStatus("GENERATING");
@@ -160,17 +159,19 @@ public class InterviewAssistService {
         entity.setUpdatedAt(LocalDateTime.now());
         interviewAiAssistMapper.update(entity);
 
-        ResumeEntity resume = session.getResumeId() != null ? loadResume(session.getResumeId(), session.getUserId()) : null;
+        ResumeEntity resume = session.getResumeId() != null
+            ? sessionSupportService.loadOwnedResume(session.getResumeId(), session.getUserId())
+            : null;
         String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
 
-        List<String> roles = readInterviewerRoles(session);
+        List<String> roles = sessionSupportService.readInterviewerRolesBestEffort(session);
         int roundIndex = questionMessage.getRoundIndex() != null ? questionMessage.getRoundIndex() : 0;
         String currentRole = roundIndex < roles.size() ? roles.get(roundIndex) : roles.isEmpty() ? "面试官" : roles.getFirst();
 
-        boolean companyContextEnabled = "READY".equals(session.getCompanyContextStatus())
-            && session.getTargetCompany() != null
-            && session.getCompanyContextSummaryJson() != null;
-        List<String> companySummary = companyContextEnabled ? readCompanyContextSummary(session) : List.of();
+        boolean companyContextEnabled = sessionSupportService.companyContextEnabled(session);
+        List<String> companySummary = companyContextEnabled
+            ? sessionSupportService.readCompanyContextSummaryBestEffort(session)
+            : List.of();
         String targetCompany = companyContextEnabled ? session.getTargetCompany() : null;
 
         String systemPrompt = InterviewPromptBuilder.buildScoreSystemPrompt(
@@ -197,19 +198,25 @@ public class InterviewAssistService {
                 }
             })
             .doOnComplete(() -> {
-                if (completed[0]) return;
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
                 parseAndPersistScore(entity, assistantText.toString());
             })
             .doOnCancel(() -> {
-                if (completed[0]) return;
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
                 parseAndPersistScore(entity, assistantText.toString());
             })
-            .doOnError(err -> {
-                if (completed[0]) return;
+            .doOnError(error -> {
+                if (completed[0]) {
+                    return;
+                }
                 completed[0] = true;
-                log.error("AI score stream error for session {} message {}: {}", sessionId, messageId, err.getMessage());
+                log.error("AI score stream error for session {} message {}: {}", sessionId, messageId, error.getMessage());
                 entity.setFeedback(assistantText.isEmpty() ? null : assistantText.toString());
                 entity.setScoreStatus("FAILED");
                 entity.setUpdatedAt(LocalDateTime.now());
@@ -232,7 +239,7 @@ public class InterviewAssistService {
         if (matcher.find()) {
             try {
                 int parsed = Integer.parseInt(matcher.group(1));
-                score = Math.max(0, Math.min(100, parsed));
+                score = Math.max(InterviewConstants.SCORE_MIN, Math.min(InterviewConstants.SCORE_MAX, parsed));
             } catch (NumberFormatException ignored) {
             }
             int feedbackStart = fullText.indexOf("\n", matcher.end());
@@ -272,63 +279,6 @@ public class InterviewAssistService {
         entity.setUpdatedAt(now);
         interviewAiAssistMapper.insert(entity);
         return entity;
-    }
-
-    private InterviewSessionEntity requireSession(String sessionId) {
-        long userId = CurrentUserContext.requireUserId();
-        InterviewSessionEntity session = interviewSessionMapper.selectOneById(sessionId);
-        if (session == null || !Long.valueOf(userId).equals(session.getUserId())) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Interview not found");
-        }
-        return session;
-    }
-
-    private InterviewMessageEntity requireInterviewerMessage(String messageId, InterviewSessionEntity session) {
-        InterviewMessageEntityTableDef table = InterviewMessageEntityTableDef.INTERVIEW_MESSAGE_ENTITY;
-        QueryWrapper query = QueryWrapper.create()
-            .where(table.ID.eq(messageId))
-            .and(table.SESSION_ID.eq(session.getId()))
-            .and(table.USER_ID.eq(session.getUserId()));
-        InterviewMessageEntity message = interviewMessageMapper.selectOneByQuery(query);
-        if (message == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Message not found");
-        }
-        if (!"INTERVIEWER".equals(message.getRole())) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Only interviewer messages support AI assist");
-        }
-        return message;
-    }
-
-    private ResumeEntity loadResume(String resumeId, Long userId) {
-        ResumeEntity resume = resumeMapper.selectOneById(resumeId);
-        if (resume == null || !userId.equals(resume.getUserId())) {
-            return null;
-        }
-        return resume;
-    }
-
-    private List<String> readInterviewerRoles(InterviewSessionEntity session) {
-        String json = session.getInterviewerRolesJson();
-        if (json == null || json.isBlank()) {
-            return List.of();
-        }
-        try {
-            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
-    }
-
-    private List<String> readCompanyContextSummary(InterviewSessionEntity session) {
-        String json = session.getCompanyContextSummaryJson();
-        if (json == null || json.isBlank()) {
-            return List.of();
-        }
-        try {
-            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
     }
 
     private InterviewAssistResponse toResponse(InterviewAiAssistEntity entity) {
