@@ -99,6 +99,6 @@ fi
 
 echo ""
 echo "=== Build complete ==="
-echo "Backend JAR: $BACKEND_DIR/target/backend-1.0.0.jar"
+echo "Backend JAR: $BACKEND_DIR/target/backend-1.1.1.jar"
 echo ""
-echo "To start: java -jar backend/target/backend-1.0.0.jar"
+echo "To start: java -jar backend/target/backend-1.1.1.jar"
