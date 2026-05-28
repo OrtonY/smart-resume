@@ -61,6 +61,7 @@ class InterviewServiceTest {
         jdbcTemplate.execute("""
             create table if not exists resumes (
                 id varchar(64) primary key,
+                user_id bigint not null,
                 title varchar(200) not null,
                 template_key varchar(80) not null,
                 layout_json text,
@@ -71,8 +72,21 @@ class InterviewServiceTest {
             )
             """);
         jdbcTemplate.execute("""
+            create table if not exists resume_sections (
+                id varchar(64) primary key,
+                user_id bigint not null,
+                resume_id varchar(64) not null,
+                section_type varchar(64) not null,
+                sort_order integer not null,
+                content_json text,
+                created_at timestamp not null,
+                updated_at timestamp not null
+            )
+            """);
+        jdbcTemplate.execute("""
             create table if not exists interview_sessions (
                 id varchar(64) primary key,
+                user_id bigint not null,
                 resume_id varchar(64) null,
                 title varchar(200) not null,
                 ai_conversation_id varchar(128) not null unique,
@@ -100,6 +114,7 @@ class InterviewServiceTest {
             create table if not exists interview_messages (
                 id varchar(64) primary key,
                 session_id varchar(64) not null,
+                user_id bigint not null,
                 role varchar(30) not null,
                 content text not null,
                 sort_order integer not null,
@@ -111,6 +126,7 @@ class InterviewServiceTest {
         jdbcTemplate.execute("""
             create table if not exists interview_round_topics (
                 id varchar(36) primary key,
+                user_id bigint not null,
                 session_id varchar(36) not null,
                 round_index int not null,
                 topics_json text not null default '[]'
@@ -129,6 +145,7 @@ class InterviewServiceTest {
         jdbcTemplate.update("delete from interview_round_topics");
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");
+        jdbcTemplate.update("delete from resume_sections");
         jdbcTemplate.update("delete from resumes");
 
         when(aiChatService.call(any(AiInvocationRequest.class)))

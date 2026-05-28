@@ -20,14 +20,12 @@ import type {
   AiChatConversation,
   AiChatMessage,
   AiConfigurationRequest,
-  AiResumeContext,
   AiResumeSuggestion,
   AiResumeSuggestionStatus,
   AiResumeSuggestionPlan,
   VendorMetadata,
 } from '../types'
 import type { ResumeDetail } from '../../resume/types'
-import { toAiResumeContext } from '../resumeContext'
 
 const { Text } = Typography
 
@@ -148,8 +146,6 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   // assistant message (with its suggestions) with the historical version. Skip that one
   // immediate reload so the optimistic in-memory round stays intact.
   const skipNextHistoryReloadRef = useRef(false)
-
-  const resumeContext = useMemo<AiResumeContext>(() => toAiResumeContext(draft), [draft])
 
   function isNearBottom(target: HTMLDivElement) {
     return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
@@ -442,7 +438,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
       await streamAiChat({
         message: trimmed,
         conversationId: selectedConversationId ?? undefined,
-        resume: resumeContext,
+        resumeId: draft.id,
       }, (event) => {
         receivedAnyEvent = true
         if (event.type === 'error') {
@@ -480,7 +476,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
           const response = await completeAiChat({
             message: trimmed,
             conversationId: selectedConversationId ?? undefined,
-            resume: resumeContext,
+            resumeId: draft.id,
           })
           const suggestions = parseSuggestionPlan(response.suggestionJson)
           activeConversationId = response.conversationId || activeConversationId
