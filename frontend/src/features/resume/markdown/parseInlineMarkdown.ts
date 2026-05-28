@@ -1,4 +1,5 @@
 import { fromMarkdown } from 'mdast-util-from-markdown'
+import { normalizeMarkdownBoldForCjk, stripMarkdownCompatMarkers } from '../../../lib/markdown/boldCompatibility'
 import type { BlockNode, InlineNode } from './types'
 
 interface MdastNode {
@@ -17,7 +18,7 @@ interface MdastNode {
  */
 export function parseMarkdownBlocks(input: string): BlockNode[] {
   if (!input) return []
-  const tree = fromMarkdown(input) as MdastNode
+  const tree = fromMarkdown(normalizeMarkdownBoldForCjk(input)) as MdastNode
   return collectBlocks(tree)
 }
 
@@ -118,7 +119,7 @@ function walkInlines(children: MdastNode[]): InlineNode[] {
 function walkInlineNode(node: MdastNode): InlineNode[] {
   switch (node.type) {
     case 'text': {
-      const value = node.value ?? ''
+      const value = stripMarkdownCompatMarkers(node.value ?? '')
       if (!value) return []
       return [{ type: 'text', text: value }]
     }
@@ -133,7 +134,7 @@ function walkInlineNode(node: MdastNode): InlineNode[] {
       return [{ type: 'italic', children: inner }]
     }
     case 'inlineCode': {
-      const value = node.value ?? ''
+      const value = stripMarkdownCompatMarkers(node.value ?? '')
       if (!value) return []
       return [{ type: 'code', text: value }]
     }
@@ -155,7 +156,7 @@ function walkInlineNode(node: MdastNode): InlineNode[] {
       if (node.children) {
         return walkInlines(node.children)
       }
-      const value = node.value ?? ''
+      const value = stripMarkdownCompatMarkers(node.value ?? '')
       if (value) {
         return [{ type: 'text', text: value }]
       }
