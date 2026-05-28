@@ -7,6 +7,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.security.CurrentUserContext;
@@ -30,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 @SpringBootTest
 class InterviewServiceTest {
@@ -58,6 +61,7 @@ class InterviewServiceTest {
         jdbcTemplate.execute("""
             create table if not exists resumes (
                 id varchar(64) primary key,
+                user_id bigint not null,
                 title varchar(200) not null,
                 template_key varchar(80) not null,
                 layout_json text,
@@ -68,8 +72,21 @@ class InterviewServiceTest {
             )
             """);
         jdbcTemplate.execute("""
+            create table if not exists resume_sections (
+                id varchar(64) primary key,
+                user_id bigint not null,
+                resume_id varchar(64) not null,
+                section_type varchar(64) not null,
+                sort_order integer not null,
+                content_json text,
+                created_at timestamp not null,
+                updated_at timestamp not null
+            )
+            """);
+        jdbcTemplate.execute("""
             create table if not exists interview_sessions (
                 id varchar(64) primary key,
+                user_id bigint not null,
                 resume_id varchar(64) null,
                 title varchar(200) not null,
                 ai_conversation_id varchar(128) not null unique,
@@ -97,6 +114,7 @@ class InterviewServiceTest {
             create table if not exists interview_messages (
                 id varchar(64) primary key,
                 session_id varchar(64) not null,
+                user_id bigint not null,
                 role varchar(30) not null,
                 content text not null,
                 sort_order integer not null,
@@ -108,6 +126,7 @@ class InterviewServiceTest {
         jdbcTemplate.execute("""
             create table if not exists interview_round_topics (
                 id varchar(36) primary key,
+                user_id bigint not null,
                 session_id varchar(36) not null,
                 round_index int not null,
                 topics_json text not null default '[]'
@@ -126,6 +145,7 @@ class InterviewServiceTest {
         jdbcTemplate.update("delete from interview_round_topics");
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");
+        jdbcTemplate.update("delete from resume_sections");
         jdbcTemplate.update("delete from resumes");
 
         when(aiChatService.call(any(AiInvocationRequest.class)))
@@ -252,7 +272,7 @@ class InterviewServiceTest {
                 Class<?> responseType = invocation.getArgument(1);
                 if ("CompanyContextSummaryResult".equals(responseType.getSimpleName())) {
                     return instantiatePrivateRecord(
-                        "com.smartresume.interview.service.InterviewService$CompanyContextSummaryResult",
+                        "com.smartresume.interview.service.InterviewAiOrchestrationService$CompanyContextSummaryResult",
                         List.of("主营云基础设施与企业数字化服务", "重视稳定性、规模化和复杂业务场景")
                     );
                 }
@@ -352,6 +372,79 @@ class InterviewServiceTest {
             .contains("即使候选人回答中提到了技术栈，也不要记录")
             .contains("{\"topics\":[\"Spring Boot\",\"Redis\"]}")
             .contains("CANDIDATE: 我在自我介绍中提到过 Spring Boot 和 Redis");
+    }
+
+    @Test
+    void streamMessageCarriesPreviousRoundTopicsIntoPrompt() {
+        when(aiChatService.callStructured(any(AiInvocationRequest.class), any()))
+            .thenAnswer((invocation) -> {
+                Class<?> responseType = invocation.getArgument(1);
+                if ("RoundTopicExtractionResult".equals(responseType.getSimpleName())) {
+                    return instantiatePrivateRecord(
+                        "com.smartresume.interview.service.InterviewAiOrchestrationService$RoundTopicExtractionResult",
+                        List.of("KafkaTopicAlpha", "RedisTopicBeta")
+                    );
+                }
+                return null;
+            });
+        when(aiChatService.stream(any(AiInvocationRequest.class)))
+            .thenReturn(Flux.just(
+                new AiChatEvent("message", "Follow-up question", null),
+                new AiChatEvent("done", "", null)
+            ));
+
+        String resumeId = createResume("Stream Prompt Resume");
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Stream Prompt Interview",
+            "Focus on API design and stability",
+            "MEDIUM",
+            List.of("Leader", "椤圭洰娣辨寲")
+        ));
+        interviewService.submitMessage(created.id(), new InterviewMessageRequest("I improved order throughput."));
+        interviewService.nextRound(created.id());
+
+        StepVerifier.create(
+                interviewService.streamMessage(created.id(), new InterviewMessageRequest("I would add retries and tracing."))
+            )
+            .expectNextCount(2)
+            .verifyComplete();
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService, atLeastOnce()).stream(captor.capture());
+
+        AiInvocationRequest streamRequest = captor.getValue();
+        assertThat(streamRequest.conversationId()).isEqualTo("interview-" + created.id() + "-round-1");
+        assertThat(streamRequest.systemPrompt()).contains("KafkaTopicAlpha", "RedisTopicBeta");
+    }
+
+    @Test
+    void nextRoundIgnoresMalformedPreviousRoundTopics() {
+        String resumeId = createResume("Malformed Topic Resume");
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Malformed Topic Interview",
+            "Focus on distributed systems",
+            "MEDIUM",
+            List.of("Leader", "椤圭洰娣辨寲", "HR")
+        ));
+
+        interviewService.nextRound(created.id());
+        jdbcTemplate.update(
+            "insert into interview_round_topics (id, user_id, session_id, round_index, topics_json) values (?, ?, ?, ?, ?)",
+            UUID.randomUUID().toString(),
+            1L,
+            created.id(),
+            0,
+            "{bad json"
+        );
+
+        InterviewDetailResponse thirdRound = interviewService.nextRound(created.id());
+
+        assertThat(thirdRound.activeRoundIndex()).isEqualTo(2);
     }
 
     private String createResume(String title) {

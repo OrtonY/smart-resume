@@ -46,8 +46,7 @@
     "send": "发送",
     "loadConversationsFailed": "Failed to load AI chat conversations",
     "loadHistoryFailed": "Failed to load AI chat history",
-    "chatFailed": "AI chat failed",
-    "skippedSystemHint": "[系统提示：用户在上一轮主动跳过了以下建议，请不要再重复提出：\n{{lines}}\n]"
+    "chatFailed": "AI chat failed"
   },
   "suggestion": {
     "groupTitle": "AI 建议（{{count}}）",

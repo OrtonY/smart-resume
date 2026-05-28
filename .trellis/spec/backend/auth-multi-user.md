@@ -96,7 +96,7 @@ record TokenPayload(
 | Token expired or credential version mismatch | 401 Unauthorized | "Access token is no longer valid" |
 | No token on authenticated endpoint | 401 Unauthorized | "Authentication is required" |
 | Non-admin calls admin-only endpoint | 403 Forbidden | "Admin access is required" |
-| Change password with wrong current password | 401 Unauthorized | "Current password is incorrect" |
+| Change password with wrong current password | 400 Bad Request | "Current password is incorrect" |
 | Username < 3 or > 80 chars | 400 Bad Request | Jakarta validation message |
 | Password < 6 or > 64 chars (register/change) | 400 Bad Request | Jakarta validation message |
 
@@ -104,7 +104,7 @@ record TokenPayload(
 
 - **Good**: First user registers → becomes admin automatically. Subsequent users register when enabled → non-admin. Admin disables registration → new registrations rejected.
 - **Base**: Legacy single-user data migrated to seeded `admin` user (id=1). Old password hash preserved. User logs in with existing credentials.
-- **Bad**: Token issued before password change → rejected on next request (credentialVersion mismatch). Service code calls `CurrentUserContext.requireUserId()` without interceptor having run → 401.
+- **Bad**: Token issued before password change → rejected on next request (credentialVersion mismatch, even if login and password change happen within the same second). Service code calls `CurrentUserContext.requireUserId()` without interceptor having run → 401.
 
 ### 6. Tests Required
 
@@ -179,7 +179,7 @@ CREATE INDEX idx_<table>_user_<sort> ON <table> (user_id, <sort_column> DESC);
 2. Include `user_id = ?` in all queries (read and write)
 3. Set `entity.setUserId(userId)` on all new inserts
 
-**Exception**: Public share page reads (`/share/{code}`) bypass user filtering — they resolve by share code and check `active` flag only.
+**Exception**: Public share reads and verification endpoints (`GET /api/public/shares/{shareCode}/access`, `GET /api/public/shares/{shareCode}`, `POST /api/public/shares/{shareCode}/verify`) bypass `CurrentUserContext` user filtering; they resolve by share code and enforce `active` plus password/token checks in share-domain service logic.
 
 ### 4. Validation & Error Matrix
 

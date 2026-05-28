@@ -4,6 +4,7 @@ import {
   DownloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  HistoryOutlined,
   HolderOutlined,
   MessageOutlined,
   MoreOutlined,
@@ -50,6 +51,7 @@ import type {
 } from '../../types'
 import { EmptyPreview, ResumePreview } from '../ResumePreview'
 import { moduleAnchorId, type ResumeModuleDefinition, type ResumeModuleId } from './moduleDefinitions'
+import { ResumeVersionTimelineModal } from './ResumeVersionTimelineModal'
 
 const { Paragraph, Text } = Typography
 
@@ -70,6 +72,7 @@ interface ResumeEditorViewProps {
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onDragEnd: (event: DragEndEvent) => void
+  onRestoredVersion: (resume: ResumeDetail) => Promise<void> | void
   onShowSection: (sectionKey: ResumeSectionKey) => void
   onUpdateDraft: (mutator: (next: ResumeDetail) => void) => void
   orderedModuleDefinitions: ResumeModuleDefinition[]
@@ -96,6 +99,7 @@ export function ResumeEditorView({
   onFocusModule,
   onHideSection,
   onDragEnd,
+  onRestoredVersion,
   onShowSection,
   onUpdateDraft,
   orderedModuleDefinitions,
@@ -109,6 +113,7 @@ export function ResumeEditorView({
   const [mobileEditorTab, setMobileEditorTab] = useState<'structure' | 'content' | 'preview'>('content')
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [versionTimelineOpen, setVersionTimelineOpen] = useState(false)
   const [shareTitle, setShareTitle] = useState('')
   const [shareMode, setShareMode] = useState<ShareMode>('LATEST')
   const [sharePasswordEnabled, setSharePasswordEnabled] = useState(false)
@@ -226,6 +231,9 @@ export function ResumeEditorView({
             </Link>
             <InterviewMenuButton interviewMenuItems={interviewMenuItems} />
             <ResumeScoreButton draft={draft} />
+            <Button icon={<HistoryOutlined />} onClick={() => setVersionTimelineOpen(true)}>
+              {t('editor.versionTimeline')}
+            </Button>
             <Button icon={<ShareAltOutlined />} onClick={openShareModal}>
               {t('editor.share')}
             </Button>
@@ -245,6 +253,7 @@ export function ResumeEditorView({
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
               onExportServerPdf={() => void onExportServerPdf()}
               onOpenShare={openShareModal}
+              onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
             />
           </Space>
         </div>
@@ -496,6 +505,13 @@ export function ResumeEditorView({
         </div>
       </ResponsiveModal>
 
+      <ResumeVersionTimelineModal
+        draft={draft}
+        open={versionTimelineOpen}
+        onClose={() => setVersionTimelineOpen(false)}
+        onRestoredVersion={onRestoredVersion}
+      />
+
       <AiResumeAssistant draft={draft} onApplyPatch={onApplyPatch} />
     </div>
   )
@@ -555,6 +571,7 @@ function MoreActionsMenu({
   onExportPdf,
   onExportServerPdf,
   onOpenShare,
+  onOpenVersionTimeline,
 }: {
   draftId: string
   exportingPdf: boolean
@@ -562,6 +579,7 @@ function MoreActionsMenu({
   onExportPdf: () => void
   onExportServerPdf: () => void
   onOpenShare: () => void
+  onOpenVersionTimeline: () => void
 }) {
   const { t } = useTranslation('workspace')
   return (
@@ -578,6 +596,12 @@ function MoreActionsMenu({
             label: t('editor.interview'),
             icon: <MessageOutlined />,
             children: interviewMenuItems,
+          },
+          {
+            key: 'versionTimeline',
+            label: t('editor.versionTimeline'),
+            icon: <HistoryOutlined />,
+            onClick: onOpenVersionTimeline,
           },
           {
             key: 'share',

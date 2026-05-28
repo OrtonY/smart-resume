@@ -1,11 +1,21 @@
 import { request } from '../../../lib/http/apiClient'
-import type { ResumeDetail, ResumePage, ShareAccessLogsPage, ShareLink, ShareMode } from '../types'
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../lib/http/pageDefaults'
+import type {
+  PublicShareAccessInfo,
+  ResumeDetail,
+  ResumePage,
+  ResumeVersionDetail,
+  ResumeVersionSummary,
+  ShareAccessLogsPage,
+  ShareLink,
+  ShareMode,
+} from '../types'
 
-export function listResumes(includeDeleted = false, page = 1, pageSize = 6) {
+export function listResumes(includeDeleted = false, page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return request<ResumePage>(`/api/resumes?includeDeleted=${includeDeleted}&page=${page}&pageSize=${pageSize}`)
 }
 
-export function listDeletedResumes(page = 1, pageSize = 6) {
+export function listDeletedResumes(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return request<ResumePage>(`/api/resumes?deletedOnly=true&page=${page}&pageSize=${pageSize}`)
 }
 
@@ -49,6 +59,26 @@ export function restoreResume(resumeId: string) {
   })
 }
 
+export function createResumeSnapshot(resumeId: string) {
+  return request<ResumeVersionSummary>(`/api/resumes/${resumeId}/versions`, {
+    method: 'POST',
+  })
+}
+
+export function listResumeVersions(resumeId: string) {
+  return request<ResumeVersionSummary[]>(`/api/resumes/${resumeId}/versions`)
+}
+
+export function getResumeVersion(resumeId: string, versionId: string) {
+  return request<ResumeVersionDetail>(`/api/resumes/${resumeId}/versions/${versionId}`)
+}
+
+export function restoreResumeFromVersion(resumeId: string, versionId: string) {
+  return request<ResumeDetail>(`/api/resumes/${resumeId}/versions/${versionId}/restore`, {
+    method: 'POST',
+  })
+}
+
 export function createShare(resumeId: string, title: string, mode: ShareMode, password?: string) {
   return request<ShareLink>(`/api/resumes/${resumeId}/shares`, {
     method: 'POST',
@@ -66,6 +96,10 @@ export function getPublicShare(shareCode: string, shareToken?: string) {
     headers['X-Share-Token'] = shareToken
   }
   return request<ResumeDetail>(`/api/public/shares/${shareCode}`, { skipAuth: true, headers })
+}
+
+export function getPublicShareAccess(shareCode: string) {
+  return request<PublicShareAccessInfo>(`/api/public/shares/${shareCode}/access`, { skipAuth: true })
 }
 
 export function verifySharePassword(shareCode: string, password: string) {

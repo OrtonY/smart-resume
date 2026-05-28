@@ -6,6 +6,7 @@ import com.smartresume.common.exception.AppException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
@@ -31,7 +32,7 @@ public class AuthTokenService {
         Instant now = Instant.now();
         TokenPayload payload = new TokenPayload(
             now.getEpochSecond(),
-            now.plusSeconds(properties.tokenValidityDays() * 24 * 60 * 60).getEpochSecond(),
+            now.plusSeconds(Duration.ofDays(properties.tokenValidityDays()).getSeconds()).getEpochSecond(),
             userId,
             credentialVersion,
             UUID.randomUUID().toString()

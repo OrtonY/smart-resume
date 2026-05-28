@@ -4,6 +4,11 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '../components/shared/LanguageSwitcher'
 import { login, register } from '../features/system/api/systemApi'
+import {
+  PASSWORD_MIN_LENGTH,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from '../features/system/constants'
 import type { AccessTokenResponse, BootstrapStatus } from '../features/system/types'
 
 type AuthMode = 'login' | 'register'
@@ -116,8 +121,8 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
               name={'username'}
               rules={[
                 { required: true, message: t('form.usernameRequired') },
-                { min: 3, message: t('form.usernameMin') },
-                { max: 80, message: t('form.usernameMax') },
+                { min: USERNAME_MIN_LENGTH, message: t('form.usernameMin') },
+                { max: USERNAME_MAX_LENGTH, message: t('form.usernameMax') },
               ]}
             >
               <Input prefix={<UserOutlined />} placeholder={t('form.usernamePlaceholder')} size={'large'} autoComplete={'username'} />
@@ -128,7 +133,7 @@ export function AuthPage({ bootstrapStatus, onAuthenticated }: AuthPageProps) {
               name={'password'}
               rules={[
                 { required: true, message: t('form.passwordRequired') },
-                ...(activeMode === 'register' ? [{ min: 6, message: t('form.passwordMin') }] : []),
+                ...(activeMode === 'register' ? [{ min: PASSWORD_MIN_LENGTH, message: t('form.passwordMin') }] : []),
               ]}
             >
               <Input.Password

@@ -5,6 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { regenerateReport, streamReportEvents } from '../api/interviewApi'
+import {
+  INTERVIEW_REPORT_COMPACT_SCORE_SIZE,
+  INTERVIEW_REPORT_DEFAULT_SCORE_SIZE,
+  INTERVIEW_SCORE_EXCELLENT_THRESHOLD,
+  INTERVIEW_SCORE_GOOD_THRESHOLD,
+  INTERVIEW_SCORE_PASSING_THRESHOLD,
+} from '../constants'
 import type {
   InterviewReport as InterviewReportData,
   InterviewReportStatus,
@@ -169,7 +176,7 @@ function ScoreOverview({ report, compact }: { report: InterviewReportData; compa
           type={compact ? 'dashboard' : 'circle'}
           percent={report.overallScore}
           format={(percent) => <span className="report-score-value">{percent}</span>}
-          size={compact ? 80 : 120}
+          size={compact ? INTERVIEW_REPORT_COMPACT_SCORE_SIZE : INTERVIEW_REPORT_DEFAULT_SCORE_SIZE}
           strokeColor={scoreColor(report.overallScore)}
         />
       </div>
@@ -304,9 +311,9 @@ function LearningResourcesSection({ resources }: { resources: InterviewReportDat
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return '#52c41a'
-  if (score >= 60) return '#1890ff'
-  if (score >= 40) return '#faad14'
+  if (score >= INTERVIEW_SCORE_EXCELLENT_THRESHOLD) return '#52c41a'
+  if (score >= INTERVIEW_SCORE_GOOD_THRESHOLD) return '#1890ff'
+  if (score >= INTERVIEW_SCORE_PASSING_THRESHOLD) return '#faad14'
   return '#ff4d4f'
 }
 

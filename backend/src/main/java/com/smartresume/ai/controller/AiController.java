@@ -5,6 +5,7 @@ import com.smartresume.ai.dto.AiDtos.AiChatConversation;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
+import com.smartresume.ai.dto.AiDtos.AiSuggestionStatusUpdateRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
@@ -36,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/ai")
 public class AiController {
 
     private final AiConfigurationService aiConfigurationService;
@@ -100,6 +101,17 @@ public class AiController {
         @PathVariable String conversationId
     ) {
         return ApiResponse.success(aiChatHistoryService.listHistory(resumeId, conversationId));
+    }
+
+    @PutMapping("/resumes/{resumeId}/chat/conversations/{conversationId}/suggestions/{suggestionId}")
+    public ApiResponse<Void> updateChatSuggestionStatus(
+        @PathVariable String resumeId,
+        @PathVariable String conversationId,
+        @PathVariable String suggestionId,
+        @Valid @RequestBody AiSuggestionStatusUpdateRequest request
+    ) {
+        aiChatHistoryService.updateSuggestionStatus(resumeId, conversationId, suggestionId, request.status());
+        return ApiResponse.success(null, "AI suggestion status updated");
     }
 
     @GetMapping("/vendors")

@@ -2,7 +2,6 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
-  EyeOutlined,
   FileTextOutlined,
   MessageOutlined,
   MoreOutlined,
@@ -30,6 +29,11 @@ import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { getInterview } from '../api/interviewApi'
+import {
+  INTERVIEW_COMPOSER_MAX_ROWS,
+  INTERVIEW_COMPOSER_MIN_ROWS,
+  INTERVIEW_SCROLL_BOTTOM_THRESHOLD,
+} from '../constants'
 import { useInterviewTimer } from '../hooks/useInterviewTimer'
 import { AiAnswerModal } from './AiAnswerModal'
 import { InterviewReportPanel } from './InterviewReportPanel'
@@ -99,6 +103,7 @@ export function InterviewDetailView({
 
   const { formatted: timerDisplay } = useInterviewTimer(detail?.status === 'IN_PROGRESS', initialTimerSeconds)
   const [reportDrawerOpen, setReportDrawerOpen] = useState(false)
+  const [companyInfoOpen, setCompanyInfoOpen] = useState(false)
   const [activeRoundTab, setActiveRoundTab] = useState<number>(detail?.activeRoundIndex ?? 0)
   const [nextRoundLoading, setNextRoundLoading] = useState(false)
   const [aiAnswerModal, setAiAnswerModal] = useState<{ messageId: string; questionContent: string; candidateAnswerFromHistory: string | undefined } | null>(null)
@@ -113,7 +118,7 @@ export function InterviewDetailView({
   }, [detail, safeActiveRoundTab])
 
   function isNearBottom(target: HTMLDivElement) {
-    return target.scrollHeight - target.scrollTop - target.clientHeight <= 64
+    return target.scrollHeight - target.scrollTop - target.clientHeight <= INTERVIEW_SCROLL_BOTTOM_THRESHOLD
   }
 
   function scrollMessagesToBottom(behavior: ScrollBehavior = 'auto') {
@@ -201,59 +206,77 @@ export function InterviewDetailView({
 
   const canMessage = detail.status === 'IN_PROGRESS' && isViewingCurrentRound
   const hasNextRound = detail.status === 'IN_PROGRESS' && detail.activeRoundIndex < detail.interviewerRoles.length - 1
+  const companyInfoContent = detail.targetCompany ? (
+    <div className="interview-company-popover__content">
+      <div className="interview-company-popover__head">
+        <span>{t('detail.targetCompanyLabel')}</span>
+        <strong>{detail.targetCompany}</strong>
+        <Tag color={companyContextColor(detail.companyContextStatus)}>
+          {companyContextStatusLabel(detail.companyContextStatus, t)}
+        </Tag>
+      </div>
+      {detail.companyContextSummary.length > 0 ? (
+        <ul className="interview-company-popover__summary">
+          {detail.companyContextSummary.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="interview-company-popover__empty">{t('detail.companyPopoverEmpty')}</p>
+      )}
+    </div>
+  ) : null
 
   return (
     <div className="workspace-layout">
       <div className="interview-detail">
         <div className="interview-detail__topbar">
-          <Space align="center">
-            <strong style={{ fontSize: 16 }}>{detail.title}</strong>
-            <Tag color="blue">{t('detail.roundTag', { current: detail.activeRoundIndex + 1, total: detail.interviewerRoles.length })}</Tag>
-            <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty, t)}</Tag>
-            {detail.targetCompany ? (
-              <Popover
-                trigger="hover"
-                placement="bottomLeft"
-                overlayClassName="interview-company-popover"
-                content={(
-                  <div className="interview-company-popover__content">
-                    <div className="interview-company-popover__head">
-                      <span>{t('detail.targetCompanyLabel')}</span>
+          {isMobile ? (
+            <div className="interview-detail__topbar-main">
+              <strong className="interview-detail__topbar-title" style={{ fontSize: 16 }}>{detail.title}</strong>
+              <div className="interview-detail__topbar-tag-strip">
+                <div className="interview-detail__topbar-tag-strip-inner">
+                  <Tag color="blue">{t('detail.roundTag', { current: detail.activeRoundIndex + 1, total: detail.interviewerRoles.length })}</Tag>
+                  <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty, t)}</Tag>
+                  {detail.targetCompany ? (
+                    <button
+                      type="button"
+                      className="interview-company-chip"
+                      aria-label={t('detail.companyChipLabel', { company: detail.targetCompany })}
+                      onClick={() => setCompanyInfoOpen(true)}
+                    >
                       <strong>{detail.targetCompany}</strong>
-                      <Tag color={companyContextColor(detail.companyContextStatus)}>
-                        {companyContextStatusLabel(detail.companyContextStatus, t)}
-                      </Tag>
-                    </div>
-                    {detail.companyContextSummary.length > 0 ? (
-                      <ul className="interview-company-popover__summary">
-                        {detail.companyContextSummary.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="interview-company-popover__empty">{t('detail.companyPopoverEmpty')}</p>
-                    )}
-                  </div>
-                )}
-              >
-                <button
-                  type="button"
-                  className="interview-company-chip"
-                  aria-label={t('detail.companyChipLabel', { company: detail.targetCompany })}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Space align="center" className="interview-detail__topbar-meta">
+              <strong className="interview-detail__topbar-title" style={{ fontSize: 16 }}>{detail.title}</strong>
+              <Tag color="blue">{t('detail.roundTag', { current: detail.activeRoundIndex + 1, total: detail.interviewerRoles.length })}</Tag>
+              <Tag color={difficultyColor(detail.difficulty)}>{interviewDifficultyLabel(detail.difficulty, t)}</Tag>
+              {detail.targetCompany ? (
+                <Popover
+                  trigger="hover"
+                  placement="bottomLeft"
+                  overlayClassName="interview-company-popover"
+                  content={companyInfoContent}
                 >
-                  <span className="interview-company-chip__label">{t('detail.targetCompanyLabel')}</span>
-                  <strong>{detail.targetCompany}</strong>
-                  <span className="interview-company-chip__hint">
-                    <EyeOutlined />
-                    {t('detail.companyChipHint')}
-                  </span>
-                </button>
-              </Popover>
-            ) : null}
-          </Space>
+                  <button
+                    type="button"
+                    className="interview-company-chip"
+                    aria-label={t('detail.companyChipLabel', { company: detail.targetCompany })}
+                  >
+                    <strong>{detail.targetCompany}</strong>
+                  </button>
+                </Popover>
+              ) : null}
+            </Space>
+          )}
 
-          <Space align="center">
-            <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: 13, padding: '2px 8px' }}>
+          <Space align="center" className="interview-detail__topbar-actions">
+            <Tag icon={<ClockCircleOutlined />} color="blue" className="interview-detail__timer-tag" style={{ fontSize: 13, padding: '2px 8px' }}>
               {timerDisplay}
             </Tag>
             {!isMobile ? (
@@ -303,7 +326,7 @@ export function InterviewDetailView({
                   ],
                 }}
               >
-                <Button icon={<MoreOutlined />} />
+                <Button className="interview-detail__more-button" icon={<MoreOutlined />} />
               </Dropdown>
             )}
           </Space>
@@ -415,7 +438,7 @@ export function InterviewDetailView({
                   onSubmit={onSubmitMessage}
                   placeholder={t('message.composerPlaceholder')}
                   disabled={false}
-                  autoSize={{ minRows: 3, maxRows: 8 }}
+                  autoSize={{ minRows: INTERVIEW_COMPOSER_MIN_ROWS, maxRows: INTERVIEW_COMPOSER_MAX_ROWS }}
                 />
                 {streaming ? (
                   <Button danger icon={<StopOutlined />} onClick={onStopStreaming}>
@@ -439,7 +462,7 @@ export function InterviewDetailView({
                   onSubmit={undefined}
                   placeholder={t('message.disabledPlaceholder')}
                   disabled
-                  autoSize={{ minRows: 3, maxRows: 8 }}
+                  autoSize={{ minRows: INTERVIEW_COMPOSER_MIN_ROWS, maxRows: INTERVIEW_COMPOSER_MAX_ROWS }}
                 />
                 <Button type="primary" icon={<SendOutlined />} disabled>
                   {t('message.sendAnswer')}
@@ -480,6 +503,19 @@ export function InterviewDetailView({
           }}
         />
       </ResponsiveModal>
+
+      {detail.targetCompany ? (
+        <ResponsiveModal
+          title={t('detail.targetCompanyLabel')}
+          open={companyInfoOpen}
+          onCancel={() => setCompanyInfoOpen(false)}
+          footer={null}
+          destroyOnHidden
+          mobileHeight="66vh"
+        >
+          {companyInfoContent}
+        </ResponsiveModal>
+      ) : null}
 
       {aiAnswerModal ? (
         <AiAnswerModal

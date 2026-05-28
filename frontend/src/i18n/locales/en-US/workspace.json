@@ -48,6 +48,12 @@
   "feedback": {
     "loadListFailed": "Unable to load resume list.",
     "loadDetailFailed": "Unable to load resume details.",
+    "versionLoadListFailed": "Unable to load version history.",
+    "versionLoadDetailFailed": "Unable to load version details.",
+    "versionSnapshotCreated": "Snapshot created.",
+    "versionSnapshotCreateFailed": "Failed to create snapshot.",
+    "versionRestoreSuccess": "Snapshot restored to the current resume.",
+    "versionRestoreFailed": "Failed to restore this snapshot.",
     "saveAutoFailed": "Auto-save failed.",
     "moveToBinSuccess": "Resume moved to recycle bin.",
     "copySuccess": "Resume copied.",
@@ -73,6 +79,7 @@
     "titlePlaceholder": "Resume title",
     "modifyTemplate": "Change template",
     "interview": "Interview",
+    "versionTimeline": "History",
     "interviewMenu": {
       "create": "Start interview",
       "related": "Related interviews"
@@ -100,6 +107,47 @@
     "tabContent": "Content",
     "moreActions": "More",
     "moreActionsAria": "More actions"
+  },
+  "versionTimeline": {
+    "title": "Version history",
+    "subtitle": "Timeline and diff",
+    "description": "Create manual snapshots, inspect earlier states, compare them with your current draft, and restore a snapshot over the current resume.",
+    "mobileListTitle": "Choose a version",
+    "detailTitle": "Version details",
+    "backToList": "Back to versions",
+    "refresh": "Refresh",
+    "createSnapshot": "Create snapshot",
+    "empty": "No snapshots yet. Create one before making a major change.",
+    "selectVersion": "Select a version from the timeline to inspect it.",
+    "versionTag": "V{{number}}",
+    "restore": "Restore snapshot",
+    "restoreConfirmTitle": "Restore this snapshot?",
+    "restoreConfirmDescription": "Restoring V{{number}} will overwrite the current resume title, template, layout, and related content.",
+    "restoreConfirmRecommendation": "To avoid losing your latest edits, create a snapshot of the current resume before restoring.",
+    "restoreConfirmOk": "Confirm restore",
+    "snapshotTitle": "Snapshot title",
+    "snapshotTemplate": "Template",
+    "snapshotTimestamp": "Captured at",
+    "diffTitle": "Compared with current draft",
+    "noDiff": "This version matches your current draft.",
+    "untitled": "Untitled resume",
+    "diffSections": {
+      "metadata": "Metadata and layout"
+    },
+    "diffItems": {
+      "titleChanged": "Resume title changed.",
+      "templateChanged": "Template changed.",
+      "sectionOrderChanged": "Section order changed.",
+      "hiddenSectionsChanged": "Hidden sections changed.",
+      "personalInfoChanged": "Updated fields: {{fields}}.",
+      "summaryChanged": "Summary content changed.",
+      "changedEntries_one": "{{count}} existing entry changed.",
+      "changedEntries_other": "{{count}} existing entries changed.",
+      "currentOnlyEntries_one": "Current draft has {{count}} additional entry.",
+      "currentOnlyEntries_other": "Current draft has {{count}} additional entries.",
+      "versionOnlyEntries_one": "Selected version has {{count}} additional entry.",
+      "versionOnlyEntries_other": "Selected version has {{count}} additional entries."
+    }
   },
   "modules": {
     "personalInfo": {
@@ -295,7 +343,7 @@
     "modeLatest": "Latest version",
     "modeSnapshot": "Current snapshot",
     "modeLatestHint": "The link always shows the latest content of the resume",
-    "modeSnapshotHint": "The link shows the resume as it is now; later edits do not affect it",
+    "modeSnapshotHint": "The latest snapshot is shared first; if none exists, one is created automatically, and later edits do not affect this share link",
     "passwordLabel": "Password protection",
     "passwordPlaceholder": "Set an access password",
     "passwordHint": "When enabled, viewers must enter the password to view",

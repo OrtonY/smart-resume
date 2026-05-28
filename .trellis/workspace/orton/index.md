@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 46
-- **Last Active**: 2026-05-26
+- **Total Sessions**: 57
+- **Last Active**: 2026-05-28
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1542 | Active |
+| `journal-1.md` | ~1912 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,17 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 57 | 2026-05-28 | Bump frontend and backend to v1.1.1 | `460887c` | `chore/bump-version-1.1.1` |
+| 56 | 2026-05-28 | Refine mobile interview header and AI resume context filtering | `2365fdf`, `29fe5f5` | `codex/mobile-chat-company-hidden-filter` |
+| 55 | 2026-05-28 | Fix markdown bold boundary compatibility | `4cabffa` | `codex/fix-markdown-bold-boundary` |
+| 54 | 2026-05-28 | Improve share password and mobile version UX | `abcb4e4` | `codex/share-mobile-ux` |
+| 53 | 2026-05-27 | Snapshot share uses latest snapshot | `5c04bd6` | `fix/share-snapshot-dedup` |
+| 52 | 2026-05-27 | Resume version timeline | `679d479` | `codex/resume-version-timeline` |
+| 51 | 2026-05-27 | Refactor extensibility and centralize magic values | `351f9ce`, `1b8439d`, `580eee3`, `18861f1` | `codex/extensibility-and-magic-values-refactor` |
+| 50 | 2026-05-27 | 修复改密后会话失效与失败提示 | `583ffb4`, `fee28d3` | `codex/logout-all-sessions-on-password-change` |
+| 49 | 2026-05-27 | Fix Playwright export dependency checks | `2756bdb`, `b4e4230` | `fix/playwright-env-check` |
+| 48 | 2026-05-26 | Persist AI resume suggestions | `4ca7f27` | `codex/persist-ai-resume-suggestions` |
+| 47 | 2026-05-26 | Remove branch creation from release merge rule | `92a79bd`, `fac2d39` | `docs/release-merge-rule` |
 | 46 | 2026-05-26 | Fix resume preview layout isolation and font-size consistency | `8c383df` | `fix/resume-preview-layout-isolation` |
 | 45 | 2026-05-26 | Fix mobile share, resume display, AI answer UX, and share page adaptation | `2227635` | `fix/mobile-share-resume-display-ai-answer` |
 | 44 | 2026-05-25 | Frontend refactor: page decomposition, code splitting, and dep bumps | `e3e3838`, `2269525`, `34ad72e` | `refactor/frontend-refactor-maintainability` |

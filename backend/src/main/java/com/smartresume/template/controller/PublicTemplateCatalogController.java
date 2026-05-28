@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/public/templates")
+@RequestMapping("/public/templates")
 public class PublicTemplateCatalogController {
 
     private final TemplateCatalogService templateCatalogService;

@@ -123,6 +123,45 @@ export function WorkspacePage({
   const isEditorView = Boolean(resumeId)
   const isRecycleBinView = location.pathname === '/app/recycle-bin'
 
+  const applyResumeDetail = useCallback((detail: ResumeDetail) => {
+    const normalizedDetail = {
+      ...detail,
+      layout: normalizeResumeLayout(detail.layout),
+    }
+
+    setDraft(normalizedDetail)
+    setLastSavedSignature(createResumeSignature(normalizedDetail))
+    setExpandedModules(['personal-info', ...normalizedDetail.layout.sectionOrder])
+    setSaveState('saved')
+    setResumeList((current) =>
+      current.map((item) =>
+        item.id === normalizedDetail.id
+          ? {
+              ...item,
+              title: normalizedDetail.title,
+              templateKey: normalizedDetail.templateKey,
+              updatedAt: normalizedDetail.updatedAt,
+            }
+          : item,
+      ),
+    )
+    setResumePage((current) => current
+      ? {
+          ...current,
+          items: current.items.map((item) =>
+            item.id === normalizedDetail.id
+              ? {
+                  ...item,
+                  title: normalizedDetail.title,
+                  templateKey: normalizedDetail.templateKey,
+                  updatedAt: normalizedDetail.updatedAt,
+                }
+              : item,
+          ),
+        }
+      : current)
+  }, [])
+
   const loadResumeList = useCallback(async () => {
     setLoadingResumeList(true)
     try {
@@ -139,23 +178,14 @@ export function WorkspacePage({
   const loadResumeDetail = useCallback(async (targetResumeId: string) => {
     setLoadingResumeDetail(true)
     try {
-      const detail = await getResume(targetResumeId)
-      const normalizedDetail = {
-        ...detail,
-        layout: normalizeResumeLayout(detail.layout),
-      }
-
-      setDraft(normalizedDetail)
-      setLastSavedSignature(createResumeSignature(normalizedDetail))
-      setExpandedModules(['personal-info', ...normalizedDetail.layout.sectionOrder])
-      setSaveState('saved')
+      applyResumeDetail(await getResume(targetResumeId))
     } catch (error) {
       setDraft(null)
       void message.error(error instanceof Error ? error.message : t('feedback.loadDetailFailed'))
     } finally {
       setLoadingResumeDetail(false)
     }
-  }, [message, t])
+  }, [applyResumeDetail, message, t])
 
   const persistDraft = useCallback(async (targetResumeId: string, currentDraft: ResumeDetail) => {
     setSaveState('saving')
@@ -306,6 +336,10 @@ export function WorkspacePage({
     await restoreResume(targetResumeId)
     void message.success(t('feedback.restoreSuccess'))
     await loadResumeList()
+  }
+
+  async function handleRestoredVersion(restoredResume: ResumeDetail) {
+    applyResumeDetail(restoredResume)
   }
 
   async function handleCreateShare(title: string, mode: ShareMode, password?: string) {
@@ -482,6 +516,7 @@ export function WorkspacePage({
         onExportServerPdf={handleExportServerPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}
+        onRestoredVersion={handleRestoredVersion}
         onShowSection={showSection}
         onUpdateDraft={updateDraft}
         orderedModuleDefinitions={orderedModuleDefinitions}

@@ -5,6 +5,11 @@ import jakarta.validation.constraints.Size;
 
 public final class SystemAccessDtos {
 
+    public static final int USERNAME_MIN_LENGTH = 3;
+    public static final int USERNAME_MAX_LENGTH = 80;
+    public static final int PASSWORD_MIN_LENGTH = 6;
+    public static final int PASSWORD_MAX_LENGTH = 64;
+
     private SystemAccessDtos() {
     }
 
@@ -13,7 +18,7 @@ public final class SystemAccessDtos {
 
     public record LoginRequest(
         @NotBlank(message = "{validation.user.usernameRequired}")
-        @Size(min = 3, max = 80, message = "{validation.user.usernameLength}")
+        @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH, message = "{validation.user.usernameLength}")
         String username,
         @NotBlank(message = "{validation.user.passwordRequired}")
         String password
@@ -22,10 +27,10 @@ public final class SystemAccessDtos {
 
     public record RegisterRequest(
         @NotBlank(message = "{validation.user.usernameRequired}")
-        @Size(min = 3, max = 80, message = "{validation.user.usernameLength}")
+        @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH, message = "{validation.user.usernameLength}")
         String username,
         @NotBlank(message = "{validation.user.passwordRequired}")
-        @Size(min = 6, max = 64, message = "{validation.user.passwordLength}")
+        @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH, message = "{validation.user.passwordLength}")
         String password
     ) {
     }
@@ -49,7 +54,7 @@ public final class SystemAccessDtos {
         @NotBlank(message = "{validation.user.currentPasswordRequired}")
         String currentPassword,
         @NotBlank(message = "{validation.user.newPasswordRequired}")
-        @Size(min = 6, max = 64, message = "{validation.user.newPasswordLength}")
+        @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH, message = "{validation.user.newPasswordLength}")
         String newPassword
     ) {
     }

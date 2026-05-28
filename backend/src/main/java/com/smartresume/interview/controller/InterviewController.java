@@ -1,6 +1,7 @@
 package com.smartresume.interview.controller;
 
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
+import com.smartresume.common.api.ApiPageDefaults;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.dto.InterviewAssistDtos.InterviewAssistResponse;
@@ -25,7 +26,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/api/interviews")
+@RequestMapping("/interviews")
 public class InterviewController {
 
     private final InterviewService interviewService;
@@ -44,8 +45,8 @@ public class InterviewController {
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String targetCompany,
         @RequestParam(required = false) String keyword,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "6") int pageSize
+        @RequestParam(defaultValue = ApiPageDefaults.DEFAULT_PAGE) int page,
+        @RequestParam(defaultValue = ApiPageDefaults.DEFAULT_PAGE_SIZE) int pageSize
     ) {
         return ApiResponse.success(interviewService.listInterviews(resumeId, status, targetCompany, keyword, page, pageSize));
     }

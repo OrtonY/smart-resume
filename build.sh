@@ -8,6 +8,39 @@ BACKEND_STATIC_DIR="$BACKEND_DIR/src/main/resources/static"
 
 REQUIRED_NODE_MAJOR=20
 REQUIRED_JAVA_MAJOR=21
+PLAYWRIGHT_CHROMIUM_REVISION=1223
+PLAYWRIGHT_CHROMIUM_HEADLESS_SHELL_REVISION=1223
+
+playwright_browsers_path() {
+  if [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ "${PLAYWRIGHT_BROWSERS_PATH}" != "0" ]; then
+    echo "$PLAYWRIGHT_BROWSERS_PATH"
+    return
+  fi
+  if [ "${PLAYWRIGHT_BROWSERS_PATH:-}" = "0" ]; then
+    echo "$PROJECT_ROOT/node_modules/playwright-core/.local-browsers"
+    return
+  fi
+
+  case "$(uname -s)" in
+    Darwin*) echo "$HOME/Library/Caches/ms-playwright" ;;
+    MINGW*|MSYS*|CYGWIN*) echo "${LOCALAPPDATA:-$HOME/AppData/Local}/ms-playwright" ;;
+    *) echo "${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright" ;;
+  esac
+}
+
+playwright_chromium_installed() {
+  local browsers_path
+  browsers_path="$(playwright_browsers_path)"
+  [ -f "$browsers_path/chromium-$PLAYWRIGHT_CHROMIUM_REVISION/INSTALLATION_COMPLETE" ] &&
+    [ -f "$browsers_path/chromium_headless_shell-$PLAYWRIGHT_CHROMIUM_HEADLESS_SHELL_REVISION/INSTALLATION_COMPLETE" ]
+}
+
+install_playwright_chromium() {
+  if ! ./mvnw exec:java -e -q -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium" 2>/dev/null; then
+    echo "    [WARN] Could not auto-install Chromium."
+    echo "           Run manually: cd backend && ./mvnw exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='install chromium'"
+  fi
+}
 
 # --- Check Node.js version ---
 if ! command -v node &>/dev/null; then
@@ -57,15 +90,15 @@ echo "==> Building backend..."
 cd "$BACKEND_DIR"
 ./mvnw package -DskipTests -q
 
-echo "==> Ensuring Playwright Chromium is installed..."
-mvn exec:java -e -q \
-  -Dexec.mainClass=com.microsoft.playwright.CLI \
-  -Dexec.args="install chromium" 2>/dev/null || \
-  npx playwright install chromium 2>/dev/null || \
-  echo "    [WARN] Could not auto-install Chromium. Run manually: npx playwright install chromium"
+if playwright_chromium_installed; then
+  echo "[OK] Playwright Chromium is already installed."
+else
+  echo "==> Playwright Chromium is missing. Installing..."
+  install_playwright_chromium
+fi
 
 echo ""
 echo "=== Build complete ==="
-echo "Backend JAR: $BACKEND_DIR/target/backend-1.0.0.jar"
+echo "Backend JAR: $BACKEND_DIR/target/backend-1.1.1.jar"
 echo ""
-echo "To start: java -jar backend/target/backend-1.0.0.jar"
+echo "To start: java -jar backend/target/backend-1.1.1.jar"

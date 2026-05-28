@@ -1,10 +1,9 @@
 import { BarChartOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Empty, Input, Progress, Space, Spin, Tag, Typography } from 'antd'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPersistedAiResumeScore, scoreAiResume } from '../api/aiApi'
-import { toAiResumeContext } from '../resumeContext'
 import type { AiResumeScoreResponse } from '../types'
 import type { ResumeDetail } from '../../resume/types'
 
@@ -22,8 +21,6 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
   const [restored, setRestored] = useState(false)
   const [result, setResult] = useState<AiResumeScoreResponse | null>(null)
   const [showJobDescriptionInput, setShowJobDescriptionInput] = useState(true)
-
-  const resumeContext = useMemo(() => toAiResumeContext(draft), [draft])
 
   useEffect(() => {
     if (!open || restored) {
@@ -84,7 +81,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
     try {
       const normalizedJobDescription = jobDescription.trim()
       const response = await scoreAiResume({
-        resume: resumeContext,
+        resumeId: draft.id,
         jobDescription: normalizedJobDescription || undefined,
       })
 

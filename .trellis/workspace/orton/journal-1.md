@@ -1540,3 +1540,373 @@ Pinned font-size/line-height/text-size-adjust on .resume-preview to eliminate re
 ### Next Steps
 
 - None - task complete
+
+
+## Session 47: Remove branch creation from release merge rule
+
+**Date**: 2026-05-26
+**Task**: Remove branch creation from release merge rule
+**Branch**: `docs/release-merge-rule`
+
+### Summary
+
+Documented release merge strategy (develop→master uses merge commit) and removed the unnecessary step of creating a branch with the same name as the release tag.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `92a79bd` | (see git log) |
+| `fac2d39` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 48: Persist AI resume suggestions
+
+**Date**: 2026-05-26
+**Task**: Persist AI resume suggestions
+**Branch**: `codex/persist-ai-resume-suggestions`
+
+### Summary
+
+Persisted AI resume suggestion cards with durable statuses, fixed stream user context handling, kept multi-turn suggestion cards actionable, and removed hidden suggestion prompt injection.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ca7f27` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 49: Fix Playwright export dependency checks
+
+**Date**: 2026-05-27
+**Task**: Fix Playwright export dependency checks
+**Branch**: `fix/playwright-env-check`
+
+### Summary
+
+Prevent backend PDF export availability checks from triggering Playwright browser downloads, make build/start install Chromium only when missing, and sync the frontend lockfile version.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2756bdb` | (see git log) |
+| `b4e4230` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 50: 修复改密后会话失效与失败提示
+
+**Date**: 2026-05-27
+**Task**: 修复改密后会话失效与失败提示
+**Branch**: `codex/logout-all-sessions-on-password-change`
+
+### Summary
+
+修复密码修改后旧 token 在同秒场景下可能不失效的问题，并将当前密码错误调整为 400，避免前端在修改失败时跳回登录页。补充认证回归测试并同步后端认证规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `583ffb4` | (see git log) |
+| `fee28d3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 51: Refactor extensibility and centralize magic values
+
+**Date**: 2026-05-27
+**Task**: Refactor extensibility and centralize magic values
+**Branch**: `codex/extensibility-and-magic-values-refactor`
+
+### Summary
+
+Split oversized resume/interview backend services into focused collaborators, moved /api prefix wiring into centralized MVC config, and centralized repeated backend/frontend magic values while preserving behavior. Updated backend/frontend trellis quality and structure specs and aligned task metadata to new scope.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `351f9ce` | (see git log) |
+| `1b8439d` | (see git log) |
+| `580eee3` | (see git log) |
+| `18861f1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 52: Resume version timeline
+
+**Date**: 2026-05-27
+**Task**: Resume version timeline
+**Branch**: `codex/resume-version-timeline`
+
+### Summary
+
+Added authenticated resume version APIs, responsive version timeline UI with diff and restore workflow, localized copy, and documented the cross-layer restore contract.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `679d479` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 53: Snapshot share uses latest snapshot
+
+**Date**: 2026-05-27
+**Task**: Snapshot share uses latest snapshot
+**Branch**: `fix/share-snapshot-dedup`
+
+### Summary
+
+Adjusted snapshot sharing to bind new links to the latest existing snapshot (or create one if none), kept password at share-link level, added backend regression tests, and updated share hint copy in zh/en locales.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5c04bd6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 54: Improve share password and mobile version UX
+
+**Date**: 2026-05-28
+**Task**: Improve share password and mobile version UX
+**Branch**: `codex/share-mobile-ux`
+
+### Summary
+
+Added public share access preflight, improved mobile password/share behavior, and split mobile version history into list/detail flow.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `abcb4e4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 55: Fix markdown bold boundary compatibility
+
+**Date**: 2026-05-28
+**Task**: Fix markdown bold boundary compatibility
+**Branch**: `codex/fix-markdown-bold-boundary`
+
+### Summary
+
+Added shared markdown bold compatibility normalization, wired it into global markdown renderers, added regression tests, and updated frontend guidance.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4cabffa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 56: Refine mobile interview header and AI resume context filtering
+
+**Date**: 2026-05-28
+**Task**: Refine mobile interview header and AI resume context filtering
+**Branch**: `codex/mobile-chat-company-hidden-filter`
+
+### Summary
+
+Optimized mobile interview detail header layout, filtered hidden resume sections from AI-related flows, unified backend visible resume prompt serialization, and updated backend specs for visible-content-only AI prompt contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2365fdf` | (see git log) |
+| `29fe5f5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 57: Bump frontend and backend to v1.1.1
+
+**Date**: 2026-05-28
+**Task**: Bump frontend and backend to v1.1.1
+**Branch**: `chore/bump-version-1.1.1`
+
+### Summary
+
+Updated frontend and backend application versions to v1.1.1, corrected backend JAR references in build/start scripts, and verified frontend lint/build plus backend tests/package.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `460887c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

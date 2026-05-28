@@ -4,6 +4,7 @@ import type { FormInstance } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { InterviewerRoleSorter } from './InterviewerRoleSorter'
+import { INTERVIEW_MODAL_WIDTH } from '../constants'
 import { getInterviewDifficultyOptions, INTERVIEWER_ROLE_OPTIONS } from '../types'
 import type { ResumeSummary } from '../../resume/types'
 import type { CreateFormValues } from '../interviewPageUtils'
@@ -37,7 +38,7 @@ export function InterviewCreateModal({
       title={t('create.title')}
       open={open}
       centered
-      width={720}
+      width={INTERVIEW_MODAL_WIDTH}
       className="interview-create-modal"
       footer={null}
       onCancel={onCancel}

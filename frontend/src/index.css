@@ -93,6 +93,11 @@ a {
   overflow: hidden;
 }
 
+.public-share-page__password-card {
+  width: min(400px, 100%);
+  text-align: center;
+}
+
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -780,6 +785,148 @@ a {
 .resume-editor-preview__hint {
   margin-bottom: 0;
   text-align: center;
+}
+
+.resume-version-modal-shell .ant-modal-body {
+  height: min(680px, calc(100dvh - 180px));
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.resume-version-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.resume-version-modal__toolbar,
+.resume-version-modal__summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-version-modal__layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__timeline-card,
+.resume-version-modal__detail {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__timeline-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-version-modal__timeline-card .ant-card-body,
+.resume-version-modal__detail {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.resume-version-modal__timeline-card .ant-card-body {
+  flex: 1;
+}
+
+.resume-version-modal__timeline-button {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.resume-version-modal__timeline-button:hover,
+.resume-version-modal__timeline-button:focus-visible {
+  border-color: rgba(49, 87, 164, 0.28);
+  box-shadow: 0 10px 26px rgba(49, 87, 164, 0.12);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.resume-version-modal__timeline-button--active {
+  border-color: rgba(49, 87, 164, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 248, 255, 0.88)),
+    radial-gradient(circle at top right, rgba(49, 87, 164, 0.08), transparent 36%);
+}
+
+.resume-version-modal__empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+}
+
+.resume-version-modal__descriptions .ant-descriptions-item-label {
+  width: 112px;
+}
+
+.resume-version-modal__diff-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.resume-version-modal__diff-card {
+  border-radius: 18px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resume-version-modal__diff-items {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.resume-version-modal__diff-items li + li {
+  margin-top: 8px;
+}
+
+.resume-version-modal__mobile-detail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.resume-version-modal__mobile-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-version-modal__mobile-detail-body {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .resume-editor-rail,
@@ -2323,6 +2470,27 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   justify-content: space-between;
 }
 
+.interview-detail__topbar-meta,
+.interview-detail__topbar-actions {
+  min-width: 0;
+}
+
+.interview-detail__topbar-title {
+  white-space: nowrap;
+}
+
+.interview-detail__topbar-tag-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.interview-detail__timer-tag {
+  margin-inline-end: 0;
+  white-space: nowrap;
+}
+
 .interview-card__meta {
   justify-content: flex-start;
   color: var(--text-secondary);
@@ -2343,7 +2511,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   max-width: min(280px, 42vw);
   padding: 6px 12px;
   border: 1px solid rgba(212, 146, 28, 0.2);
@@ -2369,27 +2537,12 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   outline: none;
 }
 
-.interview-company-chip__label {
-  flex: none;
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
 .interview-company-chip strong {
+  display: block;
   overflow: hidden;
   font-size: 13px;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.interview-company-chip__hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding-left: 2px;
-  color: #9a6b14;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 .interview-company-popover .ant-popover-inner {
@@ -3212,12 +3365,6 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .interview-company-chip {
     max-width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .interview-company-chip__hint {
-    width: 100%;
-    padding-left: 0;
   }
 
   .interview-message {
@@ -3241,6 +3388,15 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     justify-items: start;
   }
 
+  .resume-version-modal-shell .ant-modal-body {
+    height: min(680px, calc(100dvh - 160px));
+  }
+
+  .resume-version-modal__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(160px, 0.42fr) minmax(0, 1fr);
+  }
+
   .public-share-page {
     padding: 12px;
   }
@@ -3251,6 +3407,18 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .public-share-page__card .ant-card-body {
     padding: 12px;
+  }
+
+  .public-share-page--password {
+    padding: 12px;
+  }
+
+  .public-share-page__password-card {
+    border-radius: 16px;
+  }
+
+  .public-share-page__password-card .ant-card-body {
+    padding: 20px 16px 16px;
   }
 }
 
@@ -3453,6 +3621,54 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     height: 44px;
     color: rgba(20, 33, 61, 0.55);
     background: rgba(20, 33, 61, 0.04);
+  }
+
+  .resume-version-modal__toolbar,
+  .resume-version-modal__summary-head {
+    align-items: stretch;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .ant-drawer-body {
+    overflow: hidden;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .resume-version-modal {
+    min-height: 0;
+  }
+
+  .responsive-modal-drawer.resume-version-modal-shell .resume-version-modal__layout {
+    grid-template-rows: minmax(140px, 0.38fr) minmax(0, 1fr);
+  }
+
+  .resume-version-modal__toolbar {
+    gap: 10px;
+  }
+
+  .resume-version-modal__toolbar > div {
+    min-width: 0;
+  }
+
+  .resume-version-modal__mobile-header {
+    align-items: center;
+  }
+
+  .resume-version-modal__timeline-card .ant-timeline {
+    padding-inline-start: 0;
+  }
+
+  .resume-version-modal__toolbar .ant-space,
+  .resume-version-modal__summary-head .ant-space {
+    width: 100%;
+  }
+
+  .resume-version-modal__toolbar .ant-space .ant-space-item,
+  .resume-version-modal__summary-head .ant-space .ant-space-item {
+    flex: 1;
+  }
+
+  .resume-version-modal__toolbar .ant-btn,
+  .resume-version-modal__summary-head .ant-btn {
+    width: 100%;
   }
 
   /* Auth */
@@ -3682,12 +3898,95 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   /* Issue 8: Interview detail topbar */
   .interview-detail__topbar {
+    display: flex;
+    flex-wrap: nowrap;
     gap: 6px;
+    align-items: center;
   }
 
-  .interview-detail__topbar > .ant-space {
-    flex-wrap: wrap;
+  .interview-detail__topbar-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .interview-detail__topbar-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .interview-detail__topbar-tag-strip {
+    min-width: 0;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+
+  .interview-detail__topbar-tag-strip-inner {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
+    min-width: 0;
+    width: max-content;
+    white-space: nowrap;
+  }
+
+  .interview-detail__topbar-tag-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .interview-detail__topbar-tag-strip .ant-tag,
+  .interview-detail__topbar-tag-strip .interview-company-chip {
+    flex: 0 0 auto;
+  }
+
+  .interview-detail__topbar-actions {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .interview-detail__timer-tag.ant-tag {
+    height: 26px;
+    margin-inline-end: 0;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 8px !important;
+  }
+
+  .interview-detail__more-button.ant-btn {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    min-height: 26px;
+    padding-inline: 0;
+    padding-block: 0;
+    border-radius: 6px;
+  }
+
+  .interview-company-chip {
+    max-width: none;
+    flex: none;
+    padding: 4px 10px;
+  }
+
+  .interview-company-chip strong {
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .interview-detail__topbar--actions-desktop {
@@ -3705,6 +4004,34 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .interview-round-tabs {
     padding: 0;
+  }
+
+  @media (max-width: 375px) {
+    .interview-detail__topbar-title {
+      font-size: 14px;
+    }
+
+    .interview-detail__topbar-tag-strip {
+      gap: 4px;
+    }
+
+    .interview-detail__timer-tag.ant-tag {
+      margin-inline-end: 0;
+      font-size: 12px !important;
+      padding: 2px 6px !important;
+    }
+
+    .interview-detail__more-button.ant-btn {
+      width: 26px;
+      min-width: 26px;
+      height: 26px;
+      min-height: 26px;
+    }
+
+    .interview-company-chip {
+      max-width: none;
+      padding: 4px 8px;
+    }
   }
 
   .interview-round-tab {

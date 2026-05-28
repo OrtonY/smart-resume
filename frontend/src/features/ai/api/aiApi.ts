@@ -10,6 +10,7 @@ import type {
   AiResumeScoreResponse,
   AiConfiguration,
   AiConfigurationRequest,
+  AiResumeSuggestionStatus,
   ListModelsRequest,
   ListModelsResponse,
   PersistedAiResumeScoreResponse,
@@ -55,6 +56,23 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
     '/api/ai/resumes/' + encodeURIComponent(resumeId)
     + '/chat/conversations/' + encodeURIComponent(conversationId)
     + '/messages',
+  )
+}
+
+export function updateAiChatSuggestionStatus(
+  resumeId: string,
+  conversationId: string,
+  suggestionId: string,
+  status: AiResumeSuggestionStatus,
+) {
+  return requestJson<void>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/chat/conversations/' + encodeURIComponent(conversationId)
+    + '/suggestions/' + encodeURIComponent(suggestionId),
+    {
+      method: 'PUT',
+      body: { status },
+    },
   )
 }
 

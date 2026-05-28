@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next'
+import { DEFAULT_PAGE_SIZE } from '../../lib/http/pageDefaults'
 import {
   companyContextStatusLabel,
   interviewDifficultyLabel,
@@ -9,7 +10,7 @@ import {
   type InterviewStatus,
 } from './types'
 
-export const INTERVIEWS_PER_PAGE = 6
+export const INTERVIEWS_PER_PAGE = DEFAULT_PAGE_SIZE
 
 export type CreateFormValues = {
   resumeId?: string

@@ -1,4 +1,5 @@
 import { request } from '../../../lib/http/apiClient'
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../lib/http/pageDefaults'
 import { streamEvents, streamGetEvents, type SseEvent } from '../../../lib/sse/streamEvents'
 import type {
   InterviewAssistDto,
@@ -21,8 +22,8 @@ export function listInterviews(query: InterviewListQuery = {}) {
   if (query.status) params.set('status', query.status)
   if (query.targetCompany) params.set('targetCompany', query.targetCompany)
   if (query.keyword) params.set('keyword', query.keyword)
-  params.set('page', String(query.page ?? 1))
-  params.set('pageSize', String(query.pageSize ?? 6))
+  params.set('page', String(query.page ?? DEFAULT_PAGE))
+  params.set('pageSize', String(query.pageSize ?? DEFAULT_PAGE_SIZE))
   return request<InterviewPage>(`/api/interviews?${params.toString()}`)
 }
 
