@@ -48,6 +48,25 @@ Questions to answer:
 
 **Contract**: Any chat composer that must send only via button click should omit `submitOnEnter`.
 
+### Convention: Shared Markdown Rendering Must Apply Bold Compatibility Normalization
+
+**What**: All markdown rendering entry points must run the same bold compatibility normalization before parsing markdown.
+
+**Why**: CommonMark delimiter rules can treat `**...**` as plain text when bold is adjacent to other text and the inner content starts/ends with quotes, CJK characters, or punctuation. This showed up as inconsistent user-visible behavior across interview/chat/resume views.
+
+**Example**:
+
+```tsx
+import { normalizeMarkdownBoldForCjk } from '../../lib/markdown/boldCompatibility'
+
+const normalized = normalizeMarkdownBoldForCjk(content)
+```
+
+**Contract**:
+- If a renderer parses markdown from raw user/AI text, it must normalize bold markers first.
+- This compatibility scope is currently limited to `**...**` (bold only), not italic marker families.
+- Any temporary compatibility markers introduced during preprocessing must be stripped before final render text output.
+
 ---
 
 ## Streaming API Components
