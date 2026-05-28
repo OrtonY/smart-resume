@@ -1777,3 +1777,36 @@ Adjusted snapshot sharing to bind new links to the latest existing snapshot (or 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 54: Improve share password and mobile version UX
+
+**Date**: 2026-05-28
+**Task**: Improve share password and mobile version UX
+**Branch**: `codex/share-mobile-ux`
+
+### Summary
+
+Added public share access preflight, improved mobile password/share behavior, and split mobile version history into list/detail flow.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `abcb4e4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -156,6 +156,10 @@ export interface ShareAccessLogsPage {
   total: number
 }
 
+export interface PublicShareAccessInfo {
+  hasPassword: boolean
+}
+
 export interface ExportPlaceholderResponse {
   resumeId: string
   message: string

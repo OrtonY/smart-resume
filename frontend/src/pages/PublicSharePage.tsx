@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
-import { getPublicShare, verifySharePassword } from '../features/resume/api/resumeApi'
+import { getPublicShare, getPublicShareAccess, verifySharePassword } from '../features/resume/api/resumeApi'
 import { exportSharePdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import type { ResumeDetail } from '../features/resume/types'
 
 const SHARE_TOKEN_KEY_PREFIX = 'smart-resume-share-token:'
+const SHARE_AUTH_ERROR_KEYWORDS = ['password', 'token', 'share token', '\u5bc6\u7801', '\u4ee4\u724c']
 
 function getShareToken(shareCode: string): string | undefined {
   return sessionStorage.getItem(`${SHARE_TOKEN_KEY_PREFIX}${shareCode}`) || undefined
@@ -23,71 +24,108 @@ function clearShareToken(shareCode: string) {
   sessionStorage.removeItem(`${SHARE_TOKEN_KEY_PREFIX}${shareCode}`)
 }
 
+type PublicSharePageState =
+  | { status: 'loading' }
+  | { status: 'password' }
+  | { status: 'ready'; resume: ResumeDetail }
+  | { status: 'error'; message: string }
+
+function isShareAuthError(messageText: string) {
+  const normalizedMessage = messageText.toLowerCase()
+  return SHARE_AUTH_ERROR_KEYWORDS.some((keyword) => normalizedMessage.includes(keyword))
+}
+
 export function PublicSharePage() {
   const { shareCode = '' } = useParams()
   const { t } = useTranslation('share')
-  const [resume, setResume] = useState<ResumeDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [needsPassword, setNeedsPassword] = useState(false)
+  const [pageState, setPageState] = useState<PublicSharePageState>({ status: 'loading' })
   const [verifying, setVerifying] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
   const { templates } = useResumeTemplateCatalog({ scope: 'public' })
+  const resume = pageState.status === 'ready' ? pageState.resume : null
   const previewTemplates = !resume?.resolvedTemplate
     ? templates
     : templates.some((template) => template.key === resume.resolvedTemplate?.key)
       ? templates
       : [resume.resolvedTemplate, ...templates]
 
-  const loadPublicShare = useCallback(async (token?: string) => {
-    setLoading(true)
-    setNeedsPassword(false)
-    setErrorMessage(null)
+  const loadProtectedShare = useCallback(async (token?: string) => {
+    const shareToken = token || getShareToken(shareCode)
+    return getPublicShare(shareCode, shareToken)
+  }, [shareCode])
+
+  const initializePage = useCallback(async () => {
+    setPageState({ status: 'loading' })
+
     try {
-      const shareToken = token || getShareToken(shareCode)
-      setResume(await getPublicShare(shareCode, shareToken))
+      const accessInfo = await getPublicShareAccess(shareCode)
+      if (accessInfo.hasPassword) {
+        const cachedToken = getShareToken(shareCode)
+        if (!cachedToken) {
+          setPageState({ status: 'password' })
+          return
+        }
+
+        try {
+          const sharedResume = await loadProtectedShare(cachedToken)
+          setPageState({ status: 'ready', resume: sharedResume })
+          return
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : t('page.loadFailed')
+          if (isShareAuthError(msg)) {
+            clearShareToken(shareCode)
+            setPageState({ status: 'password' })
+            return
+          }
+
+          void messageApi.error(msg)
+          setPageState({ status: 'error', message: msg })
+          return
+        }
+      }
+
+      const sharedResume = await getPublicShare(shareCode)
+      setPageState({ status: 'ready', resume: sharedResume })
     } catch (error) {
       const msg = error instanceof Error ? error.message : t('page.loadFailed')
-      if (msg === 'Password required' || msg.includes('password') || msg.includes('Password')) {
-        setNeedsPassword(true)
-        clearShareToken(shareCode)
-      } else {
-        void messageApi.error(msg)
-        setErrorMessage(msg)
-      }
-      setResume(null)
-    } finally {
-      setLoading(false)
+      void messageApi.error(msg)
+      setPageState({ status: 'error', message: msg })
     }
-  }, [messageApi, shareCode, t])
+  }, [loadProtectedShare, messageApi, shareCode, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      void loadPublicShare()
+      void initializePage()
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [loadPublicShare])
+  }, [initializePage])
 
   const handlePasswordSubmit = async (values: { password: string }) => {
     setVerifying(true)
     try {
       const { token } = await verifySharePassword(shareCode, values.password)
       setShareToken(shareCode, token)
-      await loadPublicShare(token)
+      const sharedResume = await loadProtectedShare(token)
+      setPageState({ status: 'ready', resume: sharedResume })
     } catch (error) {
-      void messageApi.error(error instanceof Error ? error.message : t('page.verifyFailed'))
+      const msg = error instanceof Error ? error.message : t('page.verifyFailed')
+      if (isShareAuthError(msg)) {
+        clearShareToken(shareCode)
+        setPageState({ status: 'password' })
+      }
+      void messageApi.error(msg)
     } finally {
       setVerifying(false)
     }
   }
 
-  if (needsPassword) {
+  if (pageState.status === 'password') {
     return (
-      <div className="full-page-center">
+      <div className="public-share-page public-share-page--password">
         {contextHolder}
-        <Card className="auth-card" bordered={false} style={{ width: 400, textAlign: 'center' }}>
+        <Card className="auth-card public-share-page__password-card" bordered={false}>
           <LockOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
           <h2 style={{ marginBottom: 8 }}>{t('passwordGate.title')}</h2>
           <p style={{ color: '#666', marginBottom: 24 }}>{t('passwordGate.subtitle')}</p>
@@ -123,24 +161,24 @@ export function PublicSharePage() {
     <div className="public-share-page">
       {contextHolder}
       <Card className="public-share-page__card" bordered={false}>
-        {loading ? (
+        {pageState.status === 'loading' ? (
           <div className="full-page-center" style={{ minHeight: 320 }}>
             <Spin size="large" tip={t('page.loading')} />
           </div>
-        ) : resume ? (
+        ) : pageState.status === 'ready' ? (
           <>
             <div style={{ marginBottom: 12, textAlign: 'right' }}>
               <Button icon={<DownloadOutlined />} loading={downloading} onClick={() => void handleDownloadPdf()}>
                 {t('page.downloadPdf')}
               </Button>
             </div>
-            <ResumePreview resume={resume} templates={previewTemplates} previewMode="a4-paged" />
+            <ResumePreview resume={pageState.resume} templates={previewTemplates} previewMode="a4-paged" />
           </>
         ) : (
-          <Result status="404" title={t('notFound.title')} subTitle={errorMessage || t('notFound.subtitle')} />
+          <Result status="404" title={t('notFound.title')} subTitle={pageState.message || t('notFound.subtitle')} />
         )}
 
-        {!loading && !resume && !needsPassword ? <EmptyPreview /> : null}
+        {pageState.status === 'error' ? <EmptyPreview /> : null}
       </Card>
     </div>
   )

@@ -1,8 +1,9 @@
-import { HistoryOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { App, Button, Card, Descriptions, Empty, Space, Spin, Tag, Timeline, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../../components/shared/ResponsiveModal'
+import { useIsMobile } from '../../../../lib/hooks/useIsMobile'
 import {
   createResumeSnapshot,
   getResumeVersion,
@@ -59,9 +60,11 @@ export function ResumeVersionTimelineModal({
 }: ResumeVersionTimelineModalProps) {
   const { t, i18n } = useTranslation('workspace')
   const { message } = App.useApp()
+  const isMobile = useIsMobile()
   const [versions, setVersions] = useState<ResumeVersionSummary[]>([])
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<ResumeVersionDetail | null>(null)
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
   const [loadingVersions, setLoadingVersions] = useState(false)
   const [loadingVersionDetail, setLoadingVersionDetail] = useState(false)
   const [creatingSnapshot, setCreatingSnapshot] = useState(false)
@@ -98,6 +101,7 @@ export function ResumeVersionTimelineModal({
     }
 
     const timer = window.setTimeout(() => {
+      setMobileView('list')
       void loadVersions()
     }, 0)
 
@@ -167,6 +171,7 @@ export function ResumeVersionTimelineModal({
 
   function handleClose() {
     setRestoreConfirmOpen(false)
+    setMobileView('list')
     onClose()
   }
 
@@ -196,6 +201,115 @@ export function ResumeVersionTimelineModal({
     }
   }
 
+  function handleSelectVersion(versionId: string) {
+    setSelectedVersionId(versionId)
+    if (isMobile) {
+      setMobileView('detail')
+    }
+  }
+
+  const timelineContent = loadingVersions ? (
+    <div className="resume-version-modal__empty">
+      <Spin />
+    </div>
+  ) : versions.length === 0 ? (
+    <div className="resume-version-modal__empty">
+      <Empty description={t('versionTimeline.empty')} />
+    </div>
+  ) : (
+    <Timeline
+      items={versions.map((version) => ({
+        color: version.id === selectedVersionId ? '#3157a4' : '#d9d9d9',
+        children: (
+          <button
+            type="button"
+            className={`resume-version-modal__timeline-button${version.id === selectedVersionId ? ' resume-version-modal__timeline-button--active' : ''}`}
+            onClick={() => handleSelectVersion(version.id)}
+          >
+            <Space wrap size={[8, 8]}>
+              <Tag color={version.id === selectedVersionId ? 'blue' : 'default'}>
+                {t('versionTimeline.versionTag', { number: version.versionNumber })}
+              </Tag>
+              <Text type="secondary">{formatDateTime(version.createdAt, i18n.language)}</Text>
+            </Space>
+            <Text strong>{version.title || t('versionTimeline.untitled')}</Text>
+            <Text type="secondary">{version.templateKey}</Text>
+          </button>
+        ),
+      }))}
+    />
+  )
+
+  const detailContent = loadingVersionDetail ? (
+    <Card bordered={false} className="glass-card resume-version-modal__empty">
+      <Spin />
+    </Card>
+  ) : !activeSelectedVersion ? (
+    <Card bordered={false} className="glass-card resume-version-modal__empty">
+      <Empty description={t('versionTimeline.selectVersion')} />
+    </Card>
+  ) : (
+    <>
+      <Card bordered={false} className="glass-card">
+        <div className="resume-version-modal__summary-head">
+          <Space wrap>
+            <Tag color="blue">{t('versionTimeline.versionTag', { number: activeSelectedVersion.versionNumber })}</Tag>
+            <Tag>{formatDateTime(activeSelectedVersion.createdAt, i18n.language)}</Tag>
+          </Space>
+          <Button type="primary" onClick={openRestoreConfirm} disabled={restoringVersion}>
+            {t('versionTimeline.restore')}
+          </Button>
+        </div>
+
+        <Descriptions
+          size="small"
+          column={1}
+          className="resume-version-modal__descriptions"
+          items={[
+            {
+              key: 'title',
+              label: t('versionTimeline.snapshotTitle'),
+              children: activeSelectedVersion.snapshot.title || t('versionTimeline.untitled'),
+            },
+            {
+              key: 'template',
+              label: t('versionTimeline.snapshotTemplate'),
+              children: activeSelectedVersion.snapshot.resolvedTemplate?.name ?? activeSelectedVersion.snapshot.templateKey,
+            },
+            {
+              key: 'updatedAt',
+              label: t('versionTimeline.snapshotTimestamp'),
+              children: formatDateTime(activeSelectedVersion.createdAt, i18n.language),
+            },
+          ]}
+        />
+      </Card>
+
+      <Card bordered={false} className="glass-card" title={t('versionTimeline.diffTitle')}>
+        {diffSections.length === 0 ? (
+          <Empty description={t('versionTimeline.noDiff')} />
+        ) : (
+          <div className="resume-version-modal__diff-list">
+            {diffSections.map((section) => (
+              <Card
+                key={section.key}
+                size="small"
+                title={section.title}
+                className="resume-version-modal__diff-card"
+              >
+                <ul className="resume-version-modal__diff-items">
+                  {section.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </Card>
+            ))}
+          </div>
+        )}
+      </Card>
+    </>
+  )
+
   return (
     <ResponsiveModal
       open={open}
@@ -213,130 +327,73 @@ export function ResumeVersionTimelineModal({
       )}
     >
       <div className="resume-version-modal">
-        <div className="resume-version-modal__toolbar">
-          <div>
-            <Text strong>{t('versionTimeline.subtitle')}</Text>
-            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              {t('versionTimeline.description')}
-            </Paragraph>
-          </div>
-          <Space wrap>
-            <Button icon={<ReloadOutlined />} onClick={() => void loadVersions()} loading={loadingVersions}>
-              {t('versionTimeline.refresh')}
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => void handleCreateSnapshot()} loading={creatingSnapshot}>
-              {t('versionTimeline.createSnapshot')}
-            </Button>
-          </Space>
-        </div>
-
-        <div className="resume-version-modal__layout">
-          <Card bordered={false} className="glass-card resume-version-modal__timeline-card">
-            {loadingVersions ? (
-              <div className="resume-version-modal__empty">
-                <Spin />
+        {isMobile ? (
+          mobileView === 'detail' ? (
+            <div className="resume-version-modal__mobile-detail">
+              <div className="resume-version-modal__mobile-header">
+                <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => setMobileView('list')}>
+                  {t('versionTimeline.backToList')}
+                </Button>
+                <Text type="secondary">{t('versionTimeline.detailTitle')}</Text>
               </div>
-            ) : versions.length === 0 ? (
-              <div className="resume-version-modal__empty">
-                <Empty description={t('versionTimeline.empty')} />
+              <div className="resume-version-modal__mobile-detail-body">
+                {detailContent}
               </div>
-            ) : (
-              <Timeline
-                items={versions.map((version) => ({
-                  color: version.id === selectedVersionId ? '#3157a4' : '#d9d9d9',
-                  children: (
-                    <button
-                      type="button"
-                      className={`resume-version-modal__timeline-button${version.id === selectedVersionId ? ' resume-version-modal__timeline-button--active' : ''}`}
-                      onClick={() => setSelectedVersionId(version.id)}
-                    >
-                      <Space wrap size={[8, 8]}>
-                        <Tag color={version.id === selectedVersionId ? 'blue' : 'default'}>
-                          {t('versionTimeline.versionTag', { number: version.versionNumber })}
-                        </Tag>
-                        <Text type="secondary">{formatDateTime(version.createdAt, i18n.language)}</Text>
-                      </Space>
-                      <Text strong>{version.title || t('versionTimeline.untitled')}</Text>
-                      <Text type="secondary">{version.templateKey}</Text>
-                    </button>
-                  ),
-                }))}
-              />
-            )}
-          </Card>
+            </div>
+          ) : (
+            <>
+              <div className="resume-version-modal__toolbar">
+                <div>
+                  <Text strong>{t('versionTimeline.mobileListTitle')}</Text>
+                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                    {t('versionTimeline.description')}
+                  </Paragraph>
+                </div>
+                <Space wrap>
+                  <Button icon={<ReloadOutlined />} onClick={() => void loadVersions()} loading={loadingVersions}>
+                    {t('versionTimeline.refresh')}
+                  </Button>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => void handleCreateSnapshot()} loading={creatingSnapshot}>
+                    {t('versionTimeline.createSnapshot')}
+                  </Button>
+                </Space>
+              </div>
 
-          <div className="resume-version-modal__detail">
-            {loadingVersionDetail ? (
-              <Card bordered={false} className="glass-card resume-version-modal__empty">
-                <Spin />
+              <Card bordered={false} className="glass-card resume-version-modal__timeline-card">
+                {timelineContent}
               </Card>
-            ) : !activeSelectedVersion ? (
-              <Card bordered={false} className="glass-card resume-version-modal__empty">
-                <Empty description={t('versionTimeline.selectVersion')} />
+            </>
+          )
+        ) : (
+          <>
+            <div className="resume-version-modal__toolbar">
+              <div>
+                <Text strong>{t('versionTimeline.subtitle')}</Text>
+                <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                  {t('versionTimeline.description')}
+                </Paragraph>
+              </div>
+              <Space wrap>
+                <Button icon={<ReloadOutlined />} onClick={() => void loadVersions()} loading={loadingVersions}>
+                  {t('versionTimeline.refresh')}
+                </Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => void handleCreateSnapshot()} loading={creatingSnapshot}>
+                  {t('versionTimeline.createSnapshot')}
+                </Button>
+              </Space>
+            </div>
+
+            <div className="resume-version-modal__layout">
+              <Card bordered={false} className="glass-card resume-version-modal__timeline-card">
+                {timelineContent}
               </Card>
-            ) : (
-              <>
-                <Card bordered={false} className="glass-card">
-                  <div className="resume-version-modal__summary-head">
-                    <Space wrap>
-                      <Tag color="blue">{t('versionTimeline.versionTag', { number: activeSelectedVersion.versionNumber })}</Tag>
-                      <Tag>{formatDateTime(activeSelectedVersion.createdAt, i18n.language)}</Tag>
-                    </Space>
-                    <Button type="primary" onClick={openRestoreConfirm} disabled={restoringVersion}>
-                      {t('versionTimeline.restore')}
-                    </Button>
-                  </div>
 
-                  <Descriptions
-                    size="small"
-                    column={1}
-                    className="resume-version-modal__descriptions"
-                    items={[
-                      {
-                        key: 'title',
-                        label: t('versionTimeline.snapshotTitle'),
-                        children: activeSelectedVersion.snapshot.title || t('versionTimeline.untitled'),
-                      },
-                      {
-                        key: 'template',
-                        label: t('versionTimeline.snapshotTemplate'),
-                        children: activeSelectedVersion.snapshot.resolvedTemplate?.name ?? activeSelectedVersion.snapshot.templateKey,
-                      },
-                      {
-                        key: 'updatedAt',
-                        label: t('versionTimeline.snapshotTimestamp'),
-                        children: formatDateTime(activeSelectedVersion.createdAt, i18n.language),
-                      },
-                    ]}
-                  />
-                </Card>
-
-                <Card bordered={false} className="glass-card" title={t('versionTimeline.diffTitle')}>
-                  {diffSections.length === 0 ? (
-                    <Empty description={t('versionTimeline.noDiff')} />
-                  ) : (
-                    <div className="resume-version-modal__diff-list">
-                      {diffSections.map((section) => (
-                        <Card
-                          key={section.key}
-                          size="small"
-                          title={section.title}
-                          className="resume-version-modal__diff-card"
-                        >
-                          <ul className="resume-version-modal__diff-items">
-                            {section.items.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              </>
-            )}
-          </div>
-        </div>
+              <div className="resume-version-modal__detail">
+                {detailContent}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <ResponsiveModal
