@@ -56,6 +56,7 @@ public record AiChatEvent(String type, String content, String conversationId) {}
 
 - **Identity**: When asked who/what it is, the assistant introduces itself as "智慧简历 AI" and briefly describes its capability — optimizing the bound resume.
 - **Scope**: Only answer questions about the bound resume content, the companies / projects / roles / industries that already appear in it, resume optimization, and interview-related common knowledge. Out-of-scope chitchat / general programming / lifestyle questions are politely redirected back to the resume topic without breaking the conversation context.
+- **Resume prompt payload**: backend prompt assembly must inject only visible `AiResumeContent` JSON, not the full `AiResumeContext`. `id`, `title`, `templateKey`, layout metadata, and `hiddenSections` are transport-level fields and must not be serialized into the model-facing prompt body.
 - **Default behavior**: When improvement points exist, output a markdown-readable diagnosis listing "issue + one-line rationale" per item. `suggestedValue` defaults to a concise, one-shot apply-able new text — do NOT preemptively expand into multi-paragraph rewrites.
 - **Explicit-expansion trigger**: Only when the user explicitly says "帮我写长一点 / 多给几个版本 / 详细改" (or equivalent) does the assistant emit a longer rewrite or multiple candidates, overwriting the corresponding patch's `suggestedValue`.
 - **Sentinel protocol** — appended on a single line **after** all readable text:
@@ -92,6 +93,7 @@ Emission order on a single stream: `message`* → `suggestion` → `done`.
 - The frontend sends only the user's typed chat content as the next `userMessage`; suggestion card content, rationales, and statuses must not be appended as hidden prompt text.
 - The backend persists each suggestion card to `ai_chat_suggestions` using the tuple `(conversationId, assistantMessageIndex, displayOrder)` as the stable per-round identity source. Returned `suggestion.id` values are normalized server-side to `"{conversationId}-a{assistantMessageIndex}-s{displayOrder}"`; do not trust model-provided ids for persistence.
 - `AiAgentService` must capture `userId` before entering the stream / SSE pipeline and pass it into suggestion persistence explicitly, because `CurrentUserContext` is thread-local and is not safe to read from Reactor worker threads.
+- `ResumeContentService.buildAiVisibleContentJson(resume)` is the backend-owned serialization path for resume-chat prompt context. `AiAgentService` must not call `objectMapper.writeValueAsString(...)` directly for resume prompt assembly.
 - Suggestion status is durable across refresh / history reload with the enum: `pending`, `applied`, `dismissed`. Undoing a dismissal writes `dismissed -> pending`.
 - Sending a new user message must not prune prior rounds' pending or dismissed cards from frontend state. The chat timeline keeps all rounds, and prior suggestion cards remain visible and actionable until the user applies or skips them.
 - Persisted suggestion status is for UI/history restoration, not prompt replay.
@@ -121,6 +123,7 @@ Note on `personalInfo.index`: although it is an object section, the model may ei
 | Sentinel missing in upstream output | Visible text passes through unchanged; emit empty-list suggestion event + WARN log |
 | Sentinel present, JSON malformed | Strip from visible text; emit empty-list suggestion event + WARN log; never throw |
 | Sentinel present, JSON parses but `section` invalid enum value | Jackson rejects → falls into "JSON malformed" branch → empty list |
+| Resume has hidden modules or layout-only metadata | Prompt receives only the visible `AiResumeContent` subset; hidden sections and layout metadata are excluded before serialization |
 | Out-of-scope user question | System prompt steers back to resume topic; suggestions list typically empty |
 | User asks for detailed rewrite | `suggestedValue` may be longer / multi-line; structure unchanged |
 | Memory write fails | Surface upstream — not this layer's concern |
@@ -128,10 +131,12 @@ Note on `personalInfo.index`: although it is an object section, the model may ei
 ### 6. Good/Base/Bad Cases
 
 - **Good**: user asks "帮我看看简历"; agent returns markdown bullet list + sentinel JSON with ≥1 suggestion, each with concise `suggestedValue` and one-line `rationale`. Frontend renders Apply/Skip cards directly.
+- **Good**: prompt context includes only visible resume content fields, so hidden modules and `hiddenSections` never appear in the AI input.
 - **Good**: user follows up with "第 2 条帮我写长一点"; agent emits a single suggestion patch with an extended multi-sentence `suggestedValue` overwriting the original.
 - **Base**: out-of-scope question receives a polite redirect message + empty-list suggestion event. No card is rendered.
 - **Base**: user asks "你是什么"; agent self-introduces as "智慧简历 AI" + empty-list suggestion event.
 - **Bad**: agent emits `<<<SUGGESTIONS_JSON>>>{...}` mid-paragraph and the frontend bubble shows raw JSON characters. Caused by either an Approach A leakage or the model violating the "single line at the tail" rule.
+- **Bad**: chat service serializes the whole `AiResumeContext` into the prompt, leaking `title`, `templateKey`, layout, or hidden-module hints that the model does not need.
 - **Bad**: agent decides to fabricate a sample patch because parsing failed. Forbidden — empty list is the only correct fallback.
 - **Bad**: frontend invents ad hoc suggestion ids or reattaches persisted suggestions to the wrong assistant message after reload. The backend-owned normalized id and `assistantMessageIndex` mapping are the source of truth.
 
@@ -143,6 +148,7 @@ Located at `backend/src/test/java/com/smartresume/ai/service/AiAgentServiceTest.
 - **Default diagnostic** — assert ≥1 suggestion in the plan, each `suggestedValue` non-blank and concise (length cap as a sanity bound, not a contract).
 - **Explicit detailed rewrite** — assert the resulting `suggestedValue` is meaningfully longer than the default-mode case (proxy: length > short-form threshold).
 - **Sentinel fallback** — when the mock model emits a malformed JSON tail or omits the sentinel, the service does not throw, emits an empty-list suggestion event, and the malformed JSON characters never reach the visible message stream.
+- **Visible-content-only prompt** — assert the captured `AiInvocationRequest.systemPrompt()` contains visible resume content fields but excludes `hiddenSections`, layout metadata, and unrelated top-level resume metadata.
 
 Tests mock `AiChatService.stream(...)` to return a controlled `Flux<AiChatEvent>` so the model output text is fully deterministic.
 

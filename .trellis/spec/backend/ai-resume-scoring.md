@@ -43,6 +43,9 @@
       - `templateKey: string`
       - `content: ResumeContentPayload`
       - `layout: ResumeLayoutPayload`
+  - backend prompt payload:
+    - `AiResumeScoringService` must serialize only the visible `AiResumeContent` subset into the model-facing scoring prompt
+    - top-level resume transport metadata (`id`, `title`, `templateKey`, `layout`, `hiddenSections`) stays outside the AI prompt body
 - Response body:
   - `score: number`
     - integer percentage-like score, expected range `0..100`
@@ -60,6 +63,7 @@
 - Ownership:
   - backend DTO naming is the source of truth for cross-layer field names
   - frontend must not reshape the response into ad hoc JSX-only objects before state storage
+  - `ResumeContentService.buildAiVisibleContentJson(resume)` is the backend-owned serialization path for scoring prompt context; scoring code must not hand-roll resume prompt JSON with `objectMapper.writeValueAsString(...)`
   - backend stores only the last successful score per `(user_id, resume_id)`
   - `ai_resume_scores` columns:
     - `resume_id: varchar(64)` primary key
@@ -75,6 +79,7 @@
 - Missing `resume` -> request validation error
 - Blank `jobDescription` -> accepted, treated as not provided
 - Partially filled resume sections -> accepted; the scoring prompt derives suggestions from available content
+- Resume has hidden modules or layout-only metadata -> scoring prompt includes only visible `AiResumeContent`; hidden sections and layout metadata are excluded before serialization
 - AI provider parse failure -> `AiChatService.callStructured` retries once silently; if the retry also fails, the service throws and the controller maps it to a 5xx error. **Do NOT** fall back to a mock score.
 - AI provider unavailable / configuration missing -> propagate as a service error with the existing error envelope; frontend should display the error rather than render a fabricated score.
 - No persisted row for the resume -> `GET /api/ai/resumes/{resumeId}/score` returns `null` data and the modal starts empty
@@ -85,9 +90,11 @@
 
 - Good: user fills JD, submits scoring, sees `jobDescriptionProvided = true` and JD-oriented suggestion groups.
 - Base: user leaves JD empty, still receives score, summary, strengths, and structured suggestions.
+- Good: scoring prompt contains visible resume content only, so hidden modules and layout metadata cannot perturb the score result.
 - Good: user closes the modal and reopens it later for the same resume, and the last successful score plus last scored JD are restored from backend persistence.
 - Good: user logs in on another browser/device and can still restore the latest score for the same resume.
 - Bad: backend returns free-form text only, forcing the frontend to parse or heuristically split advice cards.
+- Bad: scoring service serializes the whole `AiResumeContext` into the prompt, coupling score behavior to transport metadata the model does not need.
 - Bad: scoring flow reuses chat-stream payloads or SSE semantics, making a simple one-shot modal harder to manage.
 
 ### 6. Tests Required
@@ -106,6 +113,7 @@
     - response always contains non-empty summary, strengths, and suggestion groups
     - response always has `mode = "ai"`
     - each call uses a freshly generated `conversationId` via `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)`
+    - captured scoring prompt contains visible resume content fields but excludes `hiddenSections`, layout metadata, and unrelated top-level resume metadata
     - parse-failure path: assert the service throws after the single retry exhausts; assert NO mock-shaped payload is returned
 
 ### 7. Wrong vs Correct
@@ -113,6 +121,7 @@
 #### Wrong
 
 - Create a second resume-to-AI context mapper just for scoring, letting chat and scoring drift over time.
+- Serialize the full `AiResumeContext` into the scoring prompt, even though the model only needs visible resume content.
 - Return only a single markdown blob from the backend and let the modal split sections heuristically.
 - Call `ChatModel` / `ChatClient` directly from `AiResumeScoringService` and skip `AiChatService.callStructured` — loses memory persistence, vendor branching, and the retry-once policy.
 - Catch the structured-output exception and synthesise a mock-shaped response so the UI "still works" — silently hides AI regressions in production.
@@ -120,7 +129,7 @@
 
 #### Correct
 
-- Reuse one `AiResumeContext` mapping path for both AI chat and scoring.
+- Reuse one visible-resume-content mapping path for both AI chat and scoring.
 - Keep scoring as a normal JSON request/response flow with explicit DTOs.
 - Build an `AiInvocationRequest` with a fresh `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)` id and invoke `aiChatService.callStructured(req, AiResumeScoreResponse.class)`; let exceptions bubble.
 - Persist the normalized `AiResumeScoreResponse` plus the last-used JD to `ai_resume_scores`, and expose a dedicated read endpoint for modal restoration.
@@ -130,3 +139,4 @@
 ## Technical Notes
 
 - The frontend strips `personalInfo.avatar` from the `AiResumeContext` before sending requests to save context tokens and reduce latency. The backend should not assume `avatar` is present in the resume context payload.
+- Even though the request DTO still carries `AiResumeContext`, backend scoring prompt assembly should read only the visible `content` projection when talking to the model.
