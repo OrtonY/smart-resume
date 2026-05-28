@@ -1843,3 +1843,37 @@ Added shared markdown bold compatibility normalization, wired it into global mar
 ### Next Steps
 
 - None - task complete
+
+
+## Session 56: Refine mobile interview header and AI resume context filtering
+
+**Date**: 2026-05-28
+**Task**: Refine mobile interview header and AI resume context filtering
+**Branch**: `codex/mobile-chat-company-hidden-filter`
+
+### Summary
+
+Optimized mobile interview detail header layout, filtered hidden resume sections from AI-related flows, unified backend visible resume prompt serialization, and updated backend specs for visible-content-only AI prompt contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2365fdf` | (see git log) |
+| `29fe5f5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

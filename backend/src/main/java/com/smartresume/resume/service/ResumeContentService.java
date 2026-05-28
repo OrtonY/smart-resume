@@ -2,6 +2,8 @@ package com.smartresume.resume.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.dto.AiDtos;
+import com.smartresume.resume.domain.ResumeEntity;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.resume.domain.ResumeSectionEntity;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -76,6 +79,40 @@ public class ResumeContentService {
 
     public ResumeContentPayload parseContent(String json) {
         return fromJson(json, ResumeContentPayload.class);
+    }
+
+    public AiDtos.AiResumeContext buildAiVisibleContext(ResumeEntity resume) {
+        if (resume == null) {
+            return null;
+        }
+
+        ResumeLayoutPayload normalizedLayout = readLayoutOrDefault(resume.getLayoutJson());
+        List<String> visibleSectionOrder = resolveVisibleSectionOrder(normalizedLayout);
+        ResumeContentPayload content = loadContent(resume.getId(), resume.getUserId());
+
+        return new AiDtos.AiResumeContext(
+            resume.getId(),
+            resume.getTitle(),
+            resume.getTemplateKey(),
+            AiDtos.fromResumeContentPayload(content, visibleSectionOrder),
+            AiDtos.fromVisibleSectionOrder(visibleSectionOrder)
+        );
+    }
+
+    public String buildAiVisibleContextJson(ResumeEntity resume) {
+        AiDtos.AiResumeContext context = buildAiVisibleContext(resume);
+        if (context == null) {
+            return "{}";
+        }
+        return toJson(context);
+    }
+
+    public String buildAiVisibleContentJson(ResumeEntity resume) {
+        AiDtos.AiResumeContext context = buildAiVisibleContext(resume);
+        if (context == null || context.content() == null) {
+            return "{}";
+        }
+        return toJson(context.content());
     }
 
     public void saveSections(String resumeId, long userId, ResumeContentPayload content, LocalDateTime now) {
@@ -208,5 +245,12 @@ public class ResumeContentService {
 
     private <T> List<T> normalizeList(List<T> source) {
         return source == null ? List.of() : new ArrayList<>(source);
+    }
+
+    private List<String> resolveVisibleSectionOrder(ResumeLayoutPayload layout) {
+        Set<String> hiddenSections = layout.hiddenSections() == null ? Set.of() : Set.copyOf(layout.hiddenSections());
+        return layout.sectionOrder().stream()
+            .filter(section -> !hiddenSections.contains(section))
+            .toList();
     }
 }

@@ -12,6 +12,7 @@ import com.smartresume.interview.domain.table.InterviewAiAssistEntityTableDef;
 import com.smartresume.interview.dto.InterviewAssistDtos.InterviewAssistResponse;
 import com.smartresume.interview.mapper.InterviewAiAssistMapper;
 import com.smartresume.resume.domain.ResumeEntity;
+import com.smartresume.resume.service.ResumeContentService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -32,15 +33,18 @@ public class InterviewAssistService {
     private final InterviewAiAssistMapper interviewAiAssistMapper;
     private final AiChatService aiChatService;
     private final InterviewSessionSupportService sessionSupportService;
+    private final ResumeContentService resumeContentService;
 
     public InterviewAssistService(
         InterviewAiAssistMapper interviewAiAssistMapper,
         AiChatService aiChatService,
-        InterviewSessionSupportService sessionSupportService
+        InterviewSessionSupportService sessionSupportService,
+        ResumeContentService resumeContentService
     ) {
         this.interviewAiAssistMapper = interviewAiAssistMapper;
         this.aiChatService = aiChatService;
         this.sessionSupportService = sessionSupportService;
+        this.resumeContentService = resumeContentService;
     }
 
     public InterviewAssistResponse getAssist(String sessionId, String messageId) {
@@ -78,7 +82,7 @@ public class InterviewAssistService {
         ResumeEntity resume = session.getResumeId() != null
             ? sessionSupportService.loadOwnedResume(session.getResumeId(), session.getUserId())
             : null;
-        String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
+        String resumeJson = resume != null ? resumeContentService.buildAiVisibleContextJson(resume) : "{}";
 
         List<String> roles = sessionSupportService.readInterviewerRolesBestEffort(session);
         int roundIndex = questionMessage.getRoundIndex() != null ? questionMessage.getRoundIndex() : 0;
@@ -162,7 +166,7 @@ public class InterviewAssistService {
         ResumeEntity resume = session.getResumeId() != null
             ? sessionSupportService.loadOwnedResume(session.getResumeId(), session.getUserId())
             : null;
-        String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
+        String resumeJson = resume != null ? resumeContentService.buildAiVisibleContextJson(resume) : "{}";
 
         List<String> roles = sessionSupportService.readInterviewerRolesBestEffort(session);
         int roundIndex = questionMessage.getRoundIndex() != null ? questionMessage.getRoundIndex() : 0;

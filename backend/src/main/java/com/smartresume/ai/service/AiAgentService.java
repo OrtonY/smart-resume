@@ -2,23 +2,23 @@ package com.smartresume.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.dto.AiDtos;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
-import com.smartresume.ai.dto.AiDtos.AiResumeContext;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.dto.suggestion.AiResumeSuggestionPlan;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
-import com.smartresume.resume.service.ResumeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-
+import com.smartresume.resume.domain.ResumeEntity;
+import com.smartresume.resume.service.ResumeContentService;
+import com.smartresume.resume.service.ResumeLookupService;
 import java.time.Duration;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 @Service
 public class AiAgentService {
@@ -71,25 +71,28 @@ public class AiAgentService {
 
     private final AiChatService aiChatService;
     private final AiChatHistoryService aiChatHistoryService;
-    private final ResumeService resumeService;
+    private final ResumeLookupService resumeLookupService;
+    private final ResumeContentService resumeContentService;
     private final ObjectMapper objectMapper;
 
     public AiAgentService(
         AiChatService aiChatService,
         AiChatHistoryService aiChatHistoryService,
-        ResumeService resumeService,
+        ResumeLookupService resumeLookupService,
+        ResumeContentService resumeContentService,
         ObjectMapper objectMapper
     ) {
         this.aiChatService = aiChatService;
         this.aiChatHistoryService = aiChatHistoryService;
-        this.resumeService = resumeService;
+        this.resumeLookupService = resumeLookupService;
+        this.resumeContentService = resumeContentService;
         this.objectMapper = objectMapper;
     }
 
     public Flux<AiChatEvent> streamChat(AiChatRequest request) {
         return Flux.defer(() -> {
             PreparedChat preparedChat = prepareChat(request);
-            String resumeId = request.resume().id();
+            String resumeId = preparedChat.resumeId();
             String conversationId = preparedChat.conversationId();
             long userId = preparedChat.userId();
             AiInvocationRequest invocationRequest = preparedChat.invocationRequest();
@@ -134,7 +137,7 @@ public class AiAgentService {
         String fullText = aiChatService.call(preparedChat.invocationRequest());
         return toChatCompletionResponse(
             fullText,
-            request.resume().id(),
+            preparedChat.resumeId(),
             preparedChat.conversationId(),
             preparedChat.userId()
         );
@@ -142,20 +145,21 @@ public class AiAgentService {
 
     private PreparedChat prepareChat(AiChatRequest request) {
         long userId = CurrentUserContext.requireUserId();
-        resumeService.validResume(request.resume().id());
+        ResumeEntity resume = resumeLookupService.requireResume(request.resumeId(), userId);
+        String visibleResumeContentJson = resumeContentService.buildAiVisibleContentJson(resume);
         String conversationId = aiChatHistoryService.resolveConversationId(
-            request.resume().id(),
+            resume.getId(),
             request.conversationId(),
             request.message()
         );
-        String systemPrompt = buildSystemPrompt(request.resume());
+        String systemPrompt = buildSystemPrompt(visibleResumeContentJson);
         AiInvocationRequest invocationRequest = new AiInvocationRequest(
             systemPrompt,
             request.message(),
             conversationId,
             AiAgentService::stripSuggestionSentinel
         );
-        return new PreparedChat(conversationId, userId, invocationRequest);
+        return new PreparedChat(resume.getId(), conversationId, userId, invocationRequest);
     }
 
     private Flux<AiChatEvent> buildResponseFlux(String fullText, String resumeId, String conversationId, long userId) {
@@ -249,21 +253,13 @@ public class AiAgentService {
             .toList();
     }
 
-    private String buildSystemPrompt(AiResumeContext resume) {
+    private String buildSystemPrompt(String resumeContentJson) {
         return """
             %s
 
-            Bound resume JSON:
+            Bound resume content JSON:
             %s
-            """.formatted(CHAT_SYSTEM_PROMPT, toJson(resume));
-    }
-
-    private String toJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException exception) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to serialize AI request context");
-        }
+            """.formatted(CHAT_SYSTEM_PROMPT, resumeContentJson);
     }
 
     private String streamErrorMessage(Throwable exception) {
@@ -274,6 +270,6 @@ public class AiAgentService {
         return exception.getMessage() == null ? "AI stream failed" : exception.getMessage();
     }
 
-    private record PreparedChat(String conversationId, long userId, AiInvocationRequest invocationRequest) {
+    private record PreparedChat(String resumeId, String conversationId, long userId, AiInvocationRequest invocationRequest) {
     }
 }
