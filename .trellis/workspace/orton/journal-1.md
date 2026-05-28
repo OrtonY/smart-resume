@@ -1877,3 +1877,36 @@ Optimized mobile interview detail header layout, filtered hidden resume sections
 ### Next Steps
 
 - None - task complete
+
+
+## Session 57: Bump frontend and backend to v1.1.1
+
+**Date**: 2026-05-28
+**Task**: Bump frontend and backend to v1.1.1
+**Branch**: `chore/bump-version-1.1.1`
+
+### Summary
+
+Updated frontend and backend application versions to v1.1.1, corrected backend JAR references in build/start scripts, and verified frontend lint/build plus backend tests/package.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `460887c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
