@@ -11,6 +11,7 @@ import com.smartresume.share.domain.ShareAccessLogEntity;
 import com.smartresume.share.domain.table.ResumeShareEntityTableDef;
 import com.smartresume.share.domain.table.ShareAccessLogEntityTableDef;
 import com.smartresume.share.dto.ShareDtos.CreateShareRequest;
+import com.smartresume.share.dto.ShareDtos.PublicShareAccessInfoResponse;
 import com.smartresume.share.dto.ShareDtos.ShareAccessLogResponse;
 import com.smartresume.share.dto.ShareDtos.ShareAccessLogsPage;
 import com.smartresume.share.dto.ShareDtos.ShareLinkResponse;
@@ -116,6 +117,11 @@ public class ShareService {
             return resumeService.getVersionSnapshotForUser(share.getTargetVersionId(), share.getUserId());
         }
         return resumeService.getResumeForUser(share.getResumeId(), share.getUserId());
+    }
+
+    public PublicShareAccessInfoResponse getPublicShareAccessInfo(String shareCode) {
+        ResumeShareEntity share = findActiveShare(shareCode);
+        return new PublicShareAccessInfoResponse(share.getPasswordHash() != null);
     }
 
     public ResumeDetailResponse getPublicShareForExport(String shareCode, String shareToken) {

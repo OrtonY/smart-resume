@@ -5,6 +5,7 @@ import com.smartresume.export.controller.ExportController;
 import com.smartresume.export.service.PdfExportService;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.share.dto.ShareDtos.CreateShareRequest;
+import com.smartresume.share.dto.ShareDtos.PublicShareAccessInfoResponse;
 import com.smartresume.share.dto.ShareDtos.ShareAccessLogsPage;
 import com.smartresume.share.dto.ShareDtos.ShareLinkResponse;
 import com.smartresume.share.dto.ShareDtos.ShareTokenResponse;
@@ -70,6 +71,11 @@ public class ShareController {
             HttpServletRequest request) {
         String ipAddress = extractIpAddress(request);
         return ApiResponse.success(shareService.getPublicShare(shareCode, shareToken, ipAddress));
+    }
+
+    @GetMapping("/public/shares/{shareCode}/access")
+    public ApiResponse<PublicShareAccessInfoResponse> getPublicShareAccessInfo(@PathVariable String shareCode) {
+        return ApiResponse.success(shareService.getPublicShareAccessInfo(shareCode));
     }
 
     @PostMapping("/public/shares/{shareCode}/verify")

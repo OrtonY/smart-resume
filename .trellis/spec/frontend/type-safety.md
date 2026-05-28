@@ -253,3 +253,68 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 
 #### Correct
 - Call `restoreResumeFromVersion`, persist the restore in the backend transaction, and replace editor state with the returned current `ResumeDetail`.
+
+## Scenario: Public Share Password Gate Preflight
+
+### 1. Scope / Trigger
+- Trigger: public resume shares can now be either open or password-protected, and the share page must decide which UI to render before attempting the main resume fetch.
+- Why this needs code-spec depth: the share page now depends on a dedicated preflight API plus token-aware fallback behavior across backend service rules, frontend API types, and route-level UI state.
+
+### 2. Signatures
+- Frontend API:
+  - `getPublicShareAccess(shareCode: string): Promise<PublicShareAccessInfo>`
+  - `getPublicShare(shareCode: string, shareToken?: string): Promise<ResumeDetail>`
+  - `verifySharePassword(shareCode: string, password: string): Promise<{ token: string }>`
+- Frontend types:
+  - `PublicShareAccessInfo = { hasPassword: boolean }`
+  - `PublicSharePageState = { status: 'loading' } | { status: 'password' } | { status: 'ready'; resume: ResumeDetail } | { status: 'error'; message: string }`
+- Backend APIs:
+  - `GET /api/public/shares/{shareCode}/access`
+  - `GET /api/public/shares/{shareCode}`
+  - `POST /api/public/shares/{shareCode}/verify`
+- Backend DTO:
+  - `PublicShareAccessInfoResponse(boolean hasPassword)`
+
+### 3. Contracts
+- Preflight response returns only whether the active share requires a password; it must not leak resume content or password metadata beyond `hasPassword`.
+- Public share page flow:
+  - call `/access` first
+  - if `hasPassword=false`, fetch the resume directly
+  - if `hasPassword=true` and no cached token exists, render the password form immediately
+  - if `hasPassword=true` and a cached token exists, attempt the protected fetch before showing the form
+- Cached share token storage remains session-scoped via `sessionStorage` key prefix `smart-resume-share-token:`.
+- If a protected fetch fails due to password/token/auth problems, the frontend must clear the cached token and return to the password state instead of staying on an opaque error screen.
+- The password form is part of the public-share route UI and must remain usable on mobile widths (`<=480px`) without horizontal overflow.
+
+### 4. Validation & Error Matrix
+- `shareCode` not found or inactive -> `/access` and `/shares/{shareCode}` fail through the existing not-found/error path.
+- `hasPassword=true` with no cached token -> render password form without attempting resume content fetch.
+- Cached token expired/invalid -> clear token, transition to `password`, let the user retry.
+- Non-auth fetch failure during preflight or content load -> transition to `error` and surface message feedback.
+- Mobile viewport around 375px -> password card must fit within the page padding and keep controls tappable.
+
+### 5. Good/Base/Bad Cases
+- Good: protected share opens on mobile with no cached token, shows the password form immediately, then loads the resume after successful verification.
+- Base: open share returns `hasPassword=false`; the page goes straight from `loading` to `ready` with no password UI flash.
+- Bad: the page tries to fetch the protected resume first, receives a password error, and only then reveals the password field after showing a generic failure message.
+- Bad: an expired cached token leaves the user stuck on a 404/error screen until they manually clear browser storage.
+
+### 6. Tests Required
+- Frontend lint/build must pass after state-union or mobile-style changes to the share page.
+- Backend test/compile must pass after adding the preflight DTO/controller/service method.
+- API assertion:
+  - protected share preflight returns `hasPassword=true`
+  - open share preflight returns `hasPassword=false`
+- UI/manual assertion:
+  - protected share with no token renders the password form first
+  - invalid cached token falls back to password form
+  - password card remains usable on a 375px-wide viewport
+
+### 7. Wrong vs Correct
+#### Wrong
+- Infer whether a share is protected by attempting the main content request first and parsing error-message text as the primary control flow.
+- Keep using a fixed-width password card that can overflow or feel cramped on small screens.
+
+#### Correct
+- Use the dedicated `/api/public/shares/{shareCode}/access` preflight contract to decide the initial UI state, then fall back cleanly when cached credentials expire.
+- Keep the password gate in an explicit union state and give it its own responsive mobile layout rules.
