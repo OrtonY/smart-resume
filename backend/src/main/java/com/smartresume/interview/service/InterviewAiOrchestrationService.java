@@ -9,6 +9,7 @@ import com.smartresume.common.exception.AppException;
 import com.smartresume.interview.domain.InterviewMessageEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
 import com.smartresume.resume.domain.ResumeEntity;
+import com.smartresume.resume.service.ResumeContentService;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +27,7 @@ public class InterviewAiOrchestrationService {
 
     private final AiChatService aiChatService;
     private final InterviewSessionSupportService sessionSupportService;
+    private final ResumeContentService resumeContentService;
 
     private record RoundTopicExtractionResult(List<String> topics) {
     }
@@ -35,10 +37,12 @@ public class InterviewAiOrchestrationService {
 
     public InterviewAiOrchestrationService(
         AiChatService aiChatService,
-        InterviewSessionSupportService sessionSupportService
+        InterviewSessionSupportService sessionSupportService,
+        ResumeContentService resumeContentService
     ) {
         this.aiChatService = aiChatService;
         this.sessionSupportService = sessionSupportService;
+        this.resumeContentService = resumeContentService;
     }
 
     public String generateAiResponse(InterviewSessionEntity session, ResumeEntity resume, String userMessage, int currentQuestionCount) {
@@ -158,8 +162,10 @@ public class InterviewAiOrchestrationService {
         if (session.getJobDescription() != null && !session.getJobDescription().isBlank()) {
             prompt.append("岗位 JD：").append(session.getJobDescription()).append("\n");
         }
-        if (resume != null && resume.getLayoutJson() != null && !resume.getLayoutJson().isBlank()) {
-            prompt.append("候选人简历（供判断匹配场景参考）：").append(resume.getLayoutJson()).append("\n");
+        if (resume != null) {
+            prompt.append("Resume context (visible sections only):\n")
+                .append(resumeContentService.buildAiVisibleContextJson(resume))
+                .append("\n");
         }
 
         AiInvocationRequest request = new AiInvocationRequest(
@@ -195,7 +201,7 @@ public class InterviewAiOrchestrationService {
         List<String> roles = sessionSupportService.readInterviewerRoles(session);
         int roundIndex = sessionSupportService.currentRoundIndex(session);
         String currentRole = roles.get(roundIndex);
-        String resumeJson = resume != null && resume.getLayoutJson() != null ? resume.getLayoutJson() : "{}";
+        String resumeJson = resume != null ? resumeContentService.buildAiVisibleContextJson(resume) : "{}";
         boolean companyContextEnabled = sessionSupportService.companyContextEnabled(session);
         List<String> companySummary = companyContextEnabled
             ? sessionSupportService.readCompanyContextSummary(session)

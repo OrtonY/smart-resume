@@ -12,19 +12,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
-import com.smartresume.ai.dto.AiDtos.AiResumeContext;
+import com.smartresume.ai.dto.AiDtos.AiResumeContent;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.common.security.CurrentUserContext;
+import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.dto.ResumeDtos.CertificateItem;
 import com.smartresume.resume.dto.ResumeDtos.EducationItem;
 import com.smartresume.resume.dto.ResumeDtos.HonorItem;
 import com.smartresume.resume.dto.ResumeDtos.PersonalInfo;
 import com.smartresume.resume.dto.ResumeDtos.ProjectExperienceItem;
-import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
-import com.smartresume.resume.dto.ResumeDtos.ResumeLayoutPayload;
 import com.smartresume.resume.dto.ResumeDtos.SkillItem;
 import com.smartresume.resume.dto.ResumeDtos.WorkExperienceItem;
-import com.smartresume.resume.service.ResumeService;
+import com.smartresume.resume.service.ResumeContentService;
+import com.smartresume.resume.service.ResumeLookupService;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,8 @@ class AiAgentServiceTest {
 
     private AiChatService aiChatService;
     private AiChatHistoryService aiChatHistoryService;
-    private ResumeService resumeService;
+    private ResumeLookupService resumeLookupService;
+    private ResumeContentService resumeContentService;
     private AiAgentService aiAgentService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -48,12 +49,18 @@ class AiAgentServiceTest {
     void setUp() {
         aiChatService = org.mockito.Mockito.mock(AiChatService.class);
         aiChatHistoryService = org.mockito.Mockito.mock(AiChatHistoryService.class);
-        resumeService = org.mockito.Mockito.mock(ResumeService.class);
+        resumeLookupService = org.mockito.Mockito.mock(ResumeLookupService.class);
+        resumeContentService = org.mockito.Mockito.mock(ResumeContentService.class);
 
         CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(7L, "tester", false));
 
-        aiAgentService = new AiAgentService(aiChatService, aiChatHistoryService, resumeService, objectMapper);
-        when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString()))
+        aiAgentService = new AiAgentService(aiChatService, aiChatHistoryService, resumeLookupService, resumeContentService, objectMapper);
+        ResumeEntity resume = new ResumeEntity();
+        resume.setId("resume-1");
+        resume.setUserId(7L);
+        lenient().when(resumeLookupService.requireResume(anyString(), anyLong())).thenReturn(resume);
+        lenient().when(resumeContentService.buildAiVisibleContentJson(any(ResumeEntity.class))).thenReturn(sampleResumeContentJson());
+        lenient().when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString()))
             .thenReturn("conv-test-1");
         lenient().when(aiChatHistoryService.persistSuggestionPlan(anyString(), anyString(), anyString(), anyLong()))
             .thenAnswer(invocation -> invocation.getArgument(2));
@@ -72,7 +79,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("What is the weather today?", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("What is the weather today?", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -105,7 +112,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -141,7 +148,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Make suggestion 2 longer", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Make suggestion 2 longer", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -160,7 +167,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -182,7 +189,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Who are you?", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Who are you?", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -202,7 +209,7 @@ class AiAgentServiceTest {
                 "conv-test-1"
             )));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
         aiAgentService.streamChat(request).collectList().block();
 
         ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
@@ -228,7 +235,7 @@ class AiAgentServiceTest {
                 "conv-test-1"
             )));
 
-        AiChatRequest request = new AiChatRequest("test request", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("test request", null, "resume-1");
         aiAgentService.streamChat(request).collectList().block();
 
         verify(aiChatHistoryService).persistSuggestionPlan(
@@ -247,7 +254,7 @@ class AiAgentServiceTest {
                 new AiChatEvent("error", "upstream failure", "conv-test-1")
             ));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, sampleResumeContext());
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -260,6 +267,26 @@ class AiAgentServiceTest {
         assertThat(visibleText).isEmpty();
         assertThat(findEvent(events, "suggestion")).isNull();
         assertThat(findEvent(events, "done")).isNotNull();
+    }
+
+    @Test
+    void systemPromptExcludesHiddenSectionsAndHiddenModuleContent() {
+        when(aiChatService.stream(any(AiInvocationRequest.class)))
+            .thenReturn(Flux.just(new AiChatEvent("message", "ok", "conv-test-1")));
+
+        when(resumeContentService.buildAiVisibleContentJson(any(ResumeEntity.class))).thenReturn("""
+            {"personalInfo":{"fullName":"Alex Chen","headline":"Senior Backend Engineer","phone":"13800000000","email":"alex@example.com","city":"Shanghai","website":"https://alex.dev","expectedSalary":"35k-45k","age":"30","avatar":null},"personalSummary":"Visible summary","education":[{"school":"Example University","degree":"Bachelor","major":"CS","startDate":"2012","endDate":"2016","description":""}],"workExperience":[{"company":"Example Corp","role":"Backend Engineer","startDate":"2020","endDate":"2024","description":"Visible work."}],"projectExperience":null,"skills":[{"name":"Java","level":"Expert"}],"honors":null,"certificates":null}
+            """.trim());
+
+        aiAgentService.streamChat(new AiChatRequest("Review my resume", null, "resume-1")).collectList().block();
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService).stream(captor.capture());
+        String prompt = captor.getValue().systemPrompt();
+
+        assertThat(prompt).doesNotContain("hiddenSections");
+        assertThat(prompt).doesNotContain("avatar-url");
+        assertThat(prompt).contains("Visible summary");
     }
 
     private AiChatEvent findEvent(List<AiChatEvent> events, String type) {
@@ -287,35 +314,31 @@ class AiAgentServiceTest {
         }
     }
 
-    private AiResumeContext sampleResumeContext() {
-        return new AiResumeContext(
-            "resume-1",
-            "Senior Engineer Resume",
-            "classic",
-            new ResumeContentPayload(
-                new PersonalInfo(
-                    "Alex Chen",
-                    "Senior Backend Engineer",
-                    "13800000000",
-                    "alex@example.com",
-                    "Shanghai",
-                    "https://alex.dev",
-                    "35k-45k",
-                    "30",
-                    ""
-                ),
-                "Seven years of backend development experience.",
-                List.of(new EducationItem("Example University", "Bachelor", "CS", "2012", "2016", "")),
-                List.of(new WorkExperienceItem("Example Corp", "Backend Engineer", "2020", "2024", "Built services.")),
-                List.of(new ProjectExperienceItem("Scoring Platform", "Tech Lead", "2023", "2024", "Led refactor.")),
-                List.of(new SkillItem("Java", "Expert")),
-                List.of(new HonorItem("Top Performer", "Example Corp", "2024", "")),
-                List.of(new CertificateItem("AWS SAA", "AWS", "2024", "aws-saa"))
+    private String sampleResumeContentJson() {
+        AiResumeContent content = new AiResumeContent(
+            new PersonalInfo(
+                "Alex Chen",
+                "Senior Backend Engineer",
+                "13800000000",
+                "alex@example.com",
+                "Shanghai",
+                "https://alex.dev",
+                "35k-45k",
+                "30",
+                ""
             ),
-            new ResumeLayoutPayload(
-                List.of("education", "summary", "workExperience", "projectExperience", "skills", "honors", "certificates"),
-                List.of()
-            )
+            "Seven years of backend development experience.",
+            List.of(new EducationItem("Example University", "Bachelor", "CS", "2012", "2016", "")),
+            List.of(new WorkExperienceItem("Example Corp", "Backend Engineer", "2020", "2024", "Built services.")),
+            List.of(new ProjectExperienceItem("Scoring Platform", "Tech Lead", "2023", "2024", "Led refactor.")),
+            List.of(new SkillItem("Java", "Expert")),
+            List.of(new HonorItem("Top Performer", "Example Corp", "2024", "")),
+            List.of(new CertificateItem("AWS SAA", "AWS", "2024", "aws-saa"))
         );
+        try {
+            return objectMapper.writeValueAsString(content);
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
+        }
     }
 }

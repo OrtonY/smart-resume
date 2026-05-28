@@ -1,5 +1,3 @@
-import type { ResumeContent, ResumeLayout } from '../resume/types'
-
 export type AiVendor = 'OpenAI' | 'Ollama' | 'DeepSeek' | 'Anthropic' | 'Azure OpenAI' | 'Other'
 
 export interface AiConfiguration {
@@ -16,14 +14,6 @@ export interface AiConfigurationRequest {
   modelName: string
 }
 
-export interface AiResumeContext {
-  id: string
-  title: string
-  templateKey: string
-  content: ResumeContent
-  layout: ResumeLayout
-}
-
 export interface AiChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
@@ -33,7 +23,7 @@ export interface AiChatMessage {
 export interface AiChatRequest {
   message: string
   conversationId?: string
-  resume: AiResumeContext
+  resumeId: string
 }
 
 export interface AiChatEvent {
@@ -85,7 +75,7 @@ export interface AiChatConversation {
 
 export interface AiResumeScoreRequest {
   jobDescription?: string
-  resume: AiResumeContext
+  resumeId: string
 }
 
 export interface AiResumeScoreSuggestionGroup {
