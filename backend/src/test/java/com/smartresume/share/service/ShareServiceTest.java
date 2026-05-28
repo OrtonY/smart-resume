@@ -2,6 +2,7 @@ package com.smartresume.share.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
 import com.smartresume.resume.service.ResumeService;
 import com.smartresume.share.domain.ResumeShareEntity;
 import com.smartresume.share.dto.ShareDtos.CreateShareRequest;
+import com.smartresume.share.dto.ShareDtos.PublicShareAccessInfoResponse;
 import com.smartresume.share.dto.ShareDtos.ShareLinkResponse;
 import com.smartresume.share.mapper.ResumeShareMapper;
 import com.smartresume.share.mapper.ShareAccessLogMapper;
@@ -46,7 +48,7 @@ class ShareServiceTest {
     @BeforeEach
     void setUp() {
         CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(1L, "admin", true));
-        when(shareAccessLogMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of());
+        lenient().when(shareAccessLogMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of());
         shareService = new ShareService(resumeShareMapper, shareAccessLogMapper, resumeService, shareTokenService);
     }
 
@@ -123,5 +125,19 @@ class ShareServiceTest {
         verify(resumeShareMapper).insert(insertCaptor.capture());
         assertThat(insertCaptor.getValue().getTargetVersionId()).isEqualTo("version-1");
         assertThat(insertCaptor.getValue().getPasswordHash()).isNotBlank();
+    }
+
+    @Test
+    void returnsPasswordRequirementForPublicShareAccessInfo() {
+        ResumeShareEntity protectedShare = new ResumeShareEntity();
+        protectedShare.setId("share-1");
+        protectedShare.setShareCode("share-code");
+        protectedShare.setActive(true);
+        protectedShare.setPasswordHash("hashed-password");
+        when(resumeShareMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(protectedShare));
+
+        PublicShareAccessInfoResponse response = shareService.getPublicShareAccessInfo("share-code");
+
+        assertThat(response.hasPassword()).isTrue();
     }
 }

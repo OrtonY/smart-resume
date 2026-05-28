@@ -1,6 +1,7 @@
 import { request } from '../../../lib/http/apiClient'
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../lib/http/pageDefaults'
 import type {
+  PublicShareAccessInfo,
   ResumeDetail,
   ResumePage,
   ResumeVersionDetail,
@@ -95,6 +96,10 @@ export function getPublicShare(shareCode: string, shareToken?: string) {
     headers['X-Share-Token'] = shareToken
   }
   return request<ResumeDetail>(`/api/public/shares/${shareCode}`, { skipAuth: true, headers })
+}
+
+export function getPublicShareAccess(shareCode: string) {
+  return request<PublicShareAccessInfo>(`/api/public/shares/${shareCode}/access`, { skipAuth: true })
 }
 
 export function verifySharePassword(shareCode: string, password: string) {

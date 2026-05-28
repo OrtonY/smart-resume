@@ -93,6 +93,11 @@ a {
   overflow: hidden;
 }
 
+.public-share-page__password-card {
+  width: min(400px, 100%);
+  text-align: center;
+}
+
 .auth-kicker {
   margin-bottom: 8px;
   font-size: 12px;
@@ -898,6 +903,30 @@ a {
 
 .resume-version-modal__diff-items li + li {
   margin-top: 8px;
+}
+
+.resume-version-modal__mobile-detail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.resume-version-modal__mobile-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-version-modal__mobile-detail-body {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .resume-editor-rail,
@@ -3379,6 +3408,18 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .public-share-page__card .ant-card-body {
     padding: 12px;
   }
+
+  .public-share-page--password {
+    padding: 12px;
+  }
+
+  .public-share-page__password-card {
+    border-radius: 16px;
+  }
+
+  .public-share-page__password-card .ant-card-body {
+    padding: 20px 16px 16px;
+  }
 }
 
 /* ===== Mobile (≤480px) ===== */
@@ -3605,6 +3646,10 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .resume-version-modal__toolbar > div {
     min-width: 0;
+  }
+
+  .resume-version-modal__mobile-header {
+    align-items: center;
   }
 
   .resume-version-modal__timeline-card .ant-timeline {

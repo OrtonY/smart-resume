@@ -179,7 +179,7 @@ CREATE INDEX idx_<table>_user_<sort> ON <table> (user_id, <sort_column> DESC);
 2. Include `user_id = ?` in all queries (read and write)
 3. Set `entity.setUserId(userId)` on all new inserts
 
-**Exception**: Public share page reads (`/share/{code}`) bypass user filtering — they resolve by share code and check `active` flag only.
+**Exception**: Public share reads and verification endpoints (`GET /api/public/shares/{shareCode}/access`, `GET /api/public/shares/{shareCode}`, `POST /api/public/shares/{shareCode}/verify`) bypass `CurrentUserContext` user filtering; they resolve by share code and enforce `active` plus password/token checks in share-domain service logic.
 
 ### 4. Validation & Error Matrix
 

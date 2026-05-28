@@ -41,6 +41,9 @@ public final class ShareDtos {
     public record ShareTokenResponse(String token) {
     }
 
+    public record PublicShareAccessInfoResponse(boolean hasPassword) {
+    }
+
     public record ShareAccessLogResponse(
         String id,
         LocalDateTime accessedAt,
