@@ -1945,3 +1945,36 @@ Added resume import from the template gallery with PDF/DOCX/TXT parsing, fixed U
 ### Next Steps
 
 - None - task complete
+
+
+## Session 59: PDF export frontend fallback
+
+**Date**: 2026-05-29
+**Task**: PDF export frontend fallback
+**Branch**: `codex/pdf-export-frontend-fallback`
+
+### Summary
+
+Implemented backend-first PDF export with frontend snapshot fallback for editor and public share downloads, simplified export actions, documented the frontend export fallback contract, and removed the temporary share-page snapshot test button after verification.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8225e77` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
