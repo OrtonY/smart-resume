@@ -64,7 +64,9 @@
     "shareCopiedLatest": "Latest version share link copied.",
     "shareCopiedSnapshot": "Snapshot share link copied.",
     "loadShareLinksFailed": "Unable to load share links.",
-    "refreshShareLinksFailed": "Unable to refresh share links."
+    "refreshShareLinksFailed": "Unable to refresh share links.",
+    "versionDeleteSuccess": "Snapshot deleted. Associated share links are now invalid.",
+    "versionDeleteFailed": "Failed to delete snapshot."
   },
   "saveState": {
     "saving": "Saving...",
@@ -147,7 +149,17 @@
       "currentOnlyEntries_other": "Current draft has {{count}} additional entries.",
       "versionOnlyEntries_one": "Selected version has {{count}} additional entry.",
       "versionOnlyEntries_other": "Selected version has {{count}} additional entries."
-    }
+    },
+    "delete": "Delete snapshot",
+    "deleteConfirmTitle": "Delete this snapshot?",
+    "deleteConfirmDescription": "Associated snapshot share links will become invalid.",
+    "deleteConfirmOk": "Delete",
+    "shareLinksTitle": "Associated share links",
+    "shareLinksEmpty": "No share links are associated with this snapshot.",
+    "shareLinkActive": "Active",
+    "shareLinkInactive": "Disabled",
+    "shareLinkInvalid": "Invalid",
+    "copyShareLink": "Copy share link"
   },
   "modules": {
     "personalInfo": {
@@ -343,7 +355,7 @@
     "modeLatest": "Latest version",
     "modeSnapshot": "Current snapshot",
     "modeLatestHint": "The link always shows the latest content of the resume",
-    "modeSnapshotHint": "The latest snapshot is shared first; if none exists, one is created automatically, and later edits do not affect this share link",
+    "modeSnapshotHint": "Compares the current resume with the latest snapshot when sharing. If title, content, layout, and template are unchanged, the latest snapshot is reused; otherwise a new snapshot is created. Later edits do not affect this share link.",
     "passwordLabel": "Password protection",
     "passwordPlaceholder": "Set an access password",
     "passwordHint": "When enabled, viewers must enter the password to view",
@@ -363,12 +375,14 @@
     "modeTagSnapshot": "Snapshot",
     "passwordProtected": "Password protected",
     "disabled": "Disabled",
+    "invalid": "Invalid",
     "viewCount": "{{count}} views",
     "createdAt": "Created: {{value}}",
     "lastAccessedAt": "Last accessed: {{value}}",
     "noVisits": "No visits yet",
     "toggleEnable": "Enable",
     "toggleDisable": "Disable",
+    "invalidEnableTooltip": "The linked snapshot was deleted and cannot be enabled",
     "deleteConfirmTitle": "Delete this share link?",
     "deleteConfirmDescription": "Access logs will also be cleared and cannot be recovered.",
     "deleteOk": "Delete",

@@ -878,10 +878,50 @@ a {
   place-items: center;
 }
 
+.resume-version-modal__detail-content {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.resume-version-modal__detail-content .glass-card {
+  min-width: 0;
+}
 .resume-version-modal__descriptions .ant-descriptions-item-label {
   width: 112px;
 }
 
+.resume-version-modal__share-links {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.resume-version-modal__share-link-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.resume-version-modal__share-link-main {
+  min-width: 0;
+}
+
+.resume-version-modal__share-link-row a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.resume-version-modal__share-link--inactive {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
 .resume-version-modal__diff-list {
   display: grid;
   gap: 12px;
@@ -3671,6 +3711,64 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     width: 100%;
   }
 
+
+  .resume-version-modal__detail-content {
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .resume-version-modal__detail-content .ant-card-body,
+  .resume-version-modal__detail-content .ant-card-head {
+    padding-inline: 12px;
+  }
+
+  .resume-version-modal__detail-content .ant-card-head-title {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-container {
+    display: block;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-label,
+  .resume-version-modal__descriptions .ant-descriptions-item-content {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-content {
+    padding-top: 4px;
+  }
+
+  .resume-version-modal__share-link-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-version-modal__share-link-row .ant-btn {
+    width: 100%;
+  }
+
+  .resume-version-modal__share-link-main,
+  .resume-version-modal__share-link-main .ant-space-item,
+  .resume-version-modal__share-link-main .ant-typography {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .resume-version-modal__share-link-main .ant-space {
+    row-gap: 6px;
+  }
+
+  .resume-version-modal__diff-card .ant-card-head-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   /* Auth */
   .auth-shell {
     padding: 16px;

@@ -17,6 +17,9 @@ public class ResumeVersionEntity {
     private String templateKey;
     private String contentJson;
     private String layoutJson;
+    private String contentHash;
+    private Boolean deleted;
+    private LocalDateTime deletedAt;
     private LocalDateTime createdAt;
 
     public String getId() {
@@ -81,6 +84,30 @@ public class ResumeVersionEntity {
 
     public void setLayoutJson(String layoutJson) {
         this.layoutJson = layoutJson;
+    }
+
+    public String getContentHash() {
+        return contentHash;
+    }
+
+    public void setContentHash(String contentHash) {
+        this.contentHash = contentHash;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
     public LocalDateTime getCreatedAt() {

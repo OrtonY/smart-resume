@@ -15,7 +15,7 @@
     "verifyButton": "Verify"
   },
   "notFound": {
-    "title": "Share link unavailable",
-    "subtitle": "This public share may have expired or no longer exists."
+    "title": "Link expired",
+    "subtitle": "Link expired"
   }
 }
