@@ -43,6 +43,7 @@ package com.smartresume.ai.memory;
 public enum AiFeatureType {
     RESUME_CHAT("resume_chat"),
     RESUME_SCORE("resume_score"),
+    RESUME_IMPORT("resume_import"),
     INTERVIEW("interview"),
     INTERVIEW_REPORT("interview_report");
     // String getCode()
@@ -167,3 +168,89 @@ return aiChatService.callStructured(req, Score.class);
 **Decision**: option 2. Features keep ownership of their system prompts and DTOs; the shared layer owns only what is genuinely cross-cutting (memory write, retry policy, vendor branching, conversation id format).
 
 **When to escalate to option 1**: only if three or more features show clearly duplicated prompt-orchestration code. Until then, duplication is cheaper than premature abstraction.
+
+
+## Scenario: AI-backed resume file import
+
+### 1. Scope / Trigger
+- Trigger: Users can upload an existing `.pdf`, `.docx`, or `.txt` resume file from the template gallery and create a new editable resume from it.
+- Why this needs code-spec depth: the flow spans multipart upload, server-side text extraction, shared AI structured output, authenticated resume creation, template access validation, and frontend navigation.
+
+### 2. Signatures
+- Frontend API: `importResume(file: File, templateKey: string): Promise<ResumeDetail>`.
+- Backend API: `POST /api/resumes/import`, `multipart/form-data` with fields:
+  - `file`: uploaded resume file.
+  - `templateKey`: selected resume template key.
+- Backend service: `ResumeImportService.importResume(MultipartFile file, String templateKey): ResumeDetailResponse`.
+- AI feature enum: `AiFeatureType.RESUME_IMPORT("resume_import")`.
+
+### 3. Contracts
+- Import always creates a new resume; it never overwrites an existing resume.
+- Imported resume title defaults to the uploaded file name without extension, with a service fallback title only when the upload name is blank.
+- The selected `templateKey` is validated through the same current-user template access rules as ordinary resume creation.
+- Text extraction is server-side:
+  - `.txt` uses UTF-8 text.
+  - `.pdf` uses PDFBox text extraction and does not perform OCR.
+  - `.docx` uses Apache POI text extraction.
+- AI mapping must call `AiChatService.callStructured(request, ResumeContentPayload.class)` with a conversation id from `AiConversationIdGenerator.generate(null, AiFeatureType.RESUME_IMPORT)`.
+- No mock, fallback, or fabricated resume content may be substituted when AI structured parsing fails.
+- Frontend upload must send `FormData` without forcing `Content-Type: application/json`; the browser owns the multipart boundary.
+
+### 4. Validation & Error Matrix
+| Condition | Behavior |
+|---|---|
+| Missing/empty file | `400 error.resume.importFileRequired` |
+| Unsupported extension | `400 error.resume.importUnsupportedFileType` |
+| Extraction throws/read failure | `400 error.resume.importReadFailed` |
+| Extracted text is blank or too short | `400 error.resume.importInsufficientText`; scanned/image-only PDFs fail here |
+| Template not accessible to current user | Existing template access error path |
+| AI structured output fails after retry | Shared `AiChatService.callStructured` exception path; do not create a resume |
+
+### 5. Good/Base/Bad Cases
+- Good: a text-based PDF uploads from the template gallery, maps into `ResumeContentPayload`, creates a new current-user resume with the selected template, and the frontend opens `/app/resumes/{id}`.
+- Base: a `.txt` resume imports successfully and missing AI fields normalize to empty strings or empty lists before section persistence.
+- Bad: a scanned PDF creates an empty resume anyway. It must fail before resume creation if extracted text is insufficient.
+- Bad: frontend manually sets `Content-Type: multipart/form-data` without the boundary, causing the backend to receive no file.
+
+### 6. Tests Required
+- Backend unit tests:
+  - TXT happy path calls `AiChatService.callStructured` and `ResumeService.createResumeFromContent`.
+  - Unsupported extension rejects before AI invocation.
+  - Insufficient extracted text rejects before AI invocation and before resume creation.
+- Frontend verification:
+  - `npm run build` and `npm run lint` pass after upload UI and `FormData` request changes.
+  - User-facing upload labels/errors exist in both `en-US` and `zh-CN` template locale files.
+
+### 7. Wrong vs Correct
+#### Wrong
+```typescript
+return request<ResumeDetail>('/api/resumes/import', {
+  method: 'POST',
+  body: formData,
+})
+// shared request helper still forces Content-Type: application/json
+```
+
+#### Correct
+```typescript
+return request<ResumeDetail>('/api/resumes/import', {
+  method: 'POST',
+  body: formData,
+  formData: true,
+})
+```
+
+#### Wrong
+```java
+String conversationId = "resume_import_" + UUID.randomUUID();
+ResumeContentPayload payload = ownChatClientCall(text);
+```
+
+#### Correct
+```java
+String conversationId = AiConversationIdGenerator.generate(null, AiFeatureType.RESUME_IMPORT);
+ResumeContentPayload payload = aiChatService.callStructured(
+    new AiInvocationRequest(systemPrompt, userMessage, conversationId),
+    ResumeContentPayload.class
+);
+```

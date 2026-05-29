@@ -134,11 +134,13 @@ export function TemplateGalleryPage() {
             applyingTemplateKey={controller.applyingTemplateKey}
             canApplyTemplate={controller.canApplyTemplate}
             creatingResumeTemplateKey={controller.creatingResumeTemplateKey}
+            importingResumeTemplateKey={controller.importingResumeTemplateKey}
             loadingResume={controller.loadingResume}
             locale={controller.locale}
             onApplyTemplateToResume={() => void controller.handleApplyTemplateToResume()}
             onBackToResume={() => controller.resume && controller.navigate(`/app/resumes/${controller.resume.id}`)}
             onCreateResumeFromTemplate={(templateKey) => void controller.handleCreateResumeFromTemplate(templateKey)}
+            onImportResumeFromTemplate={(templateKey, file) => void controller.handleImportResumeFromTemplate(templateKey, file)}
             previewResume={controller.previewResume}
             previewTemplate={controller.previewTemplate}
             resume={controller.resume}

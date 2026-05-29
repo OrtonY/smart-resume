@@ -9,6 +9,7 @@ import com.smartresume.resume.dto.ResumeDtos.ResumePageResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeUpdateRequest;
 import com.smartresume.resume.dto.ResumeDtos.ResumeVersionDetailResponse;
 import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
+import com.smartresume.resume.service.ResumeImportService;
 import com.smartresume.resume.service.ResumeService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -21,15 +22,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/resumes")
 public class ResumeController {
 
     private final ResumeService resumeService;
+    private final ResumeImportService resumeImportService;
 
-    public ResumeController(ResumeService resumeService) {
+    public ResumeController(ResumeService resumeService, ResumeImportService resumeImportService) {
         this.resumeService = resumeService;
+        this.resumeImportService = resumeImportService;
     }
 
     @GetMapping
@@ -45,6 +49,14 @@ public class ResumeController {
     @PostMapping
     public ApiResponse<ResumeDetailResponse> createResume(@Valid @RequestBody ResumeCreateRequest request) {
         return ApiResponse.success(resumeService.createResume(request), "Resume created");
+    }
+
+    @PostMapping(value = "/import", consumes = "multipart/form-data")
+    public ApiResponse<ResumeDetailResponse> importResume(
+        @RequestParam("file") MultipartFile file,
+        @RequestParam("templateKey") String templateKey
+    ) {
+        return ApiResponse.success(resumeImportService.importResume(file, templateKey), "Resume imported");
     }
 
     @PostMapping("/{resumeId}/copy")

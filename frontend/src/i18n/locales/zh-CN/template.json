@@ -71,8 +71,24 @@
       "applyToResume": "应用到当前简历",
       "backToResume": "返回当前简历",
       "createFromTemplate": "使用此模板创建简历",
+      "importFromFile": "导入",
       "lastUpdated": "最近更新：{{time}}",
       "lastUpdatedBuiltIn": "内置备份"
+    },
+    "import": {
+      "title": "导入简历",
+      "description": "使用 {{template}} 模板，从上传文件创建一份新简历。",
+      "supportedFormats": "支持格式：PDF、DOCX、TXT。",
+      "confirm": "导入",
+      "note": "暂不支持扫描版或图片版 PDF。",
+      "dropzone": {
+        "title": "点击或拖拽简历文件到这里",
+        "hint": "仅支持单个文件，导入后的简历标题会使用文件名。"
+      },
+      "validation": {
+        "fileRequired": "请先选择要导入的简历文件。",
+        "unsupportedType": "仅支持 PDF、DOCX 和 TXT 文件。"
+      }
     },
     "loading": {
       "changeTemplate": "正在加载修改模板...",
@@ -87,7 +103,9 @@
     },
     "message": {
       "resumeCreated": "简历已创建。",
+      "resumeImported": "简历已导入。",
       "createResumeFailed": "无法创建简历。",
+      "importResumeFailed": "无法导入简历。",
       "templateCreated": "模板已创建，已写入数据库。",
       "templateUpdated": "模板已更新。",
       "templateSaveFailed": "模板保存失败",
