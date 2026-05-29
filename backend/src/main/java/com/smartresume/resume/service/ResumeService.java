@@ -2,6 +2,7 @@ package com.smartresume.resume.service;
 
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.domain.ResumeVersionEntity;
@@ -21,6 +22,7 @@ import com.smartresume.template.service.TemplateCatalogService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,19 +34,22 @@ public class ResumeService {
     private final ResumeLookupService resumeLookupService;
     private final ResumeContentService resumeContentService;
     private final ResumeVersionService resumeVersionService;
+    private final ResumePhysicalDeleteService resumePhysicalDeleteService;
 
     public ResumeService(
         ResumeMapper resumeMapper,
         TemplateCatalogService templateCatalogService,
         ResumeLookupService resumeLookupService,
         ResumeContentService resumeContentService,
-        ResumeVersionService resumeVersionService
+        ResumeVersionService resumeVersionService,
+        ResumePhysicalDeleteService resumePhysicalDeleteService
     ) {
         this.resumeMapper = resumeMapper;
         this.templateCatalogService = templateCatalogService;
         this.resumeLookupService = resumeLookupService;
         this.resumeContentService = resumeContentService;
         this.resumeVersionService = resumeVersionService;
+        this.resumePhysicalDeleteService = resumePhysicalDeleteService;
     }
 
     public ResumePageResponse listResumes(boolean includeDeleted, boolean deletedOnly, int page, int pageSize) {
@@ -179,6 +184,16 @@ public class ResumeService {
         resume.setDeletedAt(null);
         resume.setUpdatedAt(now);
         resumeMapper.update(resume);
+    }
+
+    @Transactional
+    public void purgeResume(String resumeId) {
+        long userId = CurrentUserContext.requireUserId();
+        ResumeEntity resume = resumeLookupService.requireResume(resumeId, userId);
+        if (!Boolean.TRUE.equals(resume.getDeleted())) {
+            throw AppException.of(HttpStatus.CONFLICT, "error.resume.notDeleted");
+        }
+        resumePhysicalDeleteService.deleteResumeAndLinkedData(resumeId, userId);
     }
 
     @Transactional

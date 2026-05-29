@@ -46,6 +46,7 @@ import {
   listDeletedResumes,
   listResumes,
   listShares,
+  purgeResume,
   restoreResume,
   toggleShare,
   updateResume,
@@ -338,6 +339,12 @@ export function WorkspacePage({
     await loadResumeList()
   }
 
+  async function handlePurgeResume(targetResumeId: string) {
+    await purgeResume(targetResumeId)
+    void message.success(t('feedback.purgeSuccess'))
+    await loadResumeList()
+  }
+
   async function handleRestoredVersion(restoredResume: ResumeDetail) {
     applyResumeDetail(restoredResume)
   }
@@ -520,6 +527,7 @@ export function WorkspacePage({
       <RecycleBinView
         loadingResumeList={loadingResumeList}
         onPageChange={handlePageChange}
+        onPurgeResume={handlePurgeResume}
         onRestoreResume={handleRestoreResume}
         resumePage={resumePage}
         resumeList={resumeList}
@@ -734,6 +742,7 @@ function ResumeListView({
 function RecycleBinView({
   loadingResumeList,
   onPageChange,
+  onPurgeResume,
   onRestoreResume,
   resumePage,
   resumeList,
@@ -742,6 +751,7 @@ function RecycleBinView({
 }: {
   loadingResumeList: boolean
   onPageChange: (page: number) => Promise<void>
+  onPurgeResume: (resumeId: string) => Promise<void>
   onRestoreResume: (resumeId: string) => Promise<void>
   resumePage: ResumePage | null
   resumeList: ResumeSummary[]
@@ -780,6 +790,7 @@ function RecycleBinView({
           emptySlotKeyPrefix="recycle-empty-slot"
           loading={loadingResumeList}
           onPageChange={onPageChange}
+          onPurgeResume={onPurgeResume}
           onRestoreResume={onRestoreResume}
           previewDetailsByResumeId={previewDetailsByResumeId}
           resumeList={resumeList}

@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   continueInterview,
   createInterview,
+  deleteInterview,
   endInterview,
   getInterview,
   listInterviews,
@@ -54,6 +55,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const autoContinueInterviewIdRef = useRef<string | null>(null)
   const skipAutoContinueAfterPauseRef = useRef<string | null>(null)
+  const deletingInterviewIdsRef = useRef(new Set<string>())
 
   const [form] = Form.useForm<CreateFormValues>()
   const selectedInterviewerRoles = Form.useWatch('interviewerRoles', form) ?? []
@@ -231,6 +233,34 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
     }
   }, [message, t])
 
+  const handleDeleteInterview = useCallback(async (targetInterviewId: string) => {
+    deletingInterviewIdsRef.current.add(targetInterviewId)
+    try {
+      abortControllerRef.current?.abort()
+      await deleteInterview(targetInterviewId)
+      void message.success(t('feedback.deleted'))
+      setInterviewPage((prev) => {
+        if (!prev) {
+          return prev
+        }
+        return {
+          ...prev,
+          items: prev.items.filter((item) => item.id !== targetInterviewId),
+          total: Math.max(0, prev.total - 1),
+        }
+      })
+      if (interviewId === targetInterviewId) {
+        setDetail(null)
+        navigate('/app/interviews')
+      } else {
+        void loadList()
+      }
+    } catch (error) {
+      deletingInterviewIdsRef.current.delete(targetInterviewId)
+      void message.error(error instanceof Error ? error.message : t('feedback.deleteFailed'))
+    }
+  }, [interviewId, loadList, message, navigate, t])
+
   useEffect(() => {
     if (!detail || loadingDetail || detail.status !== 'PAUSED') {
       return
@@ -293,7 +323,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       setDetail(await getInterview(detail.id))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        setDetail(await getInterview(detail.id))
+        if (!deletingInterviewIdsRef.current.has(detail.id)) {
+          setDetail(await getInterview(detail.id))
+        }
       } else {
         void message.error(error instanceof Error ? error.message : t('feedback.sendFailed'))
         setDetail((prev) => {
@@ -338,7 +370,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       setDetail(await getInterview(detail.id))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        setDetail(await getInterview(detail.id))
+        if (!deletingInterviewIdsRef.current.has(detail.id)) {
+          setDetail(await getInterview(detail.id))
+        }
       } else {
         void message.error(error instanceof Error ? error.message : t('feedback.regenerateFailed'))
       }
@@ -367,6 +401,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           void refreshAfterAction(() => pauseInterview(detail.id), t('feedback.paused')).then(() => navigate('/app/interviews'))
         }}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), t('feedback.continued'))}
+        onDelete={() => detail && void handleDeleteInterview(detail.id)}
         onEnd={() =>
           detail &&
           void refreshAfterAction(() => endInterview(detail.id), t('feedback.ended')).then((updated) => {
@@ -397,6 +432,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         loading={loadingList}
         resumeOptions={resumeOptions}
         onCreate={openCreateModal}
+        onDelete={(targetInterviewId) => void handleDeleteInterview(targetInterviewId)}
         onOpenDetail={(targetInterviewId) => navigate(`/app/interviews/${targetInterviewId}`)}
         onUpdateSearch={updateSearch}
       />

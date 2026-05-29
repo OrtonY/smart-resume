@@ -5,7 +5,7 @@ import {
   RollbackOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons'
-import { App, Button, Input, Space, Spin, Tag, Typography } from 'antd'
+import { App, Button, Input, Popconfirm, Space, Spin, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
@@ -22,6 +22,7 @@ interface ResumeVisualCardProps {
   onDeleteResume?: (resumeId: string) => Promise<void>
   onOpenResume?: (resumeId: string) => void
   onOpenShareDialog?: (resume: ResumeSummary) => Promise<void>
+  onPurgeResume?: (resumeId: string) => Promise<void>
   onRestoreResume?: (resumeId: string) => Promise<void>
   previewDetail?: ResumeDetail
   selectedTemplateName: string
@@ -36,6 +37,7 @@ export function ResumeVisualCard({
   onDeleteResume,
   onOpenResume,
   onOpenShareDialog,
+  onPurgeResume,
   onRestoreResume,
   previewDetail,
   selectedTemplateName,
@@ -150,6 +152,21 @@ export function ResumeVisualCard({
           <Button danger icon={<DeleteOutlined />} onClick={() => void onDeleteResume(item.id)}>
             {t('card.delete')}
           </Button>
+        ) : null}
+
+        {onPurgeResume ? (
+          <Popconfirm
+            title={t('card.purgeConfirmTitle')}
+            description={t('card.purgeConfirmDescription')}
+            okText={t('card.purgeConfirmOk')}
+            cancelText={t('common:actions.cancel')}
+            okButtonProps={{ danger: true }}
+            onConfirm={() => void onPurgeResume(item.id)}
+          >
+            <Button danger icon={<DeleteOutlined />}>
+              {t('card.purge')}
+            </Button>
+          </Popconfirm>
         ) : null}
       </div>
 

@@ -44,6 +44,12 @@
     "replyingPlaceholder": "AI is replying...",
     "composerPlaceholder": "Ask AI about the current resume...",
     "send": "Send",
+    "retentionHint": "Only the latest 10 chats are kept.",
+    "deleteHistoryConfirmTitle": "Delete this chat history?",
+    "deleteHistoryConfirmDescription": "The conversation and related AI messages will be deleted after archival.",
+    "deleteHistoryConfirmOk": "Delete",
+    "deleteHistorySuccess": "Chat history deleted.",
+    "deleteHistoryFailed": "Failed to delete chat history",
     "loadConversationsFailed": "Failed to load AI chat conversations",
     "loadHistoryFailed": "Failed to load AI chat history",
     "chatFailed": "AI chat failed"

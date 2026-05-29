@@ -38,6 +38,12 @@ export function getInterview(interviewId: string) {
   return request<InterviewDetail>(`/api/interviews/${interviewId}`)
 }
 
+export function deleteInterview(interviewId: string) {
+  return request<void>(`/api/interviews/${interviewId}`, {
+    method: 'DELETE',
+  })
+}
+
 export function pauseInterview(interviewId: string) {
   return request<InterviewDetail>(`/api/interviews/${interviewId}/pause`, {
     method: 'POST',

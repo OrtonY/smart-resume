@@ -13,6 +13,7 @@ interface ResumeVisualGridProps {
   onOpenResume?: (resumeId: string) => void
   onOpenShareDialog?: (resume: ResumeSummary) => Promise<void>
   onPageChange: (page: number) => Promise<void>
+  onPurgeResume?: (resumeId: string) => Promise<void>
   onRestoreResume?: (resumeId: string) => Promise<void>
   previewDetailsByResumeId: Record<string, ResumeDetail>
   resumeList: ResumeSummary[]
@@ -31,6 +32,7 @@ export function ResumeVisualGrid({
   onOpenResume,
   onOpenShareDialog,
   onPageChange,
+  onPurgeResume,
   onRestoreResume,
   previewDetailsByResumeId,
   resumeList,
@@ -69,6 +71,7 @@ export function ResumeVisualGrid({
             onDeleteResume={onDeleteResume}
             onOpenResume={onOpenResume}
             onOpenShareDialog={onOpenShareDialog}
+            onPurgeResume={onPurgeResume}
             onRestoreResume={onRestoreResume}
             previewDetail={previewDetailsByResumeId[item.id]}
             selectedTemplateName={selectedTemplateName(item.templateKey)}

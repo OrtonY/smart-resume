@@ -2,6 +2,7 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   FileTextOutlined,
   MessageOutlined,
   MoreOutlined,
@@ -55,6 +56,7 @@ interface InterviewDetailViewProps {
   onBack: () => void
   onPause: () => void
   onContinue: () => void
+  onDelete: () => void
   onEnd: () => void
   onNextRound: () => Promise<InterviewDetail | null>
   onSubmitMessage: () => void
@@ -74,6 +76,7 @@ export function InterviewDetailView({
   onBack,
   onPause,
   onContinue,
+  onDelete,
   onEnd,
   onNextRound,
   onSubmitMessage,
@@ -299,6 +302,17 @@ export function InterviewDetailView({
                     </Button>
                   </Popconfirm>
                 ) : null}
+                <Popconfirm
+                  title={t('detail.deleteConfirm')}
+                  onConfirm={onDelete}
+                  okText={t('detail.deleteOk')}
+                  cancelText={t('common:actions.cancel')}
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button danger icon={<DeleteOutlined />} title={t('detail.deleteTitle')}>
+                    {t('detail.delete')}
+                  </Button>
+                </Popconfirm>
                 {detail.status === 'ENDED' || detail.reportStatus === 'READY' || detail.reportStatus === 'GENERATING' || detail.reportStatus === 'FAILED' ? (
                   <Button icon={<FileTextOutlined />} onClick={() => setReportDrawerOpen(true)}>
                     {t('detail.viewReport')}
@@ -329,6 +343,23 @@ export function InterviewDetailView({
                 <Button className="interview-detail__more-button" icon={<MoreOutlined />} />
               </Dropdown>
             )}
+            {isMobile ? (
+              <Popconfirm
+                title={t('detail.deleteConfirm')}
+                onConfirm={onDelete}
+                okText={t('detail.deleteOk')}
+                cancelText={t('common:actions.cancel')}
+                okButtonProps={{ danger: true }}
+              >
+                <Button
+                  className="interview-detail__more-button"
+                  danger
+                  icon={<DeleteOutlined />}
+                  title={t('detail.deleteTitle')}
+                  aria-label={t('detail.deleteTitle')}
+                />
+              </Popconfirm>
+            ) : null}
           </Space>
         </div>
 

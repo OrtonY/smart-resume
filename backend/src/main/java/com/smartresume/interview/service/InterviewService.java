@@ -33,19 +33,22 @@ public class InterviewService {
     private final InterviewSessionSupportService sessionSupportService;
     private final InterviewAiOrchestrationService interviewAiOrchestrationService;
     private final InterviewReportService interviewReportService;
+    private final InterviewPhysicalDeleteService interviewPhysicalDeleteService;
 
     public InterviewService(
         InterviewSessionMapper interviewSessionMapper,
         InterviewQueryService interviewQueryService,
         InterviewSessionSupportService sessionSupportService,
         InterviewAiOrchestrationService interviewAiOrchestrationService,
-        InterviewReportService interviewReportService
+        InterviewReportService interviewReportService,
+        InterviewPhysicalDeleteService interviewPhysicalDeleteService
     ) {
         this.interviewSessionMapper = interviewSessionMapper;
         this.interviewQueryService = interviewQueryService;
         this.sessionSupportService = sessionSupportService;
         this.interviewAiOrchestrationService = interviewAiOrchestrationService;
         this.interviewReportService = interviewReportService;
+        this.interviewPhysicalDeleteService = interviewPhysicalDeleteService;
     }
 
     public InterviewPageResponse listInterviews(String resumeId, String status, String targetCompany, String keyword, int page, int pageSize) {
@@ -115,6 +118,11 @@ public class InterviewService {
 
     public InterviewDetailResponse getInterview(String interviewId) {
         return interviewQueryService.getInterview(interviewId);
+    }
+
+    @Transactional
+    public void deleteInterview(String interviewId) {
+        interviewPhysicalDeleteService.deleteOwnedInterview(interviewId, CurrentUserContext.requireUserId());
     }
 
     @Transactional
