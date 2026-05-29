@@ -39,3 +39,36 @@ Added hash-aware snapshot sharing, soft-delete snapshot handling, invalid share 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 61: Physical delete AI history
+
+**Date**: 2026-05-29
+**Task**: Physical delete AI history
+**Branch**: `codex/physical-delete-ai-history`
+
+### Summary
+
+Implemented physical delete flows for resumes and interviews with associated AI history cleanup and UI actions.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `be53a55` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
