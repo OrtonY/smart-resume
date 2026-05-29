@@ -1,5 +1,5 @@
-import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Empty, Input, Pagination, Select, Space, Spin, Tag, Typography } from 'antd'
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { Button, Card, Empty, Input, Pagination, Popconfirm, Select, Space, Spin, Tag, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { getInterviewStatusOptions, type InterviewPage as InterviewPageData, type InterviewStatus } from '../types'
@@ -24,6 +24,7 @@ interface InterviewCenterViewProps {
   loading: boolean
   resumeOptions: Array<{ value: string; label: string }>
   onCreate: () => void
+  onDelete: (interviewId: string) => void
   onOpenDetail: (interviewId: string) => void
   onUpdateSearch: (next: Record<string, string | undefined>) => void
 }
@@ -37,6 +38,7 @@ export function InterviewCenterView({
   loading,
   resumeOptions,
   onCreate,
+  onDelete,
   onOpenDetail,
   onUpdateSearch,
 }: InterviewCenterViewProps) {
@@ -111,10 +113,41 @@ export function InterviewCenterView({
           <>
             <div className="interview-card-grid">
               {interviewPage.items.map((item) => (
-                <button className="interview-card" key={item.id} type="button" onClick={() => onOpenDetail(item.id)}>
+                <div
+                  className="interview-card"
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenDetail(item.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onOpenDetail(item.id)
+                    }
+                  }}
+                >
                   <div className="interview-card__head">
-                    <Tag color={statusColor(item.status)}>{interviewStatusLabel(item.status, t)}</Tag>
-                    <Tag color="purple">{interviewReportStatusLabel(item.reportStatus, t)}</Tag>
+                    <span className="interview-card__status-tags">
+                      <Tag color={statusColor(item.status)}>{interviewStatusLabel(item.status, t)}</Tag>
+                      <Tag color="purple">{interviewReportStatusLabel(item.reportStatus, t)}</Tag>
+                    </span>
+                    <span onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                      <Popconfirm
+                        title={t('list.deleteConfirm')}
+                        okText={t('list.deleteOk')}
+                        cancelText={t('common:actions.cancel')}
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => onDelete(item.id)}
+                      >
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          size="small"
+                          title={t('list.deleteTitle')}
+                          aria-label={t('list.deleteTitle')}
+                        />
+                      </Popconfirm>
+                    </span>
                   </div>
                   <strong>{item.title}</strong>
                   {item.targetCompany ? (
@@ -132,7 +165,7 @@ export function InterviewCenterView({
                     ))}
                   </div>
                   <Text type="secondary">{t('list.updatedAt', { time: new Date(item.updatedAt).toLocaleString() })}</Text>
-                </button>
+                </div>
               ))}
             </div>
 

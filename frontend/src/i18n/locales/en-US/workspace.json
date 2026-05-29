@@ -33,7 +33,11 @@
   "card": {
     "restore": "Restore",
     "copy": "Copy",
-    "delete": "Delete"
+    "delete": "Delete",
+    "purge": "Delete permanently",
+    "purgeConfirmTitle": "Permanently delete this resume?",
+    "purgeConfirmDescription": "This will erase the resume and linked chats, interviews, versions, shares, and scores. It cannot be undone.",
+    "purgeConfirmOk": "Delete permanently"
   },
   "copyDialog": {
     "title": "Copy resume",
@@ -58,6 +62,7 @@
     "moveToBinSuccess": "Resume moved to recycle bin.",
     "copySuccess": "Resume copied.",
     "restoreSuccess": "Resume restored.",
+    "purgeSuccess": "Resume permanently deleted.",
     "exportPdfStart": "PDF download started.",
     "exportPdfFailed": "Export failed. Please try again.",
     "exportPreviewMissing": "No resume preview found to export.",

@@ -121,6 +121,12 @@ public class ResumeController {
         return ApiResponse.success(null, "Resume moved to recycle bin");
     }
 
+    @DeleteMapping("/{resumeId}/purge")
+    public ApiResponse<Void> purgeResume(@PathVariable String resumeId) {
+        resumeService.purgeResume(resumeId);
+        return ApiResponse.success(null, "Resume permanently deleted");
+    }
+
     @PostMapping("/{resumeId}/recover")
     public ApiResponse<Void> restoreResume(@PathVariable String resumeId) {
         resumeService.restoreResume(resumeId);

@@ -27,6 +27,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -101,6 +102,15 @@ public class AiController {
         @PathVariable String conversationId
     ) {
         return ApiResponse.success(aiChatHistoryService.listHistory(resumeId, conversationId));
+    }
+
+    @DeleteMapping("/resumes/{resumeId}/chat/conversations/{conversationId}")
+    public ApiResponse<Void> deleteChatConversation(
+        @PathVariable String resumeId,
+        @PathVariable String conversationId
+    ) {
+        aiChatHistoryService.deleteConversation(resumeId, conversationId);
+        return ApiResponse.success(null, "AI chat history deleted");
     }
 
     @PutMapping("/resumes/{resumeId}/chat/conversations/{conversationId}/suggestions/{suggestionId}")
