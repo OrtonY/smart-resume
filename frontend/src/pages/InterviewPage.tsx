@@ -401,7 +401,6 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
           void refreshAfterAction(() => pauseInterview(detail.id), t('feedback.paused')).then(() => navigate('/app/interviews'))
         }}
         onContinue={() => detail && void refreshAfterAction(() => continueInterview(detail.id), t('feedback.continued'))}
-        onDelete={() => detail && void handleDeleteInterview(detail.id)}
         onEnd={() =>
           detail &&
           void refreshAfterAction(() => endInterview(detail.id), t('feedback.ended')).then((updated) => {
