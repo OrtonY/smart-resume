@@ -327,6 +327,7 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 
 ### 2. Signatures
 - Backend constant: `ResumeShareEntity.INVALID_TARGET_VERSION_ID = "invalid"`
+- Database column: `resume_share_links.target_version_id varchar(64) null` with no foreign key constraint
 - Authenticated share DTO: `ShareLinkResponse(..., String targetVersionId, boolean invalid, boolean hasPassword, boolean active, ...)`
 - Snapshot timeline DTO: `ResumeSnapshotShareLinkResponse(String title, String shareCode, String sharePath, boolean active, boolean invalid, LocalDateTime createdAt)`
 - Frontend types:
@@ -340,6 +341,7 @@ AI suggestion lists and resume section collections should favor typed mappers ov
   - `target_version_id = "invalid"`
   - `active = false`
   - `updated_at = now`
+- `resume_share_links.target_version_id` must not have a database foreign key to `resume_versions(id)` because it intentionally stores the `invalid` sentinel after snapshot deletion.
 - `active=false` means the owner manually disabled the link and it can be enabled again.
 - `invalid=true` means the snapshot target no longer exists and the link cannot be enabled again.
 - Frontend share management must display an invalid tag separately from the disabled tag and disable the enable action for invalid links.
@@ -357,9 +359,11 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 - Base: owner disables a live share link manually; it shows disabled and can be re-enabled later.
 - Bad: deleting a snapshot only sets `active=false`, causing the UI to show a normal disabled link that appears re-enableable.
 - Bad: frontend infers invalidity by comparing `targetVersionId === "invalid"` instead of consuming the typed `invalid` DTO field.
+- Bad: keeping a database foreign key on `target_version_id`, which rejects the `invalid` sentinel during snapshot deletion.
 
 ### 6. Tests Required
 - Backend unit test: deleting a snapshot writes `targetVersionId="invalid"`, `active=false`, and `updatedAt` on associated shares.
+- Migration/schema check: `resume_share_links.target_version_id` allows `invalid` by not enforcing a version-id foreign key.
 - Backend unit test: toggling an inactive invalid snapshot share throws `error.share.snapshotInvalid`.
 - Frontend build/type-check must pass after adding `invalid` to share DTO types.
 - UI assertion: share list renders invalid separately from disabled and prevents the enable action.
