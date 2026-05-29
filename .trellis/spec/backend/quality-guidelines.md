@@ -152,3 +152,55 @@ params.set("pageSize", String.valueOf(DEFAULT_PAGE_SIZE))
 <!-- What reviewers should check -->
 
 (To be filled by the team)
+
+### Scenario: PDF Export Content-Disposition Filename Encoding
+
+#### 1. Scope / Trigger
+
+* Trigger: Any backend endpoint returning downloadable files with `Content-Disposition`, especially PDF export endpoints that use user-controlled resume titles.
+
+#### 2. Signatures
+
+* Internal builder: `ExportController.buildPdfResponse(byte[] pdfBytes, String title)`.
+* Response header: `Content-Disposition: attachment; filename="<ascii-fallback>"; filename*=UTF-8''<percent-encoded-utf8>`.
+
+#### 3. Contracts
+
+* `filename` must contain only header-safe ASCII characters. Do not place Chinese or other Unicode characters directly in this parameter.
+* `filename*` must carry the UTF-8 percent-encoded real filename, including the `.pdf` extension.
+* If the ASCII fallback becomes blank after sanitization, use `resume.pdf`.
+* Shared/public export flows must use the same response builder so header behavior stays consistent.
+
+#### 4. Validation & Error Matrix
+
+* Unicode title such as `????` -> `filename="resume.pdf"` and `filename*=UTF-8''%E6%88%91%E7%9A%84%E7%AE%80%E5%8E%86.pdf`.
+* ASCII title such as `Resume 2026` -> `filename="Resume 2026.pdf"` and `filename*=UTF-8''Resume%202026.pdf`.
+* Blank/null/unsafe-only title -> `filename="resume.pdf"`.
+
+#### 5. Good/Base/Bad Cases
+
+* Good: build both `filename` and `filename*`, with ASCII fallback and UTF-8 encoded real filename.
+* Base: plain ASCII titles keep a readable ASCII fallback.
+* Bad: `filename="????.pdf"`; Tomcat rejects the response header because it cannot encode Unicode outside the permitted header byte range.
+
+#### 6. Tests Required
+
+* Unit test `ExportController.buildPdfResponse(...)` with a Unicode title and assert the exact `Content-Disposition` header.
+* Unit test with an ASCII title and assert the readable fallback remains intact.
+* Export route tests may reuse the shared builder contract instead of duplicating header assembly assertions.
+
+#### 7. Wrong vs Correct
+
+##### Wrong
+
+```java
+headers.set(HttpHeaders.CONTENT_DISPOSITION,
+    "attachment; filename=\"" + filename + "\"; filename*=UTF-8''" + encodedFilename);
+```
+
+##### Correct
+
+```java
+headers.set(HttpHeaders.CONTENT_DISPOSITION,
+    "attachment; filename=\"" + asciiFilename + "\"; filename*=UTF-8''" + encodedFilename);
+```
