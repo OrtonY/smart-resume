@@ -72,3 +72,36 @@ Implemented physical delete flows for resumes and interviews with associated AI 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 62: Implement AI chat style modes (savage & sarcastic)
+
+**Date**: 2026-05-29
+**Task**: Implement AI chat style modes (savage & sarcastic)
+**Branch**: `feat/resume-ai-chat-style-modes`
+
+### Summary
+
+Added per-conversation style selector with savage/sarcastic personas, backend enum + migration + prompt map, frontend segmented control, i18n, and unit tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ca38831` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
