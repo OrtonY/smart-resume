@@ -89,6 +89,25 @@ public class ResumeService {
         return getResume(resume.getId());
     }
 
+    @Transactional
+    public ResumeDetailResponse createResumeFromContent(String title, String templateKey, ResumeContentPayload content) {
+        long userId = CurrentUserContext.requireUserId();
+        templateCatalogService.validateCurrentUserTemplateAccess(templateKey);
+        LocalDateTime now = LocalDateTime.now();
+        ResumeEntity resume = new ResumeEntity();
+        resume.setId(UUID.randomUUID().toString());
+        resume.setUserId(userId);
+        resume.setTitle(title);
+        resume.setTemplateKey(templateKey);
+        resume.setLayoutJson(resumeContentService.toJson(resumeContentService.defaultLayout()));
+        resume.setDeleted(false);
+        resume.setCreatedAt(now);
+        resume.setUpdatedAt(now);
+        resumeMapper.insert(resume);
+        resumeContentService.saveSections(resume.getId(), userId, content, now);
+        return getResume(resume.getId());
+    }
+
     public void validResume(String resumeId) {
         resumeLookupService.requireResume(resumeId, CurrentUserContext.requireUserId());
     }
