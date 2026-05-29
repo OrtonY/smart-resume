@@ -64,7 +64,9 @@
     "shareCopiedLatest": "最新版本分享链接已复制。",
     "shareCopiedSnapshot": "快照分享链接已复制。",
     "loadShareLinksFailed": "无法加载分享链接。",
-    "refreshShareLinksFailed": "无法刷新分享链接。"
+    "refreshShareLinksFailed": "无法刷新分享链接。",
+    "versionDeleteSuccess": "快照已删除，关联的分享链接已失效。",
+    "versionDeleteFailed": "删除快照失败。"
   },
   "saveState": {
     "saving": "保存中...",
@@ -112,9 +114,9 @@
     "title": "版本历史",
     "subtitle": "时间线与差异对比",
     "description": "可以手动创建快照，查看早期版本，并与当前草稿对比，也可以将快照直接恢复到当前简历。",
-    "mobileListTitle": "\u9009\u62e9\u7248\u672c",
-    "detailTitle": "\u7248\u672c\u8be6\u60c5",
-    "backToList": "\u8fd4\u56de\u7248\u672c\u5217\u8868",
+    "mobileListTitle": "选择版本",
+    "detailTitle": "版本详情",
+    "backToList": "返回版本列表",
     "refresh": "刷新",
     "createSnapshot": "创建快照",
     "empty": "还没有快照，可以在大改之前先保存一个版本。",
@@ -147,7 +149,17 @@
       "currentOnlyEntries_other": "当前草稿新增了 {{count}} 条条目。",
       "versionOnlyEntries_one": "所选版本比当前多 {{count}} 条条目。",
       "versionOnlyEntries_other": "所选版本比当前多 {{count}} 条条目。"
-    }
+    },
+    "delete": "删除快照",
+    "deleteConfirmTitle": "确定删除此快照？",
+    "deleteConfirmDescription": "删除后，关联的快照分享链接将失效。",
+    "deleteConfirmOk": "删除",
+    "shareLinksTitle": "关联分享链接",
+    "shareLinksEmpty": "此快照暂无关联分享链接。",
+    "shareLinkActive": "可访问",
+    "shareLinkInactive": "已禁用",
+    "shareLinkInvalid": "已失效",
+    "copyShareLink": "复制分享链接"
   },
   "modules": {
     "personalInfo": {
@@ -343,7 +355,7 @@
     "modeLatest": "最新版本",
     "modeSnapshot": "当前快照",
     "modeLatestHint": "链接始终展示简历的最新内容",
-    "modeSnapshotHint": "优先分享最近一次快照；如果不存在快照则自动创建一个，后续编辑不会影响该分享链接",
+    "modeSnapshotHint": "分享时会比对当前简历与最近一次快照；标题、内容、布局和模板未变更时复用最近快照，变更后自动创建新快照。后续编辑不会影响该分享链接。",
     "passwordLabel": "密码保护",
     "passwordPlaceholder": "设置访问密码",
     "passwordHint": "开启后，访问者需输入密码才能查看",
@@ -363,12 +375,14 @@
     "modeTagSnapshot": "快照",
     "passwordProtected": "密码保护",
     "disabled": "已禁用",
+    "invalid": "已失效",
     "viewCount": "{{count}} 次访问",
     "createdAt": "创建: {{value}}",
     "lastAccessedAt": "最近访问: {{value}}",
     "noVisits": "暂无访问",
     "toggleEnable": "启用",
     "toggleDisable": "禁用",
+    "invalidEnableTooltip": "关联快照已删除，无法启用",
     "deleteConfirmTitle": "确定删除此分享链接？",
     "deleteConfirmDescription": "删除后访问记录也会一并清除，无法恢复。",
     "deleteOk": "删除",

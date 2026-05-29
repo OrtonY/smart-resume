@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS resume_versions (
     template_key VARCHAR(80) NOT NULL,
     content_json TEXT NOT NULL,
     layout_json TEXT NOT NULL,
+    content_hash VARCHAR(64) NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    deleted_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL,
     CONSTRAINT uk_resume_versions_resume_version UNIQUE (resume_id, version_number)
 );
@@ -226,6 +229,9 @@ CREATE INDEX IF NOT EXISTS idx_resume_sections_user_resume
 
 CREATE INDEX IF NOT EXISTS idx_resume_versions_user_resume
     ON resume_versions (user_id, resume_id, version_number DESC);
+
+CREATE INDEX IF NOT EXISTS idx_resume_versions_user_resume_active
+    ON resume_versions (user_id, resume_id, deleted, version_number DESC, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_resume_share_links_resume_id
     ON resume_share_links (resume_id);

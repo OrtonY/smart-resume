@@ -30,6 +30,7 @@ public final class ShareDtos {
         String shareMode,
         String sharePath,
         String targetVersionId,
+        boolean invalid,
         boolean hasPassword,
         boolean active,
         long viewCount,

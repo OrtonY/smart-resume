@@ -7,8 +7,8 @@
 ## Current Status
 
 <!-- @@@auto:current-status -->
-- **Active File**: `journal-1.md`
-- **Total Sessions**: 59
+- **Active File**: `journal-2.md`
+- **Total Sessions**: 60
 - **Last Active**: 2026-05-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,8 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1980 | Active |
+| `journal-2.md` | ~41 | Active |
+| `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 60 | 2026-05-29 | Invalidate deleted snapshot share links | `d6295ae`, `9c8ab9a` | `codex/resume-share-snapshot-hash` |
 | 59 | 2026-05-29 | PDF export frontend fallback | `8225e77` | `codex/pdf-export-frontend-fallback` |
 | 58 | 2026-05-29 | Resume import from template gallery | `6ed685c`, `8f87449`, `7d62bba` | `codex/resume-import` |
 | 57 | 2026-05-28 | Bump frontend and backend to v1.1.1 | `460887c` | `chore/bump-version-1.1.1` |

@@ -48,8 +48,19 @@ public final class ResumeDtos {
         int versionNumber,
         String title,
         String templateKey,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<ResumeSnapshotShareLinkResponse> shareLinks
     ) {
+        public ResumeVersionSummaryResponse(
+            String id,
+            String resumeId,
+            int versionNumber,
+            String title,
+            String templateKey,
+            LocalDateTime createdAt
+        ) {
+            this(id, resumeId, versionNumber, title, templateKey, createdAt, List.of());
+        }
     }
 
     public record ResumeVersionDetailResponse(
@@ -57,7 +68,27 @@ public final class ResumeDtos {
         String resumeId,
         int versionNumber,
         LocalDateTime createdAt,
-        ResumeDetailResponse snapshot
+        ResumeDetailResponse snapshot,
+        List<ResumeSnapshotShareLinkResponse> shareLinks
+    ) {
+        public ResumeVersionDetailResponse(
+            String id,
+            String resumeId,
+            int versionNumber,
+            LocalDateTime createdAt,
+            ResumeDetailResponse snapshot
+        ) {
+            this(id, resumeId, versionNumber, createdAt, snapshot, List.of());
+        }
+    }
+
+    public record ResumeSnapshotShareLinkResponse(
+        String title,
+        String shareCode,
+        String sharePath,
+        boolean active,
+        boolean invalid,
+        LocalDateTime createdAt
     ) {
     }
 

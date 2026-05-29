@@ -884,9 +884,10 @@ function ShareLinksModal({
           {shareLinks.map((share) => {
             const fullUrl = `${window.location.origin}${share.sharePath}`
             const isExpanded = expandedShare === share.shareCode
+            const shareAvailable = share.active && !share.invalid
 
             return (
-              <div key={share.shareCode} className="share-row" style={{ flexDirection: 'column', alignItems: 'stretch', opacity: share.active ? 1 : 0.6 }}>
+              <div key={share.shareCode} className="share-row" style={{ flexDirection: 'column', alignItems: 'stretch', opacity: shareAvailable ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Space direction="vertical" size={4}>
                     <Space wrap>
@@ -895,10 +896,11 @@ function ShareLinksModal({
                         {share.shareMode === 'LATEST' ? t('share.modeTagLatest') : t('share.modeTagSnapshot')}
                       </Tag>
                       {share.hasPassword ? <Tag icon={<LockOutlined />} color="red">{t('share.passwordProtected')}</Tag> : null}
-                      {!share.active ? <Tag color="default">{t('share.disabled')}</Tag> : null}
+                      {share.invalid ? <Tag color="error">{t('share.invalid')}</Tag> : null}
+                      {!share.active && !share.invalid ? <Tag color="default">{t('share.disabled')}</Tag> : null}
                       <Tag>{t('share.viewCount', { count: share.viewCount })}</Tag>
                     </Space>
-                    <Text copyable={{ text: fullUrl }} style={share.active ? undefined : { textDecoration: 'line-through' }}>
+                    <Text copyable={{ text: fullUrl }} style={shareAvailable ? undefined : { textDecoration: 'line-through' }}>
                       {fullUrl}
                     </Text>
                     <Space size={16}>
@@ -919,10 +921,11 @@ function ShareLinksModal({
                     <Button size="small" onClick={() => void handleToggleLogs(share)}>
                       {isExpanded ? t('common:actions.collapse') : t('common:actions.details')}
                     </Button>
-                    <Tooltip title={share.active ? t('share.toggleDisable') : t('share.toggleEnable')}>
+                    <Tooltip title={share.invalid ? t('share.invalidEnableTooltip') : share.active ? t('share.toggleDisable') : t('share.toggleEnable')}>
                       <Button
                         size="small"
                         icon={share.active ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                        disabled={share.invalid}
                         onClick={() => void handleToggleActive(share)}
                       />
                     </Tooltip>

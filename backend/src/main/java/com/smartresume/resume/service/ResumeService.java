@@ -186,6 +186,11 @@ public class ResumeService {
         return resumeVersionService.captureSnapshot(resumeId);
     }
 
+    @Transactional
+    public ResumeVersionEntity captureSnapshotIfChanged(String resumeId) {
+        return resumeVersionService.captureSnapshotIfChanged(resumeId);
+    }
+
     public ResumeDetailResponse getVersionSnapshot(String versionId) {
         return resumeVersionService.getVersionSnapshot(versionId);
     }
@@ -205,6 +210,11 @@ public class ResumeService {
     @Transactional
     public ResumeDetailResponse restoreFromVersion(String resumeId, String versionId) {
         return resumeVersionService.restoreFromVersion(resumeId, versionId);
+    }
+
+    @Transactional
+    public void deleteVersion(String resumeId, String versionId) {
+        resumeVersionService.deleteVersion(resumeId, versionId);
     }
 
     private ResumeSummaryResponse toSummary(ResumeEntity resume) {
