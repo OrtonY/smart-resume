@@ -359,27 +359,16 @@ export function WorkspacePage({
 
     setExportingPdf(true)
     try {
-      if (!previewRoot) {
-        throw new Error(t('feedback.exportPreviewMissing'))
+      try {
+        await exportResumeServerPdf(resumeId, draft.title)
+      } catch {
+        if (!previewRoot) {
+          throw new Error(t('feedback.exportPreviewMissing'))
+        }
+
+        await exportResumePdf(previewRoot, draft.title)
       }
 
-      await exportResumePdf(previewRoot, draft.title)
-      void message.success(t('feedback.exportPdfStart'))
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
-    } finally {
-      setExportingPdf(false)
-    }
-  }
-
-  async function handleExportServerPdf() {
-    if (!resumeId || !draft || exportingPdf) {
-      return
-    }
-
-    setExportingPdf(true)
-    try {
-      await exportResumeServerPdf(resumeId, draft.title)
       void message.success(t('feedback.exportPdfStart'))
     } catch (error) {
       void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
@@ -513,7 +502,6 @@ export function WorkspacePage({
         onDragEnd={handleDragEnd}
         onExpandedModulesChange={handleExpandedModulesChange}
         onExportPdf={handleExportPdf}
-        onExportServerPdf={handleExportServerPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}
         onRestoredVersion={handleRestoredVersion}

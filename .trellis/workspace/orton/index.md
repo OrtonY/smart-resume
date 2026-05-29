@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 58
+- **Total Sessions**: 59
 - **Last Active**: 2026-05-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1947 | Active |
+| `journal-1.md` | ~1980 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 59 | 2026-05-29 | PDF export frontend fallback | `8225e77` | `codex/pdf-export-frontend-fallback` |
 | 58 | 2026-05-29 | Resume import from template gallery | `6ed685c`, `8f87449`, `7d62bba` | `codex/resume-import` |
 | 57 | 2026-05-28 | Bump frontend and backend to v1.1.1 | `460887c` | `chore/bump-version-1.1.1` |
 | 56 | 2026-05-28 | Refine mobile interview header and AI resume context filtering | `2365fdf`, `29fe5f5` | `codex/mobile-chat-company-hidden-filter` |
