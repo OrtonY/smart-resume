@@ -1,0 +1,1 @@
+ALTER TABLE ai_chat_conversations ADD COLUMN style VARCHAR(32) NOT NULL DEFAULT 'NORMAL';

@@ -20,6 +20,7 @@ import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
   AiChatConversation,
   AiChatMessage,
+  AiChatStyle,
   AiConfigurationRequest,
   AiResumeSuggestion,
   AiResumeSuggestionStatus,
@@ -129,6 +130,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   const [input, setInput] = useState('')
   const [conversations, setConversations] = useState<AiChatConversation[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [pendingStyle, setPendingStyle] = useState<AiChatStyle>('NORMAL')
   const [messages, setMessages] = useState<AiChatUiMessage[]>([])
   const [suggestionStatus, setSuggestionStatus] = useState<Record<string, SuggestionStatus>>({})
   const [loadingConversations, setLoadingConversations] = useState(false)
@@ -169,6 +171,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     setSelectedConversationId(null)
     setMessages([])
     setSuggestionStatus({})
+    setPendingStyle('NORMAL')
     conversationIdRef.current = null
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
@@ -398,6 +401,22 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     [message, persistSuggestionStatuses, suggestionStatus, t],
   )
 
+  const styleLabel = useCallback((style: AiChatStyle | undefined) => {
+    switch (style) {
+      case 'SAVAGE':
+        return t('assistant.styleSavage')
+      case 'SARCASTIC':
+        return t('assistant.styleSarcastic')
+      default:
+        return t('assistant.styleNormal')
+    }
+  }, [t])
+
+  const selectedConversation = useMemo(
+    () => conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
+    [conversations, selectedConversationId],
+  )
+
   async function handleSend() {
     const trimmed = input.trim()
     if (!trimmed || streaming) {
@@ -441,6 +460,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         message: trimmed,
         conversationId: selectedConversationId ?? undefined,
         resumeId: draft.id,
+        style: selectedConversationId ? undefined : pendingStyle,
       }, (event) => {
         receivedAnyEvent = true
         if (event.type === 'error') {
@@ -479,6 +499,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
             message: trimmed,
             conversationId: selectedConversationId ?? undefined,
             resumeId: draft.id,
+            style: selectedConversationId ? undefined : pendingStyle,
           })
           const suggestions = parseSuggestionPlan(response.suggestionJson)
           activeConversationId = response.conversationId || activeConversationId
@@ -525,6 +546,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     conversationIdRef.current = null
     setMessages([])
     setSuggestionStatus({})
+    setPendingStyle('NORMAL')
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
     lastMessageCountRef.current = 0
@@ -644,15 +666,29 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                 { label: <span><HistoryOutlined /> {t('assistant.tabHistory')}</span>, value: 'history' },
               ]}
             />
-            <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
-              {t('assistant.newChat')}
-            </Button>
+            <Space size={8}>
+              <Select
+                value={pendingStyle}
+                onChange={(value) => setPendingStyle(value)}
+                disabled={!!selectedConversationId || streaming}
+                style={{ width: 130 }}
+                options={[
+                  { label: t('assistant.styleNormal'), value: 'NORMAL' },
+                  { label: t('assistant.styleSavage'), value: 'SAVAGE' },
+                  { label: t('assistant.styleSarcastic'), value: 'SARCASTIC' },
+                ]}
+              />
+              <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
+                {t('assistant.newChat')}
+              </Button>
+            </Space>
           </div>
 
           <div className="ai-chat-context">
             <Tag color="blue">{t('assistant.boundResume')}</Tag>
             <Text strong>{draft.title}</Text>
             {selectedConversationId ? <Tag color="default">{t('assistant.continuingChat')}</Tag> : <Tag color="green">{t('assistant.newChatTag')}</Tag>}
+            <Tag color="purple">{t('assistant.styleLabel', { style: styleLabel(selectedConversation?.style ?? pendingStyle) })}</Tag>
             <Text type="secondary" style={{ fontSize: 12 }}>{t('assistant.retentionHint')}</Text>
           </div>
 
@@ -691,7 +727,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                     onClick={() => selectConversation(item.conversationId)}
                   >
                     <List.Item.Meta
-                      title={item.title}
+                      title={<span>{item.title} {item.style && item.style !== 'NORMAL' ? <Tag color="purple" style={{ marginLeft: 4 }}>{styleLabel(item.style)}</Tag> : null}</span>}
                       description={new Date(item.updatedAt).toLocaleString()}
                     />
                   </List.Item>
