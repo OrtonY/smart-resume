@@ -81,20 +81,17 @@ export function PublicSharePage() {
             return
           }
 
-          void messageApi.error(msg)
-          setPageState({ status: 'error', message: msg })
+          setPageState({ status: 'error', message: t('notFound.subtitle') })
           return
         }
       }
 
       const sharedResume = await getPublicShare(shareCode)
       setPageState({ status: 'ready', resume: sharedResume })
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : t('page.loadFailed')
-      void messageApi.error(msg)
-      setPageState({ status: 'error', message: msg })
+    } catch {
+      setPageState({ status: 'error', message: t('notFound.subtitle') })
     }
-  }, [loadProtectedShare, messageApi, shareCode, t])
+  }, [loadProtectedShare, shareCode, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {

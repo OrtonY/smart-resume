@@ -106,6 +106,15 @@ public class ResumeController {
         return ApiResponse.success(resumeService.restoreFromVersion(resumeId, versionId), "Resume version restored");
     }
 
+    @DeleteMapping("/{resumeId}/versions/{versionId}")
+    public ApiResponse<Void> deleteResumeVersion(
+        @PathVariable String resumeId,
+        @PathVariable String versionId
+    ) {
+        resumeService.deleteVersion(resumeId, versionId);
+        return ApiResponse.success(null, "Resume snapshot deleted");
+    }
+
     @DeleteMapping("/{resumeId}")
     public ApiResponse<Void> softDeleteResume(@PathVariable String resumeId) {
         resumeService.softDeleteResume(resumeId);

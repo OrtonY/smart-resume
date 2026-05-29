@@ -15,7 +15,7 @@
     "verifyButton": "验证"
   },
   "notFound": {
-    "title": "分享链接不可用",
-    "subtitle": "此公开分享可能已过期或不存在。"
+    "title": "链接已失效",
+    "subtitle": "链接已失效"
   }
 }

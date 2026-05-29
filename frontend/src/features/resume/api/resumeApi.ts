@@ -90,6 +90,11 @@ export function restoreResumeFromVersion(resumeId: string, versionId: string) {
   })
 }
 
+export function deleteResumeVersion(resumeId: string, versionId: string) {
+  return request<void>(`/api/resumes/${resumeId}/versions/${versionId}`, {
+    method: 'DELETE',
+  })
+}
 export function createShare(resumeId: string, title: string, mode: ShareMode, password?: string) {
   return request<ShareLink>(`/api/resumes/${resumeId}/shares`, {
     method: 'POST',
