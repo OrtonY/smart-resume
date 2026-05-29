@@ -283,3 +283,52 @@ Do not use global state for section form fields that belong to one editing scree
 - Whitelist the field in `parseInlineMarkdown` consumers in lockstep: ResumePreview render path, docxExport TextRun helper, and (transitively) the PDF capture path.
 - Treat the parser as the single source of truth for inline formatting. New formatting (e.g. underline) requires a parser update, not per-consumer regex.
 - Keep the storage type as `string`. Do not introduce a structured AST in backend DTOs.
+## Scenario: PDF Export Backend-First Fallback
+
+### 1. Scope / Trigger
+- Trigger: any user-visible PDF export action in the editor or public share page.
+- Why this needs code-spec depth: the feature has two rendering paths (backend PDF renderer and frontend DOM snapshot), and exposing both paths directly makes UX and error handling drift across entry points.
+
+### 2. Signatures
+- Editor backend export: `exportResumeServerPdf(resumeId: string, title: string): Promise<void>`.
+- Public share backend export: `exportSharePdf(shareCode: string, title: string, shareToken?: string): Promise<void>`.
+- Frontend snapshot export: `exportResumePdf(previewRoot: HTMLElement, title: string): Promise<void>`.
+- Export source: a DOM root containing `.resume-preview-paper--page` nodes, usually rendered as `.resume-export-source` with `aria-hidden="true"`.
+
+### 3. Contracts
+- User-facing PDF export actions must try the backend export first.
+- If backend export rejects, the page-level handler may fall back to `exportResumePdf(...)` using an explicit snapshot root.
+- Fallback success must be quiet: show the normal success message and do not surface the backend error.
+- If both backend and snapshot export fail, show one clear failure message.
+- Do not expose backend-vs-screenshot implementation choices in primary editor/share UI.
+- Public share fallback must use a dedicated `.resume-export-source` rather than the responsive visible preview.
+
+### 4. Validation & Error Matrix
+- Backend export succeeds -> download starts; snapshot export is not called.
+- Backend export fails and snapshot root exists -> snapshot export runs; user sees normal success feedback if it succeeds.
+- Backend export fails and snapshot root is missing -> user sees one export/download failure message.
+- Snapshot export finds zero `.resume-preview-paper--page` nodes -> `exportResumePdf` throws the existing no-preview error.
+- Password-protected share with cached token -> backend export receives the `X-Share-Token`; fallback uses already-loaded `ResumePreview` data and does not need the token.
+
+### 5. Good/Base/Bad Cases
+- Good: editor "Export PDF" renders backend PDF by default, and silently downloads a browser snapshot when the backend renderer is unavailable.
+- Base: public share download reuses the visible resume data but captures an isolated `.resume-export-source` for fallback quality.
+- Bad: editor shows separate "High Quality Export" and "Quick Export (Screenshot)" choices, forcing users to reason about implementation details.
+- Bad: public share fallback captures the visible mobile preview directly, producing a mobile-shaped PDF.
+
+### 6. Tests Required
+- Frontend lint and build/type-check must pass after changing export orchestration.
+- Manual or automated assertion: backend success path does not call `exportResumePdf`.
+- Manual or automated assertion: backend failure with a valid snapshot root calls `exportResumePdf` and shows only success feedback.
+- Manual mobile sanity: fallback source remains under `.resume-export-source` so export layout is not driven by the visible mobile preview.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Put backend and screenshot export as two sibling menu items in the primary UI.
+- Show the backend failure toast before trying frontend fallback.
+- Reuse the responsive visible share preview as the capture source on mobile.
+
+#### Correct
+- Keep one user-visible PDF action and orchestrate backend-first / snapshot-fallback inside the page handler.
+- Render an off-screen `.resume-export-source` when a page needs frontend fallback.
+- Let `exportResumePdf` own the browser snapshot implementation while page handlers own fallback ordering and feedback.

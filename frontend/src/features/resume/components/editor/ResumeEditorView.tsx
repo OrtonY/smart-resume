@@ -68,7 +68,6 @@ interface ResumeEditorViewProps {
   onCreateShare: (title: string, mode: ShareMode, password?: string) => Promise<void>
   onExpandedModulesChange: (keys: string | string[]) => void
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
-  onExportServerPdf: () => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onDragEnd: (event: DragEndEvent) => void
@@ -95,7 +94,6 @@ export function ResumeEditorView({
   onCreateShare,
   onExpandedModulesChange,
   onExportPdf,
-  onExportServerPdf,
   onFocusModule,
   onHideSection,
   onDragEnd,
@@ -240,7 +238,6 @@ export function ResumeEditorView({
             <DropdownExport
               exportingPdf={exportingPdf}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
-              onExportServerPdf={() => void onExportServerPdf()}
             />
           </Space>
 
@@ -251,7 +248,6 @@ export function ResumeEditorView({
               exportingPdf={exportingPdf}
               interviewMenuItems={interviewMenuItems}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
-              onExportServerPdf={() => void onExportServerPdf()}
               onOpenShare={openShareModal}
               onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
             />
@@ -529,38 +525,15 @@ function InterviewMenuButton({ interviewMenuItems }: { interviewMenuItems: Array
 function DropdownExport({
   exportingPdf,
   onExportPdf,
-  onExportServerPdf,
 }: {
   exportingPdf: boolean
   onExportPdf: () => void
-  onExportServerPdf: () => void
 }) {
   const { t } = useTranslation('workspace')
   return (
-    <Dropdown
-      menu={{
-        items: [
-          {
-            key: 'exportServerPdf',
-            label: t('editor.exportServerPdf'),
-            icon: <DownloadOutlined />,
-            disabled: exportingPdf,
-            onClick: onExportServerPdf,
-          },
-          {
-            key: 'exportQuickPdf',
-            label: t('editor.exportQuickPdf'),
-            icon: <DownloadOutlined />,
-            disabled: exportingPdf,
-            onClick: onExportPdf,
-          },
-        ],
-      }}
-    >
-      <Button icon={<DownloadOutlined />} loading={exportingPdf}>
-        {t('editor.exportPdf')}
-      </Button>
-    </Dropdown>
+    <Button icon={<DownloadOutlined />} loading={exportingPdf} onClick={onExportPdf}>
+      {t('editor.exportPdf')}
+    </Button>
   )
 }
 
@@ -569,7 +542,6 @@ function MoreActionsMenu({
   exportingPdf,
   interviewMenuItems,
   onExportPdf,
-  onExportServerPdf,
   onOpenShare,
   onOpenVersionTimeline,
 }: {
@@ -577,7 +549,6 @@ function MoreActionsMenu({
   exportingPdf: boolean
   interviewMenuItems: Array<{ key: string; label: ReactNode }>
   onExportPdf: () => void
-  onExportServerPdf: () => void
   onOpenShare: () => void
   onOpenVersionTimeline: () => void
 }) {
@@ -613,20 +584,8 @@ function MoreActionsMenu({
             key: 'export',
             label: t('editor.exportPdf'),
             icon: <DownloadOutlined />,
-            children: [
-              {
-                key: 'exportServerPdf',
-                label: t('editor.exportServerPdf'),
-                disabled: exportingPdf,
-                onClick: onExportServerPdf,
-              },
-              {
-                key: 'exportQuickPdf',
-                label: t('editor.exportQuickPdf'),
-                disabled: exportingPdf,
-                onClick: onExportPdf,
-              },
-            ],
+            disabled: exportingPdf,
+            onClick: onExportPdf,
           },
         ],
       }}

@@ -1,10 +1,11 @@
 import { Button, Card, Form, Input, Result, Spin, message } from 'antd'
 import { DownloadOutlined, LockOutlined } from '@ant-design/icons'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare, getPublicShareAccess, verifySharePassword } from '../features/resume/api/resumeApi'
+import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportSharePdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import type { ResumeDetail } from '../features/resume/types'
@@ -42,6 +43,7 @@ export function PublicSharePage() {
   const [verifying, setVerifying] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
+  const exportPreviewRef = useRef<HTMLDivElement | null>(null)
   const { templates } = useResumeTemplateCatalog({ scope: 'public' })
   const resume = pageState.status === 'ready' ? pageState.resume : null
   const previewTemplates = !resume?.resolvedTemplate
@@ -148,8 +150,18 @@ export function PublicSharePage() {
     if (!resume || downloading) return
     setDownloading(true)
     try {
-      const shareToken = getShareToken(shareCode)
-      await exportSharePdf(shareCode, resume.title, shareToken)
+      try {
+        const shareToken = getShareToken(shareCode)
+        await exportSharePdf(shareCode, resume.title, shareToken)
+      } catch {
+        if (!exportPreviewRef.current) {
+          throw new Error(t('page.downloadFailed'))
+        }
+
+        await exportResumePdf(exportPreviewRef.current, resume.title)
+      }
+
+      void messageApi.success(t('page.downloadStarted'))
     } catch (error) {
       void messageApi.error(error instanceof Error ? error.message : t('page.downloadFailed'))
     } finally {
@@ -173,6 +185,9 @@ export function PublicSharePage() {
               </Button>
             </div>
             <ResumePreview resume={pageState.resume} templates={previewTemplates} previewMode="a4-paged" />
+            <div className="resume-export-source" ref={exportPreviewRef} aria-hidden="true">
+              <ResumePreview resume={pageState.resume} templates={previewTemplates} previewMode="a4-paged" />
+            </div>
           </>
         ) : (
           <Result status="404" title={t('notFound.title')} subTitle={pageState.message || t('notFound.subtitle')} />
