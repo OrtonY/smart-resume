@@ -55,7 +55,8 @@ public final class AiDtos {
         String message,
         String conversationId,
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
-        String resumeId
+        String resumeId,
+        String style
     ) {
     }
 
@@ -106,6 +107,7 @@ public final class AiDtos {
     public record AiChatConversation(
         String conversationId,
         String title,
+        String style,
         String createdAt,
         String updatedAt
     ) {

@@ -13,6 +13,7 @@ public class AiChatConversationEntity {
     private Long userId;
     private String resumeId;
     private String title;
+    private String style;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -46,6 +47,14 @@ public class AiChatConversationEntity {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getStyle() {
+        return style;
+    }
+
+    public void setStyle(String style) {
+        this.style = style;
     }
 
     public LocalDateTime getCreatedAt() {

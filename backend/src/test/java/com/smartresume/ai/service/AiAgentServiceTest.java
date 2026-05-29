@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.domain.AiChatStyle;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeContent;
@@ -60,8 +61,10 @@ class AiAgentServiceTest {
         resume.setUserId(7L);
         lenient().when(resumeLookupService.requireResume(anyString(), anyLong())).thenReturn(resume);
         lenient().when(resumeContentService.buildAiVisibleContentJson(any(ResumeEntity.class))).thenReturn(sampleResumeContentJson());
-        lenient().when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString()))
+        lenient().when(aiChatHistoryService.resolveConversationId(anyString(), any(), anyString(), any()))
             .thenReturn("conv-test-1");
+        lenient().when(aiChatHistoryService.resolveConversationStyle(anyString(), anyString()))
+            .thenReturn(AiChatStyle.NORMAL);
         lenient().when(aiChatHistoryService.persistSuggestionPlan(anyString(), anyString(), anyString(), anyLong()))
             .thenAnswer(invocation -> invocation.getArgument(2));
     }
@@ -79,7 +82,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("What is the weather today?", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("What is the weather today?", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -112,7 +115,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -148,7 +151,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Make suggestion 2 longer", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Make suggestion 2 longer", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -167,7 +170,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -189,7 +192,7 @@ class AiAgentServiceTest {
         when(aiChatService.stream(any(AiInvocationRequest.class)))
             .thenReturn(Flux.just(new AiChatEvent("message", aiOutput, "conv-test-1")));
 
-        AiChatRequest request = new AiChatRequest("Who are you?", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Who are you?", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -209,7 +212,7 @@ class AiAgentServiceTest {
                 "conv-test-1"
             )));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1", null);
         aiAgentService.streamChat(request).collectList().block();
 
         ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
@@ -235,7 +238,7 @@ class AiAgentServiceTest {
                 "conv-test-1"
             )));
 
-        AiChatRequest request = new AiChatRequest("test request", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("test request", null, "resume-1", null);
         aiAgentService.streamChat(request).collectList().block();
 
         verify(aiChatHistoryService).persistSuggestionPlan(
@@ -254,7 +257,7 @@ class AiAgentServiceTest {
                 new AiChatEvent("error", "upstream failure", "conv-test-1")
             ));
 
-        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1");
+        AiChatRequest request = new AiChatRequest("Review my resume", null, "resume-1", null);
         List<AiChatEvent> events = aiAgentService.streamChat(request).collectList().block();
 
         assertThat(events).isNotNull();
@@ -278,7 +281,7 @@ class AiAgentServiceTest {
             {"personalInfo":{"fullName":"Alex Chen","headline":"Senior Backend Engineer","phone":"13800000000","email":"alex@example.com","city":"Shanghai","website":"https://alex.dev","expectedSalary":"35k-45k","age":"30","avatar":null},"personalSummary":"Visible summary","education":[{"school":"Example University","degree":"Bachelor","major":"CS","startDate":"2012","endDate":"2016","description":""}],"workExperience":[{"company":"Example Corp","role":"Backend Engineer","startDate":"2020","endDate":"2024","description":"Visible work."}],"projectExperience":null,"skills":[{"name":"Java","level":"Expert"}],"honors":null,"certificates":null}
             """.trim());
 
-        aiAgentService.streamChat(new AiChatRequest("Review my resume", null, "resume-1")).collectList().block();
+        aiAgentService.streamChat(new AiChatRequest("Review my resume", null, "resume-1", null)).collectList().block();
 
         ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
         verify(aiChatService).stream(captor.capture());

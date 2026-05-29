@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.domain.AiChatConversationEntity;
+import com.smartresume.ai.domain.AiChatStyle;
 import com.smartresume.ai.domain.AiChatSuggestionEntity;
 import com.smartresume.ai.domain.table.AiChatConversationEntityTableDef;
 import com.smartresume.ai.domain.table.AiChatSuggestionEntityTableDef;
@@ -99,6 +100,11 @@ public class AiChatHistoryService {
 
     @Transactional
     public String resolveConversationId(String resumeId, String requestedConversationId, String firstMessage) {
+        return resolveConversationId(resumeId, requestedConversationId, firstMessage, null);
+    }
+
+    @Transactional
+    public String resolveConversationId(String resumeId, String requestedConversationId, String firstMessage, String style) {
         long userId = CurrentUserContext.requireUserId();
         resumeService.validResume(resumeId);
         if (requestedConversationId != null && !requestedConversationId.isBlank()) {
@@ -113,6 +119,7 @@ public class AiChatHistoryService {
         conversation.setUserId(userId);
         conversation.setResumeId(resumeId);
         conversation.setTitle(toTitle(firstMessage));
+        conversation.setStyle(AiChatStyle.fromValue(style).name());
         conversation.setCreatedAt(now);
         conversation.setUpdatedAt(now);
         aiChatConversationMapper.insert(conversation);
@@ -228,12 +235,21 @@ public class AiChatHistoryService {
     }
 
     private AiChatConversation toConversation(AiChatConversationEntity entity) {
+        String style = entity.getStyle() == null || entity.getStyle().isBlank()
+            ? AiChatStyle.NORMAL.name()
+            : entity.getStyle();
         return new AiChatConversation(
             entity.getConversationId(),
             entity.getTitle(),
+            style,
             entity.getCreatedAt().toString(),
             entity.getUpdatedAt().toString()
         );
+    }
+
+    public AiChatStyle resolveConversationStyle(String resumeId, String conversationId) {
+        AiChatConversationEntity conversation = requireConversation(resumeId, conversationId);
+        return AiChatStyle.fromValue(conversation.getStyle());
     }
 
     private AiChatConversationEntity requireConversation(String resumeId, String conversationId) {
