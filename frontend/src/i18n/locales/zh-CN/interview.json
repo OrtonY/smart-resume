@@ -17,7 +17,10 @@
     "noJd": "未提供岗位 JD，将主要依据简历和角色设定出题。",
     "roundLabel": "第 {{current}} 轮",
     "noResume": "未绑定简历",
-    "updatedAt": "更新于 {{time}}"
+    "updatedAt": "更新于 {{time}}",
+    "deleteTitle": "删除面试",
+    "deleteConfirm": "确定永久删除这场面试及其消息吗？",
+    "deleteOk": "删除"
   },
   "create": {
     "title": "新建面试",
@@ -57,6 +60,10 @@
     "endConfirm": "确定结束面试？",
     "endOk": "结束",
     "endTitle": "结束面试",
+    "delete": "删除",
+    "deleteTitle": "删除面试",
+    "deleteConfirm": "确定永久删除这场面试及其消息吗？",
+    "deleteOk": "删除",
     "viewReport": "查看报告",
     "backToCenter": "返回面试中心",
     "roundTabLabel": "第 {{index}} 轮 · {{role}}",
@@ -166,6 +173,8 @@
     "nextRound": "已进入下一轮面试。",
     "emptyMessage": "请输入回答内容。",
     "sendFailed": "发送失败。",
-    "regenerateFailed": "重新生成失败。"
+    "regenerateFailed": "重新生成失败。",
+    "deleted": "面试已删除。",
+    "deleteFailed": "删除面试失败。"
   }
 }

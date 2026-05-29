@@ -70,6 +70,12 @@ export function restoreResume(resumeId: string) {
   })
 }
 
+export function purgeResume(resumeId: string) {
+  return request<void>(`/api/resumes/${resumeId}/purge`, {
+    method: 'DELETE',
+  })
+}
+
 export function createResumeSnapshot(resumeId: string) {
   return request<ResumeVersionSummary>(`/api/resumes/${resumeId}/versions`, {
     method: 'POST',

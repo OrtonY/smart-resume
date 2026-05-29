@@ -1,10 +1,11 @@
-import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { CloudDownloadOutlined, DeleteOutlined, HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined } from '@ant-design/icons'
+import { App, Button, Card, Empty, Form, Input, List, Popconfirm, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import {
   completeAiChat,
+  deleteAiChatConversation,
   getAiConfiguration,
   getAiVendors,
   listAiChatConversations,
@@ -132,6 +133,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   const [suggestionStatus, setSuggestionStatus] = useState<Record<string, SuggestionStatus>>({})
   const [loadingConversations, setLoadingConversations] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
+  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null)
   const [streaming, setStreaming] = useState(false)
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat')
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
@@ -539,6 +541,31 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     shouldAutoScrollRef.current = true
   }
 
+  async function handleDeleteConversation(conversationId: string) {
+    if (streaming || deletingConversationId) {
+      return
+    }
+
+    setDeletingConversationId(conversationId)
+    try {
+      await deleteAiChatConversation(draft.id, conversationId)
+      const items = await listAiChatConversations(draft.id)
+      setConversations(items)
+      if (selectedConversationId === conversationId) {
+        setSelectedConversationId(null)
+        conversationIdRef.current = null
+        setMessages([])
+        setSuggestionStatus({})
+        lastMessageCountRef.current = 0
+      }
+      void message.success(t('assistant.deleteHistorySuccess'))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('assistant.deleteHistoryFailed'))
+    } finally {
+      setDeletingConversationId(null)
+    }
+  }
+
   function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
     dragState.current = {
       pointerId: event.pointerId,
@@ -626,6 +653,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
             <Tag color="blue">{t('assistant.boundResume')}</Tag>
             <Text strong>{draft.title}</Text>
             {selectedConversationId ? <Tag color="default">{t('assistant.continuingChat')}</Tag> : <Tag color="green">{t('assistant.newChatTag')}</Tag>}
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('assistant.retentionHint')}</Text>
           </div>
 
           {activeTab === 'history' ? (
@@ -637,6 +665,29 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                 renderItem={(item) => (
                   <List.Item
                     className={item.conversationId === selectedConversationId ? 'is-active' : ''}
+                    actions={[
+                      <Popconfirm
+                        key="delete"
+                        title={t('assistant.deleteHistoryConfirmTitle')}
+                        description={t('assistant.deleteHistoryConfirmDescription')}
+                        okText={t('assistant.deleteHistoryConfirmOk')}
+                        cancelText={t('common:actions.cancel')}
+                        okButtonProps={{ danger: true }}
+                        onConfirm={(event) => {
+                          event?.stopPropagation()
+                          void handleDeleteConversation(item.conversationId)
+                        }}
+                      >
+                        <Button
+                          danger
+                          disabled={streaming}
+                          icon={<DeleteOutlined />}
+                          loading={deletingConversationId === item.conversationId}
+                          size="small"
+                          onClick={(event) => event.stopPropagation()}
+                        />
+                      </Popconfirm>,
+                    ]}
                     onClick={() => selectConversation(item.conversationId)}
                   >
                     <List.Item.Meta

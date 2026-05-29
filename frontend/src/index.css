@@ -2493,6 +2493,13 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   align-items: center;
 }
 
+.interview-card__status-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .interview-card p {
   max-height: 72px;
   margin: 0;

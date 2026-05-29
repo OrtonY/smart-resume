@@ -59,6 +59,14 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
   )
 }
 
+export function deleteAiChatConversation(resumeId: string, conversationId: string) {
+  return requestJson<void>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/chat/conversations/' + encodeURIComponent(conversationId),
+    { method: 'DELETE' },
+  )
+}
+
 export function updateAiChatSuggestionStatus(
   resumeId: string,
   conversationId: string,

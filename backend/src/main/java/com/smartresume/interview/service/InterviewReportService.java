@@ -175,7 +175,7 @@ public class InterviewReportService {
 
     private RoundEvaluation evaluateRound(InterviewSessionEntity session, String role, List<InterviewMessageEntity> messages) {
         String conversationId = AiConversationIdGenerator.generate(
-            session.getResumeId(), AiFeatureType.INTERVIEW_REPORT);
+            session.getId(), AiFeatureType.INTERVIEW_REPORT);
 
         StringBuilder dialogBuilder = new StringBuilder();
         dialogBuilder.append("面试官角色: ").append(role).append("\n\n");
@@ -195,7 +195,7 @@ public class InterviewReportService {
 
     private InterviewReport generateOverallReport(InterviewSessionEntity session, List<RoundEvaluation> roundEvaluations) {
         String conversationId = AiConversationIdGenerator.generate(
-            session.getResumeId(), AiFeatureType.INTERVIEW_REPORT);
+            session.getId(), AiFeatureType.INTERVIEW_REPORT);
 
         StringBuilder summaryBuilder = new StringBuilder();
         summaryBuilder.append("以下是各轮面试的评估结果：\n\n");

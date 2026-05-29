@@ -129,7 +129,7 @@ class ResumeVersionServiceTest {
     }
 
     @Test
-    void deletingSnapshotInvalidatesAssociatedShares() {
+    void deletingSnapshotInvalidatesAssociatedSharesAndPhysicallyDeletesVersion() {
         ResumeEntity resume = resume("Backend Resume", "classic");
         when(resumeLookupService.requireResume("resume-1", 7L)).thenReturn(resume);
 
@@ -150,9 +150,7 @@ class ResumeVersionServiceTest {
 
         resumeVersionService.deleteVersion("resume-1", "version-1");
 
-        assertThat(version.getDeleted()).isTrue();
-        assertThat(version.getDeletedAt()).isNotNull();
-        verify(resumeVersionMapper).update(version);
+        verify(resumeVersionMapper).deleteById("version-1");
         assertThat(activeShare.getActive()).isFalse();
         assertThat(activeShare.getTargetVersionId()).isEqualTo(ResumeShareEntity.INVALID_TARGET_VERSION_ID);
         assertThat(activeShare.getUpdatedAt()).isNotNull();

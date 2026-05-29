@@ -153,11 +153,8 @@ public class ResumeVersionService {
     public void deleteVersion(String resumeId, String versionId) {
         long userId = CurrentUserContext.requireUserId();
         resumeLookupService.requireResume(resumeId, userId);
-        ResumeVersionEntity version = requireVersion(versionId, resumeId, userId);
+        requireVersion(versionId, resumeId, userId);
         LocalDateTime now = LocalDateTime.now();
-        version.setDeleted(true);
-        version.setDeletedAt(now);
-        resumeVersionMapper.update(version);
 
         ResumeShareEntityTableDef shareTable = ResumeShareEntityTableDef.RESUME_SHARE_ENTITY;
         QueryWrapper shareQuery = QueryWrapper.create()
@@ -170,6 +167,8 @@ public class ResumeVersionService {
             share.setUpdatedAt(now);
             resumeShareMapper.update(share);
         }
+
+        resumeVersionMapper.deleteById(versionId);
     }
 
     private ResumeVersionEntity insertSnapshot(
