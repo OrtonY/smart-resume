@@ -20,6 +20,7 @@ import {
   subscribeAccessToken,
 } from '../../lib/auth/tokenStorage'
 
+const ApplicationsPage = lazy(async () => import('../../pages/ApplicationsPage').then((module) => ({ default: module.ApplicationsPage })))
 const AuthPage = lazy(async () => import('../../pages/AuthPage').then((module) => ({ default: module.AuthPage })))
 const InterviewPage = lazy(async () => import('../../pages/InterviewPage').then((module) => ({ default: module.InterviewPage })))
 const PublicSharePage = lazy(async () => import('../../pages/PublicSharePage').then((module) => ({ default: module.PublicSharePage })))
@@ -125,6 +126,7 @@ export function AppRouter() {
           ) : (
             <>
               <Route path="/app/templates" element={<TemplateGalleryPage />} />
+              <Route path="/app/applications" element={<ApplicationsPage />} />
               <Route path="/app/interviews/:interviewId" element={<InterviewPage onLogout={handleLogout} />} />
               <Route path="/app/interviews" element={<InterviewPage onLogout={handleLogout} />} />
               <Route
