@@ -1,0 +1,76 @@
+{
+  "hero": {
+    "tag": "投递台",
+    "title": "简历投递台",
+    "description": "记录每一次简历投递，追踪求职进度，让面试机会尽在掌握。"
+  },
+  "actions": {
+    "create": "新增投递",
+    "view": "查看",
+    "edit": "编辑",
+    "delete": "删除",
+    "backToHome": "返回工作台"
+  },
+  "filter": {
+    "searchPlaceholder": "搜索公司或职位",
+    "statusPlaceholder": "状态筛选"
+  },
+  "table": {
+    "company": "公司",
+    "position": "职位",
+    "status": "状态",
+    "channel": "渠道",
+    "resume": "关联简历",
+    "appliedAt": "投递时间",
+    "actions": "操作",
+    "loading": "加载中…",
+    "empty": "暂无投递记录"
+  },
+  "status": {
+    "applied": "已投递",
+    "interviewing": "面试中",
+    "offered": "已通过",
+    "rejected": "已拒绝",
+    "withdrawn": "已放弃"
+  },
+  "modal": {
+    "createTitle": "新增投递记录",
+    "editTitle": "编辑投递记录",
+    "viewTitle": "投递详情",
+    "ok": "保存",
+    "cancel": "取消",
+    "close": "关闭"
+  },
+  "form": {
+    "company": "目标公司",
+    "companyPlaceholder": "如：字节跳动",
+    "companyRequired": "请填写目标公司",
+    "position": "投递职位",
+    "positionPlaceholder": "如：前端工程师",
+    "positionRequired": "请填写投递职位",
+    "status": "投递状态",
+    "statusRequired": "请选择投递状态",
+    "channel": "投递渠道",
+    "channelPlaceholder": "选择或输入渠道（如：Boss直聘、内推等）",
+    "resume": "关联简历",
+    "resumePlaceholder": "选择关联的简历（可选）",
+    "appliedAt": "投递时间",
+    "appliedAtPlaceholder": "默认为当前时间",
+    "notes": "备注",
+    "notesPlaceholder": "记录面试反馈、HR 信息等"
+  },
+  "confirm": {
+    "deleteTitle": "确认删除",
+    "deleteDescription": "删除后该投递记录将不可恢复，是否继续？",
+    "ok": "确定",
+    "cancel": "取消"
+  },
+  "feedback": {
+    "loadFailed": "加载投递记录失败",
+    "createSuccess": "投递记录已创建",
+    "updateSuccess": "投递记录已更新",
+    "deleteSuccess": "投递记录已删除",
+    "saveFailed": "保存失败",
+    "deleteFailed": "删除失败"
+  }
+}

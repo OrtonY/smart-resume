@@ -7,6 +7,7 @@
   "actions": {
     "templateGallery": "Templates",
     "interviewCenter": "Interview Center",
+    "applicationCenter": "Tracker",
     "recycleBin": "Recycle Bin",
     "lockWorkspace": "Lock workspace",
     "backToList": "Back to list",

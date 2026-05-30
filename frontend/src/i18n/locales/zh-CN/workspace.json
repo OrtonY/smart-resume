@@ -7,6 +7,7 @@
   "actions": {
     "templateGallery": "模板目录",
     "interviewCenter": "面试中心",
+    "applicationCenter": "投递台",
     "recycleBin": "回收桶",
     "lockWorkspace": "锁定工作区",
     "backToList": "返回列表",
