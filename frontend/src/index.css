@@ -4428,3 +4428,50 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     font-size: 24px;
   }
 }
+
+/* Application card list (mobile) */
+.application-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.application-card-item {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.application-card-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.application-card-item__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.application-card-item__title .ant-typography {
+  max-width: 100%;
+}
+
+.application-card-item__meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.application-card-item__actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  padding-top: 8px;
+}

@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
+  SendOutlined,
 } from '@ant-design/icons'
 import {
   App,
@@ -661,6 +662,11 @@ function ResumeListView({
                         {t('actions.interviewCenter')}
                       </Button>
                     </Link>
+                    <Link to="/app/applications" onClick={() => setMobileMenuOpen(false)}>
+                      <Button icon={<SendOutlined />} block>
+                        {t('actions.applicationCenter')}
+                      </Button>
+                    </Link>
                     <AiConfigurationButton />
                     <Link to="/app/recycle-bin" onClick={() => setMobileMenuOpen(false)}>
                       <Button icon={<InboxOutlined />} block>
@@ -681,6 +687,9 @@ function ResumeListView({
                 </Link>
                 <Link to="/app/interviews">
                   <Button icon={<MessageOutlined />}>{t('actions.interviewCenter')}</Button>
+                </Link>
+                <Link to="/app/applications">
+                  <Button icon={<SendOutlined />}>{t('actions.applicationCenter')}</Button>
                 </Link>
                 <AiConfigurationButton />
                 <Link to="/app/recycle-bin">
