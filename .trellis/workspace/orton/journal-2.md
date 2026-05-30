@@ -105,3 +105,37 @@ Added per-conversation style selector with savage/sarcastic personas, backend en
 ### Next Steps
 
 - None - task complete
+
+
+## Session 63: 简历投递台 CRUD with mobile and view support
+
+**Date**: 2026-05-30
+**Task**: 简历投递台 CRUD with mobile and view support
+**Branch**: `feat/job-applications`
+
+### Summary
+
+Implemented job application tracker: backend CRUD APIs with physical delete, frontend page with desktop table + mobile card list, create/edit/view modals, workspace navigation, i18n. Mobile modal height capped to prevent page stretch.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d991bee` | (see git log) |
+| `8814194` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
