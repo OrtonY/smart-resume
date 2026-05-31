@@ -6,6 +6,8 @@ import type {
   AiChatMessage,
   AiChatEvent,
   AiChatRequest,
+  AiBulletRewriteRequest,
+  AiBulletRewriteResponse,
   AiResumeScoreRequest,
   AiResumeScoreResponse,
   AiConfiguration,
@@ -38,6 +40,13 @@ export async function saveAiConfiguration(payload: AiConfigurationRequest) {
 
 export async function scoreAiResume(payload: AiResumeScoreRequest) {
   return requestJson<AiResumeScoreResponse>('/api/ai/resume-score', {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export async function rewriteAiResumeBullet(payload: AiBulletRewriteRequest) {
+  return requestJson<AiBulletRewriteResponse>('/api/ai/resume-bullet-rewrite', {
     method: 'POST',
     body: payload,
   })
