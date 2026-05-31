@@ -139,3 +139,36 @@ Implemented job application tracker: backend CRUD APIs with physical delete, fro
 ### Next Steps
 
 - None - task complete
+
+
+## Session 64: Resume DOCX export
+
+**Date**: 2026-05-31
+**Task**: Resume DOCX export
+**Branch**: `feature/docx-export`
+
+### Summary
+
+Implemented DOCX export layout routing for the three resume templates, fixed date and personal info rendering in DOCX output, and added frontend wording for the Word export notice.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6dbc695` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
