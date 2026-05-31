@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { Button, Input, Segmented, Space, Tooltip } from 'antd'
 import {
   BoldOutlined,
@@ -25,6 +25,8 @@ interface MarkdownComposerProps {
   autoSize?: { minRows?: number; maxRows?: number }
   hidePreview?: boolean
   submitOnEnter?: boolean
+  toolbarExtra?: ReactNode
+  onSelectionChange?: (start: number, end: number) => void
 }
 
 type Mode = 'edit' | 'preview'
@@ -39,6 +41,8 @@ export function MarkdownComposer({
   autoSize,
   hidePreview,
   submitOnEnter = false,
+  toolbarExtra,
+  onSelectionChange,
 }: MarkdownComposerProps) {
   const { t } = useTranslation('template')
   const [mode, setMode] = useState<Mode>('edit')
@@ -96,6 +100,13 @@ export function MarkdownComposer({
       const cursor = start + 5
       el.setSelectionRange(cursor, cursor)
     })
+  }
+
+  function reportSelection() {
+    const el = textAreaRef.current?.resizableTextArea?.textArea
+    if (el) {
+      onSelectionChange?.(el.selectionStart, el.selectionEnd)
+    }
   }
 
   return (
@@ -167,17 +178,20 @@ export function MarkdownComposer({
             />
           </Tooltip>
         </Space>
-        {!hidePreview && (
-          <Segmented
-            size="small"
-            value={mode}
-            onChange={(v) => setMode(v as Mode)}
-            options={[
-              { label: t('markdown.mode.edit'), value: 'edit' },
-              { label: t('markdown.mode.preview'), value: 'preview' },
-            ]}
-          />
-        )}
+        <Space size={4} wrap>
+          {toolbarExtra}
+          {!hidePreview && (
+            <Segmented
+              size="small"
+              value={mode}
+              onChange={(v) => setMode(v as Mode)}
+              options={[
+                { label: t('markdown.mode.edit'), value: 'edit' },
+                { label: t('markdown.mode.preview'), value: 'preview' },
+              ]}
+            />
+          )}
+        </Space>
       </div>
       {mode === 'edit' ? (
         <TextArea
@@ -189,6 +203,10 @@ export function MarkdownComposer({
           disabled={disabled}
           rows={rows}
           autoSize={autoSize}
+          onClick={reportSelection}
+          onKeyUp={reportSelection}
+          onSelect={reportSelection}
+          onFocus={reportSelection}
           onPressEnter={(e) => {
             if (submitOnEnter && !e.shiftKey && onSubmit) {
               e.preventDefault()

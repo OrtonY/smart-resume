@@ -2,6 +2,8 @@ package com.smartresume.ai.controller;
 
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatConversation;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteRequest;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
@@ -84,6 +86,11 @@ public class AiController {
     @PostMapping("/resume-score")
     public ApiResponse<AiResumeScoreResponse> scoreResume(@Valid @RequestBody AiResumeScoreRequest request) {
         return ApiResponse.success(aiResumeScoringService.scoreResume(request), "Resume scored");
+    }
+
+    @PostMapping("/resume-bullet-rewrite")
+    public ApiResponse<AiBulletRewriteResponse> rewriteResumeBullet(@Valid @RequestBody AiBulletRewriteRequest request) {
+        return ApiResponse.success(aiResumeScoringService.rewriteBullet(request));
     }
 
     @GetMapping("/resumes/{resumeId}/score")

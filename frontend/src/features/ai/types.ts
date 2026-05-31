@@ -82,6 +82,18 @@ export interface AiResumeScoreRequest {
   resumeId: string
 }
 
+export interface AiBulletRewriteRequest {
+  resumeId: string
+  text: string
+  section: 'personalSummary' | 'education' | 'workExperience' | 'projectExperience'
+  index?: number
+}
+
+export interface AiBulletRewriteResponse {
+  rewrittenText: string
+  rationale: string
+}
+
 export interface AiResumeScoreSuggestionGroup {
   title: string
   suggestions: string[]

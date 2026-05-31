@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 64
+- **Total Sessions**: 65
 - **Last Active**: 2026-05-31
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~174 | Active |
+| `journal-2.md` | ~207 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 65 | 2026-05-31 | Resume text rewrite finish | `242b709` | `codex/bullet-ai-rewrite` |
 | 64 | 2026-05-31 | Resume DOCX export | `6dbc695` | `feature/docx-export` |
 | 63 | 2026-05-30 | 简历投递台 CRUD with mobile and view support | `d991bee`, `8814194` | `feat/job-applications` |
 | 62 | 2026-05-29 | Implement AI chat style modes (savage & sarcastic) | `ca38831` | `feat/resume-ai-chat-style-modes` |
