@@ -67,6 +67,22 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiBulletRewriteRequest(
+        @NotBlank(message = "{validation.ai.resumeIdRequired}")
+        String resumeId,
+        @NotBlank(message = "{validation.ai.bulletTextRequired}")
+        String text,
+        String section,
+        Integer index
+    ) {
+    }
+
+    public record AiBulletRewriteResponse(
+        String rewrittenText,
+        String rationale
+    ) {
+    }
+
     public record AiResumeContext(
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String id,

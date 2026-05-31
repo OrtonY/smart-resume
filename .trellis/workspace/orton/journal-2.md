@@ -172,3 +172,36 @@ Implemented DOCX export layout routing for the three resume templates, fixed dat
 ### Next Steps
 
 - None - task complete
+
+
+## Session 65: Resume text rewrite finish
+
+**Date**: 2026-05-31
+**Task**: Resume text rewrite finish
+**Branch**: `codex/bullet-ai-rewrite`
+
+### Summary
+
+Added AI rewrite for resume text spans across personal summary, education highlights, work experience, and project descriptions; preview-first apply flow with selection-or-full-text behavior.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `242b709` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

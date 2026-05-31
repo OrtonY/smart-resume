@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartresume.ai.domain.AiResumeScoreEntity;
 import com.smartresume.ai.dto.AiDtos.AiResumeContent;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteRequest;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreSuggestionGroup;
@@ -192,6 +194,33 @@ class AiResumeScoringServiceTest {
         assertThat(userMessage).doesNotContain("hiddenSections");
         assertThat(userMessage).doesNotContain("avatar-url");
         assertThat(userMessage).contains("Visible summary");
+    }
+
+    @Test
+    void rewritesSingleBulletWithStructuredResponse() {
+        AiBulletRewriteResponse mockResponse = new AiBulletRewriteResponse(
+            "- Led API refactors that improved throughput by 40%",
+            "Keeps the bullet concise while adding impact."
+        );
+        when(aiChatService.callStructured(any(AiInvocationRequest.class), eq(AiBulletRewriteResponse.class)))
+            .thenReturn(mockResponse);
+
+        AiBulletRewriteResponse response = service.rewriteBullet(new AiBulletRewriteRequest(
+            "resume-1",
+            "- Built services",
+            "workExperience",
+            0
+        ));
+
+        assertThat(response.rewrittenText()).startsWith("- ");
+        assertThat(response.rationale()).isNotBlank();
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService).callStructured(captor.capture(), eq(AiBulletRewriteResponse.class));
+        AiInvocationRequest request = captor.getValue();
+        assertThat(request.systemPrompt()).contains("Rewrite exactly the single resume text span");
+        assertThat(request.userMessage()).contains("Text:");
+        assertThat(request.userMessage()).contains("Resume content JSON:");
     }
 
     private String sampleResumeContentJson() {

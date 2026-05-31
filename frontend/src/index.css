@@ -713,6 +713,29 @@ a {
   grid-column: 1 / -1;
 }
 
+.resume-bullet-rewrite-preview {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-bullet-rewrite-preview__section {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resume-bullet-rewrite-preview__section .markdown-message {
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.resume-bullet-rewrite-preview__reason {
+  display: grid;
+  gap: 4px;
+}
+
 .resume-editor-long-textarea.ant-input {
   white-space: pre;
   overflow-x: auto;

@@ -120,7 +120,20 @@
     "tabStructure": "Structure",
     "tabContent": "Content",
     "moreActions": "More",
-    "moreActionsAria": "More actions"
+    "moreActionsAria": "More actions",
+    "bulletRewrite": {
+      "buttonLabel": "AI rewrite",
+      "buttonTitle": "Rewrite the selection, or the full field when nothing is selected",
+      "previewTitle": "Confirm AI rewrite",
+      "originalLabel": "Original text",
+      "previewLabel": "Rewrite preview",
+      "rationaleLabel": "Reason",
+      "apply": "Apply rewrite",
+      "cancel": "Cancel",
+      "selectLine": "Enter text to rewrite first.",
+      "changed": "This text changed after the rewrite was generated. Please run AI rewrite again.",
+      "failed": "AI rewrite failed. Please try again."
+    }
   },
   "versionTimeline": {
     "title": "Version history",
