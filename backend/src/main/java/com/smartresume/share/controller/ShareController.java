@@ -2,6 +2,7 @@ package com.smartresume.share.controller;
 
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.export.controller.ExportController;
+import com.smartresume.export.service.DocxExportService;
 import com.smartresume.export.service.PdfExportService;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
 import com.smartresume.share.dto.ShareDtos.CreateShareRequest;
@@ -31,10 +32,12 @@ public class ShareController {
 
     private final ShareService shareService;
     private final PdfExportService pdfExportService;
+    private final DocxExportService docxExportService;
 
-    public ShareController(ShareService shareService, PdfExportService pdfExportService) {
+    public ShareController(ShareService shareService, PdfExportService pdfExportService, DocxExportService docxExportService) {
         this.shareService = shareService;
         this.pdfExportService = pdfExportService;
+        this.docxExportService = docxExportService;
     }
 
     @PostMapping("/resumes/{resumeId}/shares")
@@ -93,6 +96,16 @@ public class ShareController {
         ResumeDetailResponse resume = shareService.getPublicShareForExport(shareCode, shareToken);
         byte[] pdfBytes = pdfExportService.exportResumePdf(resume, languageTag);
         return ExportController.buildPdfResponse(pdfBytes, resume.title());
+    }
+
+    @GetMapping("/public/shares/{shareCode}/export/docx")
+    public ResponseEntity<byte[]> exportShareDocx(
+            @PathVariable String shareCode,
+            @RequestHeader(value = SHARE_TOKEN_HEADER, required = false) String shareToken,
+            @RequestHeader(value = "X-Resume-Language", required = false) String languageTag) {
+        ResumeDetailResponse resume = shareService.getPublicShareForExport(shareCode, shareToken);
+        byte[] docxBytes = docxExportService.exportResumeDocx(resume, languageTag);
+        return ExportController.buildDocxResponse(docxBytes, resume.title());
     }
 
     private String extractIpAddress(HttpServletRequest request) {

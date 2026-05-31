@@ -60,6 +60,7 @@ export type ResumeEditorSaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
 interface ResumeEditorViewProps {
   draft: ResumeDetail
   deferredDraft: ResumeDetail | null
+  exportingDocx: boolean
   expandedModules: ResumeModuleId[]
   exportingPdf: boolean
   hiddenSections: ResumeSectionKey[]
@@ -67,6 +68,7 @@ interface ResumeEditorViewProps {
   onApplyPatch: (patch: AiResumeSuggestion) => void
   onCreateShare: (title: string, mode: ShareMode, password?: string) => Promise<void>
   onExpandedModulesChange: (keys: string | string[]) => void
+  onExportDocx: () => Promise<void>
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
@@ -86,6 +88,7 @@ const AVATAR_INPUT_ID = 'resume-editor-avatar-input'
 export function ResumeEditorView({
   draft,
   deferredDraft,
+  exportingDocx,
   expandedModules,
   exportingPdf,
   hiddenSections,
@@ -93,6 +96,7 @@ export function ResumeEditorView({
   onApplyPatch,
   onCreateShare,
   onExpandedModulesChange,
+  onExportDocx,
   onExportPdf,
   onFocusModule,
   onHideSection,
@@ -236,7 +240,9 @@ export function ResumeEditorView({
               {t('editor.share')}
             </Button>
             <DropdownExport
+              exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
+              onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
             />
           </Space>
@@ -245,8 +251,10 @@ export function ResumeEditorView({
             <ResumeScoreButton draft={draft} />
             <MoreActionsMenu
               draftId={draft.id}
+              exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
               interviewMenuItems={interviewMenuItems}
+              onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
               onOpenShare={openShareModal}
               onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
@@ -523,31 +531,61 @@ function InterviewMenuButton({ interviewMenuItems }: { interviewMenuItems: Array
 }
 
 function DropdownExport({
+  exportingDocx,
   exportingPdf,
+  onExportDocx,
   onExportPdf,
 }: {
+  exportingDocx: boolean
   exportingPdf: boolean
+  onExportDocx: () => void
   onExportPdf: () => void
 }) {
   const { t } = useTranslation('workspace')
   return (
-    <Button icon={<DownloadOutlined />} loading={exportingPdf} onClick={onExportPdf}>
-      {t('editor.exportPdf')}
-    </Button>
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: [
+          {
+            key: 'pdf',
+            label: t('editor.exportPdf'),
+            icon: <DownloadOutlined />,
+            disabled: exportingPdf,
+            onClick: onExportPdf,
+          },
+          {
+            key: 'docx',
+            label: t('editor.exportWord'),
+            icon: <DownloadOutlined />,
+            disabled: exportingDocx,
+            onClick: onExportDocx,
+          },
+        ],
+      }}
+    >
+      <Button icon={<DownloadOutlined />} loading={exportingPdf || exportingDocx}>
+        {t('editor.export')}
+      </Button>
+    </Dropdown>
   )
 }
 
 function MoreActionsMenu({
   draftId,
+  exportingDocx,
   exportingPdf,
   interviewMenuItems,
+  onExportDocx,
   onExportPdf,
   onOpenShare,
   onOpenVersionTimeline,
 }: {
   draftId: string
+  exportingDocx: boolean
   exportingPdf: boolean
   interviewMenuItems: Array<{ key: string; label: ReactNode }>
+  onExportDocx: () => void
   onExportPdf: () => void
   onOpenShare: () => void
   onOpenVersionTimeline: () => void
@@ -581,11 +619,18 @@ function MoreActionsMenu({
             onClick: onOpenShare,
           },
           {
-            key: 'export',
+            key: 'exportPdf',
             label: t('editor.exportPdf'),
             icon: <DownloadOutlined />,
             disabled: exportingPdf,
             onClick: onExportPdf,
+          },
+          {
+            key: 'exportWord',
+            label: t('editor.exportWord'),
+            icon: <DownloadOutlined />,
+            disabled: exportingDocx,
+            onClick: onExportDocx,
           },
         ],
       }}
