@@ -1,0 +1,9 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Backend export classes/controllers must follow feature package placement and naming"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend constants, file download headers, and tests must follow quality contracts"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Implementation must reuse existing PDF/export/share/download patterns where possible"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Frontend export UI must respect component and off-screen export source conventions"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend export UI must use i18n and mobile-safe action variants"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Frontend export helpers should stay typed and avoid loose API shapes"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "DOCX export spans DTO, service, HTTP response, and frontend blob download boundaries"}
+{"file": ".trellis/spec/guides/git-branching-workflow.md", "reason": "Branch and PR target must follow develop-based workflow"}

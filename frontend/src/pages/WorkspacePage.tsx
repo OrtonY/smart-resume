@@ -53,6 +53,7 @@ import {
   updateResume,
 } from '../features/resume/api/resumeApi'
 import { RESUMES_PER_PAGE } from '../features/resume/constants'
+import { exportResumeServerDocx } from '../features/resume/export/docxExport'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -118,6 +119,7 @@ export function WorkspacePage({
   const [loadingResumeList, setLoadingResumeList] = useState(true)
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [saveState, setSaveState] = useState<ResumeEditorSaveState>('idle')
+  const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
@@ -385,6 +387,23 @@ export function WorkspacePage({
     }
   }
 
+  async function handleExportDocx() {
+    if (!resumeId || !draft || exportingDocx) {
+      return
+    }
+
+    setExportingDocx(true)
+    try {
+      await exportResumeServerDocx(resumeId, draft.title)
+      void message.success(t('feedback.exportDocxStart'))
+      void message.info(t('feedback.exportDocxStyleNotice'))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('feedback.exportDocxFailed'))
+    } finally {
+      setExportingDocx(false)
+    }
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) {
@@ -501,6 +520,7 @@ export function WorkspacePage({
       <ResumeEditorView
         draft={draft}
         deferredDraft={deferredDraft}
+        exportingDocx={exportingDocx}
         expandedModules={expandedModules}
         exportingPdf={exportingPdf}
         hiddenSections={hiddenSections}
@@ -509,6 +529,7 @@ export function WorkspacePage({
         onCreateShare={handleCreateShare}
         onDragEnd={handleDragEnd}
         onExpandedModulesChange={handleExpandedModulesChange}
+        onExportDocx={handleExportDocx}
         onExportPdf={handleExportPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}

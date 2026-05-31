@@ -35,6 +35,7 @@
 		<playwright.version>1.60.0</playwright.version>
 		<pdfbox.version>3.0.7</pdfbox.version>
 		<poi.version>5.5.1</poi.version>
+		<commonmark.version>0.28.0</commonmark.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -113,6 +114,11 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>${poi.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.commonmark</groupId>
+			<artifactId>commonmark</artifactId>
+			<version>${commonmark.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
