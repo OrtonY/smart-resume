@@ -77,7 +77,10 @@
     "loadShareLinksFailed": "无法加载分享链接。",
     "refreshShareLinksFailed": "无法刷新分享链接。",
     "versionDeleteSuccess": "快照已删除，关联的分享链接已失效。",
-    "versionDeleteFailed": "删除快照失败。"
+    "versionDeleteFailed": "删除快照失败。",
+    "translationOverwriteSuccess": "简历已翻译并更新。",
+    "translationCopySuccess": "已创建翻译版简历。",
+    "translationFailed": "简历翻译失败，请重试。"
   },
   "saveState": {
     "saving": "保存中...",
@@ -104,6 +107,21 @@
     "exportJson": "导出 JSON",
     "exportServerPdf": "高质量导出",
     "exportQuickPdf": "快速导出（截图）",
+    "translation": {
+      "button": "翻译",
+      "title": "翻译简历",
+      "targetLabel": "目标语言",
+      "english": "英文",
+      "chinese": "中文",
+      "modeLabel": "保存方式",
+      "modeCopy": "创建新简历",
+      "modeOverwrite": "覆盖当前简历",
+      "modeCopyHint": "创建一份独立的翻译版简历，完成后自动打开。",
+      "modeOverwriteHint": "翻译完成后替换当前简历内容。",
+      "okText": "开始翻译",
+      "cancelText": "取消",
+      "copyTitle": "{{title}} - {{language}}版"
+    },
     "moduleCount": "{{count}} 个模块",
     "structureTitle": "简历结构",
     "structureDescription": "直接在这里调整顺序和显隐，右侧预览会同步更新。",
