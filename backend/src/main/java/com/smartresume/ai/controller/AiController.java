@@ -7,6 +7,8 @@ import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
+import com.smartresume.ai.dto.AiDtos.AiResumeTranslationRequest;
+import com.smartresume.ai.dto.AiDtos.AiResumeTranslationResponse;
 import com.smartresume.ai.dto.AiDtos.AiSuggestionStatusUpdateRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationRequest;
 import com.smartresume.ai.dto.AiDtos.AiConfigurationResponse;
@@ -23,6 +25,7 @@ import com.smartresume.ai.service.AiAgentService;
 import com.smartresume.ai.service.AiChatHistoryService;
 import com.smartresume.ai.service.AiConfigurationService;
 import com.smartresume.ai.service.AiResumeScoringService;
+import com.smartresume.ai.service.AiResumeTranslationService;
 import com.smartresume.common.api.ApiResponse;
 import com.smartresume.common.exception.AppException;
 import jakarta.validation.Valid;
@@ -47,6 +50,7 @@ public class AiController {
     private final AiAgentService aiAgentService;
     private final AiChatHistoryService aiChatHistoryService;
     private final AiResumeScoringService aiResumeScoringService;
+    private final AiResumeTranslationService aiResumeTranslationService;
     private final ChatModelProviderRegistry chatModelProviderRegistry;
 
     public AiController(
@@ -54,12 +58,14 @@ public class AiController {
         AiAgentService aiAgentService,
         AiChatHistoryService aiChatHistoryService,
         AiResumeScoringService aiResumeScoringService,
+        AiResumeTranslationService aiResumeTranslationService,
         ChatModelProviderRegistry chatModelProviderRegistry
     ) {
         this.aiConfigurationService = aiConfigurationService;
         this.aiAgentService = aiAgentService;
         this.aiChatHistoryService = aiChatHistoryService;
         this.aiResumeScoringService = aiResumeScoringService;
+        this.aiResumeTranslationService = aiResumeTranslationService;
         this.chatModelProviderRegistry = chatModelProviderRegistry;
     }
 
@@ -91,6 +97,14 @@ public class AiController {
     @PostMapping("/resume-bullet-rewrite")
     public ApiResponse<AiBulletRewriteResponse> rewriteResumeBullet(@Valid @RequestBody AiBulletRewriteRequest request) {
         return ApiResponse.success(aiResumeScoringService.rewriteBullet(request));
+    }
+
+    @PostMapping("/resumes/{resumeId}/translate")
+    public ApiResponse<AiResumeTranslationResponse> translateResume(
+        @PathVariable String resumeId,
+        @Valid @RequestBody AiResumeTranslationRequest request
+    ) {
+        return ApiResponse.success(aiResumeTranslationService.translateResume(resumeId, request), "Resume translated");
     }
 
     @GetMapping("/resumes/{resumeId}/score")

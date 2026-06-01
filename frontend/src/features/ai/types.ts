@@ -1,3 +1,5 @@
+import type { ResumeContent } from '../resume/types'
+
 export type AiVendor = 'OpenAI' | 'Ollama' | 'DeepSeek' | 'Anthropic' | 'Azure OpenAI' | 'Other'
 
 export interface AiConfiguration {
@@ -92,6 +94,19 @@ export interface AiBulletRewriteRequest {
 export interface AiBulletRewriteResponse {
   rewrittenText: string
   rationale: string
+}
+
+export type AiResumeTranslationTarget = 'ENGLISH' | 'CHINESE'
+
+export type AiResumeTranslationMode = 'overwrite' | 'copy'
+
+export interface AiResumeTranslationRequest {
+  targetLanguage: AiResumeTranslationTarget
+}
+
+export interface AiResumeTranslationResponse {
+  targetLanguage: AiResumeTranslationTarget
+  content: ResumeContent
 }
 
 export interface AiResumeScoreSuggestionGroup {
