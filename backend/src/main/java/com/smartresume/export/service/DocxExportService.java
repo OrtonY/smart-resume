@@ -88,8 +88,7 @@ public class DocxExportService {
         ResumeContentPayload content,
         ExportLanguage language
     ) {
-        writer.writeName(document, resolveName(resume));
-        writeHeaderBlock(document, content, HeaderVariant.MINIMAL);
+        writeMasthead(document, resume, content, HeaderVariant.MINIMAL);
         writeSections(document, visibleSectionOrder(resume == null ? null : resume.layout()), content, language);
     }
 
@@ -99,8 +98,7 @@ public class DocxExportService {
         ResumeContentPayload content,
         ExportLanguage language
     ) {
-        writer.writeClassicName(document, resolveName(resume));
-        writeHeaderBlock(document, content, HeaderVariant.CLASSIC);
+        writeMasthead(document, resume, content, HeaderVariant.CLASSIC);
         writeSections(document, visibleSectionOrder(resume == null ? null : resume.layout()), content, language);
     }
 
@@ -114,7 +112,7 @@ public class DocxExportService {
         XWPFTableCell sidebar = table.getRow(0).getCell(0);
         XWPFTableCell main = table.getRow(0).getCell(1);
         PersonalInfo info = content == null ? null : content.personalInfo();
-        writer.writeSplitHeaderCell(sidebar, resolveName(resume), info == null ? null : info.headline());
+        writer.writeSplitHeaderCell(sidebar, resolveName(resume), info == null ? null : info.headline(), info == null ? null : info.avatar());
         writeContactStack(sidebar, content);
         List<String> ordered = visibleSectionOrder(resume == null ? null : resume.layout());
         writeSections(sidebar, filterSections(ordered, SPLIT_SIDEBAR_SECTIONS), content, language);
@@ -127,8 +125,7 @@ public class DocxExportService {
         ResumeContentPayload content,
         ExportLanguage language
     ) {
-        writer.writeEditorialName(document, resolveName(resume));
-        writeHeaderBlock(document, content, HeaderVariant.EDITORIAL);
+        writeMasthead(document, resume, content, HeaderVariant.EDITORIAL);
         if (content != null) {
             writer.writeEditorialSummaryPanel(document, language.summaryTitle(), content.personalSummary(), markdownRenderer);
         }
@@ -141,21 +138,20 @@ public class DocxExportService {
         writeSections(notes, filterSections(ordered, EDITORIAL_NOTES_SECTIONS), content, language);
     }
 
-    private void writeHeaderBlock(XWPFDocument document, ResumeContentPayload content, HeaderVariant variant) {
+    private void writeMasthead(
+        XWPFDocument document,
+        ResumeDetailResponse resume,
+        ResumeContentPayload content,
+        HeaderVariant variant
+    ) {
         PersonalInfo info = content == null ? null : content.personalInfo();
-        if (info == null) {
-            return;
-        }
+        String headline = info == null ? null : info.headline();
+        List<DocxResumeWriter.ContactItem> items = info == null ? List.of() : contactItems(info);
+        String avatar = info == null ? null : info.avatar();
         switch (variant) {
-            case CLASSIC -> writer.writeClassicSubtitle(document, info.headline());
-            case EDITORIAL -> writer.writeEditorialSubtitle(document, info.headline());
-            case MINIMAL -> writer.writeSubtitle(document, info.headline());
-        }
-        List<DocxResumeWriter.ContactItem> items = contactItems(info);
-        switch (variant) {
-            case CLASSIC -> writer.writeClassicContactGrid(document, items);
-            case EDITORIAL -> writer.writeEditorialContactGrid(document, items);
-            case MINIMAL -> writer.writeContactGrid(document, items);
+            case CLASSIC -> writer.writeClassicMasthead(document, resolveName(resume), headline, items, avatar);
+            case EDITORIAL -> writer.writeEditorialMasthead(document, resolveName(resume), headline, items, avatar);
+            case MINIMAL -> writer.writeMasthead(document, resolveName(resume), headline, items, avatar);
         }
     }
 
@@ -173,7 +169,8 @@ public class DocxExportService {
             new DocxResumeWriter.ContactItem("邮箱", valueOrEmpty(info.email())),
             new DocxResumeWriter.ContactItem("城市", valueOrEmpty(info.city())),
             new DocxResumeWriter.ContactItem("链接", valueOrEmpty(info.website())),
-            new DocxResumeWriter.ContactItem("期望薪资", valueOrEmpty(info.expectedSalary()))
+            new DocxResumeWriter.ContactItem("期望薪资", valueOrEmpty(info.expectedSalary())),
+            new DocxResumeWriter.ContactItem("年龄", formatAge(info.age()))
         );
     }
 
@@ -256,7 +253,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(document, language.educationTitle());
         for (EducationItem item : items) {
-            writer.writeItemHeader(document, item.school(), joinParts(item.degree(), item.major()), dateRange(item.startDate(), item.endDate()));
+            writer.writeInlineItemHeader(document, item.school(), joinParts(item.degree(), item.major()), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(document, item.description());
         }
     }
@@ -268,7 +265,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(cell, language.educationTitle());
         for (EducationItem item : items) {
-            writer.writeItemHeader(cell, item.school(), joinParts(item.degree(), item.major()), dateRange(item.startDate(), item.endDate()));
+            writer.writeInlineItemHeader(cell, item.school(), joinParts(item.degree(), item.major()), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(cell, item.description());
         }
     }
@@ -280,7 +277,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(document, language.workExperienceTitle());
         for (WorkExperienceItem item : items) {
-            writer.writeItemHeader(document, item.company(), item.role(), dateRange(item.startDate(), item.endDate()));
+            writer.writeStackedItemHeader(document, item.company(), item.role(), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(document, item.description());
         }
     }
@@ -292,7 +289,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(cell, language.workExperienceTitle());
         for (WorkExperienceItem item : items) {
-            writer.writeItemHeader(cell, item.company(), item.role(), dateRange(item.startDate(), item.endDate()));
+            writer.writeStackedItemHeader(cell, item.company(), item.role(), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(cell, item.description());
         }
     }
@@ -304,7 +301,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(document, language.projectExperienceTitle());
         for (ProjectExperienceItem item : items) {
-            writer.writeItemHeader(document, item.name(), item.role(), dateRange(item.startDate(), item.endDate()));
+            writer.writeStackedItemHeader(document, item.name(), item.role(), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(document, item.description());
         }
     }
@@ -316,7 +313,7 @@ public class DocxExportService {
         }
         writer.writeSectionTitle(cell, language.projectExperienceTitle());
         for (ProjectExperienceItem item : items) {
-            writer.writeItemHeader(cell, item.name(), item.role(), dateRange(item.startDate(), item.endDate()));
+            writer.writeStackedItemHeader(cell, item.name(), item.role(), dateRange(item.startDate(), item.endDate()));
             markdownRenderer.render(cell, item.description());
         }
     }
@@ -494,6 +491,22 @@ public class DocxExportService {
             .filter(part -> !isBlank(part))
             .map(String::trim)
             .toList());
+    }
+
+    private String formatAge(String age) {
+        if (isBlank(age)) {
+            return "";
+        }
+        String trimmed = age.trim();
+        try {
+            int numericAge = Integer.parseInt(trimmed);
+            if (numericAge < 1 || numericAge > 150) {
+                return "";
+            }
+            return numericAge + "岁";
+        } catch (NumberFormatException exception) {
+            return trimmed;
+        }
     }
 
     private <T> List<T> safeList(List<T> items) {

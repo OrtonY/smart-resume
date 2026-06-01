@@ -19,13 +19,16 @@ import org.junit.jupiter.api.Test;
 
 class DocxExportServiceTest {
 
+    private static final String ONE_PIXEL_PNG_DATA_URL =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
+
     private final DocxExportService service = new DocxExportService();
 
     @Test
     void exportsEditableDocxWithNameContactAndMarkdown() throws IOException {
         byte[] bytes = service.exportResumeDocx(resume(
             content(
-                new PersonalInfo("张三", "Java 工程师", "13800000000", "test@example.com", "上海", "https://example.com", "", "", null),
+                new PersonalInfo("张三", "Java 工程师", "13800000000", "test@example.com", "上海", "https://example.com", "", "28", ONE_PIXEL_PNG_DATA_URL),
                 "擅长 **Spring Boot** 和 _Word 导出_。",
                 List.of(new EducationItem("复旦大学", "本科", "计算机", "2018", "2022", "- GPA 3.8")),
                 List.of(new WorkExperienceItem("Acme", "后端工程师", "2022", "至今", "- 建设导出服务\n- 优化性能")),
@@ -42,9 +45,11 @@ class DocxExportServiceTest {
                     "电话",
                     "邮箱",
                     "城市",
+                    "年龄",
                     "13800000000",
                     "test@example.com",
                     "上海",
+                    "28岁",
                     "个人简介",
                     "工作经历",
                     "• 建设导出服务",
@@ -59,6 +64,7 @@ class DocxExportServiceTest {
                     assertThat(run.text()).isEqualTo("Spring Boot");
                     assertThat(run.isBold()).isTrue();
                 });
+            assertThat(document.getAllPictures()).hasSize(1);
         }
     }
 
@@ -103,8 +109,7 @@ class DocxExportServiceTest {
         ), "en-US");
 
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
-            assertThat(document.getParagraphs())
-                .extracting(paragraph -> paragraph.getText())
+            assertThat(documentText(document))
                 .contains("Jane", "Summary", "Visible summary")
                 .doesNotContain("Work experience", "Hidden Co", "Skills");
         }
@@ -136,7 +141,7 @@ class DocxExportServiceTest {
             "Resume Title",
             templateKey,
             content(
-                new PersonalInfo("张三", "Java 工程师", "13800000000", "test@example.com", "上海", "https://example.com", "", "", null),
+                new PersonalInfo("张三", "Java 工程师", "13800000000", "test@example.com", "上海", "https://example.com", "", "28", ONE_PIXEL_PNG_DATA_URL),
                 "擅长 **Spring Boot** 和 _Word 导出_。",
                 List.of(new EducationItem("复旦大学", "本科", "计算机", "2018", "2022", "- GPA 3.8")),
                 List.of(new WorkExperienceItem("Acme", "后端工程师", "2022", "至今", "- 建设导出服务")),
