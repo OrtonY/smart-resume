@@ -5,7 +5,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 BACKEND_STATIC_DIR="$BACKEND_DIR/src/main/resources/static"
-BACKEND_JAR="$BACKEND_DIR/target/backend-1.1.1.jar"
+BACKEND_JAR="$BACKEND_DIR/target/backend-1.1.2.jar"
 
 REQUIRED_NODE_MAJOR=20
 REQUIRED_JAVA_MAJOR=21
