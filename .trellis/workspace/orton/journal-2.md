@@ -271,3 +271,36 @@ Released Smart Resume v1.1.2: bumped frontend/backend versions, merged release P
 ### Next Steps
 
 - None - task complete
+
+
+## Session 68: JSON import/export
+
+**Date**: 2026-06-01
+**Task**: JSON import/export
+**Branch**: `codex/json-import-export`
+
+### Summary
+
+Added JSON import/export for resumes, including lightweight JSON export from visible sections, unified template catalog JSON import, and backend parsing that keeps missing modules visible as empty data under the default layout.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `16cd0b8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

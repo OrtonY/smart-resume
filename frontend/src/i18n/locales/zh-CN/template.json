@@ -78,7 +78,7 @@
     "import": {
       "title": "导入简历",
       "description": "使用 {{template}} 模板，从上传文件创建一份新简历。",
-      "supportedFormats": "支持格式：PDF、DOCX、TXT。",
+      "supportedFormats": "支持格式：PDF、DOCX、TXT、JSON。",
       "confirm": "导入",
       "note": "暂不支持扫描版或图片版 PDF。",
       "dropzone": {
@@ -87,7 +87,8 @@
       },
       "validation": {
         "fileRequired": "请先选择要导入的简历文件。",
-        "unsupportedType": "仅支持 PDF、DOCX 和 TXT 文件。"
+        "unsupportedType": "仅支持 PDF、DOCX、TXT 和 JSON 文件。",
+        "invalidJson": "无法解析上传的 JSON 文件。"
       }
     },
     "loading": {

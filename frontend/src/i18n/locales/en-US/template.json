@@ -78,7 +78,7 @@
     "import": {
       "title": "Import Resume",
       "description": "Create a new resume from the uploaded file using {{template}}.",
-      "supportedFormats": "Supported formats: PDF, DOCX, TXT.",
+      "supportedFormats": "Supported formats: PDF, DOCX, TXT, JSON.",
       "confirm": "Import",
       "note": "Scanned or image-only PDFs are not supported yet.",
       "dropzone": {
@@ -87,7 +87,8 @@
       },
       "validation": {
         "fileRequired": "Please choose a resume file first.",
-        "unsupportedType": "Only PDF, DOCX, and TXT files are supported."
+        "unsupportedType": "Only PDF, DOCX, TXT, and JSON files are supported.",
+        "invalidJson": "Unable to parse the uploaded JSON file."
       }
     },
     "loading": {
