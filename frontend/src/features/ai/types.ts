@@ -114,6 +114,30 @@ export interface AiResumeScoreSuggestionGroup {
   suggestions: string[]
 }
 
+export type AiResumeRequirementStatus = 'matched' | 'partial' | 'missing'
+export type AiResumeHeatmapStatus = 'strong' | 'medium' | 'weak' | 'missing'
+
+export interface AiResumeRequirementMatch {
+  text: string
+  category: string
+  importance: 'high' | 'medium' | 'low' | string
+  status: AiResumeRequirementStatus | string
+  score: number
+  matchedSections: string[]
+  evidence: string[]
+  suggestion: string
+}
+
+export interface AiResumeSectionHeatmap {
+  sectionKey: string
+  sectionLabel: string
+  score: number
+  status: AiResumeHeatmapStatus | string
+  matchedCount: number
+  missingCount: number
+  summary: string
+}
+
 export interface AiResumeScoreResponse {
   score: number
   summary: string
@@ -122,6 +146,9 @@ export interface AiResumeScoreResponse {
   jobDescriptionProvided: boolean
   generatedAt: string
   mode: 'ai' | 'mock' | 'live'
+  heatmapSummary?: string | null
+  requirementMatches?: AiResumeRequirementMatch[] | null
+  sectionHeatmap?: AiResumeSectionHeatmap[] | null
 }
 
 export interface PersistedAiResumeScoreResponse {

@@ -2221,7 +2221,20 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-result__summary,
 .resume-score-result__strengths,
 .resume-score-result__groups,
-.resume-score-group {
+.resume-score-group,
+.resume-score-heatmap,
+.resume-score-heatmap__header,
+.resume-score-section-heatmap,
+.resume-score-section-heatmap__grid,
+.resume-score-section-card,
+.resume-score-requirements,
+.resume-score-requirements__list,
+.resume-score-requirement,
+.resume-score-requirement__heading,
+.resume-score-requirement__title,
+.resume-score-requirement__sections,
+.resume-score-requirement__block,
+.resume-score-requirement__suggestion {
   min-width: 0;
   max-width: 100%;
 }
@@ -2264,7 +2277,8 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 .resume-score-result__hero,
 .resume-score-result__strengths,
-.resume-score-group {
+.resume-score-group,
+.resume-score-heatmap {
   padding: 16px 18px;
   border-radius: 20px;
   border: 1px solid rgba(20, 33, 61, 0.08);
@@ -2331,6 +2345,70 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   color: var(--text-secondary);
   width: 100%;
   min-width: 0;
+}
+
+.resume-score-heatmap {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-score-heatmap__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.resume-score-section-heatmap,
+.resume-score-requirements,
+.resume-score-requirements__list {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-score-section-heatmap__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.resume-score-section-card,
+.resume-score-requirement {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.resume-score-section-card__heading,
+.resume-score-requirement__heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.resume-score-requirement__title {
+  display: grid;
+  gap: 6px;
+}
+
+.resume-score-requirement__sections,
+.resume-score-requirement__block,
+.resume-score-requirement__suggestion {
+  display: grid;
+  gap: 6px;
+}
+
+.resume-score-requirement__block ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 4px;
 }
 
 .resume-score-empty {
@@ -4235,7 +4313,11 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .resume-score-result__hero,
   .resume-score-result__strengths,
   .resume-score-result__groups,
-  .resume-score-group {
+  .resume-score-group,
+  .resume-score-heatmap,
+  .resume-score-section-heatmap__grid,
+  .resume-score-section-card,
+  .resume-score-requirement {
     min-width: 0;
   }
 
@@ -4261,9 +4343,21 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .resume-score-result__hero,
   .resume-score-result__strengths,
-  .resume-score-group {
+  .resume-score-group,
+  .resume-score-heatmap {
     padding: 12px 14px;
     border-radius: 14px;
+  }
+
+  .resume-score-heatmap__header,
+  .resume-score-requirement__heading,
+  .resume-score-section-card__heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resume-score-section-heatmap__grid {
+    grid-template-columns: 1fr;
   }
 
   .resume-score-result__summary {

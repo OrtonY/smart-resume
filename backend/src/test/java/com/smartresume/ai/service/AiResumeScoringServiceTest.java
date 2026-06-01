@@ -14,9 +14,11 @@ import com.smartresume.ai.domain.AiResumeScoreEntity;
 import com.smartresume.ai.dto.AiDtos.AiResumeContent;
 import com.smartresume.ai.dto.AiDtos.AiBulletRewriteRequest;
 import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
+import com.smartresume.ai.dto.AiDtos.AiResumeRequirementMatch;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreSuggestionGroup;
+import com.smartresume.ai.dto.AiDtos.AiResumeSectionHeatmap;
 import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.mapper.AiResumeScoreMapper;
@@ -103,6 +105,9 @@ class AiResumeScoringServiceTest {
         assertThat(response.summary()).isNotBlank();
         assertThat(response.strengths()).isNotEmpty();
         assertThat(response.suggestionGroups()).isNotEmpty();
+        assertThat(response.heatmapSummary()).isNull();
+        assertThat(response.requirementMatches()).isEmpty();
+        assertThat(response.sectionHeatmap()).isEmpty();
     }
 
     @Test
@@ -117,7 +122,41 @@ class AiResumeScoringServiceTest {
             ),
             true,
             Instant.now().toString(),
-            "ai"
+            "ai",
+            "The resume matches backend fundamentals but should highlight distributed systems work.",
+            List.of(
+                new AiResumeRequirementMatch(
+                    "Spring Boot",
+                    "skill",
+                    "high",
+                    "matched",
+                    95,
+                    List.of("workExperience", "skills"),
+                    List.of("Built Spring Boot services"),
+                    "Keep Spring Boot near the top of skills."
+                ),
+                new AiResumeRequirementMatch(
+                    "Distributed tracing",
+                    "tool",
+                    "medium",
+                    "missing",
+                    20,
+                    List.of(),
+                    List.of(),
+                    "Add tracing or observability experience if accurate."
+                )
+            ),
+            List.of(
+                new AiResumeSectionHeatmap(
+                    "workExperience",
+                    "Work experience",
+                    82,
+                    "strong",
+                    3,
+                    1,
+                    "Work experience carries most JD evidence."
+                )
+            )
         );
 
         when(aiChatService.callStructured(any(AiInvocationRequest.class), eq(AiResumeScoreResponse.class)))
@@ -135,6 +174,17 @@ class AiResumeScoringServiceTest {
         assertThat(response.suggestionGroups())
             .extracting(AiResumeScoreSuggestionGroup::title)
             .contains("JD alignment");
+        assertThat(response.heatmapSummary()).contains("backend fundamentals");
+        assertThat(response.requirementMatches())
+            .extracting(AiResumeRequirementMatch::status)
+            .contains("matched", "missing");
+        assertThat(response.sectionHeatmap())
+            .extracting(AiResumeSectionHeatmap::sectionKey)
+            .contains("workExperience");
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService).callStructured(captor.capture(), eq(AiResumeScoreResponse.class));
+        assertThat(captor.getValue().userMessage()).contains("Return the JD heatmap fields");
     }
 
     @Test
@@ -146,7 +196,27 @@ class AiResumeScoringServiceTest {
             List.of(new AiResumeScoreSuggestionGroup("Group", List.of("Suggestion"))),
             true,
             Instant.now().toString(),
-            "ai"
+            "ai",
+            "Heatmap summary",
+            List.of(new AiResumeRequirementMatch(
+                "PostgreSQL",
+                "skill",
+                "medium",
+                "partial",
+                60,
+                List.of("skills"),
+                List.of("PostgreSQL"),
+                "Add production database impact."
+            )),
+            List.of(new AiResumeSectionHeatmap(
+                "skills",
+                "Skills",
+                70,
+                "medium",
+                1,
+                1,
+                "Skills partially match the JD."
+            ))
         );
         AiResumeScoreEntity entity = new AiResumeScoreEntity();
         entity.setResumeId("resume-1");
@@ -164,6 +234,9 @@ class AiResumeScoringServiceTest {
         assertThat(response.jobDescription()).isEqualTo("Backend JD");
         assertThat(response.result().score()).isEqualTo(88);
         assertThat(response.result().mode()).isEqualTo("ai");
+        assertThat(response.result().heatmapSummary()).isEqualTo("Heatmap summary");
+        assertThat(response.result().requirementMatches()).hasSize(1);
+        assertThat(response.result().sectionHeatmap()).hasSize(1);
     }
 
     @Test
