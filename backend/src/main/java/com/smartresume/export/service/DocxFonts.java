@@ -83,7 +83,9 @@ final class DocxFonts {
         run.setFontFamily(LATIN);
         run.setFontFamily(EAST_ASIA, XWPFRun.FontCharRange.eastAsia);
         run.setFontSize(fontSize);
-        run.setColor(color);
+        if (color != null && !color.isBlank()) {
+            run.setColor(color);
+        }
         run.setBold(bold);
     }
 }

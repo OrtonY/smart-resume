@@ -205,3 +205,36 @@ Added AI rewrite for resume text spans across personal summary, education highli
 ### Next Steps
 
 - None - task complete
+
+
+## Session 66: Optimize DOCX resume export layout
+
+**Date**: 2026-06-01
+**Task**: Optimize DOCX resume export layout
+**Branch**: `codex/optimize-docx-export-format`
+
+### Summary
+
+Compared exported PDF and DOCX samples, then fixed DOCX masthead layout, avatar embedding, age display, and timeline field positioning for the resume templates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `537a0c9` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
