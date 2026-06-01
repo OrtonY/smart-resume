@@ -1,0 +1,76 @@
+{
+  "hero": {
+    "tag": "Tracker",
+    "title": "Resume Application Tracker",
+    "description": "Track every job application, monitor your progress, and stay on top of every interview opportunity."
+  },
+  "actions": {
+    "create": "New Application",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "backToHome": "Back to Workspace"
+  },
+  "filter": {
+    "searchPlaceholder": "Search by company or position",
+    "statusPlaceholder": "Filter by status"
+  },
+  "table": {
+    "company": "Company",
+    "position": "Position",
+    "status": "Status",
+    "channel": "Channel",
+    "resume": "Resume",
+    "appliedAt": "Applied At",
+    "actions": "Actions",
+    "loading": "Loading…",
+    "empty": "No applications yet"
+  },
+  "status": {
+    "applied": "Applied",
+    "interviewing": "Interviewing",
+    "offered": "Offered",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn"
+  },
+  "modal": {
+    "createTitle": "Create Application",
+    "editTitle": "Edit Application",
+    "viewTitle": "Application Details",
+    "ok": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "form": {
+    "company": "Company",
+    "companyPlaceholder": "e.g. ByteDance",
+    "companyRequired": "Company is required",
+    "position": "Position",
+    "positionPlaceholder": "e.g. Frontend Engineer",
+    "positionRequired": "Position is required",
+    "status": "Status",
+    "statusRequired": "Status is required",
+    "channel": "Channel",
+    "channelPlaceholder": "Select or type a channel (e.g. LinkedIn, Referral)",
+    "resume": "Linked Resume",
+    "resumePlaceholder": "Select a resume (optional)",
+    "appliedAt": "Applied At",
+    "appliedAtPlaceholder": "Defaults to current time",
+    "notes": "Notes",
+    "notesPlaceholder": "Interview feedback, HR contact, etc."
+  },
+  "confirm": {
+    "deleteTitle": "Confirm deletion",
+    "deleteDescription": "This application record will be permanently removed. Continue?",
+    "ok": "Confirm",
+    "cancel": "Cancel"
+  },
+  "feedback": {
+    "loadFailed": "Failed to load applications",
+    "createSuccess": "Application created",
+    "updateSuccess": "Application updated",
+    "deleteSuccess": "Application deleted",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete"
+  }
+}

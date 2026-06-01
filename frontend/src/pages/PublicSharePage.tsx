@@ -1,10 +1,12 @@
-import { Button, Card, Form, Input, Result, Spin, message } from 'antd'
+import { Button, Card, Dropdown, Form, Input, Result, Spin, message } from 'antd'
 import { DownloadOutlined, LockOutlined } from '@ant-design/icons'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { EmptyPreview, ResumePreview } from '../features/resume/components/ResumePreview'
 import { getPublicShare, getPublicShareAccess, verifySharePassword } from '../features/resume/api/resumeApi'
+import { exportShareDocx } from '../features/resume/export/docxExport'
+import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportSharePdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import type { ResumeDetail } from '../features/resume/types'
@@ -40,8 +42,10 @@ export function PublicSharePage() {
   const { t } = useTranslation('share')
   const [pageState, setPageState] = useState<PublicSharePageState>({ status: 'loading' })
   const [verifying, setVerifying] = useState(false)
-  const [downloading, setDownloading] = useState(false)
+  const [downloadingDocx, setDownloadingDocx] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
+  const exportPreviewRef = useRef<HTMLDivElement | null>(null)
   const { templates } = useResumeTemplateCatalog({ scope: 'public' })
   const resume = pageState.status === 'ready' ? pageState.resume : null
   const previewTemplates = !resume?.resolvedTemplate
@@ -79,20 +83,17 @@ export function PublicSharePage() {
             return
           }
 
-          void messageApi.error(msg)
-          setPageState({ status: 'error', message: msg })
+          setPageState({ status: 'error', message: t('notFound.subtitle') })
           return
         }
       }
 
       const sharedResume = await getPublicShare(shareCode)
       setPageState({ status: 'ready', resume: sharedResume })
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : t('page.loadFailed')
-      void messageApi.error(msg)
-      setPageState({ status: 'error', message: msg })
+    } catch {
+      setPageState({ status: 'error', message: t('notFound.subtitle') })
     }
-  }, [loadProtectedShare, messageApi, shareCode, t])
+  }, [loadProtectedShare, shareCode, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -145,15 +146,40 @@ export function PublicSharePage() {
   }
 
   async function handleDownloadPdf() {
-    if (!resume || downloading) return
-    setDownloading(true)
+    if (!resume || downloadingPdf) return
+    setDownloadingPdf(true)
     try {
-      const shareToken = getShareToken(shareCode)
-      await exportSharePdf(shareCode, resume.title, shareToken)
+      try {
+        const shareToken = getShareToken(shareCode)
+        await exportSharePdf(shareCode, resume.title, shareToken)
+      } catch {
+        if (!exportPreviewRef.current) {
+          throw new Error(t('page.downloadFailed'))
+        }
+
+        await exportResumePdf(exportPreviewRef.current, resume.title)
+      }
+
+      void messageApi.success(t('page.downloadStarted'))
     } catch (error) {
       void messageApi.error(error instanceof Error ? error.message : t('page.downloadFailed'))
     } finally {
-      setDownloading(false)
+      setDownloadingPdf(false)
+    }
+  }
+
+  async function handleDownloadDocx() {
+    if (!resume || downloadingDocx) return
+    setDownloadingDocx(true)
+    try {
+      const shareToken = getShareToken(shareCode)
+      await exportShareDocx(shareCode, resume.title, shareToken)
+      void messageApi.success(t('page.downloadDocxStarted'))
+      void messageApi.info(t('page.downloadDocxStyleNotice'))
+    } catch (error) {
+      void messageApi.error(error instanceof Error ? error.message : t('page.downloadDocxFailed'))
+    } finally {
+      setDownloadingDocx(false)
     }
   }
 
@@ -168,11 +194,36 @@ export function PublicSharePage() {
         ) : pageState.status === 'ready' ? (
           <>
             <div style={{ marginBottom: 12, textAlign: 'right' }}>
-              <Button icon={<DownloadOutlined />} loading={downloading} onClick={() => void handleDownloadPdf()}>
-                {t('page.downloadPdf')}
-              </Button>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    {
+                      key: 'pdf',
+                      label: t('page.downloadPdf'),
+                      icon: <DownloadOutlined />,
+                      disabled: downloadingPdf,
+                      onClick: () => void handleDownloadPdf(),
+                    },
+                    {
+                      key: 'docx',
+                      label: t('page.downloadWord'),
+                      icon: <DownloadOutlined />,
+                      disabled: downloadingDocx,
+                      onClick: () => void handleDownloadDocx(),
+                    },
+                  ],
+                }}
+              >
+                <Button icon={<DownloadOutlined />} loading={downloadingPdf || downloadingDocx}>
+                  {t('page.download')}
+                </Button>
+              </Dropdown>
             </div>
             <ResumePreview resume={pageState.resume} templates={previewTemplates} previewMode="a4-paged" />
+            <div className="resume-export-source" ref={exportPreviewRef} aria-hidden="true">
+              <ResumePreview resume={pageState.resume} templates={previewTemplates} previewMode="a4-paged" />
+            </div>
           </>
         ) : (
           <Result status="404" title={t('notFound.title')} subTitle={pageState.message || t('notFound.subtitle')} />

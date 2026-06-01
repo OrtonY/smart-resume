@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.domain.AiChatConversationEntity;
+import com.smartresume.ai.domain.AiChatStyle;
 import com.smartresume.ai.domain.AiChatSuggestionEntity;
 import com.smartresume.ai.domain.table.AiChatConversationEntityTableDef;
 import com.smartresume.ai.domain.table.AiChatSuggestionEntityTableDef;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AiChatHistoryService {
 
     private static final int MAX_TITLE_LENGTH = 60;
+    private static final int MAX_RESUME_CHAT_CONVERSATIONS = 10;
     private static final String EMPTY_SUGGESTIONS_JSON = "{\"suggestions\":[]}";
     private static final String STATUS_PENDING = "pending";
     private static final Set<String> ALLOWED_SUGGESTION_STATUSES = Set.of(
@@ -45,6 +47,7 @@ public class AiChatHistoryService {
     private final JdbcChatMemoryRepository chatMemoryRepository;
     private final AiChatConversationMapper aiChatConversationMapper;
     private final AiChatSuggestionMapper aiChatSuggestionMapper;
+    private final AiChatConversationCleanupService aiChatConversationCleanupService;
     private final ResumeService resumeService;
     private final ObjectMapper objectMapper;
 
@@ -52,12 +55,14 @@ public class AiChatHistoryService {
         JdbcChatMemoryRepository chatMemoryRepository,
         AiChatConversationMapper aiChatConversationMapper,
         AiChatSuggestionMapper aiChatSuggestionMapper,
+        AiChatConversationCleanupService aiChatConversationCleanupService,
         ResumeService resumeService,
         ObjectMapper objectMapper
     ) {
         this.chatMemoryRepository = chatMemoryRepository;
         this.aiChatConversationMapper = aiChatConversationMapper;
         this.aiChatSuggestionMapper = aiChatSuggestionMapper;
+        this.aiChatConversationCleanupService = aiChatConversationCleanupService;
         this.resumeService = resumeService;
         this.objectMapper = objectMapper;
     }
@@ -95,6 +100,11 @@ public class AiChatHistoryService {
 
     @Transactional
     public String resolveConversationId(String resumeId, String requestedConversationId, String firstMessage) {
+        return resolveConversationId(resumeId, requestedConversationId, firstMessage, null);
+    }
+
+    @Transactional
+    public String resolveConversationId(String resumeId, String requestedConversationId, String firstMessage, String style) {
         long userId = CurrentUserContext.requireUserId();
         resumeService.validResume(resumeId);
         if (requestedConversationId != null && !requestedConversationId.isBlank()) {
@@ -109,10 +119,22 @@ public class AiChatHistoryService {
         conversation.setUserId(userId);
         conversation.setResumeId(resumeId);
         conversation.setTitle(toTitle(firstMessage));
+        conversation.setStyle(AiChatStyle.fromValue(style).name());
         conversation.setCreatedAt(now);
         conversation.setUpdatedAt(now);
         aiChatConversationMapper.insert(conversation);
+        enforceConversationLimit(resumeId, userId);
         return conversation.getConversationId();
+    }
+
+    @Transactional
+    public void deleteConversation(String resumeId, String conversationId) {
+        resumeService.validResume(resumeId);
+        AiChatConversationEntity conversation = requireConversation(resumeId, conversationId);
+        aiChatConversationCleanupService.deleteConversation(
+            conversation,
+            AiChatConversationCleanupService.REASON_MANUAL_DELETE
+        );
     }
 
     @Transactional
@@ -213,12 +235,21 @@ public class AiChatHistoryService {
     }
 
     private AiChatConversation toConversation(AiChatConversationEntity entity) {
+        String style = entity.getStyle() == null || entity.getStyle().isBlank()
+            ? AiChatStyle.NORMAL.name()
+            : entity.getStyle();
         return new AiChatConversation(
             entity.getConversationId(),
             entity.getTitle(),
+            style,
             entity.getCreatedAt().toString(),
             entity.getUpdatedAt().toString()
         );
+    }
+
+    public AiChatStyle resolveConversationStyle(String resumeId, String conversationId) {
+        AiChatConversationEntity conversation = requireConversation(resumeId, conversationId);
+        return AiChatStyle.fromValue(conversation.getStyle());
     }
 
     private AiChatConversationEntity requireConversation(String resumeId, String conversationId) {
@@ -244,6 +275,26 @@ public class AiChatHistoryService {
     private void touch(AiChatConversationEntity conversation) {
         conversation.setUpdatedAt(LocalDateTime.now());
         aiChatConversationMapper.update(conversation);
+    }
+
+    private void enforceConversationLimit(String resumeId, long userId) {
+        AiChatConversationEntityTableDef table = AiChatConversationEntityTableDef.AI_CHAT_CONVERSATION_ENTITY;
+        QueryWrapper query = QueryWrapper.create()
+            .where(table.RESUME_ID.eq(resumeId))
+            .and(table.USER_ID.eq(userId))
+            .orderBy(table.UPDATED_AT, true)
+            .orderBy(table.CREATED_AT, true);
+        List<AiChatConversationEntity> conversations = aiChatConversationMapper.selectListByQuery(query);
+        int overflowCount = conversations.size() - MAX_RESUME_CHAT_CONVERSATIONS;
+        if (overflowCount <= 0) {
+            return;
+        }
+        conversations.stream()
+            .limit(overflowCount)
+            .forEach(conversation -> aiChatConversationCleanupService.deleteConversation(
+                conversation,
+                AiChatConversationCleanupService.REASON_RETENTION_LIMIT
+            ));
     }
 
     private String toTitle(String firstMessage) {

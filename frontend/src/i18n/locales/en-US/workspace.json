@@ -7,6 +7,7 @@
   "actions": {
     "templateGallery": "Templates",
     "interviewCenter": "Interview Center",
+    "applicationCenter": "Tracker",
     "recycleBin": "Recycle Bin",
     "lockWorkspace": "Lock workspace",
     "backToList": "Back to list",
@@ -33,7 +34,11 @@
   "card": {
     "restore": "Restore",
     "copy": "Copy",
-    "delete": "Delete"
+    "delete": "Delete",
+    "purge": "Delete permanently",
+    "purgeConfirmTitle": "Permanently delete this resume?",
+    "purgeConfirmDescription": "This will erase the resume and linked chats, interviews, versions, shares, and scores. It cannot be undone.",
+    "purgeConfirmOk": "Delete permanently"
   },
   "copyDialog": {
     "title": "Copy resume",
@@ -58,13 +63,20 @@
     "moveToBinSuccess": "Resume moved to recycle bin.",
     "copySuccess": "Resume copied.",
     "restoreSuccess": "Resume restored.",
+    "purgeSuccess": "Resume permanently deleted.",
     "exportPdfStart": "PDF download started.",
     "exportPdfFailed": "Export failed. Please try again.",
+    "exportDocxStart": "Word download started.",
+    "exportDocxFailed": "Word export failed. Please try again.",
+    "exportDocxStyleNotice": "The Word export uses semantic layout, so colors and some styling may differ from the PDF preview.",
+    "downloadDocxStyleNotice": "The Word export uses semantic layout, so colors and some styling may differ from the PDF preview.",
     "exportPreviewMissing": "No resume preview found to export.",
     "shareCopiedLatest": "Latest version share link copied.",
     "shareCopiedSnapshot": "Snapshot share link copied.",
     "loadShareLinksFailed": "Unable to load share links.",
-    "refreshShareLinksFailed": "Unable to refresh share links."
+    "refreshShareLinksFailed": "Unable to refresh share links.",
+    "versionDeleteSuccess": "Snapshot deleted. Associated share links are now invalid.",
+    "versionDeleteFailed": "Failed to delete snapshot."
   },
   "saveState": {
     "saving": "Saving...",
@@ -85,7 +97,9 @@
       "related": "Related interviews"
     },
     "share": "Share",
+    "export": "Export",
     "exportPdf": "Export PDF",
+    "exportWord": "Export Word",
     "exportServerPdf": "High Quality Export",
     "exportQuickPdf": "Quick Export (Screenshot)",
     "moduleCount": "{{count}} modules",
@@ -106,7 +120,20 @@
     "tabStructure": "Structure",
     "tabContent": "Content",
     "moreActions": "More",
-    "moreActionsAria": "More actions"
+    "moreActionsAria": "More actions",
+    "bulletRewrite": {
+      "buttonLabel": "AI rewrite",
+      "buttonTitle": "Rewrite the selection, or the full field when nothing is selected",
+      "previewTitle": "Confirm AI rewrite",
+      "originalLabel": "Original text",
+      "previewLabel": "Rewrite preview",
+      "rationaleLabel": "Reason",
+      "apply": "Apply rewrite",
+      "cancel": "Cancel",
+      "selectLine": "Enter text to rewrite first.",
+      "changed": "This text changed after the rewrite was generated. Please run AI rewrite again.",
+      "failed": "AI rewrite failed. Please try again."
+    }
   },
   "versionTimeline": {
     "title": "Version history",
@@ -147,7 +174,17 @@
       "currentOnlyEntries_other": "Current draft has {{count}} additional entries.",
       "versionOnlyEntries_one": "Selected version has {{count}} additional entry.",
       "versionOnlyEntries_other": "Selected version has {{count}} additional entries."
-    }
+    },
+    "delete": "Delete snapshot",
+    "deleteConfirmTitle": "Delete this snapshot?",
+    "deleteConfirmDescription": "Associated snapshot share links will become invalid.",
+    "deleteConfirmOk": "Delete",
+    "shareLinksTitle": "Associated share links",
+    "shareLinksEmpty": "No share links are associated with this snapshot.",
+    "shareLinkActive": "Active",
+    "shareLinkInactive": "Disabled",
+    "shareLinkInvalid": "Invalid",
+    "copyShareLink": "Copy share link"
   },
   "modules": {
     "personalInfo": {
@@ -343,7 +380,7 @@
     "modeLatest": "Latest version",
     "modeSnapshot": "Current snapshot",
     "modeLatestHint": "The link always shows the latest content of the resume",
-    "modeSnapshotHint": "The latest snapshot is shared first; if none exists, one is created automatically, and later edits do not affect this share link",
+    "modeSnapshotHint": "Compares the current resume with the latest snapshot when sharing. If title, content, layout, and template are unchanged, the latest snapshot is reused; otherwise a new snapshot is created. Later edits do not affect this share link.",
     "passwordLabel": "Password protection",
     "passwordPlaceholder": "Set an access password",
     "passwordHint": "When enabled, viewers must enter the password to view",
@@ -363,12 +400,14 @@
     "modeTagSnapshot": "Snapshot",
     "passwordProtected": "Password protected",
     "disabled": "Disabled",
+    "invalid": "Invalid",
     "viewCount": "{{count}} views",
     "createdAt": "Created: {{value}}",
     "lastAccessedAt": "Last accessed: {{value}}",
     "noVisits": "No visits yet",
     "toggleEnable": "Enable",
     "toggleDisable": "Disable",
+    "invalidEnableTooltip": "The linked snapshot was deleted and cannot be enabled",
     "deleteConfirmTitle": "Delete this share link?",
     "deleteConfirmDescription": "Access logs will also be cleared and cannot be recovered.",
     "deleteOk": "Delete",

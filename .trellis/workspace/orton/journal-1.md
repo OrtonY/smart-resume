@@ -1910,3 +1910,71 @@ Updated frontend and backend application versions to v1.1.1, corrected backend J
 ### Next Steps
 
 - None - task complete
+
+
+## Session 58: Resume import from template gallery
+
+**Date**: 2026-05-29
+**Task**: Resume import from template gallery
+**Branch**: `codex/resume-import`
+
+### Summary
+
+Added resume import from the template gallery with PDF/DOCX/TXT parsing, fixed Unicode PDF export filenames, and documented the related backend contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6ed685c` | (see git log) |
+| `8f87449` | (see git log) |
+| `7d62bba` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 59: PDF export frontend fallback
+
+**Date**: 2026-05-29
+**Task**: PDF export frontend fallback
+**Branch**: `codex/pdf-export-frontend-fallback`
+
+### Summary
+
+Implemented backend-first PDF export with frontend snapshot fallback for editor and public share downloads, simplified export actions, documented the frontend export fallback contract, and removed the temporary share-page snapshot test button after verification.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8225e77` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

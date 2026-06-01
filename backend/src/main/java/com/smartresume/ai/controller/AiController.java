@@ -2,6 +2,8 @@ package com.smartresume.ai.controller;
 
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatConversation;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteRequest;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
@@ -27,6 +29,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -85,6 +88,11 @@ public class AiController {
         return ApiResponse.success(aiResumeScoringService.scoreResume(request), "Resume scored");
     }
 
+    @PostMapping("/resume-bullet-rewrite")
+    public ApiResponse<AiBulletRewriteResponse> rewriteResumeBullet(@Valid @RequestBody AiBulletRewriteRequest request) {
+        return ApiResponse.success(aiResumeScoringService.rewriteBullet(request));
+    }
+
     @GetMapping("/resumes/{resumeId}/score")
     public ApiResponse<PersistedAiResumeScoreResponse> getPersistedResumeScore(@PathVariable String resumeId) {
         return ApiResponse.success(aiResumeScoringService.getPersistedScore(resumeId));
@@ -101,6 +109,15 @@ public class AiController {
         @PathVariable String conversationId
     ) {
         return ApiResponse.success(aiChatHistoryService.listHistory(resumeId, conversationId));
+    }
+
+    @DeleteMapping("/resumes/{resumeId}/chat/conversations/{conversationId}")
+    public ApiResponse<Void> deleteChatConversation(
+        @PathVariable String resumeId,
+        @PathVariable String conversationId
+    ) {
+        aiChatHistoryService.deleteConversation(resumeId, conversationId);
+        return ApiResponse.success(null, "AI chat history deleted");
     }
 
     @PutMapping("/resumes/{resumeId}/chat/conversations/{conversationId}/suggestions/{suggestionId}")

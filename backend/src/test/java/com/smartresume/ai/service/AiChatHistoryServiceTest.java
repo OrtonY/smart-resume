@@ -37,6 +37,9 @@ class AiChatHistoryServiceTest {
     private AiChatSuggestionMapper aiChatSuggestionMapper;
 
     @Mock
+    private AiChatConversationCleanupService aiChatConversationCleanupService;
+
+    @Mock
     private ResumeService resumeService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -48,6 +51,7 @@ class AiChatHistoryServiceTest {
             chatMemoryRepository,
             aiChatConversationMapper,
             aiChatSuggestionMapper,
+            aiChatConversationCleanupService,
             resumeService,
             objectMapper
         );

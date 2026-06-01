@@ -113,6 +113,15 @@ export interface ResumeDetail {
   resolvedTemplate?: ResumeTemplateDefinition | null
 }
 
+export interface ResumeSnapshotShareLink {
+  title: string | null
+  shareCode: string
+  sharePath: string
+  active: boolean
+  invalid: boolean
+  createdAt: string
+}
+
 export interface ResumeVersionSummary {
   id: string
   resumeId: string
@@ -120,6 +129,7 @@ export interface ResumeVersionSummary {
   title: string
   templateKey: string
   createdAt: string
+  shareLinks: ResumeSnapshotShareLink[]
 }
 
 export interface ResumeVersionDetail {
@@ -128,6 +138,7 @@ export interface ResumeVersionDetail {
   versionNumber: number
   createdAt: string
   snapshot: ResumeDetail
+  shareLinks: ResumeSnapshotShareLink[]
 }
 
 export type ShareMode = 'LATEST' | 'SNAPSHOT'
@@ -138,6 +149,7 @@ export interface ShareLink {
   shareMode: ShareMode
   sharePath: string
   targetVersionId: string | null
+  invalid: boolean
   hasPassword: boolean
   active: boolean
   viewCount: number

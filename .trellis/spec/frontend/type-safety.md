@@ -318,3 +318,59 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 #### Correct
 - Use the dedicated `/api/public/shares/{shareCode}/access` preflight contract to decide the initial UI state, then fall back cleanly when cached credentials expire.
 - Keep the password gate in an explicit union state and give it its own responsive mobile layout rules.
+
+## Scenario: Snapshot Share Invalid State
+
+### 1. Scope / Trigger
+- Trigger: snapshot deletion must invalidate associated snapshot share links without treating them as ordinary user-disabled links.
+- Why this needs code-spec depth: the state crosses database storage, backend DTOs, public share access behavior, authenticated share management, and frontend UI tags/actions.
+
+### 2. Signatures
+- Backend constant: `ResumeShareEntity.INVALID_TARGET_VERSION_ID = "invalid"`
+- Database column: `resume_share_links.target_version_id varchar(64) null` with no foreign key constraint
+- Authenticated share DTO: `ShareLinkResponse(..., String targetVersionId, boolean invalid, boolean hasPassword, boolean active, ...)`
+- Snapshot timeline DTO: `ResumeSnapshotShareLinkResponse(String title, String shareCode, String sharePath, boolean active, boolean invalid, LocalDateTime createdAt)`
+- Frontend types:
+  - `ShareLink.invalid: boolean`
+  - `ResumeSnapshotShareLink.invalid: boolean`
+- Delete snapshot API: `DELETE /api/resumes/{resumeId}/versions/{versionId}`
+- Toggle share API: `PUT /api/resumes/{resumeId}/shares/{shareCode}/toggle`
+
+### 3. Contracts
+- Deleting a snapshot soft-deletes the `resume_versions` row and updates associated `resume_share_links` rows:
+  - `target_version_id = "invalid"`
+  - `active = false`
+  - `updated_at = now`
+- `resume_share_links.target_version_id` must not have a database foreign key to `resume_versions(id)` because it intentionally stores the `invalid` sentinel after snapshot deletion.
+- `active=false` means the owner manually disabled the link and it can be enabled again.
+- `invalid=true` means the snapshot target no longer exists and the link cannot be enabled again.
+- Frontend share management must display an invalid tag separately from the disabled tag and disable the enable action for invalid links.
+- Public snapshot share access for an invalid target must fail instead of attempting to load version id `invalid`.
+
+### 4. Validation & Error Matrix
+- Toggle inactive valid share -> active becomes `true`.
+- Toggle active valid share -> active becomes `false`.
+- Toggle inactive invalid snapshot share -> `409 Conflict` with `error.share.snapshotInvalid`.
+- Public access/export for invalid snapshot share -> not-found style error with `error.share.snapshotInvalid`.
+- Latest-mode shares never become invalid through snapshot deletion because they do not target a version id.
+
+### 5. Good/Base/Bad Cases
+- Good: owner deletes a snapshot, then sees its associated share links marked invalid; the enable button is disabled.
+- Base: owner disables a live share link manually; it shows disabled and can be re-enabled later.
+- Bad: deleting a snapshot only sets `active=false`, causing the UI to show a normal disabled link that appears re-enableable.
+- Bad: frontend infers invalidity by comparing `targetVersionId === "invalid"` instead of consuming the typed `invalid` DTO field.
+- Bad: keeping a database foreign key on `target_version_id`, which rejects the `invalid` sentinel during snapshot deletion.
+
+### 6. Tests Required
+- Backend unit test: deleting a snapshot writes `targetVersionId="invalid"`, `active=false`, and `updatedAt` on associated shares.
+- Migration/schema check: `resume_share_links.target_version_id` allows `invalid` by not enforcing a version-id foreign key.
+- Backend unit test: toggling an inactive invalid snapshot share throws `error.share.snapshotInvalid`.
+- Frontend build/type-check must pass after adding `invalid` to share DTO types.
+- UI assertion: share list renders invalid separately from disabled and prevents the enable action.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Treat invalid snapshot shares as ordinary disabled shares and let the frontend show the enable button.
+
+#### Correct
+- Persist the invalid target sentinel, expose a typed `invalid` flag, and make the UI action state follow `invalid` before `active`.

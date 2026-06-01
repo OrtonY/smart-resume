@@ -7,9 +7,9 @@
 ## Current Status
 
 <!-- @@@auto:current-status -->
-- **Active File**: `journal-1.md`
-- **Total Sessions**: 57
-- **Last Active**: 2026-05-28
+- **Active File**: `journal-2.md`
+- **Total Sessions**: 66
+- **Last Active**: 2026-06-01
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,8 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1912 | Active |
+| `journal-2.md` | ~240 | Active |
+| `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +30,15 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 66 | 2026-06-01 | Optimize DOCX resume export layout | `537a0c9` | `codex/optimize-docx-export-format` |
+| 65 | 2026-05-31 | Resume text rewrite finish | `242b709` | `codex/bullet-ai-rewrite` |
+| 64 | 2026-05-31 | Resume DOCX export | `6dbc695` | `feature/docx-export` |
+| 63 | 2026-05-30 | 简历投递台 CRUD with mobile and view support | `d991bee`, `8814194` | `feat/job-applications` |
+| 62 | 2026-05-29 | Implement AI chat style modes (savage & sarcastic) | `ca38831` | `feat/resume-ai-chat-style-modes` |
+| 61 | 2026-05-29 | Physical delete AI history | `be53a55` | `codex/physical-delete-ai-history` |
+| 60 | 2026-05-29 | Invalidate deleted snapshot share links | `d6295ae`, `9c8ab9a` | `codex/resume-share-snapshot-hash` |
+| 59 | 2026-05-29 | PDF export frontend fallback | `8225e77` | `codex/pdf-export-frontend-fallback` |
+| 58 | 2026-05-29 | Resume import from template gallery | `6ed685c`, `8f87449`, `7d62bba` | `codex/resume-import` |
 | 57 | 2026-05-28 | Bump frontend and backend to v1.1.1 | `460887c` | `chore/bump-version-1.1.1` |
 | 56 | 2026-05-28 | Refine mobile interview header and AI resume context filtering | `2365fdf`, `29fe5f5` | `codex/mobile-chat-company-hidden-filter` |
 | 55 | 2026-05-28 | Fix markdown bold boundary compatibility | `4cabffa` | `codex/fix-markdown-bold-boundary` |

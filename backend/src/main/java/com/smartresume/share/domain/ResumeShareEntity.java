@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 @Table("resume_share_links")
 public class ResumeShareEntity {
 
+    public static final String INVALID_TARGET_VERSION_ID = "invalid";
+
     @Id(keyType = KeyType.None)
     private String id;
     private Long userId;

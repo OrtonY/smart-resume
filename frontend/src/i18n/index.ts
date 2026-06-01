@@ -10,6 +10,7 @@ import zhTemplate from './locales/zh-CN/template.json'
 import zhAi from './locales/zh-CN/ai.json'
 import zhShare from './locales/zh-CN/share.json'
 import zhSystem from './locales/zh-CN/system.json'
+import zhApplication from './locales/zh-CN/application.json'
 
 import enCommon from './locales/en-US/common.json'
 import enAuth from './locales/en-US/auth.json'
@@ -19,6 +20,7 @@ import enTemplate from './locales/en-US/template.json'
 import enAi from './locales/en-US/ai.json'
 import enShare from './locales/en-US/share.json'
 import enSystem from './locales/en-US/system.json'
+import enApplication from './locales/en-US/application.json'
 
 export const SUPPORTED_LANGUAGES = ['zh-CN', 'en-US'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -42,6 +44,7 @@ void i18n
         ai: zhAi,
         share: zhShare,
         system: zhSystem,
+        application: zhApplication,
       },
       'en-US': {
         common: enCommon,
@@ -52,11 +55,12 @@ void i18n
         ai: enAi,
         share: enShare,
         system: enSystem,
+        application: enApplication,
       },
     },
     fallbackLng: 'zh-CN',
     supportedLngs: SUPPORTED_LANGUAGES,
-    ns: ['common', 'auth', 'workspace', 'interview', 'template', 'ai', 'share', 'system'],
+    ns: ['common', 'auth', 'workspace', 'interview', 'template', 'ai', 'share', 'system', 'application'],
     defaultNS: 'common',
     detection: {
       order: ['localStorage', 'navigator'],

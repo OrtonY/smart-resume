@@ -147,7 +147,7 @@ class InterviewAssistServiceTest {
             )
             """);
         jdbcTemplate.execute("""
-            create table if not exists SPRING_AI_CHAT_MEMORY (
+            create table if not exists spring_ai_chat_memory (
                 conversation_id varchar(128) not null,
                 content text not null,
                 type varchar(10) not null,
@@ -156,7 +156,7 @@ class InterviewAssistServiceTest {
             """);
 
         jdbcTemplate.update("delete from interview_ai_assists");
-        jdbcTemplate.update("delete from SPRING_AI_CHAT_MEMORY");
+        jdbcTemplate.update("delete from spring_ai_chat_memory");
         jdbcTemplate.update("delete from interview_round_topics");
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");

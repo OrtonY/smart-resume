@@ -4,7 +4,6 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
-import com.smartresume.resume.dto.ResumeDtos.ResumeVersionSummaryResponse;
 import com.smartresume.resume.service.ResumeService;
 import com.smartresume.share.domain.ResumeShareEntity;
 import com.smartresume.share.domain.ShareAccessLogEntity;
@@ -65,10 +64,7 @@ public class ShareService {
 
         String targetVersionId = null;
         if ("SNAPSHOT".equals(normalizedMode)) {
-            targetVersionId = latestSnapshotVersionId(resumeId);
-            if (targetVersionId == null) {
-                targetVersionId = resumeService.captureSnapshot(resumeId).getId();
-            }
+            targetVersionId = resumeService.captureSnapshotIfChanged(resumeId).getId();
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -114,6 +110,9 @@ public class ShareService {
         recordAccess(share.getId(), ipAddress);
 
         if ("SNAPSHOT".equals(share.getShareMode())) {
+            if (isInvalidSnapshotShare(share)) {
+                throw AppException.of(HttpStatus.NOT_FOUND, "error.share.snapshotInvalid");
+            }
             return resumeService.getVersionSnapshotForUser(share.getTargetVersionId(), share.getUserId());
         }
         return resumeService.getResumeForUser(share.getResumeId(), share.getUserId());
@@ -132,6 +131,9 @@ public class ShareService {
         }
 
         if ("SNAPSHOT".equals(share.getShareMode())) {
+            if (isInvalidSnapshotShare(share)) {
+                throw AppException.of(HttpStatus.NOT_FOUND, "error.share.snapshotInvalid");
+            }
             return resumeService.getVersionSnapshotForUser(share.getTargetVersionId(), share.getUserId());
         }
         return resumeService.getResumeForUser(share.getResumeId(), share.getUserId());
@@ -172,6 +174,9 @@ public class ShareService {
     @Transactional
     public void deactivateShare(String resumeId, String shareCode) {
         ResumeShareEntity share = requireOwnedShare(resumeId, shareCode);
+        if (!Boolean.TRUE.equals(share.getActive()) && isInvalidSnapshotShare(share)) {
+            throw AppException.of(HttpStatus.CONFLICT, "error.share.snapshotInvalid");
+        }
         share.setActive(!Boolean.TRUE.equals(share.getActive()));
         share.setUpdatedAt(LocalDateTime.now());
         resumeShareMapper.update(share);
@@ -238,12 +243,6 @@ public class ShareService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private String latestSnapshotVersionId(String resumeId) {
-        return resumeService.listVersions(resumeId).stream()
-            .map(ResumeVersionSummaryResponse::id)
-            .findFirst()
-            .orElse(null);
-    }
 
     private ShareLinkResponse toResponse(ResumeShareEntity share) {
         ShareAccessLogEntityTableDef accessLogTable = ShareAccessLogEntityTableDef.SHARE_ACCESS_LOG_ENTITY;
@@ -263,11 +262,17 @@ public class ShareService {
             share.getShareMode(),
             "/share/" + share.getShareCode(),
             share.getTargetVersionId(),
+            isInvalidSnapshotShare(share),
             share.getPasswordHash() != null,
             Boolean.TRUE.equals(share.getActive()),
             viewCount,
             lastAccessedAt,
             share.getCreatedAt()
         );
+    }
+
+    private boolean isInvalidSnapshotShare(ResumeShareEntity share) {
+        return "SNAPSHOT".equals(share.getShareMode())
+            && ResumeShareEntity.INVALID_TARGET_VERSION_ID.equals(share.getTargetVersionId());
     }
 }

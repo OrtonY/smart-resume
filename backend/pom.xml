@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.smartresume</groupId>
 	<artifactId>backend</artifactId>
-	<version>1.1.1</version>
+	<version>1.1.2</version>
 	<name>smart-resume-backend</name>
 	<description>Smart Resume Backend</description>
 	<url/>
@@ -33,6 +33,9 @@
 		<spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
 		<dotenv.version>5.1.0</dotenv.version>
 		<playwright.version>1.60.0</playwright.version>
+		<pdfbox.version>3.0.7</pdfbox.version>
+		<poi.version>5.5.1</poi.version>
+		<commonmark.version>0.28.0</commonmark.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -91,6 +94,33 @@
 			<version>${mybatis-flex.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.mybatis-flex</groupId>
+			<artifactId>mybatis-flex-processor</artifactId>
+			<version>${mybatis-flex.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>${pdfbox.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.commonmark</groupId>
+			<artifactId>commonmark</artifactId>
+			<version>${commonmark.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>
@@ -137,6 +167,19 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>com.mybatis-flex</groupId>
+							<artifactId>mybatis-flex-processor</artifactId>
+							<version>${mybatis-flex.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

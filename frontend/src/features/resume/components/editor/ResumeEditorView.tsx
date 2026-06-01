@@ -9,6 +9,7 @@ import {
   MessageOutlined,
   MoreOutlined,
   PlusOutlined,
+  RobotOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons'
 import {
@@ -23,6 +24,7 @@ import {
   Space,
   Switch,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd'
 import { useCallback, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
@@ -34,9 +36,12 @@ import { Link } from 'react-router-dom'
 import { ResponsiveModal } from '../../../../components/shared/ResponsiveModal'
 import { useIsMobile } from '../../../../lib/hooks/useIsMobile'
 import { MarkdownComposer } from '../../../../lib/markdown/MarkdownComposer'
+import { MarkdownMessage } from '../../../../lib/markdown/MarkdownMessage'
+import { rewriteAiResumeBullet } from '../../../ai/api/aiApi'
 import { AiResumeAssistant } from '../../../ai/components/AiResumeAssistant'
 import { ResumeScoreButton } from '../../../ai/components/ResumeScoreButton'
-import type { AiResumeSuggestion } from '../../../ai/types'
+import type { AiBulletRewriteResponse, AiResumeSuggestion } from '../../../ai/types'
+import { normalizeRewrittenBulletLine, replaceTextRange } from '../../markdown/bulletLine'
 import { resolveResumeTemplate, type ResumeTemplateDefinition } from '../../templateCatalog'
 import type {
   CertificateItem,
@@ -60,6 +65,7 @@ export type ResumeEditorSaveState = 'idle' | 'saving' | 'saved' | 'save_failed'
 interface ResumeEditorViewProps {
   draft: ResumeDetail
   deferredDraft: ResumeDetail | null
+  exportingDocx: boolean
   expandedModules: ResumeModuleId[]
   exportingPdf: boolean
   hiddenSections: ResumeSectionKey[]
@@ -67,8 +73,8 @@ interface ResumeEditorViewProps {
   onApplyPatch: (patch: AiResumeSuggestion) => void
   onCreateShare: (title: string, mode: ShareMode, password?: string) => Promise<void>
   onExpandedModulesChange: (keys: string | string[]) => void
+  onExportDocx: () => Promise<void>
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
-  onExportServerPdf: () => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onDragEnd: (event: DragEndEvent) => void
@@ -84,9 +90,28 @@ interface ResumeEditorViewProps {
 const MAX_AVATAR_FILE_SIZE_BYTES = 1024 * 1024
 const AVATAR_INPUT_ID = 'resume-editor-avatar-input'
 
+type BulletRewriteSection = 'personalSummary' | 'education' | 'workExperience' | 'projectExperience'
+
+interface BulletRewritePreviewState {
+  section: BulletRewriteSection
+  index?: number
+  originalText: string
+  selectionStart: number
+  selectionEnd: number
+  replaceMode: 'selection' | 'full'
+  response: AiBulletRewriteResponse
+}
+
+interface BulletRewriteControls {
+  rewriting: boolean
+  onSelectionChange: (section: BulletRewriteSection, index: number | undefined, start: number, end: number) => void
+  onRewrite: (section: BulletRewriteSection, index: number | undefined, value: string) => void
+}
+
 export function ResumeEditorView({
   draft,
   deferredDraft,
+  exportingDocx,
   expandedModules,
   exportingPdf,
   hiddenSections,
@@ -94,8 +119,8 @@ export function ResumeEditorView({
   onApplyPatch,
   onCreateShare,
   onExpandedModulesChange,
+  onExportDocx,
   onExportPdf,
-  onExportServerPdf,
   onFocusModule,
   onHideSection,
   onDragEnd,
@@ -112,6 +137,9 @@ export function ResumeEditorView({
   const isMobile = useIsMobile()
   const [mobileEditorTab, setMobileEditorTab] = useState<'structure' | 'content' | 'preview'>('content')
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [bulletRewritePreview, setBulletRewritePreview] = useState<BulletRewritePreviewState | null>(null)
+  const [bulletRewriteSelection, setBulletRewriteSelection] = useState<Record<string, { start: number; end: number }>>({})
+  const [rewritingBullet, setRewritingBullet] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [versionTimelineOpen, setVersionTimelineOpen] = useState(false)
   const [shareTitle, setShareTitle] = useState('')
@@ -127,6 +155,98 @@ export function ResumeEditorView({
   const selectedTemplate = resolveResumeTemplate(templates, draft.templateKey)
   const personalInfoModule = orderedModuleDefinitions.find((module) => module.key === 'personal-info')
   const sortableModules = orderedModuleDefinitions.filter((module) => module.key !== 'personal-info')
+
+  const handleBulletRewriteSelectionChange = useCallback((section: BulletRewriteSection, index: number | undefined, start: number, end: number) => {
+    setBulletRewriteSelection((current) => ({ ...current, [bulletRewriteFieldKey(section, index)]: { start, end } }))
+  }, [])
+
+  const handleBulletRewriteRequest = useCallback(async (section: BulletRewriteSection, index: number | undefined, value: string) => {
+    const selection = bulletRewriteSelection[bulletRewriteFieldKey(section, index)] ?? { start: 0, end: 0 }
+    const hasSelection = selection.end > selection.start
+    const text = hasSelection ? value.slice(selection.start, selection.end) : value
+    if (!text.trim()) {
+      void message.warning(t('editor.bulletRewrite.selectLine'))
+      return
+    }
+
+    setRewritingBullet(true)
+    try {
+      const response = await rewriteAiResumeBullet({
+        resumeId: draft.id,
+        text,
+        section,
+        index,
+      })
+      setBulletRewritePreview({
+        section,
+        index,
+        originalText: text,
+        selectionStart: selection.start,
+        selectionEnd: selection.end,
+        replaceMode: hasSelection ? 'selection' : 'full',
+        response,
+      })
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('editor.bulletRewrite.failed'))
+    } finally {
+      setRewritingBullet(false)
+    }
+  }, [bulletRewriteSelection, draft.id, message, t])
+
+  const handleApplyBulletRewrite = useCallback(() => {
+    if (!bulletRewritePreview) {
+      return
+    }
+
+    const { section, index, originalText, selectionStart, selectionEnd, replaceMode, response } = bulletRewritePreview
+    let applied = false
+    onUpdateDraft((next) => {
+      const currentText = section === 'personalSummary'
+        ? next.content.personalSummary
+        : section === 'education'
+          ? next.content.education[index ?? -1]?.description
+        : section === 'workExperience'
+          ? next.content.workExperience[index ?? -1]?.description
+          : next.content.projectExperience[index ?? -1]?.description
+      if (currentText == null) return
+
+      let nextText: string
+      if (replaceMode === 'selection') {
+        const currentSelection = currentText.slice(selectionStart, selectionEnd)
+        if (currentSelection !== originalText) {
+          return
+        }
+        nextText = replaceTextRange(currentText, selectionStart, selectionEnd, response.rewrittenText)
+      } else {
+        if (currentText !== originalText) {
+          return
+        }
+        nextText = normalizeRewrittenBulletLine(currentText, response.rewrittenText)
+      }
+
+      if (section === 'personalSummary') {
+        next.content.personalSummary = nextText
+      } else if (section === 'education') {
+        const target = next.content.education[index ?? -1]
+        if (!target) return
+        target.description = nextText
+      } else if (section === 'workExperience') {
+        const target = next.content.workExperience[index ?? -1]
+        if (!target) return
+        target.description = nextText
+      } else {
+        const target = next.content.projectExperience[index ?? -1]
+        if (!target) return
+        target.description = nextText
+      }
+      applied = true
+    })
+    if (applied) {
+      setBulletRewritePreview(null)
+      return
+    }
+    void message.warning(t('editor.bulletRewrite.changed'))
+  }, [bulletRewritePreview, message, onUpdateDraft, t])
 
   const interviewMenuItems = [
     {
@@ -238,9 +358,10 @@ export function ResumeEditorView({
               {t('editor.share')}
             </Button>
             <DropdownExport
+              exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
+              onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
-              onExportServerPdf={() => void onExportServerPdf()}
             />
           </Space>
 
@@ -248,10 +369,11 @@ export function ResumeEditorView({
             <ResumeScoreButton draft={draft} />
             <MoreActionsMenu
               draftId={draft.id}
+              exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
               interviewMenuItems={interviewMenuItems}
+              onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
-              onExportServerPdf={() => void onExportServerPdf()}
               onOpenShare={openShareModal}
               onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
             />
@@ -356,7 +478,19 @@ export function ResumeEditorView({
                     ) : null,
                     children: (
                       <div id={moduleAnchorId(module.key)}>
-                        {renderModuleContent(module.key, draft, onUpdateDraft, handleAvatarPickerOpen, handleAvatarRemove, t)}
+                        {renderModuleContent(
+                          module.key,
+                          draft,
+                          onUpdateDraft,
+                          handleAvatarPickerOpen,
+                          handleAvatarRemove,
+                          t,
+                          {
+                            rewriting: rewritingBullet,
+                            onSelectionChange: handleBulletRewriteSelectionChange,
+                            onRewrite: handleBulletRewriteRequest,
+                          },
+                        )}
                       </div>
                     ),
                   }
@@ -410,6 +544,37 @@ export function ResumeEditorView({
             />
           ) : null}
         </div>
+      </ResponsiveModal>
+
+      <ResponsiveModal
+        open={bulletRewritePreview !== null}
+        onCancel={() => setBulletRewritePreview(null)}
+        onOk={handleApplyBulletRewrite}
+        okText={t('editor.bulletRewrite.apply')}
+        cancelText={t('editor.bulletRewrite.cancel')}
+        confirmLoading={false}
+        destroyOnHidden
+        title={t('editor.bulletRewrite.previewTitle')}
+        mobileHeight="100dvh"
+      >
+        {bulletRewritePreview ? (
+          <div className="resume-bullet-rewrite-preview">
+            <div className="resume-bullet-rewrite-preview__section">
+              <Text type="secondary">{t('editor.bulletRewrite.originalLabel')}</Text>
+              <MarkdownMessage content={bulletRewritePreview.originalText} />
+            </div>
+            <div className="resume-bullet-rewrite-preview__section">
+              <Text type="secondary">{t('editor.bulletRewrite.previewLabel')}</Text>
+              <MarkdownMessage content={bulletRewritePreview.response.rewrittenText} />
+            </div>
+            <div className="resume-bullet-rewrite-preview__reason">
+              <Text strong>{t('editor.bulletRewrite.rationaleLabel')}</Text>
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {bulletRewritePreview.response.rationale}
+              </Paragraph>
+            </div>
+          </div>
+        ) : null}
       </ResponsiveModal>
 
       <div className="resume-export-source" ref={exportPreviewRef} aria-hidden="true">
@@ -527,38 +692,41 @@ function InterviewMenuButton({ interviewMenuItems }: { interviewMenuItems: Array
 }
 
 function DropdownExport({
+  exportingDocx,
   exportingPdf,
+  onExportDocx,
   onExportPdf,
-  onExportServerPdf,
 }: {
+  exportingDocx: boolean
   exportingPdf: boolean
+  onExportDocx: () => void
   onExportPdf: () => void
-  onExportServerPdf: () => void
 }) {
   const { t } = useTranslation('workspace')
   return (
     <Dropdown
+      trigger={['click']}
       menu={{
         items: [
           {
-            key: 'exportServerPdf',
-            label: t('editor.exportServerPdf'),
-            icon: <DownloadOutlined />,
-            disabled: exportingPdf,
-            onClick: onExportServerPdf,
-          },
-          {
-            key: 'exportQuickPdf',
-            label: t('editor.exportQuickPdf'),
+            key: 'pdf',
+            label: t('editor.exportPdf'),
             icon: <DownloadOutlined />,
             disabled: exportingPdf,
             onClick: onExportPdf,
           },
+          {
+            key: 'docx',
+            label: t('editor.exportWord'),
+            icon: <DownloadOutlined />,
+            disabled: exportingDocx,
+            onClick: onExportDocx,
+          },
         ],
       }}
     >
-      <Button icon={<DownloadOutlined />} loading={exportingPdf}>
-        {t('editor.exportPdf')}
+      <Button icon={<DownloadOutlined />} loading={exportingPdf || exportingDocx}>
+        {t('editor.export')}
       </Button>
     </Dropdown>
   )
@@ -566,18 +734,20 @@ function DropdownExport({
 
 function MoreActionsMenu({
   draftId,
+  exportingDocx,
   exportingPdf,
   interviewMenuItems,
+  onExportDocx,
   onExportPdf,
-  onExportServerPdf,
   onOpenShare,
   onOpenVersionTimeline,
 }: {
   draftId: string
+  exportingDocx: boolean
   exportingPdf: boolean
   interviewMenuItems: Array<{ key: string; label: ReactNode }>
+  onExportDocx: () => void
   onExportPdf: () => void
-  onExportServerPdf: () => void
   onOpenShare: () => void
   onOpenVersionTimeline: () => void
 }) {
@@ -610,23 +780,18 @@ function MoreActionsMenu({
             onClick: onOpenShare,
           },
           {
-            key: 'export',
+            key: 'exportPdf',
             label: t('editor.exportPdf'),
             icon: <DownloadOutlined />,
-            children: [
-              {
-                key: 'exportServerPdf',
-                label: t('editor.exportServerPdf'),
-                disabled: exportingPdf,
-                onClick: onExportServerPdf,
-              },
-              {
-                key: 'exportQuickPdf',
-                label: t('editor.exportQuickPdf'),
-                disabled: exportingPdf,
-                onClick: onExportPdf,
-              },
-            ],
+            disabled: exportingPdf,
+            onClick: onExportPdf,
+          },
+          {
+            key: 'exportWord',
+            label: t('editor.exportWord'),
+            icon: <DownloadOutlined />,
+            disabled: exportingDocx,
+            onClick: onExportDocx,
           },
         ],
       }}
@@ -672,6 +837,10 @@ function SectionGridFullWidth({ children }: { children: ReactNode }) {
   return <div className="resume-editor-section-grid__full">{children}</div>
 }
 
+function bulletRewriteFieldKey(section: BulletRewriteSection, index: number | undefined) {
+  return `${section}:${index ?? 'root'}`
+}
+
 function renderModuleContent(
   moduleKey: ResumeModuleId,
   draft: ResumeDetail,
@@ -679,6 +848,7 @@ function renderModuleContent(
   onAvatarPickerOpen: () => void,
   onAvatarRemove: () => void,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  bulletRewriteControls?: BulletRewriteControls,
 ) {
   if (moduleKey === 'personal-info') {
     return (
@@ -790,6 +960,19 @@ function renderModuleContent(
               next.content.personalSummary = value
             })}
             placeholder={t('modules.summary.placeholder')}
+            onSelectionChange={(start, end) => bulletRewriteControls?.onSelectionChange('personalSummary', undefined, start, end)}
+            toolbarExtra={bulletRewriteControls ? (
+              <Tooltip title={t('editor.bulletRewrite.buttonTitle')}>
+                <Button
+                  size="small"
+                  icon={<RobotOutlined />}
+                  loading={bulletRewriteControls.rewriting}
+                  onClick={() => void bulletRewriteControls.onRewrite('personalSummary', undefined, draft.content.personalSummary)}
+                >
+                  {t('editor.bulletRewrite.buttonLabel')}
+                </Button>
+              </Tooltip>
+            ) : undefined}
           />
         </div>
       )
@@ -798,19 +981,19 @@ function renderModuleContent(
         updateDraft((next) => {
           next.content.education.push({ school: '', degree: '', major: '', startDate: '', endDate: '', description: '' })
         })
-      }, updateDraft, t)
+      }, updateDraft, t, bulletRewriteControls)
     case 'workExperience':
       return renderWorkSection(draft.content.workExperience, () => {
         updateDraft((next) => {
           next.content.workExperience.push({ company: '', role: '', startDate: '', endDate: '', description: '' })
         })
-      }, updateDraft, t)
+      }, updateDraft, t, bulletRewriteControls)
     case 'projectExperience':
       return renderProjectSection(draft.content.projectExperience, () => {
         updateDraft((next) => {
           next.content.projectExperience.push({ name: '', role: '', startDate: '', endDate: '', description: '' })
         })
-      }, updateDraft, t)
+      }, updateDraft, t, bulletRewriteControls)
     case 'skills':
       return renderSkillSection(draft.content.skills, () => {
         updateDraft((next) => {
@@ -839,6 +1022,7 @@ function renderEducationSection(
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  bulletRewriteControls?: BulletRewriteControls,
 ) {
   return renderRepeatableCards(
     items,
@@ -852,7 +1036,27 @@ function renderEducationSection(
         <InputField label={t('modules.education.fields.startDate')} placeholder={t('modules.education.placeholder.startDate')} value={item.startDate} onChange={(value) => updateDraft((next) => { next.content.education[index].startDate = value })} />
         <InputField label={t('modules.education.fields.endDate')} placeholder={t('modules.education.placeholder.endDate')} value={item.endDate} onChange={(value) => updateDraft((next) => { next.content.education[index].endDate = value })} />
         <SectionGridFullWidth>
-          <MarkdownField label={t('modules.education.fields.description')} placeholder={t('modules.education.placeholder.description')} value={item.description} minRows={3} maxRows={8} onChange={(value) => updateDraft((next) => { next.content.education[index].description = value })} />
+          <MarkdownField
+            label={t('modules.education.fields.description')}
+            placeholder={t('modules.education.placeholder.description')}
+            value={item.description}
+            minRows={3}
+            maxRows={8}
+            onChange={(value) => updateDraft((next) => { next.content.education[index].description = value })}
+            onSelectionChange={(start, end) => bulletRewriteControls?.onSelectionChange('education', index, start, end)}
+            toolbarExtra={bulletRewriteControls ? (
+              <Tooltip title={t('editor.bulletRewrite.buttonTitle')}>
+                <Button
+                  size="small"
+                  icon={<RobotOutlined />}
+                  loading={bulletRewriteControls.rewriting}
+                  onClick={() => void bulletRewriteControls.onRewrite('education', index, item.description)}
+                >
+                  {t('editor.bulletRewrite.buttonLabel')}
+                </Button>
+              </Tooltip>
+            ) : undefined}
+          />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -868,6 +1072,7 @@ function renderWorkSection(
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  bulletRewriteControls?: BulletRewriteControls,
 ) {
   return renderRepeatableCards(
     items,
@@ -880,7 +1085,27 @@ function renderWorkSection(
         <InputField label={t('modules.workExperience.fields.startDate')} placeholder={t('modules.workExperience.placeholder.startDate')} value={item.startDate} onChange={(value) => updateDraft((next) => { next.content.workExperience[index].startDate = value })} />
         <InputField label={t('modules.workExperience.fields.endDate')} placeholder={t('modules.workExperience.placeholder.endDate')} value={item.endDate} onChange={(value) => updateDraft((next) => { next.content.workExperience[index].endDate = value })} />
         <SectionGridFullWidth>
-          <MarkdownField label={t('modules.workExperience.fields.description')} placeholder={t('modules.workExperience.placeholder.description')} value={item.description} minRows={4} maxRows={10} onChange={(value) => updateDraft((next) => { next.content.workExperience[index].description = value })} />
+          <MarkdownField
+            label={t('modules.workExperience.fields.description')}
+            placeholder={t('modules.workExperience.placeholder.description')}
+            value={item.description}
+            minRows={4}
+            maxRows={10}
+            onChange={(value) => updateDraft((next) => { next.content.workExperience[index].description = value })}
+            onSelectionChange={(start, end) => bulletRewriteControls?.onSelectionChange('workExperience', index, start, end)}
+            toolbarExtra={bulletRewriteControls ? (
+              <Tooltip title={t('editor.bulletRewrite.buttonTitle')}>
+                <Button
+                  size="small"
+                  icon={<RobotOutlined />}
+                  loading={bulletRewriteControls.rewriting}
+                  onClick={() => void bulletRewriteControls.onRewrite('workExperience', index, item.description)}
+                >
+                  {t('editor.bulletRewrite.buttonLabel')}
+                </Button>
+              </Tooltip>
+            ) : undefined}
+          />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -896,6 +1121,7 @@ function renderProjectSection(
   addItem: () => void,
   updateDraft: (mutator: (next: ResumeDetail) => void) => void,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  bulletRewriteControls?: BulletRewriteControls,
 ) {
   return renderRepeatableCards(
     items,
@@ -908,7 +1134,27 @@ function renderProjectSection(
         <InputField label={t('modules.projectExperience.fields.startDate')} placeholder={t('modules.projectExperience.placeholder.startDate')} value={item.startDate} onChange={(value) => updateDraft((next) => { next.content.projectExperience[index].startDate = value })} />
         <InputField label={t('modules.projectExperience.fields.endDate')} placeholder={t('modules.projectExperience.placeholder.endDate')} value={item.endDate} onChange={(value) => updateDraft((next) => { next.content.projectExperience[index].endDate = value })} />
         <SectionGridFullWidth>
-          <MarkdownField label={t('modules.projectExperience.fields.description')} placeholder={t('modules.projectExperience.placeholder.description')} value={item.description} minRows={4} maxRows={10} onChange={(value) => updateDraft((next) => { next.content.projectExperience[index].description = value })} />
+          <MarkdownField
+            label={t('modules.projectExperience.fields.description')}
+            placeholder={t('modules.projectExperience.placeholder.description')}
+            value={item.description}
+            minRows={4}
+            maxRows={10}
+            onChange={(value) => updateDraft((next) => { next.content.projectExperience[index].description = value })}
+            onSelectionChange={(start, end) => bulletRewriteControls?.onSelectionChange('projectExperience', index, start, end)}
+            toolbarExtra={bulletRewriteControls ? (
+              <Tooltip title={t('editor.bulletRewrite.buttonTitle')}>
+                <Button
+                  size="small"
+                  icon={<RobotOutlined />}
+                  loading={bulletRewriteControls.rewriting}
+                  onClick={() => void bulletRewriteControls.onRewrite('projectExperience', index, item.description)}
+                >
+                  {t('editor.bulletRewrite.buttonLabel')}
+                </Button>
+              </Tooltip>
+            ) : undefined}
+          />
         </SectionGridFullWidth>
       </SectionGrid>
     ),
@@ -1056,14 +1302,18 @@ function MarkdownField({
   maxRows,
   minRows,
   onChange,
+  onSelectionChange,
   placeholder,
+  toolbarExtra,
   value,
 }: {
   label: string
   maxRows: number
   minRows: number
   onChange: (value: string) => void
+  onSelectionChange?: (start: number, end: number) => void
   placeholder: string
+  toolbarExtra?: ReactNode
   value: string
 }) {
   return (
@@ -1075,6 +1325,8 @@ function MarkdownField({
         value={value}
         placeholder={placeholder}
         onChange={onChange}
+        onSelectionChange={onSelectionChange}
+        toolbarExtra={toolbarExtra}
       />
     </div>
   )

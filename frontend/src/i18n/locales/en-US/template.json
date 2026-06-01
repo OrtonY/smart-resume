@@ -71,8 +71,24 @@
       "applyToResume": "Apply to Resume",
       "backToResume": "Back to Resume",
       "createFromTemplate": "Create Resume from Template",
+      "importFromFile": "Import",
       "lastUpdated": "Last updated: {{time}}",
       "lastUpdatedBuiltIn": "Built-in fallback"
+    },
+    "import": {
+      "title": "Import Resume",
+      "description": "Create a new resume from the uploaded file using {{template}}.",
+      "supportedFormats": "Supported formats: PDF, DOCX, TXT.",
+      "confirm": "Import",
+      "note": "Scanned or image-only PDFs are not supported yet.",
+      "dropzone": {
+        "title": "Click or drag a resume file here",
+        "hint": "One file only. The imported resume title will use the file name."
+      },
+      "validation": {
+        "fileRequired": "Please choose a resume file first.",
+        "unsupportedType": "Only PDF, DOCX, and TXT files are supported."
+      }
     },
     "loading": {
       "changeTemplate": "Loading template editor...",
@@ -87,7 +103,9 @@
     },
     "message": {
       "resumeCreated": "Resume created.",
+      "resumeImported": "Resume imported.",
       "createResumeFailed": "Failed to create resume.",
+      "importResumeFailed": "Failed to import resume.",
       "templateCreated": "Template created and saved.",
       "templateUpdated": "Template updated.",
       "templateSaveFailed": "Failed to save template",

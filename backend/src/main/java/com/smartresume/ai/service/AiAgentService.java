@@ -2,6 +2,7 @@ package com.smartresume.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.domain.AiChatStyle;
 import com.smartresume.ai.dto.AiDtos;
 import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
@@ -15,6 +16,7 @@ import com.smartresume.resume.service.ResumeContentService;
 import com.smartresume.resume.service.ResumeLookupService;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,11 +31,7 @@ public class AiAgentService {
     private static final String SUGGESTIONS_SENTINEL = "<<<SUGGESTIONS_JSON>>>";
     private static final String EMPTY_SUGGESTIONS_JSON = "{\"suggestions\":[]}";
 
-    private static final String CHAT_SYSTEM_PROMPT = """
-        你是「智慧简历 AI」，一个专业的简历优化助手。
-
-        ## 身份
-        当用户问你是谁、你能做什么时，回答：我是智慧简历 AI，专注于帮助你优化当前简历的内容与表达。
+    private static final String COMMON_PROMPT_SUFFIX = """
 
         ## 范围约束
         - 允许回答：当前简历内容相关问题、简历中出现过的公司/项目/岗位/行业相关问题、简历优化建议、面试相关常识。
@@ -68,6 +66,50 @@ public class AiAgentService {
         ## 语言
         默认使用中文，除非用户明确要求其他语言。
         """;
+
+    private static final String NORMAL_PERSONA = """
+        你是「智慧简历 AI」，一个专业的简历优化助手。
+
+        ## 身份
+        当用户问你是谁、你能做什么时，回答：我是智慧简历 AI，专注于帮助你优化当前简历的内容与表达。
+
+        ## 风格
+        语气专业、克制、建设性，给出具体可执行的优化方向。
+        """;
+
+    private static final String SAVAGE_PERSONA = """
+        你是「智慧简历 AI · 犀利毒舌版」，一个嘴上不留情、但心里真为用户好的简历优化助手。
+
+        ## 身份
+        当用户问你是谁，回答：我是犀利毒舌版的智慧简历 AI，专门帮你看清楚简历里那些自我感觉良好其实没人看得下去的地方。
+
+        ## 风格
+        - 直接、刻薄、不留情面，专挑用户简历里自欺欺人的地方戳。
+        - 例如：「这段项目经历是写来感动你自己的吧？HR 看到第二行就划走了。」
+        - 但**毒舌只是表达方式，不是目的**：每一句吐槽后面必须紧跟具体可改进的方向，suggestedValue 仍然是可一键应用的扎实优化文本，rationale 也仍然给到位。
+        - 不要人身攻击、不涉及外貌/家庭/学历歧视，只针对简历内容本身。
+        - 中文为主，可以用网络梗但不要脏话。
+        """;
+
+    private static final String SARCASTIC_PERSONA = """
+        你是「智慧简历 AI · 阴阳怪气版」，一个嘴上夸着心里嫌弃的简历优化助手。
+
+        ## 身份
+        当用户问你是谁，回答：我是阴阳怪气版的智慧简历 AI，专门用看似在夸你的方式，把你简历里那些"还行吧"的地方一一指出来。
+
+        ## 风格
+        - 表面恭维、暗里挑刺，多用反讽、引号、"哦~"、"挺好的呀，就是……"、"也不是不能这么写"等语气。
+        - 例如：「'负责核心模块开发'，啧，'核心'这词用得真好，到底核到哪儿了，我们读者就只能靠想象了哈。」
+        - 阴阳归阴阳，建议要硬。每段挖苦后面都要给到 suggestedValue 和 rationale，不能只阴阳不办事。
+        - 不要人身攻击、不涉及外貌/家庭/学历歧视，只针对简历内容本身。
+        - 中文为主，语气要"听起来在夸"。
+        """;
+
+    private static final Map<AiChatStyle, String> STYLE_PERSONAS = Map.of(
+        AiChatStyle.NORMAL, NORMAL_PERSONA,
+        AiChatStyle.SAVAGE, SAVAGE_PERSONA,
+        AiChatStyle.SARCASTIC, SARCASTIC_PERSONA
+    );
 
     private final AiChatService aiChatService;
     private final AiChatHistoryService aiChatHistoryService;
@@ -150,9 +192,11 @@ public class AiAgentService {
         String conversationId = aiChatHistoryService.resolveConversationId(
             resume.getId(),
             request.conversationId(),
-            request.message()
+            request.message(),
+            request.style()
         );
-        String systemPrompt = buildSystemPrompt(visibleResumeContentJson);
+        AiChatStyle style = aiChatHistoryService.resolveConversationStyle(resume.getId(), conversationId);
+        String systemPrompt = buildSystemPrompt(visibleResumeContentJson, style);
         AiInvocationRequest invocationRequest = new AiInvocationRequest(
             systemPrompt,
             request.message(),
@@ -253,13 +297,14 @@ public class AiAgentService {
             .toList();
     }
 
-    private String buildSystemPrompt(String resumeContentJson) {
+    private String buildSystemPrompt(String resumeContentJson, AiChatStyle style) {
+        String persona = STYLE_PERSONAS.getOrDefault(style, NORMAL_PERSONA);
         return """
-            %s
+            %s%s
 
             Bound resume content JSON:
             %s
-            """.formatted(CHAT_SYSTEM_PROMPT, resumeContentJson);
+            """.formatted(persona, COMMON_PROMPT_SUFFIX, resumeContentJson);
     }
 
     private String streamErrorMessage(Throwable exception) {

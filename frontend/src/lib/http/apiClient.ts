@@ -10,13 +10,16 @@ interface ApiEnvelope<T> {
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
   skipAuth?: boolean
+  formData?: boolean
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 export async function request<T>(path: string, options: RequestOptions = {}) {
   const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
+  if (!options.formData) {
+    headers.set('Content-Type', 'application/json')
+  }
   headers.set('Accept-Language', i18n.language)
 
   if (!options.skipAuth) {
@@ -29,7 +32,7 @@ export async function request<T>(path: string, options: RequestOptions = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    body: options.body == null ? undefined : JSON.stringify(options.body),
+    body: options.body == null ? undefined : options.formData ? (options.body as BodyInit) : JSON.stringify(options.body),
   })
 
   const payload = (await response.json()) as ApiEnvelope<T>

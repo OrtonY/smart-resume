@@ -9,7 +9,7 @@ import {
   listManagedResumeTemplates,
   updateResumeTemplate,
 } from '../api/templateCatalogApi'
-import { createResume, getResume, updateResume } from '../api/resumeApi'
+import { createResume, getResume, importResume, updateResume } from '../api/resumeApi'
 import { replaceManagedResumeTemplateCatalogCache } from './useResumeTemplateCatalog'
 import { getLocalizedField, type ManagedResumeTemplateDefinition, type ResumeTemplatePreview, type ResumeTemplateTheme } from '../templateCatalog'
 import type { ResumeDetail } from '../types'
@@ -50,6 +50,7 @@ export function useTemplateGalleryController() {
   const [applyingTemplateKey, setApplyingTemplateKey] = useState<string | null>(null)
   const [deletingTemplateKey, setDeletingTemplateKey] = useState<string | null>(null)
   const [creatingResumeTemplateKey, setCreatingResumeTemplateKey] = useState<string | null>(null)
+  const [importingResumeTemplateKey, setImportingResumeTemplateKey] = useState<string | null>(null)
   const isResumeTemplateChange = Boolean(resumeId)
 
   const selectedTemplate = useMemo(
@@ -197,6 +198,18 @@ export function useTemplateGalleryController() {
     }
   }
 
+  async function handleImportResumeFromTemplate(templateKey: string, file: File) {
+    setImportingResumeTemplateKey(templateKey)
+    try {
+      const detail = await importResume(file, templateKey)
+      void message.success(t('gallery.message.resumeImported'))
+      navigate(`/app/resumes/${detail.id}`)
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('gallery.message.importResumeFailed'))
+    } finally {
+      setImportingResumeTemplateKey(null)
+    }
+  }
   function handleCreateFromCurrent() {
     setSelectionTouched(true)
     setEditorMode('create')
@@ -332,9 +345,11 @@ export function useTemplateGalleryController() {
     handleCancelCreate,
     handleCreateFromCurrent,
     handleCreateResumeFromTemplate,
+    handleImportResumeFromTemplate,
     handleDeleteTemplate,
     handleSaveTemplate,
     handleTemplateSelect,
+    importingResumeTemplateKey,
     isMobile,
     isResumeTemplateChange,
     linkedTemplateName,

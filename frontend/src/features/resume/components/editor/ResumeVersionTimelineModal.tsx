@@ -1,11 +1,13 @@
-import { ArrowLeftOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { App, Button, Card, Descriptions, Empty, Space, Spin, Tag, Timeline, Typography } from 'antd'
+import { ArrowLeftOutlined, CopyOutlined, DeleteOutlined, HistoryOutlined, LinkOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { App, Button, Card, Descriptions, Empty, Popconfirm, Space, Spin, Tag, Timeline, Tooltip, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../../components/shared/ResponsiveModal'
+import { copyToClipboard } from '../../../../lib/copyToClipboard'
 import { useIsMobile } from '../../../../lib/hooks/useIsMobile'
 import {
   createResumeSnapshot,
+  deleteResumeVersion,
   getResumeVersion,
   listResumeVersions,
   restoreResumeFromVersion,
@@ -69,6 +71,7 @@ export function ResumeVersionTimelineModal({
   const [loadingVersionDetail, setLoadingVersionDetail] = useState(false)
   const [creatingSnapshot, setCreatingSnapshot] = useState(false)
   const [restoringVersion, setRestoringVersion] = useState(false)
+  const [deletingVersion, setDeletingVersion] = useState(false)
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false)
 
   const activeSelectedVersion = selectedVersion?.id === selectedVersionId ? selectedVersion : null
@@ -201,6 +204,27 @@ export function ResumeVersionTimelineModal({
     }
   }
 
+  async function handleDeleteVersion() {
+    if (!activeSelectedVersion) {
+      return
+    }
+
+    setDeletingVersion(true)
+    try {
+      await deleteResumeVersion(draft.id, activeSelectedVersion.id)
+      setSelectedVersion(null)
+      if (isMobile) {
+        setMobileView('list')
+      }
+      await loadVersions()
+      void message.success(t('feedback.versionDeleteSuccess'))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('feedback.versionDeleteFailed'))
+    } finally {
+      setDeletingVersion(false)
+    }
+  }
+
   function handleSelectVersion(versionId: string) {
     setSelectedVersionId(versionId)
     if (isMobile) {
@@ -249,16 +273,30 @@ export function ResumeVersionTimelineModal({
       <Empty description={t('versionTimeline.selectVersion')} />
     </Card>
   ) : (
-    <>
+    <div className="resume-version-modal__detail-content">
       <Card bordered={false} className="glass-card">
         <div className="resume-version-modal__summary-head">
           <Space wrap>
             <Tag color="blue">{t('versionTimeline.versionTag', { number: activeSelectedVersion.versionNumber })}</Tag>
             <Tag>{formatDateTime(activeSelectedVersion.createdAt, i18n.language)}</Tag>
           </Space>
-          <Button type="primary" onClick={openRestoreConfirm} disabled={restoringVersion}>
-            {t('versionTimeline.restore')}
-          </Button>
+          <Space wrap>
+            <Button type="primary" onClick={openRestoreConfirm} disabled={restoringVersion || deletingVersion}>
+              {t('versionTimeline.restore')}
+            </Button>
+            <Popconfirm
+              title={t('versionTimeline.deleteConfirmTitle')}
+              description={t('versionTimeline.deleteConfirmDescription')}
+              onConfirm={() => void handleDeleteVersion()}
+              okText={t('versionTimeline.deleteConfirmOk')}
+              cancelText={t('common:actions.cancel')}
+              okButtonProps={{ danger: true }}
+            >
+              <Button danger icon={<DeleteOutlined />} loading={deletingVersion} disabled={restoringVersion}>
+                {t('versionTimeline.delete')}
+              </Button>
+            </Popconfirm>
+          </Space>
         </div>
 
         <Descriptions
@@ -285,6 +323,45 @@ export function ResumeVersionTimelineModal({
         />
       </Card>
 
+      <Card bordered={false} className="glass-card" title={t('versionTimeline.shareLinksTitle')}>
+        {activeSelectedVersion.shareLinks.length === 0 ? (
+          <Empty description={t('versionTimeline.shareLinksEmpty')} />
+        ) : (
+          <div className="resume-version-modal__share-links">
+            {activeSelectedVersion.shareLinks.map((share) => {
+              const fullUrl = `${window.location.origin}${share.sharePath}`
+              const shareAvailable = share.active && !share.invalid
+              return (
+                <div key={share.shareCode} className="resume-version-modal__share-link-row">
+                  <Space direction="vertical" size={4} className="resume-version-modal__share-link-main">
+                    <Space wrap size={[8, 8]}>
+                      <Text strong>{share.title?.trim() ? share.title : t('share.linkUntitled')}</Text>
+                      <Tag icon={<LinkOutlined />} color={shareAvailable ? 'green' : share.invalid ? 'error' : 'default'}>
+                        {share.invalid
+                          ? t('versionTimeline.shareLinkInvalid')
+                          : share.active ? t('versionTimeline.shareLinkActive') : t('versionTimeline.shareLinkInactive')}
+                      </Tag>
+                      <Text type="secondary">{formatDateTime(share.createdAt, i18n.language)}</Text>
+                    </Space>
+                    <a href={fullUrl} target="_blank" rel="noreferrer" className={shareAvailable ? undefined : 'resume-version-modal__share-link--inactive'}>
+                      {fullUrl}
+                    </a>
+                  </Space>
+                  <Tooltip title={t('versionTimeline.copyShareLink')}>
+                    <Button
+                      icon={<CopyOutlined />}
+                      onClick={async () => {
+                        await copyToClipboard(fullUrl)
+                        void message.success(t('share.feedback2.linkCopied'))
+                      }}
+                    />
+                  </Tooltip>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Card>
       <Card bordered={false} className="glass-card" title={t('versionTimeline.diffTitle')}>
         {diffSections.length === 0 ? (
           <Empty description={t('versionTimeline.noDiff')} />
@@ -307,7 +384,7 @@ export function ResumeVersionTimelineModal({
           </div>
         )}
       </Card>
-    </>
+    </div>
   )
 
   return (

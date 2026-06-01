@@ -6,6 +6,8 @@ import type {
   AiChatMessage,
   AiChatEvent,
   AiChatRequest,
+  AiBulletRewriteRequest,
+  AiBulletRewriteResponse,
   AiResumeScoreRequest,
   AiResumeScoreResponse,
   AiConfiguration,
@@ -43,6 +45,13 @@ export async function scoreAiResume(payload: AiResumeScoreRequest) {
   })
 }
 
+export async function rewriteAiResumeBullet(payload: AiBulletRewriteRequest) {
+  return requestJson<AiBulletRewriteResponse>('/api/ai/resume-bullet-rewrite', {
+    method: 'POST',
+    body: payload,
+  })
+}
+
 export async function getPersistedAiResumeScore(resumeId: string) {
   return requestJson<PersistedAiResumeScoreResponse | null>('/api/ai/resumes/' + encodeURIComponent(resumeId) + '/score')
 }
@@ -56,6 +65,14 @@ export function listAiChatMessages(resumeId: string, conversationId: string) {
     '/api/ai/resumes/' + encodeURIComponent(resumeId)
     + '/chat/conversations/' + encodeURIComponent(conversationId)
     + '/messages',
+  )
+}
+
+export function deleteAiChatConversation(resumeId: string, conversationId: string) {
+  return requestJson<void>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/chat/conversations/' + encodeURIComponent(conversationId),
+    { method: 'DELETE' },
   )
 }
 

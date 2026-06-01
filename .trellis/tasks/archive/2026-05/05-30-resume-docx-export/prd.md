@@ -1,0 +1,289 @@
+# brainstorm: resume docx export
+
+## Goal
+
+Add a Word `.docx` export path for resumes so users can download editable, ATS-friendly documents from both the workspace editor and public share page. The export should bypass the current pixel/fixed-page rendering layers and generate OOXML directly from structured resume data.
+
+## What I already know
+
+* Current client PDF export uses `html2canvas` and `jsPDF`, producing a bitmap PDF without document semantics.
+* Current server PDF export uses Playwright `page.pdf()`, producing fixed-layout PDF output without Word paragraph/list/title structure.
+* `.docx` should be generated from `ResumeContentPayload`, not from HTML, PDF, screenshots, or preview pagination slices.
+* Product fidelity target is ATS simplified layout: single column, solid colors, no gradients, no two-column blocks, no color blocks, no avatar.
+* Initial behavior targets the pure-form experience, but the generation logic should be template-independent and should not vary by `templateKey` yet.
+* Backend generation should use Apache POI XWPF; `poi-ooxml 5.5.1` is already expected in backend dependencies.
+* Markdown fields such as `description` and `personalSummary` should be parsed with `commonmark-java` and mapped from the AST to XWPF runs/paragraphs, not rendered through HTML.
+* Workspace editor and public share pages both need a Word export entry; existing single export buttons should become PDF/Word dropdowns where needed.
+* Current branch is `feature/docx-export`, which is a task branch containing `develop`.
+* There is already a local modification in `backend/pom.xml`; it must be preserved and inspected before dependency edits.
+* `backend/pom.xml` already has `commonmark.version=0.24.0` and an `org.commonmark:commonmark` dependency added as a local change.
+* Existing backend PDF export entry is `ExportController.exportResumePdf`, which calls `ResumeService.getResume(...)`, `PdfExportService.exportResumePdf(...)`, then `ExportController.buildPdfResponse(...)`.
+* Existing public share PDF export entry is `ShareController.exportSharePdf`, which reuses `shareService.getPublicShareForExport(...)`, `X-Share-Token`, and `ExportController.buildPdfResponse(...)`.
+* Existing frontend server PDF helper is `frontend/src/features/resume/export/serverPdfExport.ts`; it already sends `Accept-Language`, `X-Resume-Language`, auth token, and share token headers.
+* Existing frontend download utility is `fileDownload.ts`; `createExportFilename` currently accepts only `'pdf'` and should be widened to include `'docx'`.
+* Existing workspace UI has desktop `DropdownExport` but it is currently a plain PDF button; mobile export lives inside `MoreActionsMenu`.
+* Existing share page download currently tries server PDF first and falls back to client screenshot PDF; DOCX should not reuse that fallback.
+* Existing `ExportControllerTest` covers PDF `Content-Disposition` for Unicode and ASCII titles; this should be generalized/extended for DOCX and empty titles.
+
+## Assumptions (temporary)
+
+* The first implementation can ignore template-specific visual styling for DOCX and use one shared ATS layout.
+* Word pagination should be delegated to Word; no manual page breaks or frontend pagination reuse.
+* DOCX generation failure should not fall back to screenshot/PDF conversion.
+* Existing PDF authorization, filename, and response-building contracts should be reused and generalized where possible.
+
+## Open Questions
+
+* Which future-proofing level should the MVP include for DOCX template variants?
+
+## Requirements (evolving)
+
+* Generate `.docx` server-side from `ResumeContentPayload` using Apache POI XWPF.
+* Add markdown-to-DOCX rendering for paragraphs, bullets/numbered lists, emphasis, strong emphasis, and links as readable text.
+* Add authenticated workspace DOCX export and public share DOCX export using existing export/share authorization paths.
+* Add frontend Word download actions in both desktop and mobile workspace export UI.
+* Add frontend Word download action in the public share page.
+* Keep DOCX layout ATS-friendly: single column, editable text, semantic headings/paragraphs/lists.
+* Do not attempt pixel parity with PDF preview.
+* Keep existing PDF behavior intact, including server PDF fallback-to-client PDF on the frontend where it already exists.
+
+## Acceptance Criteria (evolving)
+
+* [ ] Workspace users can download a `.docx` file for a resume from the editor page.
+* [ ] Public share visitors can download a `.docx` file from the share page, including password/token-protected shares.
+* [ ] Generated files open as editable Word documents with selectable text.
+* [ ] Markdown bold, italic, bullet/numbered list, and link text render acceptably in DOCX.
+* [ ] Hidden sections and layout section order are respected.
+* [ ] Empty sections are skipped and `content == null` still produces a minimal valid document.
+* [ ] Backend unit tests verify DOCX round-trip by reading generated bytes with `XWPFDocument`.
+* [ ] Filename `Content-Disposition` behavior remains correct for ASCII, Unicode, and empty titles across PDF and DOCX.
+
+## Definition of Done (team quality bar)
+
+* Tests added/updated (unit/integration where appropriate)
+* Lint / typecheck / CI green
+* Docs/notes updated if behavior changes
+* Rollout/rollback considered if risky
+
+## Out of Scope (explicit)
+
+* Pixel-perfect parity with existing PDF/template previews.
+* HTML/PDF/image to DOCX conversion.
+* Avatar, gradients, two-column layout, color block, and complex visual template reproduction in DOCX.
+* Manual pagination or matching frontend `previewPagination` output.
+* Client-side DOCX fallback.
+
+## Technical Notes
+
+* Branch policy: continue on `feature/docx-export`; do not commit directly to `develop` or `master`, and do not locally merge into `develop`.
+* Candidate backend files: `backend/pom.xml`, export service/controller classes, share controller, backend i18n messages, backend tests under export service/controller packages.
+* Candidate frontend files: resume export helpers, workspace editor/export UI, public share page, workspace/share i18n locale JSON.
+* Need to inspect existing PDF response builder, filename logic, `downloadBlob`/`createExportFilename`, `shareService.getPublicShareForExport`, and frontend export button variants before implementation.
+* Need to preserve Content-Disposition contract: `filename` ASCII fallback plus UTF-8 `filename*`, with extension-specific fallback such as `resume.docx`.
+* Magic values such as A4 dimensions, margins, fonts, media type, and file extension should be local constants rather than repeated inline literals.
+* Existing backend tests to extend/reference: `backend/src/test/java/com/smartresume/export/controller/ExportControllerTest.java`, `PdfExportServiceTest`, and `PdfDocumentRendererTest`.
+* Existing backend messages: `error.export.notAvailable` only covers PDF/Chromium; add DOCX-specific generation failure key in both message bundles.
+* Existing frontend i18n namespaces: workspace export text under `workspace.json` (`editor`, `feedback`), share download text under `share.json` (`page`).
+* Data-flow contract: `ResumeContentPayload` / layout metadata -> `DocxExportService` -> POI `XWPFDocument` -> byte[] -> HTTP response -> frontend blob download.
+
+## Research Notes
+
+### What similar tools do
+
+* Treat editable DOCX export as a semantic document generation pipeline rather than a visual screenshot/export pipeline.
+* Use the existing structured resume model as the source of truth and map known markdown constructs to Word primitives.
+
+### Constraints from our repo/project
+
+* Backend is feature-oriented Spring Boot; new services should live under `com.smartresume.export.service`.
+* Controllers should keep feature-local mappings and reuse common response-building logic where possible.
+* Frontend uses Ant Design, TypeScript, and `react-i18next`; all new visible text must be localized in both `zh-CN` and `en-US`.
+* Mobile export entry must remain available through the existing mobile actions menu.
+
+### Feasible approaches here
+
+**Approach A: One ATS DOCX writer with small extension seams** (Recommended)
+
+* How it works: implement a single template-independent DOCX writer now, with constants and method boundaries that make future style variants possible without introducing a template registry yet.
+* Pros: lowest risk, matches confirmed product decision, avoids speculative architecture, keeps tests focused.
+* Cons: future template-specific DOCX styling will require introducing a strategy/variant layer later.
+
+**Approach B: Strategy interface from day one**
+
+* How it works: introduce `DocxTemplateWriter` or equivalent now, route `templateKey` through a registry, but only ship one ATS implementation.
+* Pros: makes future template-specific output explicit immediately.
+* Cons: more files and abstractions before there is a second implementation; higher chance of unused indirection.
+
+**Approach C: Mirror PDF templates visually**
+
+* How it works: attempt to map template themes/layouts into DOCX styling.
+* Pros: closer visual continuity with PDF/preview.
+* Cons: conflicts with ATS simplified decision and increases risk of brittle Word layout behavior; not recommended for MVP.
+
+## Original User Description (verbatim)
+
+```text
+简历 DOCX 导出功能
+  
+ Context（背景与目标）
+
+ 当前项目支持两种导出，但都到不了 docx：
+ - 客户端 pdfExport.ts：html2canvas → jsPDF，产物是位图，没有文本结构。
+ - 服务端 PdfDocumentRenderer：Playwright page.pdf()，产物是固定布局 PDF，无段落/标题语义。
+
+ docx（Word）需要的是流式语义结构（标题/段落/列表/样式），与"像素/固定页面"正交。因此任何"从 HTML/PDF/图片转 docx"的路线都不可行或严重失真。
+
+ 正路：绕开渲染层，从结构化简历数据 ResumeContentPayload 用 Apache POI (XWPF) 直接生成 OOXML。这是与现有 PDF 管线共享数据源、但完全独立的第二条管线。
+
+ 已确认的产品决策：
+ 1. 保真度 = ATS 简化排版（单栏、纯色、无渐变/双栏/色块/头像）。
+ 2. 首发只针对 pure-form 体验，但生成逻辑与模板无关（统一按结构化数据生成单栏文档，templateKey 暂不影响排版）。
+ 3. 生成位置 = 后端 Apache POI（poi-ooxml 5.5.1 已在依赖中）。
+ 4. description/personalSummary 是 markdown，引入 commonmark-java，遍历 AST 映射到 XWPF，绝不渲染成 HTML。
+ 5. 前端入口 = 工作区编辑页 + 公开分享页都做，现有单个导出按钮改为下拉（PDF / Word）。
+
+ 预期结果：用户在编辑页和分享页都能下载结构化、可编辑、ATS 友好的 .docx；分页交给 Word 自己流式排版（彻底甩开前端那套 JS 测量分页算法）。
+
+ ---
+ 核心设计原则
+
+ - 数据 → 文档，全程只碰 ResumeContentPayload 和 commonmark AST，不碰 HTML、不碰前端预览的 PageSlice。
+ - 不手动插分页符：只设 A4 页面尺寸 + 页边距，让 Word 自动分页；section 标题用 setKeepNext(true) 防孤行。
+ - 对称复用现有 PDF 导出的 Controller/鉴权/文件名逻辑，不重写。
+
+ ---
+ 后端改动（主体）
+
+ 1. 依赖（backend/pom.xml）
+
+ 新增 commonmark（property + dependency），版本用 0.24.0（落地时可升 0.28.0，注意核对 OrderedList 的 API 名 getMarkerStartNumber()）：
+ <commonmark.version>0.24.0</commonmark.version>
+ <dependency>
+   <groupId>org.commonmark</groupId><artifactId>commonmark</artifactId>
+   <version>${commonmark.version}</version>
+ </dependency>
+
+ 2. 新增三个类（backend/.../export/service/）
+
+ ┌───────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+ │            类             │                                                                   职责                                                                    │
+ ├───────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+ │ MarkdownToDocxRenderer    │ 给定 XWPFDocument + markdown，用 Parser.parse() 得 AST，AbstractVisitor 遍历追加段落/run。无状态、单独可测。坑最多，独立。                │
+ ├───────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+ │ DocxResumeWriter +        │ 封装 POI 排版原语：页面设置、姓名/联系行、section 标题、item 标题行、字体。                                                               │
+ │ DocxFonts                 │                                                                                                                                           │
+ ├───────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+ │ DocxExportService         │ 业务编排：exportResumeDocx(ResumeDetailResponse, languageTag) → section 顺序解析、空值过滤、i18n 标题、装配 XWPFDocument、doc.write(out)  │
+ │ (@Service)                │ 返回 byte[]。无需 isAvailable 守卫、无需头像处理（ATS 不放头像）。                                                                        │
+ └───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ 3. POI 关键技术点（易错处，已验证方案）
+
+ - 页面 A4：CTSectPr/CTPageSz/CTPageMar，A4 = 11906×16838 twips，边距 1080 twips；addNewPgSz/PgMar 前用 isSet*() 判空，尺寸用 BigInteger.valueOf(...)。
+ - 中文字体：必须显式 run.setFontFamily(name, XWPFRun.FontCharRange.eastAsia)（如"微软雅黑"），否则跨机器渲染不一致；ascii/hAnsi 设拉丁字体。
+ - item 标题行右侧日期：用右对齐 tab stop（CTTabStop setPos=页宽-左右边距≈9746 twips + run.addTab()），不用表格（表格破坏 ATS 解析）。日期用 en-dash –
+ 连接，任一为空只显示一侧。
+ - markdown 列表：用 "• " / "n. " 前缀 + setIndentationLeft 缩进，不用 XWPFNumbering（API 繁琐易错）。
+ - 加粗/斜体：visitor 进入 StrongEmphasis/Emphasis 置状态，Text 节点建 run 时读状态。
+ - 链接：首发降级为 文本 (url) 纯文本。
+ - ListItem 内的 Paragraph 复用当前段落（currentPara==null 守卫），否则 bullet 与正文裂成两段。
+ - XWPFDocument 用 try-with-resources 关闭。
+
+ 4. section 顺序 / 空值（DocxExportService）
+
+ - 默认顺序：education, summary, workExperience, projectExperience, skills, honors, certificates；按 layout.sectionOrder 排序、补齐缺失 key、跳过 hiddenSections。注意
+ "summary" key 映射到 personalSummary 字段。
+ - 空 list / 空字符串的 section 不渲染（连标题一起跳过）；content==null 仍输出含 title 的最小文档不报错。
+ - 纯文本 description 无需特判：commonmark 自动包成 Document>Paragraph>Text。
+
+ 5. Controller 接入（复用现有，不重写）
+
+ - export/controller/ExportController.java：把现有 buildPdfResponse 的主体抽成私有 buildResponse(bytes, title, mediaType, ext)，新增 public static
+ buildDocxResponse(...)（mediaType = application/vnd.openxmlformats-officedocument.wordprocessingml.document，ext = .docx）。注意 toAsciiFilename 第 90 行 fallback 硬编码
+ .pdf，泛化时参数化扩展名。新增 @GetMapping("/docx")，数据源 resumeService.getResume(resumeId)。
+ - share/controller/ShareController.java：对称新增 @GetMapping("/public/shares/{shareCode}/export/docx")，复用 shareService.getPublicShareForExport(shareCode, shareToken)
+ 鉴权（X-Share-Token），调 ExportController.buildDocxResponse。两个 controller 构造器注入 DocxExportService。
+
+ 6. 后端 i18n（messages.properties / messages_en.properties）
+
+ 新增 error.export.docxGenerationFailed（docx 本地生成失败时；与现有 error.export.notAvailable 风格一致）。
+
+ 7. 测试（backend/src/test/.../export/service/）
+
+ - DocxExportServiceTest：往返测试——生成 byte[] 后用 new XWPFDocument(new ByteArrayInputStream(bytes)) 读回，getParagraphs().map(getText) 用 AssertJ contains
+ 断言（不要精确相等，同段 run 文本会拼接）。覆盖：姓名+联系行、markdown bullet/加粗、空 section 跳过、hiddenSections 生效、content==null 不抛异常。
+ - MarkdownToDocxRendererTest：render(doc, "**x** _y_") 后断言 run 的 isBold()/isItalic()。
+ - 测试风格参考 PdfExportServiceTest（纯构造、无 Spring 容器）。
+
+ ---
+ 前端改动
+
+ 1. 导出函数（frontend/src/features/resume/export/）
+
+ - 新增 docxExport.ts：exportResumeServerDocx(resumeId, title) 和 exportShareDocx(shareCode, title, shareToken?)，复制 serverPdfExport.ts 的 downloadPdf 模式（fetch → blob →
+ downloadBlob），路径换成 /exports/docx 和 /export/docx。
+ - fileDownload.ts 的 createExportFilename 已支持传扩展名（PDF 在用），docx 传 'docx' 即可。
+ - 无客户端兜底：docx 失败即提示重试（html2canvas 无法产出 docx，这是预期限制）。
+
+ 2. UI（按钮改下拉）
+
+ - 编辑页：ResumeEditorView 的 DropdownExport（桌面）改为含「导出 PDF / 导出 Word」两项的下拉；MoreActionsMenu（移动）加「导出 Word」菜单项。
+ - WorkspacePage.tsx：在 handleExportPdf（约 363-386）旁新增 handleExportDocx，调 exportResumeServerDocx，复用 exportingPdf/message 提示模式（或新增 exportingDocx state）。
+ - PublicSharePage.tsx：下载按钮（约 180）改下拉，新增 handleDownloadDocx 调 exportShareDocx（约 146-167 旁）。
+
+ 3. 前端 i18n
+
+ - i18n/locales/{zh-CN,en-US}/workspace.json：新增 editor.exportWord、feedback.exportDocxStart、feedback.exportDocxFailed。
+ - .../share.json：新增 page.downloadWord 等。
+
+ ---
+ 关键约束与权衡（实现者须知）
+
+ - docx 不会和 PDF 像素一致：渐变/双栏/色块/头像在 ATS 简化策略下一律不还原——这是产品决策，非缺陷。
+ - 分页由 Word 决定，不要尝试复刻前端 previewPagination.ts 的分页结果。
+ - docx 导出无降级兜底，与 PDF 的「服务端失败→客户端截图」不同。
+
+ ---
+ Verification（验证）
+
+ 1. 后端单测：cd backend && ./mvnw test -Dtest=DocxExportServiceTest,MarkdownToDocxRendererTest。
+ 2. 端到端（编辑页）：启动前后端 → 编辑页点「导出 Word」→ 用 Word / WPS / macOS Pages 打开，确认：文字可选中可编辑、中文字体正常、markdown 加粗/项目符号正确、section
+ 顺序与隐藏符合设置、内容超过一页时 Word 自动分页且无错位。
+ 3. 端到端（分享页）：打开公开分享链接（含带密码的）→ 下载 Word，确认鉴权正常、内容正确。
+ 4. 边界：空简历 / 隐藏全部 section / 超长 description 多页 / 纯文本（非 markdown）description，均不报错且排版合理。
+
+     3. 端到端（分享页）：打开公开分享链接（含带密码的）→ 下载 Word，确认鉴权正常、内容正确。
+     4. 边界：空简历 / 隐藏全部 section / 超长 description 多页 / 纯文本（非 markdown）description，均不报错且排版合理。
+
+     ---
+     实施顺序
+
+     1. pom.xml 加 commonmark。
+     2. MarkdownToDocxRenderer + 单测。
+     3. DocxResumeWriter + DocxFonts。
+     4. DocxExportService + 往返测试。
+     5. ExportController 泛化 + /docx 端点。
+     6. ShareController + /export/docx 端点。
+     7. 后端 i18n。
+     8. 前端 docxExport.ts。
+     9. 前端 UI 下拉 + 两页 handler。
+     10. 前端 i18n。
+
+     ---
+     Trellis 规范约束（开发须遵循，来自 .trellis/spec）
+
+     - Git 分支：从 develop 新建任务分支（如 feature/docx-export）后再写代码；不直接在 develop 提交；完成后 push + gh pr create --base develop（rebase merge）。
+     - 禁止重复魔法值（backend/quality）：A4 尺寸/边距、字体名、docx MediaType、.docx 扩展名等做成 feature-local 常量（如 export 模块内常量类或 DocxResumeWriter
+     静态常量），不内联重复。
+     - Content-Disposition 契约（backend/quality 专项场景）：泛化 buildResponse 必须保持 filename(仅 ASCII) + filename*(UTF-8 percent-encoded，含 .docx)，空标题回退
+     resume.docx；分享与普通导出共用同一 builder。必须新增 Unicode 标题与 ASCII 标题的 Content-Disposition 单元测试。
+     - 目录/命名（backend/directory）：新类放 export/service（对称 PdfExportService）；Service 以 Service 结尾；controller 保持 feature-local mapping，不硬编码 /api。
+     - 前端 i18n（frontend/quality 必守）：所有新文案走 t()，同时写入 i18n/locales/zh-CN/{workspace,share}.json 与 en-US/...；key 用点分路径（如 editor.exportWord）。完成后用
+     grep -rn ">[^<{]*[一-鿿]" frontend/src --include="*.tsx" 自检无硬编码中文。
+     - 前端移动端（frontend/quality 必守）：导出入口在桌面 DropdownExport 与移动 MoreActionsMenu 两个变体都加「导出 Word」；触摸目标 ≥40px；不得新增会影响 PDF 导出源 DOM 的
+     @media 规则。
+     - 先搜索再写（guides/code-reuse）：复用 buildPdfResponse
+     文件名逻辑、downloadBlob/createExportFilename（fileDownload.ts）、shareService.getPublicShareForExport，不复制粘贴。
+     - 跨层 round-trip（guides/cross-layer）：数据流 ResumeContentPayload → POI → byte[] → HTTP → blob 下载；在 DTO→POI 边界处理 null/空，用"生成→XWPFDocument 读回"测试验证
+     round-trip。
+```

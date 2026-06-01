@@ -14,6 +14,8 @@ export interface AiConfigurationRequest {
   modelName: string
 }
 
+export type AiChatStyle = 'NORMAL' | 'SAVAGE' | 'SARCASTIC'
+
 export interface AiChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
@@ -24,6 +26,7 @@ export interface AiChatRequest {
   message: string
   conversationId?: string
   resumeId: string
+  style?: AiChatStyle
 }
 
 export interface AiChatEvent {
@@ -69,6 +72,7 @@ export interface AiResumeSuggestionPlan {
 export interface AiChatConversation {
   conversationId: string
   title: string
+  style: AiChatStyle
   createdAt: string
   updatedAt: string
 }
@@ -76,6 +80,18 @@ export interface AiChatConversation {
 export interface AiResumeScoreRequest {
   jobDescription?: string
   resumeId: string
+}
+
+export interface AiBulletRewriteRequest {
+  resumeId: string
+  text: string
+  section: 'personalSummary' | 'education' | 'workExperience' | 'projectExperience'
+  index?: number
+}
+
+export interface AiBulletRewriteResponse {
+  rewrittenText: string
+  rationale: string
 }
 
 export interface AiResumeScoreSuggestionGroup {

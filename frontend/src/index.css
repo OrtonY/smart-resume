@@ -713,6 +713,29 @@ a {
   grid-column: 1 / -1;
 }
 
+.resume-bullet-rewrite-preview {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-bullet-rewrite-preview__section {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resume-bullet-rewrite-preview__section .markdown-message {
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.resume-bullet-rewrite-preview__reason {
+  display: grid;
+  gap: 4px;
+}
+
 .resume-editor-long-textarea.ant-input {
   white-space: pre;
   overflow-x: auto;
@@ -878,10 +901,50 @@ a {
   place-items: center;
 }
 
+.resume-version-modal__detail-content {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.resume-version-modal__detail-content .glass-card {
+  min-width: 0;
+}
 .resume-version-modal__descriptions .ant-descriptions-item-label {
   width: 112px;
 }
 
+.resume-version-modal__share-links {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.resume-version-modal__share-link-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.resume-version-modal__share-link-main {
+  min-width: 0;
+}
+
+.resume-version-modal__share-link-row a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.resume-version-modal__share-link--inactive {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
 .resume-version-modal__diff-list {
   display: grid;
   gap: 12px;
@@ -2453,6 +2516,13 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   align-items: center;
 }
 
+.interview-card__status-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .interview-card p {
   max-height: 72px;
   margin: 0;
@@ -3671,6 +3741,64 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     width: 100%;
   }
 
+
+  .resume-version-modal__detail-content {
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .resume-version-modal__detail-content .ant-card-body,
+  .resume-version-modal__detail-content .ant-card-head {
+    padding-inline: 12px;
+  }
+
+  .resume-version-modal__detail-content .ant-card-head-title {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-container {
+    display: block;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-label,
+  .resume-version-modal__descriptions .ant-descriptions-item-content {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .resume-version-modal__descriptions .ant-descriptions-item-content {
+    padding-top: 4px;
+  }
+
+  .resume-version-modal__share-link-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .resume-version-modal__share-link-row .ant-btn {
+    width: 100%;
+  }
+
+  .resume-version-modal__share-link-main,
+  .resume-version-modal__share-link-main .ant-space-item,
+  .resume-version-modal__share-link-main .ant-typography {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .resume-version-modal__share-link-main .ant-space {
+    row-gap: 6px;
+  }
+
+  .resume-version-modal__diff-card .ant-card-head-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   /* Auth */
   .auth-shell {
     padding: 16px;
@@ -4322,4 +4450,51 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .ai-answer-modal__score-value {
     font-size: 24px;
   }
+}
+
+/* Application card list (mobile) */
+.application-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.application-card-item {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.application-card-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.application-card-item__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.application-card-item__title .ant-typography {
+  max-width: 100%;
+}
+
+.application-card-item__meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.application-card-item__actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  padding-top: 8px;
 }

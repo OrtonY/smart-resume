@@ -7,6 +7,7 @@
   "actions": {
     "templateGallery": "模板目录",
     "interviewCenter": "面试中心",
+    "applicationCenter": "投递台",
     "recycleBin": "回收桶",
     "lockWorkspace": "锁定工作区",
     "backToList": "返回列表",
@@ -33,7 +34,11 @@
   "card": {
     "restore": "恢复",
     "copy": "复制",
-    "delete": "删除"
+    "delete": "删除",
+    "purge": "彻底删除",
+    "purgeConfirmTitle": "彻底删除这份简历？",
+    "purgeConfirmDescription": "这会清除简历以及关联的对话、面试、版本、分享和评分，且无法恢复。",
+    "purgeConfirmOk": "彻底删除"
   },
   "copyDialog": {
     "title": "复制简历",
@@ -58,13 +63,20 @@
     "moveToBinSuccess": "简历已移至回收站。",
     "copySuccess": "简历已复制。",
     "restoreSuccess": "简历已恢复。",
+    "purgeSuccess": "简历已彻底删除。",
     "exportPdfStart": "PDF 已开始下载。",
     "exportPdfFailed": "导出失败，请重试。",
+    "exportDocxStart": "Word 已开始下载。",
+    "exportDocxFailed": "Word 导出失败，请重试。",
+    "exportDocxStyleNotice": "Word 版为语义排版导出，颜色和局部样式可能与 PDF 预览不同。",
+    "downloadDocxStyleNotice": "Word 版为语义排版导出，颜色和局部样式可能与 PDF 预览不同。",
     "exportPreviewMissing": "未找到可导出的简历预览。",
     "shareCopiedLatest": "最新版本分享链接已复制。",
     "shareCopiedSnapshot": "快照分享链接已复制。",
     "loadShareLinksFailed": "无法加载分享链接。",
-    "refreshShareLinksFailed": "无法刷新分享链接。"
+    "refreshShareLinksFailed": "无法刷新分享链接。",
+    "versionDeleteSuccess": "快照已删除，关联的分享链接已失效。",
+    "versionDeleteFailed": "删除快照失败。"
   },
   "saveState": {
     "saving": "保存中...",
@@ -85,7 +97,9 @@
       "related": "相关面试"
     },
     "share": "分享",
+    "export": "导出",
     "exportPdf": "导出 PDF",
+    "exportWord": "导出 Word",
     "exportServerPdf": "高质量导出",
     "exportQuickPdf": "快速导出（截图）",
     "moduleCount": "{{count}} 个模块",
@@ -106,15 +120,28 @@
     "tabStructure": "结构",
     "tabContent": "内容",
     "moreActions": "更多",
-    "moreActionsAria": "更多操作"
+    "moreActionsAria": "更多操作",
+    "bulletRewrite": {
+      "buttonLabel": "AI 改写",
+      "buttonTitle": "改写选中内容；未选中时改写整段",
+      "previewTitle": "确认 AI 改写",
+      "originalLabel": "原文",
+      "previewLabel": "改写预览",
+      "rationaleLabel": "改写理由",
+      "apply": "应用改写",
+      "cancel": "取消",
+      "selectLine": "请先输入要改写的内容。",
+      "changed": "这段内容在生成改写后已变更，请重新发起 AI 改写。",
+      "failed": "AI 改写失败，请重试。"
+    }
   },
   "versionTimeline": {
     "title": "版本历史",
     "subtitle": "时间线与差异对比",
     "description": "可以手动创建快照，查看早期版本，并与当前草稿对比，也可以将快照直接恢复到当前简历。",
-    "mobileListTitle": "\u9009\u62e9\u7248\u672c",
-    "detailTitle": "\u7248\u672c\u8be6\u60c5",
-    "backToList": "\u8fd4\u56de\u7248\u672c\u5217\u8868",
+    "mobileListTitle": "选择版本",
+    "detailTitle": "版本详情",
+    "backToList": "返回版本列表",
     "refresh": "刷新",
     "createSnapshot": "创建快照",
     "empty": "还没有快照，可以在大改之前先保存一个版本。",
@@ -147,7 +174,17 @@
       "currentOnlyEntries_other": "当前草稿新增了 {{count}} 条条目。",
       "versionOnlyEntries_one": "所选版本比当前多 {{count}} 条条目。",
       "versionOnlyEntries_other": "所选版本比当前多 {{count}} 条条目。"
-    }
+    },
+    "delete": "删除快照",
+    "deleteConfirmTitle": "确定删除此快照？",
+    "deleteConfirmDescription": "删除后，关联的快照分享链接将失效。",
+    "deleteConfirmOk": "删除",
+    "shareLinksTitle": "关联分享链接",
+    "shareLinksEmpty": "此快照暂无关联分享链接。",
+    "shareLinkActive": "可访问",
+    "shareLinkInactive": "已禁用",
+    "shareLinkInvalid": "已失效",
+    "copyShareLink": "复制分享链接"
   },
   "modules": {
     "personalInfo": {
@@ -343,7 +380,7 @@
     "modeLatest": "最新版本",
     "modeSnapshot": "当前快照",
     "modeLatestHint": "链接始终展示简历的最新内容",
-    "modeSnapshotHint": "优先分享最近一次快照；如果不存在快照则自动创建一个，后续编辑不会影响该分享链接",
+    "modeSnapshotHint": "分享时会比对当前简历与最近一次快照；标题、内容、布局和模板未变更时复用最近快照，变更后自动创建新快照。后续编辑不会影响该分享链接。",
     "passwordLabel": "密码保护",
     "passwordPlaceholder": "设置访问密码",
     "passwordHint": "开启后，访问者需输入密码才能查看",
@@ -363,12 +400,14 @@
     "modeTagSnapshot": "快照",
     "passwordProtected": "密码保护",
     "disabled": "已禁用",
+    "invalid": "已失效",
     "viewCount": "{{count}} 次访问",
     "createdAt": "创建: {{value}}",
     "lastAccessedAt": "最近访问: {{value}}",
     "noVisits": "暂无访问",
     "toggleEnable": "启用",
     "toggleDisable": "禁用",
+    "invalidEnableTooltip": "关联快照已删除，无法启用",
     "deleteConfirmTitle": "确定删除此分享链接？",
     "deleteConfirmDescription": "删除后访问记录也会一并清除，无法恢复。",
     "deleteOk": "删除",

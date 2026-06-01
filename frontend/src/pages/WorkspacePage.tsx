@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
+  SendOutlined,
 } from '@ant-design/icons'
 import {
   App,
@@ -46,11 +47,13 @@ import {
   listDeletedResumes,
   listResumes,
   listShares,
+  purgeResume,
   restoreResume,
   toggleShare,
   updateResume,
 } from '../features/resume/api/resumeApi'
 import { RESUMES_PER_PAGE } from '../features/resume/constants'
+import { exportResumeServerDocx } from '../features/resume/export/docxExport'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -116,6 +119,7 @@ export function WorkspacePage({
   const [loadingResumeList, setLoadingResumeList] = useState(true)
   const [loadingResumeDetail, setLoadingResumeDetail] = useState(false)
   const [saveState, setSaveState] = useState<ResumeEditorSaveState>('idle')
+  const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
@@ -338,6 +342,12 @@ export function WorkspacePage({
     await loadResumeList()
   }
 
+  async function handlePurgeResume(targetResumeId: string) {
+    await purgeResume(targetResumeId)
+    void message.success(t('feedback.purgeSuccess'))
+    await loadResumeList()
+  }
+
   async function handleRestoredVersion(restoredResume: ResumeDetail) {
     applyResumeDetail(restoredResume)
   }
@@ -359,11 +369,16 @@ export function WorkspacePage({
 
     setExportingPdf(true)
     try {
-      if (!previewRoot) {
-        throw new Error(t('feedback.exportPreviewMissing'))
+      try {
+        await exportResumeServerPdf(resumeId, draft.title)
+      } catch {
+        if (!previewRoot) {
+          throw new Error(t('feedback.exportPreviewMissing'))
+        }
+
+        await exportResumePdf(previewRoot, draft.title)
       }
 
-      await exportResumePdf(previewRoot, draft.title)
       void message.success(t('feedback.exportPdfStart'))
     } catch (error) {
       void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
@@ -372,19 +387,20 @@ export function WorkspacePage({
     }
   }
 
-  async function handleExportServerPdf() {
-    if (!resumeId || !draft || exportingPdf) {
+  async function handleExportDocx() {
+    if (!resumeId || !draft || exportingDocx) {
       return
     }
 
-    setExportingPdf(true)
+    setExportingDocx(true)
     try {
-      await exportResumeServerPdf(resumeId, draft.title)
-      void message.success(t('feedback.exportPdfStart'))
+      await exportResumeServerDocx(resumeId, draft.title)
+      void message.success(t('feedback.exportDocxStart'))
+      void message.info(t('feedback.exportDocxStyleNotice'))
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : t('feedback.exportPdfFailed'))
+      void message.error(error instanceof Error ? error.message : t('feedback.exportDocxFailed'))
     } finally {
-      setExportingPdf(false)
+      setExportingDocx(false)
     }
   }
 
@@ -504,6 +520,7 @@ export function WorkspacePage({
       <ResumeEditorView
         draft={draft}
         deferredDraft={deferredDraft}
+        exportingDocx={exportingDocx}
         expandedModules={expandedModules}
         exportingPdf={exportingPdf}
         hiddenSections={hiddenSections}
@@ -512,8 +529,8 @@ export function WorkspacePage({
         onCreateShare={handleCreateShare}
         onDragEnd={handleDragEnd}
         onExpandedModulesChange={handleExpandedModulesChange}
+        onExportDocx={handleExportDocx}
         onExportPdf={handleExportPdf}
-        onExportServerPdf={handleExportServerPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}
         onRestoredVersion={handleRestoredVersion}
@@ -532,6 +549,7 @@ export function WorkspacePage({
       <RecycleBinView
         loadingResumeList={loadingResumeList}
         onPageChange={handlePageChange}
+        onPurgeResume={handlePurgeResume}
         onRestoreResume={handleRestoreResume}
         resumePage={resumePage}
         resumeList={resumeList}
@@ -665,6 +683,11 @@ function ResumeListView({
                         {t('actions.interviewCenter')}
                       </Button>
                     </Link>
+                    <Link to="/app/applications" onClick={() => setMobileMenuOpen(false)}>
+                      <Button icon={<SendOutlined />} block>
+                        {t('actions.applicationCenter')}
+                      </Button>
+                    </Link>
                     <AiConfigurationButton />
                     <Link to="/app/recycle-bin" onClick={() => setMobileMenuOpen(false)}>
                       <Button icon={<InboxOutlined />} block>
@@ -685,6 +708,9 @@ function ResumeListView({
                 </Link>
                 <Link to="/app/interviews">
                   <Button icon={<MessageOutlined />}>{t('actions.interviewCenter')}</Button>
+                </Link>
+                <Link to="/app/applications">
+                  <Button icon={<SendOutlined />}>{t('actions.applicationCenter')}</Button>
                 </Link>
                 <AiConfigurationButton />
                 <Link to="/app/recycle-bin">
@@ -746,6 +772,7 @@ function ResumeListView({
 function RecycleBinView({
   loadingResumeList,
   onPageChange,
+  onPurgeResume,
   onRestoreResume,
   resumePage,
   resumeList,
@@ -754,6 +781,7 @@ function RecycleBinView({
 }: {
   loadingResumeList: boolean
   onPageChange: (page: number) => Promise<void>
+  onPurgeResume: (resumeId: string) => Promise<void>
   onRestoreResume: (resumeId: string) => Promise<void>
   resumePage: ResumePage | null
   resumeList: ResumeSummary[]
@@ -792,6 +820,7 @@ function RecycleBinView({
           emptySlotKeyPrefix="recycle-empty-slot"
           loading={loadingResumeList}
           onPageChange={onPageChange}
+          onPurgeResume={onPurgeResume}
           onRestoreResume={onRestoreResume}
           previewDetailsByResumeId={previewDetailsByResumeId}
           resumeList={resumeList}
@@ -896,9 +925,10 @@ function ShareLinksModal({
           {shareLinks.map((share) => {
             const fullUrl = `${window.location.origin}${share.sharePath}`
             const isExpanded = expandedShare === share.shareCode
+            const shareAvailable = share.active && !share.invalid
 
             return (
-              <div key={share.shareCode} className="share-row" style={{ flexDirection: 'column', alignItems: 'stretch', opacity: share.active ? 1 : 0.6 }}>
+              <div key={share.shareCode} className="share-row" style={{ flexDirection: 'column', alignItems: 'stretch', opacity: shareAvailable ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Space direction="vertical" size={4}>
                     <Space wrap>
@@ -907,10 +937,11 @@ function ShareLinksModal({
                         {share.shareMode === 'LATEST' ? t('share.modeTagLatest') : t('share.modeTagSnapshot')}
                       </Tag>
                       {share.hasPassword ? <Tag icon={<LockOutlined />} color="red">{t('share.passwordProtected')}</Tag> : null}
-                      {!share.active ? <Tag color="default">{t('share.disabled')}</Tag> : null}
+                      {share.invalid ? <Tag color="error">{t('share.invalid')}</Tag> : null}
+                      {!share.active && !share.invalid ? <Tag color="default">{t('share.disabled')}</Tag> : null}
                       <Tag>{t('share.viewCount', { count: share.viewCount })}</Tag>
                     </Space>
-                    <Text copyable={{ text: fullUrl }} style={share.active ? undefined : { textDecoration: 'line-through' }}>
+                    <Text copyable={{ text: fullUrl }} style={shareAvailable ? undefined : { textDecoration: 'line-through' }}>
                       {fullUrl}
                     </Text>
                     <Space size={16}>
@@ -931,10 +962,11 @@ function ShareLinksModal({
                     <Button size="small" onClick={() => void handleToggleLogs(share)}>
                       {isExpanded ? t('common:actions.collapse') : t('common:actions.details')}
                     </Button>
-                    <Tooltip title={share.active ? t('share.toggleDisable') : t('share.toggleEnable')}>
+                    <Tooltip title={share.invalid ? t('share.invalidEnableTooltip') : share.active ? t('share.toggleDisable') : t('share.toggleEnable')}>
                       <Button
                         size="small"
                         icon={share.active ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                        disabled={share.invalid}
                         onClick={() => void handleToggleActive(share)}
                       />
                     </Tooltip>

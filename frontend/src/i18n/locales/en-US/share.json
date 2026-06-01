@@ -3,8 +3,14 @@
     "loading": "Loading shared resume...",
     "loadFailed": "Failed to load shared resume.",
     "verifyFailed": "Password verification failed",
+    "download": "Download",
     "downloadPdf": "Download PDF",
-    "downloadFailed": "Download failed. Please try again."
+    "downloadWord": "Download Word",
+    "downloadFailed": "Download failed. Please try again.",
+    "downloadStarted": "PDF download started.",
+    "downloadDocxFailed": "Word download failed. Please try again.",
+    "downloadDocxStarted": "Word download started.",
+    "downloadDocxStyleNotice": "The Word export uses semantic layout, so colors and some styling may differ from the PDF preview."
   },
   "passwordGate": {
     "title": "This share link requires a password",
@@ -14,7 +20,7 @@
     "verifyButton": "Verify"
   },
   "notFound": {
-    "title": "Share link unavailable",
-    "subtitle": "This public share may have expired or no longer exists."
+    "title": "Link expired",
+    "subtitle": "Link expired"
   }
 }

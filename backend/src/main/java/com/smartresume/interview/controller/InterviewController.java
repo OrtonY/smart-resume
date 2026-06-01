@@ -15,6 +15,7 @@ import com.smartresume.interview.service.InterviewReportService;
 import com.smartresume.interview.service.InterviewService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +60,12 @@ public class InterviewController {
     @GetMapping("/{interviewId}")
     public ApiResponse<InterviewDetailResponse> getInterview(@PathVariable String interviewId) {
         return ApiResponse.success(interviewService.getInterview(interviewId));
+    }
+
+    @DeleteMapping("/{interviewId}")
+    public ApiResponse<Void> deleteInterview(@PathVariable String interviewId) {
+        interviewService.deleteInterview(interviewId);
+        return ApiResponse.success(null, "Interview deleted");
     }
 
     @PostMapping("/{interviewId}/pause")

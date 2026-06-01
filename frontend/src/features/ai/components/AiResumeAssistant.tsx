@@ -1,10 +1,11 @@
-import { HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined, CloudDownloadOutlined } from '@ant-design/icons'
-import { App, Button, Card, Empty, Form, Input, List, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { CloudDownloadOutlined, DeleteOutlined, HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined } from '@ant-design/icons'
+import { App, Button, Card, Empty, Form, Input, List, Popconfirm, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import {
   completeAiChat,
+  deleteAiChatConversation,
   getAiConfiguration,
   getAiVendors,
   listAiChatConversations,
@@ -19,6 +20,7 @@ import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
 import type {
   AiChatConversation,
   AiChatMessage,
+  AiChatStyle,
   AiConfigurationRequest,
   AiResumeSuggestion,
   AiResumeSuggestionStatus,
@@ -128,10 +130,12 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
   const [input, setInput] = useState('')
   const [conversations, setConversations] = useState<AiChatConversation[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [pendingStyle, setPendingStyle] = useState<AiChatStyle>('NORMAL')
   const [messages, setMessages] = useState<AiChatUiMessage[]>([])
   const [suggestionStatus, setSuggestionStatus] = useState<Record<string, SuggestionStatus>>({})
   const [loadingConversations, setLoadingConversations] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
+  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null)
   const [streaming, setStreaming] = useState(false)
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat')
   const [position, setPosition] = useState({ x: window.innerWidth - 96, y: window.innerHeight - 112 })
@@ -167,6 +171,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     setSelectedConversationId(null)
     setMessages([])
     setSuggestionStatus({})
+    setPendingStyle('NORMAL')
     conversationIdRef.current = null
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
@@ -396,6 +401,22 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     [message, persistSuggestionStatuses, suggestionStatus, t],
   )
 
+  const styleLabel = useCallback((style: AiChatStyle | undefined) => {
+    switch (style) {
+      case 'SAVAGE':
+        return t('assistant.styleSavage')
+      case 'SARCASTIC':
+        return t('assistant.styleSarcastic')
+      default:
+        return t('assistant.styleNormal')
+    }
+  }, [t])
+
+  const selectedConversation = useMemo(
+    () => conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
+    [conversations, selectedConversationId],
+  )
+
   async function handleSend() {
     const trimmed = input.trim()
     if (!trimmed || streaming) {
@@ -439,6 +460,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
         message: trimmed,
         conversationId: selectedConversationId ?? undefined,
         resumeId: draft.id,
+        style: selectedConversationId ? undefined : pendingStyle,
       }, (event) => {
         receivedAnyEvent = true
         if (event.type === 'error') {
@@ -477,6 +499,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
             message: trimmed,
             conversationId: selectedConversationId ?? undefined,
             resumeId: draft.id,
+            style: selectedConversationId ? undefined : pendingStyle,
           })
           const suggestions = parseSuggestionPlan(response.suggestionJson)
           activeConversationId = response.conversationId || activeConversationId
@@ -523,6 +546,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     conversationIdRef.current = null
     setMessages([])
     setSuggestionStatus({})
+    setPendingStyle('NORMAL')
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
     lastMessageCountRef.current = 0
@@ -537,6 +561,31 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     setSuggestionStatus({})
     setActiveTab('chat')
     shouldAutoScrollRef.current = true
+  }
+
+  async function handleDeleteConversation(conversationId: string) {
+    if (streaming || deletingConversationId) {
+      return
+    }
+
+    setDeletingConversationId(conversationId)
+    try {
+      await deleteAiChatConversation(draft.id, conversationId)
+      const items = await listAiChatConversations(draft.id)
+      setConversations(items)
+      if (selectedConversationId === conversationId) {
+        setSelectedConversationId(null)
+        conversationIdRef.current = null
+        setMessages([])
+        setSuggestionStatus({})
+        lastMessageCountRef.current = 0
+      }
+      void message.success(t('assistant.deleteHistorySuccess'))
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('assistant.deleteHistoryFailed'))
+    } finally {
+      setDeletingConversationId(null)
+    }
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
@@ -617,15 +666,30 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                 { label: <span><HistoryOutlined /> {t('assistant.tabHistory')}</span>, value: 'history' },
               ]}
             />
-            <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
-              {t('assistant.newChat')}
-            </Button>
+            <Space size={8}>
+              <Select
+                value={pendingStyle}
+                onChange={(value) => setPendingStyle(value)}
+                disabled={!!selectedConversationId || streaming}
+                style={{ width: 130 }}
+                options={[
+                  { label: t('assistant.styleNormal'), value: 'NORMAL' },
+                  { label: t('assistant.styleSavage'), value: 'SAVAGE' },
+                  { label: t('assistant.styleSarcastic'), value: 'SARCASTIC' },
+                ]}
+              />
+              <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
+                {t('assistant.newChat')}
+              </Button>
+            </Space>
           </div>
 
           <div className="ai-chat-context">
             <Tag color="blue">{t('assistant.boundResume')}</Tag>
             <Text strong>{draft.title}</Text>
             {selectedConversationId ? <Tag color="default">{t('assistant.continuingChat')}</Tag> : <Tag color="green">{t('assistant.newChatTag')}</Tag>}
+            <Tag color="purple">{t('assistant.styleLabel', { style: styleLabel(selectedConversation?.style ?? pendingStyle) })}</Tag>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('assistant.retentionHint')}</Text>
           </div>
 
           {activeTab === 'history' ? (
@@ -637,10 +701,33 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                 renderItem={(item) => (
                   <List.Item
                     className={item.conversationId === selectedConversationId ? 'is-active' : ''}
+                    actions={[
+                      <Popconfirm
+                        key="delete"
+                        title={t('assistant.deleteHistoryConfirmTitle')}
+                        description={t('assistant.deleteHistoryConfirmDescription')}
+                        okText={t('assistant.deleteHistoryConfirmOk')}
+                        cancelText={t('common:actions.cancel')}
+                        okButtonProps={{ danger: true }}
+                        onConfirm={(event) => {
+                          event?.stopPropagation()
+                          void handleDeleteConversation(item.conversationId)
+                        }}
+                      >
+                        <Button
+                          danger
+                          disabled={streaming}
+                          icon={<DeleteOutlined />}
+                          loading={deletingConversationId === item.conversationId}
+                          size="small"
+                          onClick={(event) => event.stopPropagation()}
+                        />
+                      </Popconfirm>,
+                    ]}
                     onClick={() => selectConversation(item.conversationId)}
                   >
                     <List.Item.Meta
-                      title={item.title}
+                      title={<span>{item.title} {item.style && item.style !== 'NORMAL' ? <Tag color="purple" style={{ marginLeft: 4 }}>{styleLabel(item.style)}</Tag> : null}</span>}
                       description={new Date(item.updatedAt).toLocaleString()}
                     />
                   </List.Item>

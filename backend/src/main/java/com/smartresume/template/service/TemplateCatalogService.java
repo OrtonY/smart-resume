@@ -99,10 +99,7 @@ public class TemplateCatalogService {
     @Transactional
     public void deleteTemplate(String templateKey) {
         ResumeTemplateEntity entity = requireCurrentUserCustomTemplate(templateKey);
-        entity.setDeleted(true);
-        entity.setDeletedAt(LocalDateTime.now());
-        entity.setUpdatedAt(entity.getDeletedAt());
-        resumeTemplateMapper.update(entity);
+        resumeTemplateMapper.deleteById(entity.getKey());
     }
 
     @Transactional

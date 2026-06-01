@@ -26,6 +26,17 @@ export function createResume(payload: { title: string; templateKey: string }) {
   })
 }
 
+export function importResume(file: File, templateKey: string) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('templateKey', templateKey)
+  return request<ResumeDetail>('/api/resumes/import', {
+    method: 'POST',
+    body: formData,
+    formData: true,
+  })
+}
+
 export function copyResume(resumeId: string, payload: { title: string }) {
   return request<ResumeDetail>(`/api/resumes/${resumeId}/copy`, {
     method: 'POST',
@@ -59,6 +70,12 @@ export function restoreResume(resumeId: string) {
   })
 }
 
+export function purgeResume(resumeId: string) {
+  return request<void>(`/api/resumes/${resumeId}/purge`, {
+    method: 'DELETE',
+  })
+}
+
 export function createResumeSnapshot(resumeId: string) {
   return request<ResumeVersionSummary>(`/api/resumes/${resumeId}/versions`, {
     method: 'POST',
@@ -79,6 +96,11 @@ export function restoreResumeFromVersion(resumeId: string, versionId: string) {
   })
 }
 
+export function deleteResumeVersion(resumeId: string, versionId: string) {
+  return request<void>(`/api/resumes/${resumeId}/versions/${versionId}`, {
+    method: 'DELETE',
+  })
+}
 export function createShare(resumeId: string, title: string, mode: ShareMode, password?: string) {
   return request<ShareLink>(`/api/resumes/${resumeId}/shares`, {
     method: 'POST',

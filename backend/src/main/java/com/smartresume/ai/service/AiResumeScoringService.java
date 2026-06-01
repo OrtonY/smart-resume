@@ -2,6 +2,8 @@ package com.smartresume.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteRequest;
+import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.domain.AiResumeScoreEntity;
 import com.smartresume.ai.domain.table.AiResumeScoreEntityTableDef;
@@ -45,6 +47,22 @@ public class AiResumeScoringService {
         Default to Chinese for all text content.
         """;
 
+    private static final String BULLET_REWRITE_SYSTEM_PROMPT = """
+        You are a professional resume text rewrite assistant.
+        Rewrite exactly the single resume text span provided by the user.
+
+        Rules:
+        - Only improve the text span provided by the user.
+        - Preserve the original meaning and facts.
+        - Preserve Markdown style when the input is Markdown.
+        - Output valid JSON only.
+        - The JSON must contain rewrittenText and rationale.
+        - rewrittenText must be directly replaceable in the original field.
+        - If the input is a single Markdown bullet line, rewrittenText should also be a single Markdown bullet line.
+        - rationale must be one short sentence.
+        - Default to Chinese for all text content unless the input is clearly English.
+        """;
+
     private final AiChatService aiChatService;
     private final ResumeLookupService resumeLookupService;
     private final ResumeContentService resumeContentService;
@@ -63,6 +81,24 @@ public class AiResumeScoringService {
         this.resumeContentService = resumeContentService;
         this.aiResumeScoreMapper = aiResumeScoreMapper;
         this.objectMapper = objectMapper;
+    }
+
+    public AiBulletRewriteResponse rewriteBullet(AiBulletRewriteRequest request) {
+        long userId = CurrentUserContext.requireUserId();
+        ResumeEntity resumeEntity = resumeLookupService.requireResume(request.resumeId(), userId);
+        String resumeId = resumeEntity.getId();
+        String visibleResumeContentJson = resumeContentService.buildAiVisibleContentJson(resumeEntity);
+
+        String conversationId = AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_BULLET_REWRITE);
+        String userMessage = buildBulletRewriteUserMessage(request.text(), request.section(), request.index(), visibleResumeContentJson);
+
+        AiInvocationRequest invocationRequest = new AiInvocationRequest(
+            BULLET_REWRITE_SYSTEM_PROMPT,
+            userMessage,
+            conversationId
+        );
+
+        return aiChatService.callStructured(invocationRequest, AiBulletRewriteResponse.class);
     }
 
     public AiResumeScoreResponse scoreResume(AiResumeScoreRequest request) {
@@ -123,6 +159,25 @@ public class AiResumeScoringService {
             sb.append("\n\nTarget Job Description:\n").append(jobDescription);
         }
 
+        return sb.toString();
+    }
+
+    private String buildBulletRewriteUserMessage(
+        String text,
+        String section,
+        Integer index,
+        String resumeContentJson
+    ) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Rewrite this resume text span:\n");
+        sb.append("Text:\n").append(text).append('\n');
+        if (section != null && !section.isBlank()) {
+            sb.append("Section: ").append(section).append('\n');
+        }
+        if (index != null) {
+            sb.append("Index: ").append(index).append('\n');
+        }
+        sb.append("\nResume content JSON:\n").append(resumeContentJson);
         return sb.toString();
     }
 

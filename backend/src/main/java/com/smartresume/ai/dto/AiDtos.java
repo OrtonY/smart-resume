@@ -55,7 +55,8 @@ public final class AiDtos {
         String message,
         String conversationId,
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
-        String resumeId
+        String resumeId,
+        String style
     ) {
     }
 
@@ -63,6 +64,22 @@ public final class AiDtos {
         String jobDescription,
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String resumeId
+    ) {
+    }
+
+    public record AiBulletRewriteRequest(
+        @NotBlank(message = "{validation.ai.resumeIdRequired}")
+        String resumeId,
+        @NotBlank(message = "{validation.ai.bulletTextRequired}")
+        String text,
+        String section,
+        Integer index
+    ) {
+    }
+
+    public record AiBulletRewriteResponse(
+        String rewrittenText,
+        String rationale
     ) {
     }
 
@@ -106,6 +123,7 @@ public final class AiDtos {
     public record AiChatConversation(
         String conversationId,
         String title,
+        String style,
         String createdAt,
         String updatedAt
     ) {

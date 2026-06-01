@@ -1,22 +1,28 @@
-import { FileAddOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Space, Tag, Typography } from 'antd'
+import { FileAddOutlined, InboxOutlined, ImportOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Space, Tag, Typography, Upload, type UploadFile } from 'antd'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ResponsiveModal } from '../../../../components/shared/ResponsiveModal'
+import { RESUME_IMPORT_ACCEPT, RESUME_IMPORT_ALLOWED_EXTENSIONS, RESUME_IMPORT_MODAL_WIDTH } from '../../constants'
 import { ResumePreview } from '../ResumePreview'
 import { getLocalizedField, type ManagedResumeTemplateDefinition } from '../../templateCatalog'
 import { layoutLabel } from '../../templateGalleryUtils'
 import type { ResumeDetail } from '../../types'
 
+const { Dragger } = Upload
 const { Paragraph, Text, Title } = Typography
 
 export function TemplateGalleryPreviewPanel({
   applyingTemplateKey,
   canApplyTemplate,
   creatingResumeTemplateKey,
+  importingResumeTemplateKey,
   loadingResume,
   locale,
   onApplyTemplateToResume,
   onBackToResume,
   onCreateResumeFromTemplate,
+  onImportResumeFromTemplate,
   previewResume,
   previewTemplate,
   resume,
@@ -26,11 +32,13 @@ export function TemplateGalleryPreviewPanel({
   applyingTemplateKey: string | null
   canApplyTemplate: boolean
   creatingResumeTemplateKey: string | null
+  importingResumeTemplateKey: string | null
   loadingResume: boolean
   locale: string
   onApplyTemplateToResume: () => void
   onBackToResume: () => void
   onCreateResumeFromTemplate: (templateKey: string) => void
+  onImportResumeFromTemplate: (templateKey: string, file: File) => void
   previewResume: Pick<ResumeDetail, 'title' | 'templateKey' | 'content' | 'layout'>
   previewTemplate: ManagedResumeTemplateDefinition
   resume: ResumeDetail | null
@@ -38,6 +46,61 @@ export function TemplateGalleryPreviewPanel({
   selectedTemplate: ManagedResumeTemplateDefinition
 }) {
   const { t } = useTranslation('template')
+  const [importOpen, setImportOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const uploadFileList = useMemo<UploadFile[]>(() => {
+    if (!selectedFile) {
+      return []
+    }
+    return [{
+      uid: selectedFile.name,
+      name: selectedFile.name,
+      status: 'done',
+      size: selectedFile.size,
+      type: selectedFile.type,
+    }]
+  }, [selectedFile])
+
+  const openImportModal = () => {
+    setLocalError(null)
+    setSelectedFile(null)
+    setImportOpen(true)
+  }
+
+  const closeImportModal = () => {
+    if (importingResumeTemplateKey === previewTemplate.key) {
+      return
+    }
+    setImportOpen(false)
+    setLocalError(null)
+    setSelectedFile(null)
+  }
+
+  const handleBeforeUpload = (file: File) => {
+    const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? '' : ''
+    if (!RESUME_IMPORT_ALLOWED_EXTENSIONS.includes(extension as (typeof RESUME_IMPORT_ALLOWED_EXTENSIONS)[number])) {
+      setLocalError(t('gallery.import.validation.unsupportedType'))
+      return Upload.LIST_IGNORE
+    }
+    setSelectedFile(file)
+    setLocalError(null)
+    return false
+  }
+
+  const handleRemove = () => {
+    setSelectedFile(null)
+    setLocalError(null)
+  }
+
+  const handleConfirmImport = () => {
+    if (!selectedFile) {
+      setLocalError(t('gallery.import.validation.fileRequired'))
+      return
+    }
+    onImportResumeFromTemplate(previewTemplate.key, selectedFile)
+  }
 
   return (
     <div className="template-gallery-preview">
@@ -81,14 +144,23 @@ export function TemplateGalleryPreviewPanel({
                   <Button onClick={onBackToResume}>{t('gallery.preview.backToResume')}</Button>
                 </>
               ) : (
-                <Button
-                  type="primary"
-                  icon={<FileAddOutlined />}
-                  onClick={() => onCreateResumeFromTemplate(previewTemplate.key)}
-                  loading={creatingResumeTemplateKey === previewTemplate.key}
-                >
-                  {t('gallery.preview.createFromTemplate')}
-                </Button>
+                <>
+                  <Button
+                    type="primary"
+                    icon={<FileAddOutlined />}
+                    onClick={() => onCreateResumeFromTemplate(previewTemplate.key)}
+                    loading={creatingResumeTemplateKey === previewTemplate.key}
+                  >
+                    {t('gallery.preview.createFromTemplate')}
+                  </Button>
+                  <Button
+                    icon={<ImportOutlined />}
+                    onClick={openImportModal}
+                    loading={importingResumeTemplateKey === previewTemplate.key}
+                  >
+                    {t('gallery.preview.importFromFile')}
+                  </Button>
+                </>
               )}
               <Text type="secondary">
                 {t('gallery.preview.lastUpdated', {
@@ -110,6 +182,41 @@ export function TemplateGalleryPreviewPanel({
           />
         </Space>
       </Card>
+
+      <ResponsiveModal
+        open={importOpen}
+        onCancel={closeImportModal}
+        onOk={handleConfirmImport}
+        title={t('gallery.import.title')}
+        okText={t('gallery.import.confirm')}
+        cancelText={t('common:actions.cancel')}
+        confirmLoading={importingResumeTemplateKey === previewTemplate.key}
+        width={RESUME_IMPORT_MODAL_WIDTH}
+        destroyOnHidden
+      >
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+            {t('gallery.import.description', { template: getLocalizedField(previewTemplate.name, locale) })}
+          </Paragraph>
+          <Alert type="info" showIcon message={t('gallery.import.supportedFormats')} />
+          {localError ? <Alert type="warning" showIcon message={localError} /> : null}
+          <Dragger
+            accept={RESUME_IMPORT_ACCEPT}
+            maxCount={1}
+            multiple={false}
+            beforeUpload={handleBeforeUpload}
+            onRemove={handleRemove}
+            fileList={uploadFileList}
+          >
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">{t('gallery.import.dropzone.title')}</p>
+            <p className="ant-upload-hint">{t('gallery.import.dropzone.hint')}</p>
+          </Dragger>
+          <Text type="secondary">{t('gallery.import.note')}</Text>
+        </Space>
+      </ResponsiveModal>
     </div>
   )
 }
