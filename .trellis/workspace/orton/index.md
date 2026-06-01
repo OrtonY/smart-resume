@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 66
+- **Total Sessions**: 67
 - **Last Active**: 2026-06-01
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~240 | Active |
+| `journal-2.md` | ~273 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 67 | 2026-06-01 | Release v1.1.2 | `acab376` | `codex/finish-release-1-1-2` |
 | 66 | 2026-06-01 | Optimize DOCX resume export layout | `537a0c9` | `codex/optimize-docx-export-format` |
 | 65 | 2026-05-31 | Resume text rewrite finish | `242b709` | `codex/bullet-ai-rewrite` |
 | 64 | 2026-05-31 | Resume DOCX export | `6dbc695` | `feature/docx-export` |

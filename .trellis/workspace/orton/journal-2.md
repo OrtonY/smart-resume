@@ -238,3 +238,36 @@ Compared exported PDF and DOCX samples, then fixed DOCX masthead layout, avatar 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 67: Release v1.1.2
+
+**Date**: 2026-06-01
+**Task**: Release v1.1.2
+**Branch**: `codex/finish-release-1-1-2`
+
+### Summary
+
+Released Smart Resume v1.1.2: bumped frontend/backend versions, merged release PRs, created tag v1.1.2, and published GitHub Release with backend-1.1.2.jar.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `acab376` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
