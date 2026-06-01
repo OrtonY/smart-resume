@@ -304,3 +304,36 @@ Added JSON import/export for resumes, including lightweight JSON export from vis
 ### Next Steps
 
 - None - task complete
+
+
+## Session 69: Resume translation workflow
+
+**Date**: 2026-06-01
+**Task**: Resume translation workflow
+**Branch**: `codex/resume-translation`
+
+### Summary
+
+Implemented editor-driven Chinese/English resume translation with backend AI structured output, copy/overwrite flows, conservative normalization, avatar stripping for AI prompts, tests, and code-spec updates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b8b1d25` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
