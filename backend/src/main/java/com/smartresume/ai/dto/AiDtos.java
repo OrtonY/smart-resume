@@ -83,6 +83,18 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiResumeTranslationRequest(
+        @NotBlank(message = "{validation.ai.translationLanguageRequired}")
+        String targetLanguage
+    ) {
+    }
+
+    public record AiResumeTranslationResponse(
+        String targetLanguage,
+        ResumeContentPayload content
+    ) {
+    }
+
     public record AiResumeContext(
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String id,

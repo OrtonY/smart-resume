@@ -4,6 +4,7 @@ import {
   DownloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  GlobalOutlined,
   HistoryOutlined,
   HolderOutlined,
   MessageOutlined,
@@ -40,7 +41,7 @@ import { MarkdownMessage } from '../../../../lib/markdown/MarkdownMessage'
 import { rewriteAiResumeBullet } from '../../../ai/api/aiApi'
 import { AiResumeAssistant } from '../../../ai/components/AiResumeAssistant'
 import { ResumeScoreButton } from '../../../ai/components/ResumeScoreButton'
-import type { AiBulletRewriteResponse, AiResumeSuggestion } from '../../../ai/types'
+import type { AiBulletRewriteResponse, AiResumeSuggestion, AiResumeTranslationMode, AiResumeTranslationTarget } from '../../../ai/types'
 import { normalizeRewrittenBulletLine, replaceTextRange } from '../../markdown/bulletLine'
 import { resolveResumeTemplate, type ResumeTemplateDefinition } from '../../templateCatalog'
 import type {
@@ -81,11 +82,13 @@ interface ResumeEditorViewProps {
   onDragEnd: (event: DragEndEvent) => void
   onRestoredVersion: (resume: ResumeDetail) => Promise<void> | void
   onShowSection: (sectionKey: ResumeSectionKey) => void
+  onTranslateResume: (targetLanguage: AiResumeTranslationTarget, mode: AiResumeTranslationMode) => Promise<void>
   onUpdateDraft: (mutator: (next: ResumeDetail) => void) => void
   orderedModuleDefinitions: ResumeModuleDefinition[]
   saveState: ResumeEditorSaveState
   sectionOrder: ResumeSectionKey[]
   templates: ResumeTemplateDefinition[]
+  translatingResume: boolean
 }
 
 const MAX_AVATAR_FILE_SIZE_BYTES = 1024 * 1024
@@ -128,11 +131,13 @@ export function ResumeEditorView({
   onDragEnd,
   onRestoredVersion,
   onShowSection,
+  onTranslateResume,
   onUpdateDraft,
   orderedModuleDefinitions,
   saveState,
   sectionOrder,
   templates,
+  translatingResume,
 }: ResumeEditorViewProps) {
   const { t } = useTranslation('workspace')
   const { message } = App.useApp()
@@ -144,6 +149,9 @@ export function ResumeEditorView({
   const [rewritingBullet, setRewritingBullet] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [versionTimelineOpen, setVersionTimelineOpen] = useState(false)
+  const [translationModalOpen, setTranslationModalOpen] = useState(false)
+  const [translationTarget, setTranslationTarget] = useState<AiResumeTranslationTarget>('ENGLISH')
+  const [translationMode, setTranslationMode] = useState<AiResumeTranslationMode>('copy')
   const [shareTitle, setShareTitle] = useState('')
   const [shareMode, setShareMode] = useState<ShareMode>('LATEST')
   const [sharePasswordEnabled, setSharePasswordEnabled] = useState(false)
@@ -269,6 +277,15 @@ export function ResumeEditorView({
     setSharePassword('')
   }
 
+  const handleTranslationConfirm = useCallback(async () => {
+    try {
+      await onTranslateResume(translationTarget, translationMode)
+      setTranslationModalOpen(false)
+    } catch {
+      // The page-level handler owns localized error feedback.
+    }
+  }, [onTranslateResume, translationMode, translationTarget])
+
   const handleAvatarPickerOpen = useCallback(() => {
     document.getElementById(AVATAR_INPUT_ID)?.click()
   }, [])
@@ -351,6 +368,9 @@ export function ResumeEditorView({
             <Link to={`/app/templates?resumeId=${draft.id}`}>
               <Button>{t('editor.modifyTemplate')}</Button>
             </Link>
+            <Button icon={<GlobalOutlined />} loading={translatingResume} onClick={() => setTranslationModalOpen(true)}>
+              {t('editor.translation.button')}
+            </Button>
             <InterviewMenuButton interviewMenuItems={interviewMenuItems} />
             <ResumeScoreButton draft={draft} />
             <Button icon={<HistoryOutlined />} onClick={() => setVersionTimelineOpen(true)}>
@@ -379,7 +399,9 @@ export function ResumeEditorView({
               onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
               onOpenShare={openShareModal}
+              onOpenTranslation={() => setTranslationModalOpen(true)}
               onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
+              translatingResume={translatingResume}
             />
           </Space>
         </div>
@@ -674,6 +696,48 @@ export function ResumeEditorView({
         </div>
       </ResponsiveModal>
 
+      <ResponsiveModal
+        open={translationModalOpen}
+        title={t('editor.translation.title')}
+        onCancel={() => setTranslationModalOpen(false)}
+        onOk={() => void handleTranslationConfirm()}
+        okText={t('editor.translation.okText')}
+        cancelText={t('editor.translation.cancelText')}
+        confirmLoading={translatingResume}
+        destroyOnHidden
+      >
+        <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 20 }}>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('editor.translation.targetLabel')}</Text>
+            <Radio.Group
+              value={translationTarget}
+              onChange={(event) => setTranslationTarget(event.target.value)}
+            >
+              <Radio.Button value="ENGLISH">{t('editor.translation.english')}</Radio.Button>
+              <Radio.Button value="CHINESE">{t('editor.translation.chinese')}</Radio.Button>
+            </Radio.Group>
+          </div>
+
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('editor.translation.modeLabel')}</Text>
+            <Radio.Group
+              value={translationMode}
+              onChange={(event) => setTranslationMode(event.target.value)}
+            >
+              <Radio.Button value="copy">{t('editor.translation.modeCopy')}</Radio.Button>
+              <Radio.Button value="overwrite">{t('editor.translation.modeOverwrite')}</Radio.Button>
+            </Radio.Group>
+            <div style={{ marginTop: 4 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {translationMode === 'copy'
+                  ? t('editor.translation.modeCopyHint')
+                  : t('editor.translation.modeOverwriteHint')}
+              </Text>
+            </div>
+          </div>
+        </div>
+      </ResponsiveModal>
+
       <ResumeVersionTimelineModal
         draft={draft}
         open={versionTimelineOpen}
@@ -753,7 +817,9 @@ function MoreActionsMenu({
   onExportDocx,
   onExportPdf,
   onOpenShare,
+  onOpenTranslation,
   onOpenVersionTimeline,
+  translatingResume,
 }: {
   draftId: string
   exportingDocx: boolean
@@ -763,7 +829,9 @@ function MoreActionsMenu({
   onExportDocx: () => void
   onExportPdf: () => void
   onOpenShare: () => void
+  onOpenTranslation: () => void
   onOpenVersionTimeline: () => void
+  translatingResume: boolean
 }) {
   const { t } = useTranslation('workspace')
   return (
@@ -780,6 +848,13 @@ function MoreActionsMenu({
             label: t('editor.interview'),
             icon: <MessageOutlined />,
             children: interviewMenuItems,
+          },
+          {
+            key: 'translation',
+            label: t('editor.translation.button'),
+            icon: <GlobalOutlined />,
+            disabled: translatingResume,
+            onClick: onOpenTranslation,
           },
           {
             key: 'versionTimeline',
