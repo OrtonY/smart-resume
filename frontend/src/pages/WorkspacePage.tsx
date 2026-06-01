@@ -54,6 +54,7 @@ import {
 } from '../features/resume/api/resumeApi'
 import { RESUMES_PER_PAGE } from '../features/resume/constants'
 import { exportResumeServerDocx } from '../features/resume/export/docxExport'
+import { exportResumeJson } from '../features/resume/export/jsonExport'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -404,6 +405,15 @@ export function WorkspacePage({
     }
   }
 
+  function handleExportJson() {
+    if (!draft) {
+      return
+    }
+
+    exportResumeJson(draft)
+    void message.success(t('feedback.exportJsonStart'))
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) {
@@ -530,6 +540,7 @@ export function WorkspacePage({
         onDragEnd={handleDragEnd}
         onExpandedModulesChange={handleExpandedModulesChange}
         onExportDocx={handleExportDocx}
+        onExportJson={handleExportJson}
         onExportPdf={handleExportPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}

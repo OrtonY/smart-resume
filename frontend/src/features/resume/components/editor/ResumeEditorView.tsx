@@ -74,6 +74,7 @@ interface ResumeEditorViewProps {
   onCreateShare: (title: string, mode: ShareMode, password?: string) => Promise<void>
   onExpandedModulesChange: (keys: string | string[]) => void
   onExportDocx: () => Promise<void>
+  onExportJson: () => void
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
   onHideSection: (sectionKey: ResumeSectionKey) => void
@@ -120,6 +121,7 @@ export function ResumeEditorView({
   onCreateShare,
   onExpandedModulesChange,
   onExportDocx,
+  onExportJson,
   onExportPdf,
   onFocusModule,
   onHideSection,
@@ -360,6 +362,7 @@ export function ResumeEditorView({
             <DropdownExport
               exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
+              onExportJson={() => void onExportJson()}
               onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
             />
@@ -372,6 +375,7 @@ export function ResumeEditorView({
               exportingDocx={exportingDocx}
               exportingPdf={exportingPdf}
               interviewMenuItems={interviewMenuItems}
+              onExportJson={() => void onExportJson()}
               onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
               onOpenShare={openShareModal}
@@ -694,11 +698,13 @@ function InterviewMenuButton({ interviewMenuItems }: { interviewMenuItems: Array
 function DropdownExport({
   exportingDocx,
   exportingPdf,
+  onExportJson,
   onExportDocx,
   onExportPdf,
 }: {
   exportingDocx: boolean
   exportingPdf: boolean
+  onExportJson: () => void
   onExportDocx: () => void
   onExportPdf: () => void
 }) {
@@ -714,6 +720,12 @@ function DropdownExport({
             icon: <DownloadOutlined />,
             disabled: exportingPdf,
             onClick: onExportPdf,
+          },
+          {
+            key: 'json',
+            label: t('editor.exportJson'),
+            icon: <DownloadOutlined />,
+            onClick: onExportJson,
           },
           {
             key: 'docx',
@@ -736,6 +748,7 @@ function MoreActionsMenu({
   draftId,
   exportingDocx,
   exportingPdf,
+  onExportJson,
   interviewMenuItems,
   onExportDocx,
   onExportPdf,
@@ -745,6 +758,7 @@ function MoreActionsMenu({
   draftId: string
   exportingDocx: boolean
   exportingPdf: boolean
+  onExportJson: () => void
   interviewMenuItems: Array<{ key: string; label: ReactNode }>
   onExportDocx: () => void
   onExportPdf: () => void
@@ -785,6 +799,12 @@ function MoreActionsMenu({
             icon: <DownloadOutlined />,
             disabled: exportingPdf,
             onClick: onExportPdf,
+          },
+          {
+            key: 'exportJson',
+            label: t('editor.exportJson'),
+            icon: <DownloadOutlined />,
+            onClick: onExportJson,
           },
           {
             key: 'exportWord',
