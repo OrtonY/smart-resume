@@ -57,6 +57,30 @@
     - ISO-8601 timestamp
   - `mode: "ai"`
     - constant since the mock path was removed; reserved as an enum-shaped field for future variants (e.g. `"ai-cached"`)
+  - `heatmapSummary?: string | null`
+    - present only for JD-backed heatmap results
+    - should summarize JD fit and the most important gaps in one short sentence
+  - `requirementMatches?: AiResumeRequirementMatch[]`
+    - empty list when no JD is provided
+    - each item fields:
+      - `text: string` - JD requirement or keyword phrase
+      - `category: string` - e.g. `skill`, `experience`, `education`, `seniority`, `domain`, `tool`, or `other`
+      - `importance: "high" | "medium" | "low" | string`
+      - `status: "matched" | "partial" | "missing" | string`
+      - `score: number` - integer `0..100`
+      - `matchedSections: string[]` - resume section keys such as `summary`, `workExperience`, `projectExperience`, `education`, `skills`, `honors`, `certificates`
+      - `evidence: string[]` - short supporting snippets from the visible resume content
+      - `suggestion: string` - one concrete edit suggestion
+  - `sectionHeatmap?: AiResumeSectionHeatmap[]`
+    - empty list when no JD is provided
+    - each item fields:
+      - `sectionKey: string`
+      - `sectionLabel: string`
+      - `score: number` - integer `0..100`
+      - `status: "strong" | "medium" | "weak" | "missing" | string`
+      - `matchedCount: number`
+      - `missingCount: number`
+      - `summary: string`
 - Persisted-score read response:
   - `jobDescription: string`
   - `result: AiResumeScoreResponse`
@@ -78,6 +102,8 @@
 
 - Missing `resume` -> request validation error
 - Blank `jobDescription` -> accepted, treated as not provided
+- Blank `jobDescription` -> general scoring response only; `heatmapSummary = null`, `requirementMatches = []`, and `sectionHeatmap = []`
+- Non-blank `jobDescription` -> backend prompt must request both requirement-level matches and section-level heatmap details
 - Partially filled resume sections -> accepted; the scoring prompt derives suggestions from available content
 - Resume has hidden modules or layout-only metadata -> scoring prompt includes only visible `AiResumeContent`; hidden sections and layout metadata are excluded before serialization
 - AI provider parse failure -> `AiChatService.callStructured` retries once silently; if the retry also fails, the service throws and the controller maps it to a 5xx error. **Do NOT** fall back to a mock score.
@@ -89,11 +115,16 @@
 ### 5. Good/Base/Bad Cases
 
 - Good: user fills JD, submits scoring, sees `jobDescriptionProvided = true` and JD-oriented suggestion groups.
+- Good: user fills JD, submits scoring, and sees `requirementMatches` with `matched`, `partial`, and `missing` rows plus `sectionHeatmap` section aggregates.
 - Base: user leaves JD empty, still receives score, summary, strengths, and structured suggestions.
+- Base: user leaves JD empty and receives empty heatmap arrays rather than a fabricated general-purpose heatmap.
 - Good: scoring prompt contains visible resume content only, so hidden modules and layout metadata cannot perturb the score result.
 - Good: user closes the modal and reopens it later for the same resume, and the last successful score plus last scored JD are restored from backend persistence.
+- Good: persisted restore returns the full `AiResumeScoreResponse`, including heatmap fields when the last saved score used a JD.
 - Good: user logs in on another browser/device and can still restore the latest score for the same resume.
 - Bad: backend returns free-form text only, forcing the frontend to parse or heuristically split advice cards.
+- Bad: frontend derives heatmap status by parsing `summary` or `suggestionGroups`; heatmap fields must be explicit DTO fields.
+- Bad: no-JD scoring invents `missing` JD keywords from generic best practices; no-JD mode is general scoring only.
 - Bad: scoring service serializes the whole `AiResumeContext` into the prompt, coupling score behavior to transport metadata the model does not need.
 - Bad: scoring flow reuses chat-stream payloads or SSE semantics, making a simple one-shot modal harder to manage.
 
@@ -105,11 +136,14 @@
     - score modal compiles with typed request/response
     - shared resume context mapper is reused by both chat and scoring entry points
     - persisted score response can hydrate JD + result state when the modal opens
+    - JD heatmap rows render from typed fields without parsing prose
 - Backend:
   - `mvn test`
   - assertion points:
     - `AiResumeScoringServiceTest` covers JD provided and JD omitted cases
+    - `AiResumeScoringServiceTest` covers heatmap fields for JD scoring and empty heatmap fields for no-JD scoring
     - `AiResumeScoringServiceTest` covers persisted-score readback
+    - persisted-score readback preserves heatmap fields from `result_json`
     - response always contains non-empty summary, strengths, and suggestion groups
     - response always has `mode = "ai"`
     - each call uses a freshly generated `conversationId` via `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)`
@@ -123,6 +157,8 @@
 - Create a second resume-to-AI context mapper just for scoring, letting chat and scoring drift over time.
 - Serialize the full `AiResumeContext` into the scoring prompt, even though the model only needs visible resume content.
 - Return only a single markdown blob from the backend and let the modal split sections heuristically.
+- Ask the model for heatmap prose only, then build visual rows by string matching on the frontend.
+- Generate section heatmap rows when `jobDescriptionProvided = false`.
 - Call `ChatModel` / `ChatClient` directly from `AiResumeScoringService` and skip `AiChatService.callStructured` — loses memory persistence, vendor branching, and the retry-once policy.
 - Catch the structured-output exception and synthesise a mock-shaped response so the UI "still works" — silently hides AI regressions in production.
 - Keep score persistence only in browser local storage when the product requirement is cross-device recovery.
@@ -131,6 +167,8 @@
 
 - Reuse one visible-resume-content mapping path for both AI chat and scoring.
 - Keep scoring as a normal JSON request/response flow with explicit DTOs.
+- Keep JD heatmap as explicit fields on `AiResumeScoreResponse`: `heatmapSummary`, `requirementMatches`, and `sectionHeatmap`.
+- Normalize no-JD scoring to `heatmapSummary = null` and empty heatmap arrays.
 - Build an `AiInvocationRequest` with a fresh `AiConversationIdGenerator.generate(resumeId, AiFeatureType.RESUME_SCORE)` id and invoke `aiChatService.callStructured(req, AiResumeScoreResponse.class)`; let exceptions bubble.
 - Persist the normalized `AiResumeScoreResponse` plus the last-used JD to `ai_resume_scores`, and expose a dedicated read endpoint for modal restoration.
 
