@@ -1,11 +1,12 @@
 import { BarChartOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Empty, Input, Progress, Space, Spin, Tag, Typography } from 'antd'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPersistedAiResumeScore, scoreAiResume } from '../api/aiApi'
 import type { AiResumeHeatmapStatus, AiResumeRequirementStatus, AiResumeScoreResponse } from '../types'
 import type { ResumeDetail } from '../../resume/types'
+import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 
 const { Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -25,6 +26,9 @@ const SECTION_STROKE_COLORS: Record<string, string> = {
   weak: '#d46b08',
   missing: '#cf1322',
 }
+
+const MOBILE_REQUIREMENT_INITIAL_COUNT = 6
+const MOBILE_REQUIREMENT_BATCH_SIZE = 6
 
 function getStatusTagColor(status: AiResumeRequirementStatus | AiResumeHeatmapStatus | string) {
   return STATUS_TAG_COLORS[status] ?? 'default'
@@ -46,9 +50,46 @@ function getSectionLabel(sectionKey: string, fallback: string, t: (key: string, 
   return t('section.' + sectionKey, { defaultValue: fallback || sectionKey })
 }
 
+function normalizeScorePercent(score: number) {
+  if (!Number.isFinite(score)) {
+    return 0
+  }
+  return Math.max(0, Math.min(100, Math.round(score)))
+}
+
+function HeatmapScoreBar({ color, percent }: { color: string; percent: number }) {
+  const normalizedPercent = normalizeScorePercent(percent)
+  const style = {
+    '--resume-score-bar-color': color,
+    '--resume-score-bar-percent': `${normalizedPercent}%`,
+  } as CSSProperties
+
+  return (
+    <div
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={normalizedPercent}
+      className="resume-score-bar"
+      role="progressbar"
+      style={style}
+    >
+      <span className="resume-score-bar__track">
+        <span className="resume-score-bar__fill" />
+      </span>
+      <span className="resume-score-bar__value">{normalizedPercent}%</span>
+    </div>
+  )
+}
+
+function getInitialVisibleRequirementCount(result: AiResumeScoreResponse, isMobile: boolean) {
+  const requirementCount = result.requirementMatches?.length ?? 0
+  return isMobile ? Math.min(MOBILE_REQUIREMENT_INITIAL_COUNT, requirementCount) : requirementCount
+}
+
 export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
   const { t } = useTranslation('ai')
   const { message } = App.useApp()
+  const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [jobDescription, setJobDescription] = useState('')
   const [savedJobDescription, setSavedJobDescription] = useState('')
@@ -57,9 +98,15 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
   const [restored, setRestored] = useState(false)
   const [result, setResult] = useState<AiResumeScoreResponse | null>(null)
   const [showJobDescriptionInput, setShowJobDescriptionInput] = useState(true)
+  const [visibleRequirementCount, setVisibleRequirementCount] = useState(0)
+  const [expandedRequirementKey, setExpandedRequirementKey] = useState<string | null>(null)
   const requirementMatches = result?.requirementMatches ?? []
   const sectionHeatmap = result?.sectionHeatmap ?? []
   const hasHeatmap = Boolean(result?.jobDescriptionProvided && (requirementMatches.length > 0 || sectionHeatmap.length > 0))
+  const visibleRequirementMatches = isMobile
+    ? requirementMatches.slice(0, visibleRequirementCount)
+    : requirementMatches
+  const hasHiddenRequirementMatches = isMobile && visibleRequirementCount < requirementMatches.length
 
   useEffect(() => {
     if (!open || restored) {
@@ -77,6 +124,8 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
         if (persisted) {
           setJobDescription(persisted.jobDescription)
           setSavedJobDescription(persisted.jobDescription)
+          setVisibleRequirementCount(getInitialVisibleRequirementCount(persisted.result, isMobile))
+          setExpandedRequirementKey(null)
           setResult(persisted.result)
           setShowJobDescriptionInput(false)
         }
@@ -97,7 +146,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
     return () => {
       canceled = true
     }
-  }, [draft.id, message, open, restored, t])
+  }, [draft.id, isMobile, message, open, restored, t])
 
   function handleClose() {
     if (scoring || restoring) {
@@ -124,6 +173,8 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
         jobDescription: normalizedJobDescription || undefined,
       })
 
+      setVisibleRequirementCount(getInitialVisibleRequirementCount(response, isMobile))
+      setExpandedRequirementKey(null)
       setResult(response)
       setJobDescription(normalizedJobDescription)
       setSavedJobDescription(normalizedJobDescription)
@@ -272,11 +323,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
                                   {getHeatmapStatusLabel(section.status, t)}
                                 </Tag>
                               </div>
-                              <Progress
-                                percent={section.score}
-                                size="small"
-                                strokeColor={getSectionStrokeColor(section.status)}
-                              />
+                              <HeatmapScoreBar color={getSectionStrokeColor(section.status)} percent={section.score} />
                               <Text type="secondary">
                                 {t('score.sectionHeatmapCounts', {
                                   matched: section.matchedCount,
@@ -298,64 +345,96 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
                       <div className="resume-score-requirements">
                         <Text strong>{t('score.requirementMatchesTitle')}</Text>
                         <div className="resume-score-requirements__list">
-                          {requirementMatches.map((item, index) => (
-                            <div className="resume-score-requirement" key={item.text + index}>
-                              <div className="resume-score-requirement__heading">
-                                <div className="resume-score-requirement__title">
-                                  <Text strong>{item.text}</Text>
-                                  <Space size={4} wrap>
-                                    {item.category ? <Tag>{item.category}</Tag> : null}
-                                    {item.importance ? (
-                                      <Tag color="blue">
-                                        {getImportanceLabel(item.importance, t)}
-                                      </Tag>
-                                    ) : null}
-                                  </Space>
+                          {visibleRequirementMatches.map((item, index) => {
+                            const requirementKey = item.text + index
+                            const hasRequirementDetails = item.matchedSections.length > 0 || item.evidence.length > 0 || Boolean(item.suggestion)
+                            const showRequirementDetails = !isMobile || expandedRequirementKey === requirementKey
+
+                            return (
+                              <div className="resume-score-requirement" key={requirementKey}>
+                                <div className="resume-score-requirement__heading">
+                                  <div className="resume-score-requirement__title">
+                                    <Text strong>{item.text}</Text>
+                                    <Space size={4} wrap>
+                                      {item.category ? <Tag>{item.category}</Tag> : null}
+                                      {item.importance ? (
+                                        <Tag color="blue">
+                                          {getImportanceLabel(item.importance, t)}
+                                        </Tag>
+                                      ) : null}
+                                    </Space>
+                                  </div>
+                                  <Tag color={getStatusTagColor(item.status)}>
+                                    {getHeatmapStatusLabel(item.status, t)}
+                                  </Tag>
                                 </div>
-                                <Tag color={getStatusTagColor(item.status)}>
-                                  {getHeatmapStatusLabel(item.status, t)}
-                                </Tag>
+
+                                <HeatmapScoreBar
+                                  color={getStatusTagColor(item.status) === 'red' ? '#cf1322' : '#3157a4'}
+                                  percent={item.score}
+                                />
+
+                                {isMobile && hasRequirementDetails ? (
+                                  <Button
+                                    className="resume-score-requirement__details-button"
+                                    size="small"
+                                    type="text"
+                                    onClick={() => setExpandedRequirementKey(showRequirementDetails ? null : requirementKey)}
+                                  >
+                                    {showRequirementDetails
+                                      ? t('score.hideRequirementDetails', { defaultValue: '收起详情' })
+                                      : t('score.showRequirementDetails', { defaultValue: '查看详情' })}
+                                  </Button>
+                                ) : null}
+
+                                {showRequirementDetails && item.matchedSections.length > 0 ? (
+                                  <div className="resume-score-requirement__sections">
+                                    <Text type="secondary">{t('score.matchedSectionsLabel')}</Text>
+                                    <Space size={4} wrap>
+                                      {item.matchedSections.map((section) => (
+                                        <Tag color="geekblue" key={section}>
+                                          {getSectionLabel(section, section, t)}
+                                        </Tag>
+                                      ))}
+                                    </Space>
+                                  </div>
+                                ) : null}
+
+                                {showRequirementDetails && item.evidence.length > 0 ? (
+                                  <div className="resume-score-requirement__block">
+                                    <Text type="secondary">{t('score.evidenceLabel')}</Text>
+                                    <ul>
+                                      {item.evidence.map((evidence) => (
+                                        <li key={evidence}>{evidence}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ) : null}
+
+                                {showRequirementDetails && item.suggestion ? (
+                                  <div className="resume-score-requirement__suggestion">
+                                    <Text type="secondary">{t('score.suggestionLabel')}</Text>
+                                    <Paragraph style={{ marginBottom: 0 }}>{item.suggestion}</Paragraph>
+                                  </div>
+                                ) : null}
                               </div>
-
-                              <Progress
-                                percent={item.score}
-                                size="small"
-                                strokeColor={getStatusTagColor(item.status) === 'red' ? '#cf1322' : '#3157a4'}
-                              />
-
-                              {item.matchedSections.length > 0 ? (
-                                <div className="resume-score-requirement__sections">
-                                  <Text type="secondary">{t('score.matchedSectionsLabel')}</Text>
-                                  <Space size={4} wrap>
-                                    {item.matchedSections.map((section) => (
-                                      <Tag color="geekblue" key={section}>
-                                        {getSectionLabel(section, section, t)}
-                                      </Tag>
-                                    ))}
-                                  </Space>
-                                </div>
-                              ) : null}
-
-                              {item.evidence.length > 0 ? (
-                                <div className="resume-score-requirement__block">
-                                  <Text type="secondary">{t('score.evidenceLabel')}</Text>
-                                  <ul>
-                                    {item.evidence.map((evidence) => (
-                                      <li key={evidence}>{evidence}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ) : null}
-
-                              {item.suggestion ? (
-                                <div className="resume-score-requirement__suggestion">
-                                  <Text type="secondary">{t('score.suggestionLabel')}</Text>
-                                  <Paragraph style={{ marginBottom: 0 }}>{item.suggestion}</Paragraph>
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
+                        {hasHiddenRequirementMatches ? (
+                          <Button
+                            block
+                            className="resume-score-requirements__more"
+                            onClick={() => {
+                              setVisibleRequirementCount((current) => Math.min(current + MOBILE_REQUIREMENT_BATCH_SIZE, requirementMatches.length))
+                            }}
+                          >
+                            {t('score.showMoreRequirementMatches', {
+                              count: requirementMatches.length - visibleRequirementCount,
+                              defaultValue: '查看更多要求（剩余 {{count}} 条）',
+                            })}
+                          </Button>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

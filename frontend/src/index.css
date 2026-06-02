@@ -2403,6 +2403,45 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   gap: 6px;
 }
 
+.resume-score-requirement__details-button,
+.resume-score-requirements__more {
+  justify-self: stretch;
+}
+
+.resume-score-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.resume-score-bar__track {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(20, 33, 61, 0.08);
+}
+
+.resume-score-bar__fill {
+  display: block;
+  width: var(--resume-score-bar-percent, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--resume-score-bar-color, #3157a4);
+}
+
+.resume-score-bar__value {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .resume-score-requirement__block ul {
   margin: 0;
   padding-left: 18px;
@@ -4251,7 +4290,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     overflow-y: auto !important;
   }
 
-  .responsive-modal-drawer .ant-drawer-body * {
+  .responsive-modal-drawer:not(.resume-score-modal) .ant-drawer-body * {
     max-width: 100%;
   }
 
@@ -4295,6 +4334,10 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   }
 
   /* Resume score panel mobile */
+  .responsive-modal-drawer.resume-score-modal .ant-drawer-body {
+    overscroll-behavior: contain;
+  }
+
   .resume-score-panel {
     gap: 12px;
     width: 100%;
@@ -4358,6 +4401,26 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .resume-score-section-heatmap__grid {
     grid-template-columns: 1fr;
+  }
+
+  .resume-score-bar {
+    gap: 6px;
+  }
+
+  .responsive-modal-drawer.resume-score-modal .resume-score-heatmap,
+  .responsive-modal-drawer.resume-score-modal .resume-score-section-heatmap,
+  .responsive-modal-drawer.resume-score-modal .resume-score-requirements,
+  .responsive-modal-drawer.resume-score-modal .resume-score-requirements__list {
+    contain: layout paint;
+  }
+
+  .responsive-modal-drawer.resume-score-modal .resume-score-section-card *,
+  .responsive-modal-drawer.resume-score-modal .resume-score-requirement * {
+    min-width: 0;
+  }
+
+  .responsive-modal-drawer.resume-score-modal .resume-score-requirement__title > .ant-typography {
+    display: block;
   }
 
   .resume-score-result__summary {
