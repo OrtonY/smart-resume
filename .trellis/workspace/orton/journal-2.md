@@ -337,3 +337,37 @@ Implemented editor-driven Chinese/English resume translation with backend AI str
 ### Next Steps
 
 - None - task complete
+
+
+## Session 70: Optimize mobile resume JD heatmap
+
+**Date**: 2026-06-02
+**Task**: Optimize mobile resume JD heatmap
+**Branch**: `codex/resume-jd-heatmap-eval`
+
+### Summary
+
+Added resume JD heatmap scoring and optimized the mobile heatmap rendering path with lightweight score bars, mobile requirement pagination, and detail toggles to avoid Drawer scroll freezes.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `233f963` | (see git log) |
+| `8c548b5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
