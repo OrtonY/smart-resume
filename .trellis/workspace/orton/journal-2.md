@@ -371,3 +371,36 @@ Added resume JD heatmap scoring and optimized the mobile heatmap rendering path 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 71: Optimize resume score rendering
+
+**Date**: 2026-06-03
+**Task**: Optimize resume score rendering
+**Branch**: `codex/optimize-resume-score-rendering`
+
+### Summary
+
+Refactored resume score rendering to reduce layout pressure, restore reliable modal/drawer internal scrolling, replace heavy scoring visuals with lightweight markup, and document trace-backed findings.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8aae96b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
