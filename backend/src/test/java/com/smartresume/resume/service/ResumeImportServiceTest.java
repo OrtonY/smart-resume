@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.resume.dto.ResumeDtos.PersonalInfo;
@@ -40,7 +41,7 @@ class ResumeImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        resumeImportService = new ResumeImportService(aiChatService, resumeContentService, resumeService);
+        resumeImportService = new ResumeImportService(aiChatService, resumeContentService, resumeService, new ObjectMapper());
     }
 
     @Test
@@ -87,6 +88,83 @@ class ResumeImportServiceTest {
         assertThat(savedPayload.personalInfo().email()).isEqualTo("alice@example.com");
         assertThat(savedPayload.personalInfo().headline()).isEmpty();
         assertThat(savedPayload.personalSummary()).isEmpty();
+    }
+
+    @Test
+    void importsJsonResumeWithoutAiAndKeepsDefaultLayout() {
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "visible-resume.json",
+            "application/json",
+            """
+                {
+                  "title": "Visible Resume",
+                  "personalInfo": {
+                    "fullName": "Alice Example",
+                    "headline": "Senior Java Engineer",
+                    "email": "alice@example.com"
+                  },
+                  "personalSummary": "Backend platform engineer.",
+                  "workExperience": [
+                    {
+                      "company": "Acme",
+                      "role": "Lead Engineer",
+                      "startDate": "2020",
+                      "endDate": "Present",
+                      "description": "Built hiring systems."
+                    }
+                  ],
+                  "skills": []
+                }
+                """.getBytes()
+        );
+        ResumeContentPayload defaults = emptyContent();
+        ResumeDetailResponse detailResponse = new ResumeDetailResponse(
+            "resume-json",
+            "Visible Resume",
+            "modern",
+            defaults,
+            new ResumeLayoutPayload(List.of("education", "summary", "workExperience", "projectExperience", "skills", "honors", "certificates"), List.of()),
+            LocalDateTime.now(),
+            null,
+            null
+        );
+
+        when(resumeContentService.defaultContent()).thenReturn(defaults);
+        when(resumeService.createResumeFromContent(eq("Visible Resume"), eq("modern"), any())).thenReturn(detailResponse);
+
+        ResumeDetailResponse result = resumeImportService.importResume(file, "modern");
+
+        assertThat(result.id()).isEqualTo("resume-json");
+        verify(aiChatService, never()).callStructured(any(), eq(ResumeContentPayload.class));
+
+        ArgumentCaptor<ResumeContentPayload> contentCaptor = ArgumentCaptor.forClass(ResumeContentPayload.class);
+        verify(resumeService).createResumeFromContent(eq("Visible Resume"), eq("modern"), contentCaptor.capture());
+
+        ResumeContentPayload savedPayload = contentCaptor.getValue();
+        assertThat(savedPayload.personalInfo().fullName()).isEqualTo("Alice Example");
+        assertThat(savedPayload.personalInfo().headline()).isEqualTo("Senior Java Engineer");
+        assertThat(savedPayload.personalSummary()).isEqualTo("Backend platform engineer.");
+        assertThat(savedPayload.workExperience()).hasSize(1);
+        assertThat(savedPayload.education()).isEmpty();
+    }
+
+    @Test
+    void rejectsInvalidJsonResume() {
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "resume.json",
+            "application/json",
+            "[]".getBytes()
+        );
+
+        assertThatThrownBy(() -> resumeImportService.importResume(file, "pure-form"))
+            .isInstanceOf(AppException.class)
+            .extracting(exception -> ((AppException) exception).getMessageKey())
+            .isEqualTo("error.resume.importInvalidJson");
+
+        verify(aiChatService, never()).callStructured(any(), eq(ResumeContentPayload.class));
+        verify(resumeService, never()).createResumeFromContent(any(), any(), any());
     }
 
     @Test

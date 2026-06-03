@@ -49,6 +49,7 @@
     "styleSarcastic": "阴阳怪气",
     "styleLabel": "风格：{{style}}",
     "retentionHint": "仅保留最近 10 条历史对话。",
+    "retentionHintHelp": "历史记录仅保留最近 10 个对话，不限制当前对话轮次。",
     "deleteHistoryConfirmTitle": "删除这条历史对话？",
     "deleteHistoryConfirmDescription": "对话和关联的 AI 消息会归档后删除。",
     "deleteHistoryConfirmOk": "删除",
@@ -99,12 +100,34 @@
     "mockAlertTitle": "当前展示的是 Mock 评分结果",
     "mockAlertDescription": "接口结构已经稳定，后续接入真实 AI 时无需调整页面交互。",
     "scoreUnit": "{{score}} 分",
+    "scoreGaugeUnit": "分",
     "scoreCompleted": "评分完成",
     "withJd": "已结合 JD",
     "withoutJd": "未填写 JD",
     "generatedAt": "生成时间：{{time}}",
     "strengthsTitle": "当前亮点",
     "emptyDescription": "填写 JD 后点击开始评分，或直接评分查看当前简历的结构与内容建议。",
-    "scoreFailed": "简历评分失败"
+    "scoreFailed": "简历评分失败",
+    "heatmapTitle": "JD 匹配热力图",
+    "heatmapTag": "热力图",
+    "sectionHeatmapTitle": "模块热度",
+    "requirementMatchesTitle": "要求匹配",
+    "sectionHeatmapCounts": "{{matched}} 项匹配 · {{missing}} 项缺口",
+    "matchedSectionsLabel": "匹配模块",
+    "evidenceLabel": "证据",
+    "suggestionLabel": "建议",
+    "heatmapStatus": {
+      "matched": "已匹配",
+      "partial": "部分匹配",
+      "missing": "缺失",
+      "strong": "强",
+      "medium": "中",
+      "weak": "弱"
+    },
+    "heatmapImportance": {
+      "high": "高优先级",
+      "medium": "中优先级",
+      "low": "低优先级"
+    }
   }
 }

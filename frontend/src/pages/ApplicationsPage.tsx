@@ -122,11 +122,17 @@ export function ApplicationsPage() {
   }, [])
 
   useEffect(() => {
-    void loadList()
+    const timer = window.setTimeout(() => {
+      void loadList()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [loadList])
 
   useEffect(() => {
-    void loadResumes()
+    const timer = window.setTimeout(() => {
+      void loadResumes()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [loadResumes])
 
   function openCreateModal() {

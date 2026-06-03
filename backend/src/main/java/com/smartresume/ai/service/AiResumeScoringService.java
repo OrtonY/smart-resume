@@ -7,6 +7,9 @@ import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.smartresume.ai.domain.AiResumeScoreEntity;
 import com.smartresume.ai.domain.table.AiResumeScoreEntityTableDef;
+import com.smartresume.ai.dto.AiDtos.AiResumeRequirementMatch;
+import com.smartresume.ai.dto.AiDtos.AiResumeScoreSuggestionGroup;
+import com.smartresume.ai.dto.AiDtos.AiResumeSectionHeatmap;
 import com.smartresume.ai.dto.AiDtos.PersistedAiResumeScoreResponse;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeScoreResponse;
@@ -21,6 +24,7 @@ import com.smartresume.resume.service.ResumeContentService;
 import com.smartresume.resume.service.ResumeLookupService;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,6 +46,26 @@ public class AiResumeScoringService {
         - Provide 2-4 strengths
         - Provide 2-4 suggestion groups, each with 2-4 suggestions
         - Summary should be 1-2 sentences
+        - If a Target Job Description is provided, also return a JD match heatmap:
+          - heatmapSummary: one short sentence summarizing JD fit and main gaps
+          - requirementMatches: 5-10 important JD requirements or keywords
+            * text: the requirement or keyword phrase
+            * category: skill, experience, education, seniority, domain, tool, or other
+            * importance: high, medium, or low
+            * status: matched, partial, or missing
+            * score: integer 0-100
+            * matchedSections: resume section keys that support the match, using summary, workExperience, projectExperience, education, skills, honors, or certificates
+            * evidence: 0-3 short evidence snippets from the resume
+            * suggestion: one concrete edit suggestion mapped to the resume
+          - sectionHeatmap: one row for each visible resume section that matters
+            * sectionKey: summary, workExperience, projectExperience, education, skills, honors, or certificates
+            * sectionLabel: short human label
+            * score: integer 0-100 for JD support in this section
+            * status: strong, medium, weak, or missing
+            * matchedCount: number of requirements supported by this section
+            * missingCount: number of important gaps related to this section
+            * summary: one short explanation
+        - If no Target Job Description is provided, set heatmapSummary to null and both heatmap arrays to empty lists
 
         Output MUST be valid JSON matching the required schema.
         Default to Chinese for all text content.
@@ -121,15 +145,25 @@ public class AiResumeScoringService {
 
         AiResumeScoreResponse aiResponse = aiChatService.callStructured(invocationRequest, AiResumeScoreResponse.class);
 
+        List<AiResumeRequirementMatch> requirementMatches = jobDescriptionProvided
+            ? normalizeRequirementMatches(aiResponse.requirementMatches())
+            : List.of();
+        List<AiResumeSectionHeatmap> sectionHeatmap = jobDescriptionProvided
+            ? normalizeSectionHeatmap(aiResponse.sectionHeatmap())
+            : List.of();
+
         // Force mode to "ai" and ensure generatedAt is set
         AiResumeScoreResponse response = new AiResumeScoreResponse(
             aiResponse.score(),
             aiResponse.summary(),
-            aiResponse.strengths(),
-            aiResponse.suggestionGroups(),
+            normalizeList(aiResponse.strengths()),
+            normalizeSuggestionGroups(aiResponse.suggestionGroups()),
             jobDescriptionProvided,
             aiResponse.generatedAt() != null ? aiResponse.generatedAt() : java.time.Instant.now().toString(),
-            "ai"
+            "ai",
+            jobDescriptionProvided ? aiResponse.heatmapSummary() : null,
+            requirementMatches,
+            sectionHeatmap
         );
 
         log.info("Resume {} scored: {} (mode={})", resumeId, response.score(), response.mode());
@@ -157,6 +191,7 @@ public class AiResumeScoringService {
 
         if (jobDescriptionProvided) {
             sb.append("\n\nTarget Job Description:\n").append(jobDescription);
+            sb.append("\n\nReturn the JD heatmap fields so the UI can render requirement and section match details.");
         }
 
         return sb.toString();
@@ -210,6 +245,57 @@ public class AiResumeScoringService {
             .where(table.RESUME_ID.eq(resumeId))
             .and(table.USER_ID.eq(userId));
         return aiResumeScoreMapper.selectOneByQuery(query);
+    }
+
+    private List<AiResumeScoreSuggestionGroup> normalizeSuggestionGroups(List<AiResumeScoreSuggestionGroup> groups) {
+        if (groups == null) {
+            return List.of();
+        }
+        return groups.stream()
+            .map(group -> new AiResumeScoreSuggestionGroup(
+                group.title(),
+                normalizeList(group.suggestions())
+            ))
+            .toList();
+    }
+
+    private List<AiResumeRequirementMatch> normalizeRequirementMatches(List<AiResumeRequirementMatch> matches) {
+        if (matches == null) {
+            return List.of();
+        }
+        return matches.stream()
+            .map(match -> new AiResumeRequirementMatch(
+                match.text(),
+                match.category(),
+                match.importance(),
+                match.status(),
+                match.score(),
+                normalizeList(match.matchedSections()),
+                normalizeList(match.evidence()),
+                match.suggestion()
+            ))
+            .toList();
+    }
+
+    private List<AiResumeSectionHeatmap> normalizeSectionHeatmap(List<AiResumeSectionHeatmap> sections) {
+        if (sections == null) {
+            return List.of();
+        }
+        return sections.stream()
+            .map(section -> new AiResumeSectionHeatmap(
+                section.sectionKey(),
+                section.sectionLabel(),
+                section.score(),
+                section.status(),
+                section.matchedCount(),
+                section.missingCount(),
+                section.summary()
+            ))
+            .toList();
+    }
+
+    private List<String> normalizeList(List<String> values) {
+        return values == null ? List.of() : values;
     }
 
     private String toJson(Object value) {

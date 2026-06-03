@@ -83,6 +83,18 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiResumeTranslationRequest(
+        @NotBlank(message = "{validation.ai.translationLanguageRequired}")
+        String targetLanguage
+    ) {
+    }
+
+    public record AiResumeTranslationResponse(
+        String targetLanguage,
+        ResumeContentPayload content
+    ) {
+    }
+
     public record AiResumeContext(
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String id,
@@ -151,6 +163,29 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiResumeRequirementMatch(
+        String text,
+        String category,
+        String importance,
+        String status,
+        int score,
+        List<String> matchedSections,
+        List<String> evidence,
+        String suggestion
+    ) {
+    }
+
+    public record AiResumeSectionHeatmap(
+        String sectionKey,
+        String sectionLabel,
+        int score,
+        String status,
+        int matchedCount,
+        int missingCount,
+        String summary
+    ) {
+    }
+
     public record AiResumeScoreResponse(
         int score,
         String summary,
@@ -158,8 +193,22 @@ public final class AiDtos {
         List<AiResumeScoreSuggestionGroup> suggestionGroups,
         boolean jobDescriptionProvided,
         String generatedAt,
-        String mode
+        String mode,
+        String heatmapSummary,
+        List<AiResumeRequirementMatch> requirementMatches,
+        List<AiResumeSectionHeatmap> sectionHeatmap
     ) {
+        public AiResumeScoreResponse(
+            int score,
+            String summary,
+            List<String> strengths,
+            List<AiResumeScoreSuggestionGroup> suggestionGroups,
+            boolean jobDescriptionProvided,
+            String generatedAt,
+            String mode
+        ) {
+            this(score, summary, strengths, suggestionGroups, jobDescriptionProvided, generatedAt, mode, null, null, null);
+        }
     }
 
     public record PersistedAiResumeScoreResponse(

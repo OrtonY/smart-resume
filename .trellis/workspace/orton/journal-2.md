@@ -238,3 +238,235 @@ Compared exported PDF and DOCX samples, then fixed DOCX masthead layout, avatar 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 67: Release v1.1.2
+
+**Date**: 2026-06-01
+**Task**: Release v1.1.2
+**Branch**: `codex/finish-release-1-1-2`
+
+### Summary
+
+Released Smart Resume v1.1.2: bumped frontend/backend versions, merged release PRs, created tag v1.1.2, and published GitHub Release with backend-1.1.2.jar.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `acab376` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 68: JSON import/export
+
+**Date**: 2026-06-01
+**Task**: JSON import/export
+**Branch**: `codex/json-import-export`
+
+### Summary
+
+Added JSON import/export for resumes, including lightweight JSON export from visible sections, unified template catalog JSON import, and backend parsing that keeps missing modules visible as empty data under the default layout.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `16cd0b8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 69: Resume translation workflow
+
+**Date**: 2026-06-01
+**Task**: Resume translation workflow
+**Branch**: `codex/resume-translation`
+
+### Summary
+
+Implemented editor-driven Chinese/English resume translation with backend AI structured output, copy/overwrite flows, conservative normalization, avatar stripping for AI prompts, tests, and code-spec updates.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b8b1d25` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 70: Optimize mobile resume JD heatmap
+
+**Date**: 2026-06-02
+**Task**: Optimize mobile resume JD heatmap
+**Branch**: `codex/resume-jd-heatmap-eval`
+
+### Summary
+
+Added resume JD heatmap scoring and optimized the mobile heatmap rendering path with lightweight score bars, mobile requirement pagination, and detail toggles to avoid Drawer scroll freezes.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `233f963` | (see git log) |
+| `8c548b5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 71: Optimize resume score rendering
+
+**Date**: 2026-06-03
+**Task**: Optimize resume score rendering
+**Branch**: `codex/optimize-resume-score-rendering`
+
+### Summary
+
+Refactored resume score rendering to reduce layout pressure, restore reliable modal/drawer internal scrolling, replace heavy scoring visuals with lightweight markup, and document trace-backed findings.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8aae96b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 72: Frontend responsive layout fixes
+
+**Date**: 2026-06-03
+**Task**: Frontend responsive layout fixes
+**Branch**: `codex/frontend-responsive-layout`
+
+### Summary
+
+Fixed mobile AI chat toolbar/context layout, restored scroll behavior for chat history, constrained share details content scrolling, and moved mobile retention help tooltip out of the drawer layout flow.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ce56489` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 73: Refresh bilingual README screenshots
+
+**Date**: 2026-06-03
+**Task**: Refresh bilingual README screenshots
+**Branch**: `codex/rewrite-readme-screenshots`
+
+### Summary
+
+Rewrote English and Chinese README files to use the new web and mobile screenshot directories, included all 44 screenshots, and removed obsolete root docs screenshots.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `060bee2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

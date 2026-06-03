@@ -1,3 +1,5 @@
+import type { ResumeContent } from '../resume/types'
+
 export type AiVendor = 'OpenAI' | 'Ollama' | 'DeepSeek' | 'Anthropic' | 'Azure OpenAI' | 'Other'
 
 export interface AiConfiguration {
@@ -94,9 +96,46 @@ export interface AiBulletRewriteResponse {
   rationale: string
 }
 
+export type AiResumeTranslationTarget = 'ENGLISH' | 'CHINESE'
+
+export type AiResumeTranslationMode = 'overwrite' | 'copy'
+
+export interface AiResumeTranslationRequest {
+  targetLanguage: AiResumeTranslationTarget
+}
+
+export interface AiResumeTranslationResponse {
+  targetLanguage: AiResumeTranslationTarget
+  content: ResumeContent
+}
+
 export interface AiResumeScoreSuggestionGroup {
   title: string
   suggestions: string[]
+}
+
+export type AiResumeRequirementStatus = 'matched' | 'partial' | 'missing'
+export type AiResumeHeatmapStatus = 'strong' | 'medium' | 'weak' | 'missing'
+
+export interface AiResumeRequirementMatch {
+  text: string
+  category: string
+  importance: 'high' | 'medium' | 'low' | string
+  status: AiResumeRequirementStatus | string
+  score: number
+  matchedSections: string[]
+  evidence: string[]
+  suggestion: string
+}
+
+export interface AiResumeSectionHeatmap {
+  sectionKey: string
+  sectionLabel: string
+  score: number
+  status: AiResumeHeatmapStatus | string
+  matchedCount: number
+  missingCount: number
+  summary: string
 }
 
 export interface AiResumeScoreResponse {
@@ -107,6 +146,9 @@ export interface AiResumeScoreResponse {
   jobDescriptionProvided: boolean
   generatedAt: string
   mode: 'ai' | 'mock' | 'live'
+  heatmapSummary?: string | null
+  requirementMatches?: AiResumeRequirementMatch[] | null
+  sectionHeatmap?: AiResumeSectionHeatmap[] | null
 }
 
 export interface PersistedAiResumeScoreResponse {

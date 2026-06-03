@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 66
-- **Last Active**: 2026-06-01
+- **Total Sessions**: 73
+- **Last Active**: 2026-06-03
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~240 | Active |
+| `journal-2.md` | ~472 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,13 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 73 | 2026-06-03 | Refresh bilingual README screenshots | `060bee2` | `codex/rewrite-readme-screenshots` |
+| 72 | 2026-06-03 | Frontend responsive layout fixes | `ce56489` | `codex/frontend-responsive-layout` |
+| 71 | 2026-06-03 | Optimize resume score rendering | `8aae96b` | `codex/optimize-resume-score-rendering` |
+| 70 | 2026-06-02 | Optimize mobile resume JD heatmap | `233f963`, `8c548b5` | `codex/resume-jd-heatmap-eval` |
+| 69 | 2026-06-01 | Resume translation workflow | `b8b1d25` | `codex/resume-translation` |
+| 68 | 2026-06-01 | JSON import/export | `16cd0b8` | `codex/json-import-export` |
+| 67 | 2026-06-01 | Release v1.1.2 | `acab376` | `codex/finish-release-1-1-2` |
 | 66 | 2026-06-01 | Optimize DOCX resume export layout | `537a0c9` | `codex/optimize-docx-export-format` |
 | 65 | 2026-05-31 | Resume text rewrite finish | `242b709` | `codex/bullet-ai-rewrite` |
 | 64 | 2026-05-31 | Resume DOCX export | `6dbc695` | `feature/docx-export` |

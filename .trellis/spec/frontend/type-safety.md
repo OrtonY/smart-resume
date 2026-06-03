@@ -374,3 +374,51 @@ AI suggestion lists and resume section collections should favor typed mappers ov
 
 #### Correct
 - Persist the invalid target sentinel, expose a typed `invalid` flag, and make the UI action state follow `invalid` before `active`.
+
+## Scenario: Resume JSON Import And Export
+
+### 1. Scope / Trigger
+- Trigger: Resume JSON import/export moves structured resume data between the editor, template catalog import flow, backend import service, and persisted resume sections.
+- This needs code-spec depth because the JSON shape intentionally differs from the full `ResumeDetail` contract.
+
+### 2. Signatures
+- Frontend export helper: `exportResumeJson(resume: Pick<ResumeDetail, 'title' | 'content' | 'layout'>): void`
+- Frontend filename helper: `createExportFilename(title: string, extension: 'pdf' | 'docx' | 'json'): string`
+- Frontend import constants: `RESUME_IMPORT_ACCEPT` includes `.json`; `RESUME_IMPORT_ALLOWED_EXTENSIONS` includes `json`.
+- Backend import endpoint remains the unified template catalog entry: `POST /api/resumes/import` with uploaded file plus selected `templateKey`.
+- Backend service branch: `.json` files are parsed by `ResumeImportService` without AI parsing and create the resume through `ResumeService.createResumeFromContent(title, templateKey, content)`.
+
+### 3. Contracts
+- Exported JSON is lightweight business data only: `title`, `personalInfo`, and visible section content.
+- Exported JSON must not include `schemaVersion`, server ids, timestamps, `templateKey`, template metadata, hidden-section metadata, or full layout metadata.
+- Hidden editor sections are omitted from export.
+- JSON import uses the template selected in the template catalog flow; any template identity inside the file is ignored because it is out of scope.
+- Missing JSON modules are imported as empty strings or empty arrays and remain visible under the default resume layout.
+- JSON import must not derive hidden sections from absent modules.
+
+### 4. Validation & Error Matrix
+- Uploaded file extension is not `pdf`, `docx`, `txt`, or `json` -> localized unsupported-file error.
+- JSON root is not an object or cannot be parsed -> `error.resume.importInvalidJson`.
+- JSON section field is absent or not an array -> imported as an empty list.
+- JSON personal info is absent or not an object -> imported with default empty personal info.
+- PDF/DOCX/TXT imports keep the existing text extraction plus AI parsing path.
+
+### 5. Good/Base/Bad Cases
+- Good: A resume with hidden `skills` exports no `skills` field; importing the JSON with another selected template creates a new resume where `skills` is visible and empty.
+- Base: A JSON file with only `title` and `personalInfo` imports successfully with all list sections empty.
+- Bad: Exporting `templateKey` or `layout.hiddenSections` makes the JSON look like a full persisted resume snapshot, which this feature intentionally is not.
+- Bad: Treating absent JSON modules as hidden sections loses the user's ability to fill those modules after import.
+
+### 6. Tests Required
+- Backend unit test: JSON import does not call AI parsing and creates a resume from normalized content.
+- Backend unit test: invalid JSON root returns `error.resume.importInvalidJson`.
+- Backend assertion: missing sections are empty content, not hidden layout metadata.
+- Frontend build/type-check must pass after adding JSON export menu actions and import extension constants.
+- Lint should pass for changed files; unrelated existing lint failures must be reported separately.
+
+### 7. Wrong vs Correct
+#### Wrong
+- Export `layout.hiddenSections` or derive `hiddenSections` during import from fields missing in the JSON file.
+
+#### Correct
+- Export only visible business content and let JSON import create the new resume with the selected template's default visible layout.

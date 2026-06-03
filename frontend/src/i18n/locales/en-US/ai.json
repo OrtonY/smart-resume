@@ -49,6 +49,7 @@
     "styleSarcastic": "Sarcastic",
     "styleLabel": "Style: {{style}}",
     "retentionHint": "Only the latest 10 chats are kept.",
+    "retentionHintHelp": "History keeps the latest 10 conversations; the current chat is not limited.",
     "deleteHistoryConfirmTitle": "Delete this chat history?",
     "deleteHistoryConfirmDescription": "The conversation and related AI messages will be deleted after archival.",
     "deleteHistoryConfirmOk": "Delete",
@@ -99,12 +100,34 @@
     "mockAlertTitle": "This is a mock scoring result",
     "mockAlertDescription": "The API shape is stable, so the UI will not need changes when real AI is integrated.",
     "scoreUnit": "{{score}} pts",
+    "scoreGaugeUnit": "pts",
     "scoreCompleted": "Scoring complete",
     "withJd": "JD included",
     "withoutJd": "No JD",
     "generatedAt": "Generated at: {{time}}",
     "strengthsTitle": "Current strengths",
     "emptyDescription": "Fill in a JD and click Start scoring, or score directly to see structural and content tips.",
-    "scoreFailed": "Resume scoring failed"
+    "scoreFailed": "Resume scoring failed",
+    "heatmapTitle": "JD match heatmap",
+    "heatmapTag": "Heatmap",
+    "sectionHeatmapTitle": "Section heat",
+    "requirementMatchesTitle": "Requirement matches",
+    "sectionHeatmapCounts": "{{matched}} matched · {{missing}} gaps",
+    "matchedSectionsLabel": "Matched sections",
+    "evidenceLabel": "Evidence",
+    "suggestionLabel": "Suggestion",
+    "heatmapStatus": {
+      "matched": "Matched",
+      "partial": "Partial",
+      "missing": "Missing",
+      "strong": "Strong",
+      "medium": "Medium",
+      "weak": "Weak"
+    },
+    "heatmapImportance": {
+      "high": "High priority",
+      "medium": "Medium priority",
+      "low": "Low priority"
+    }
   }
 }

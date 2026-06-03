@@ -1,13 +1,21 @@
 package com.smartresume.resume.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartresume.ai.dto.AiInvocationRequest;
 import com.smartresume.ai.memory.AiConversationIdGenerator;
 import com.smartresume.ai.memory.AiFeatureType;
 import com.smartresume.ai.service.AiChatService;
 import com.smartresume.common.exception.AppException;
+import com.smartresume.resume.dto.ResumeDtos.CertificateItem;
+import com.smartresume.resume.dto.ResumeDtos.EducationItem;
+import com.smartresume.resume.dto.ResumeDtos.HonorItem;
 import com.smartresume.resume.dto.ResumeDtos.PersonalInfo;
+import com.smartresume.resume.dto.ResumeDtos.ProjectExperienceItem;
 import com.smartresume.resume.dto.ResumeDtos.ResumeContentPayload;
 import com.smartresume.resume.dto.ResumeDtos.ResumeDetailResponse;
+import com.smartresume.resume.dto.ResumeDtos.SkillItem;
+import com.smartresume.resume.dto.ResumeDtos.WorkExperienceItem;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResumeImportService {
 
     private static final int MIN_EXTRACTED_TEXT_LENGTH = 40;
-    private static final List<String> SUPPORTED_EXTENSIONS = List.of("pdf", "docx", "txt");
+    private static final List<String> SUPPORTED_EXTENSIONS = List.of("pdf", "docx", "txt", "json");
     private static final String IMPORTED_RESUME_FALLBACK_TITLE = "Imported Resume";
 
     private static final String IMPORT_SYSTEM_PROMPT = """
@@ -48,15 +56,18 @@ public class ResumeImportService {
     private final AiChatService aiChatService;
     private final ResumeContentService resumeContentService;
     private final ResumeService resumeService;
+    private final ObjectMapper objectMapper;
 
     public ResumeImportService(
         AiChatService aiChatService,
         ResumeContentService resumeContentService,
-        ResumeService resumeService
+        ResumeService resumeService,
+        ObjectMapper objectMapper
     ) {
         this.aiChatService = aiChatService;
         this.resumeContentService = resumeContentService;
         this.resumeService = resumeService;
+        this.objectMapper = objectMapper;
     }
 
     public ResumeDetailResponse importResume(MultipartFile file, String templateKey) {
@@ -68,6 +79,10 @@ public class ResumeImportService {
         String extension = resolveExtension(originalFilename);
         if (!SUPPORTED_EXTENSIONS.contains(extension)) {
             throw AppException.of(HttpStatus.BAD_REQUEST, "error.resume.importUnsupportedFileType");
+        }
+
+        if ("json".equals(extension)) {
+            return importJsonResume(file, templateKey, originalFilename);
         }
 
         String extractedText = extractText(file, extension);
@@ -86,6 +101,77 @@ public class ResumeImportService {
             templateKey,
             normalizeImportedContent(aiContent)
         );
+    }
+
+    private ResumeDetailResponse importJsonResume(MultipartFile file, String templateKey, String originalFilename) {
+        JsonNode root = readJsonRoot(file);
+        ResumeContentPayload content = normalizeJsonImportedContent(root);
+        return resumeService.createResumeFromContent(resolveJsonTitle(root, originalFilename), templateKey, content);
+    }
+
+    private JsonNode readJsonRoot(MultipartFile file) {
+        try {
+            JsonNode root = objectMapper.readTree(file.getBytes());
+            if (root == null || !root.isObject()) {
+                throw AppException.of(HttpStatus.BAD_REQUEST, "error.resume.importInvalidJson");
+            }
+            return root;
+        } catch (AppException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.resume.importInvalidJson");
+        }
+    }
+
+    private ResumeContentPayload normalizeJsonImportedContent(JsonNode root) {
+        ResumeContentPayload defaults = resumeContentService.defaultContent();
+        return new ResumeContentPayload(
+            readPersonalInfo(root.path("personalInfo"), defaults.personalInfo()),
+            readText(root.get("personalSummary")),
+            readList(root.path("education"), EducationItem.class),
+            readList(root.path("workExperience"), WorkExperienceItem.class),
+            readList(root.path("projectExperience"), ProjectExperienceItem.class),
+            readList(root.path("skills"), SkillItem.class),
+            readList(root.path("honors"), HonorItem.class),
+            readList(root.path("certificates"), CertificateItem.class)
+        );
+    }
+
+    private String resolveJsonTitle(JsonNode root, String originalFilename) {
+        String jsonTitle = readText(root.get("title"));
+        return StringUtils.hasText(jsonTitle) ? jsonTitle : resolveTitle(originalFilename);
+    }
+
+    private PersonalInfo readPersonalInfo(JsonNode node, PersonalInfo defaults) {
+        if (!node.isObject()) {
+            return defaults;
+        }
+        return new PersonalInfo(
+            readText(node.get("fullName")),
+            readText(node.get("headline")),
+            readText(node.get("phone")),
+            readText(node.get("email")),
+            readText(node.get("city")),
+            readText(node.get("website")),
+            readText(node.get("expectedSalary")),
+            readText(node.get("age")),
+            readText(node.get("avatar"))
+        );
+    }
+
+    private <T> List<T> readList(JsonNode node, Class<T> itemClass) {
+        if (!node.isArray()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readerForListOf(itemClass).readValue(node);
+        } catch (IOException exception) {
+            throw AppException.of(HttpStatus.BAD_REQUEST, "error.resume.importInvalidJson");
+        }
+    }
+
+    private String readText(JsonNode node) {
+        return node != null && node.isTextual() ? node.asText() : "";
     }
 
     private String buildUserMessage(String extractedText) {

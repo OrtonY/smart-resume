@@ -1,4 +1,5 @@
 import { clearAccessToken, getAccessToken } from '../../../lib/auth/tokenStorage'
+import i18n from '../../../i18n'
 import { streamEvents } from '../../../lib/sse/streamEvents'
 import type {
   AiChatConversation,
@@ -8,6 +9,8 @@ import type {
   AiChatRequest,
   AiBulletRewriteRequest,
   AiBulletRewriteResponse,
+  AiResumeTranslationRequest,
+  AiResumeTranslationResponse,
   AiResumeScoreRequest,
   AiResumeScoreResponse,
   AiConfiguration,
@@ -50,6 +53,16 @@ export async function rewriteAiResumeBullet(payload: AiBulletRewriteRequest) {
     method: 'POST',
     body: payload,
   })
+}
+
+export async function translateAiResume(resumeId: string, payload: AiResumeTranslationRequest) {
+  return requestJson<AiResumeTranslationResponse>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId) + '/translate',
+    {
+      method: 'POST',
+      body: payload,
+    },
+  )
 }
 
 export async function getPersistedAiResumeScore(resumeId: string) {
@@ -136,6 +149,7 @@ async function requestJson<T>(path: string, options: Omit<RequestInit, 'body'> &
 function buildHeaders(headers?: HeadersInit) {
   const next = new Headers(headers)
   next.set('Content-Type', 'application/json')
+  next.set('Accept-Language', i18n.language)
   const token = getAccessToken()
   if (token) {
     next.set('X-Access-Token', token)

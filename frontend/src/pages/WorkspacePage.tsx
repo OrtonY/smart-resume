@@ -32,8 +32,9 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ResponsiveModal } from '../components/shared/ResponsiveModal'
 import { LanguageSwitcher } from '../components/shared/LanguageSwitcher'
+import { translateAiResume } from '../features/ai/api/aiApi'
 import { AiConfigurationButton } from '../features/ai/components/AiResumeAssistant'
-import type { AiResumeSuggestion } from '../features/ai/types'
+import type { AiResumeSuggestion, AiResumeTranslationMode, AiResumeTranslationTarget } from '../features/ai/types'
 import { ResumeEditorView, type ResumeEditorSaveState } from '../features/resume/components/editor/ResumeEditorView'
 import { moduleAnchorId, type ResumeModuleId, useResumeModuleDefinitions } from '../features/resume/components/editor/moduleDefinitions'
 import { ResumeVisualGrid } from '../features/resume/components/ResumeVisualGrid'
@@ -54,6 +55,7 @@ import {
 } from '../features/resume/api/resumeApi'
 import { RESUMES_PER_PAGE } from '../features/resume/constants'
 import { exportResumeServerDocx } from '../features/resume/export/docxExport'
+import { exportResumeJson } from '../features/resume/export/jsonExport'
 import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
@@ -121,6 +123,7 @@ export function WorkspacePage({
   const [saveState, setSaveState] = useState<ResumeEditorSaveState>('idle')
   const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [translatingResume, setTranslatingResume] = useState(false)
   const [lastSavedSignature, setLastSavedSignature] = useState('')
   const [expandedModules, setExpandedModules] = useState<ResumeModuleId[]>(['personal-info', ...DEFAULT_LAYOUT.sectionOrder])
   const deferredDraft = useDeferredValue(draft)
@@ -225,6 +228,22 @@ export function WorkspacePage({
       void message.error(error instanceof Error ? error.message : t('feedback.saveAutoFailed'))
     }
   }, [message, t])
+
+  const saveDraftNow = useCallback(async (targetResumeId: string, currentDraft: ResumeDetail) => {
+    setSaveState('saving')
+    const saved = await updateResume(targetResumeId, {
+      title: currentDraft.title,
+      templateKey: currentDraft.templateKey,
+      content: currentDraft.content,
+      layout: normalizeResumeLayout(currentDraft.layout),
+    })
+    const normalizedSaved = {
+      ...saved,
+      layout: normalizeResumeLayout(saved.layout),
+    }
+    applyResumeDetail(normalizedSaved)
+    return normalizedSaved
+  }, [applyResumeDetail])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -336,6 +355,53 @@ export function WorkspacePage({
     await loadResumeList()
   }
 
+  async function handleTranslateResume(targetLanguage: AiResumeTranslationTarget, mode: AiResumeTranslationMode) {
+    if (!resumeId || !draft || translatingResume) {
+      return
+    }
+
+    setTranslatingResume(true)
+    try {
+      const savedSource = await saveDraftNow(resumeId, draft)
+      const translated = await translateAiResume(resumeId, { targetLanguage })
+      const targetLabel = targetLanguage === 'ENGLISH'
+        ? t('editor.translation.english')
+        : t('editor.translation.chinese')
+
+      if (mode === 'overwrite') {
+        const updated = await updateResume(resumeId, {
+          title: savedSource.title,
+          templateKey: savedSource.templateKey,
+          content: translated.content,
+          layout: normalizeResumeLayout(savedSource.layout),
+        })
+        applyResumeDetail(updated)
+        void message.success(t('feedback.translationOverwriteSuccess'))
+        return
+      }
+
+      const translatedTitle = t('editor.translation.copyTitle', {
+        title: savedSource.title,
+        language: targetLabel,
+      })
+      const copied = await copyResume(resumeId, { title: translatedTitle })
+      const updatedCopy = await updateResume(copied.id, {
+        title: translatedTitle,
+        templateKey: copied.templateKey,
+        content: translated.content,
+        layout: normalizeResumeLayout(savedSource.layout),
+      })
+      void message.success(t('feedback.translationCopySuccess'))
+      await loadResumeList()
+      navigate(`/app/resumes/${updatedCopy.id}`)
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('feedback.translationFailed'))
+      throw error
+    } finally {
+      setTranslatingResume(false)
+    }
+  }
+
   async function handleRestoreResume(targetResumeId: string) {
     await restoreResume(targetResumeId)
     void message.success(t('feedback.restoreSuccess'))
@@ -402,6 +468,15 @@ export function WorkspacePage({
     } finally {
       setExportingDocx(false)
     }
+  }
+
+  function handleExportJson() {
+    if (!draft) {
+      return
+    }
+
+    exportResumeJson(draft)
+    void message.success(t('feedback.exportJsonStart'))
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -530,16 +605,19 @@ export function WorkspacePage({
         onDragEnd={handleDragEnd}
         onExpandedModulesChange={handleExpandedModulesChange}
         onExportDocx={handleExportDocx}
+        onExportJson={handleExportJson}
         onExportPdf={handleExportPdf}
         onFocusModule={focusModule}
         onHideSection={hideSection}
         onRestoredVersion={handleRestoredVersion}
         onShowSection={showSection}
+        onTranslateResume={handleTranslateResume}
         onUpdateDraft={updateDraft}
         orderedModuleDefinitions={orderedModuleDefinitions}
         saveState={saveState}
         sectionOrder={sectionOrder}
         templates={templates}
+        translatingResume={translatingResume}
       />
     )
   }
@@ -913,6 +991,7 @@ function ShareLinksModal({
       footer={null}
       destroyOnHidden
       width={600}
+      className="share-links-modal"
     >
       {loading ? (
         <div className="resume-list-card__share-loading">
