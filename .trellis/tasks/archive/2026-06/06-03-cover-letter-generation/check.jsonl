@@ -1,0 +1,5 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/tasks/06-03-cover-letter-generation/research/codebase-ai-cover-letter.md", "reason": "Verify implementation matches finalized cover letter requirements"}
+{"file": ".trellis/spec/backend/ai-chat-service.md", "reason": "Verify shared AI invocation contract is followed"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality verification"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality verification"}

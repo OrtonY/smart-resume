@@ -9,6 +9,9 @@ import type {
   AiChatRequest,
   AiBulletRewriteRequest,
   AiBulletRewriteResponse,
+  AiCoverLetter,
+  AiCoverLetterGenerateRequest,
+  AiCoverLetterUpdateRequest,
   AiResumeTranslationRequest,
   AiResumeTranslationResponse,
   AiResumeScoreRequest,
@@ -62,6 +65,46 @@ export async function translateAiResume(resumeId: string, payload: AiResumeTrans
       method: 'POST',
       body: payload,
     },
+  )
+}
+
+export async function generateAiCoverLetter(resumeId: string, payload: AiCoverLetterGenerateRequest) {
+  return requestJson<AiCoverLetter>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId) + '/cover-letters',
+    {
+      method: 'POST',
+      body: payload,
+    },
+  )
+}
+
+export async function listAiCoverLetters(resumeId: string) {
+  return requestJson<AiCoverLetter[]>('/api/ai/resumes/' + encodeURIComponent(resumeId) + '/cover-letters')
+}
+
+export async function getAiCoverLetter(resumeId: string, coverLetterId: string) {
+  return requestJson<AiCoverLetter>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/cover-letters/' + encodeURIComponent(coverLetterId),
+  )
+}
+
+export async function updateAiCoverLetter(resumeId: string, coverLetterId: string, payload: AiCoverLetterUpdateRequest) {
+  return requestJson<AiCoverLetter>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/cover-letters/' + encodeURIComponent(coverLetterId),
+    {
+      method: 'PUT',
+      body: payload,
+    },
+  )
+}
+
+export async function deleteAiCoverLetter(resumeId: string, coverLetterId: string) {
+  return requestJson<void>(
+    '/api/ai/resumes/' + encodeURIComponent(resumeId)
+    + '/cover-letters/' + encodeURIComponent(coverLetterId),
+    { method: 'DELETE' },
   )
 }
 

@@ -4,6 +4,7 @@ import {
   DownloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  FileTextOutlined,
   GlobalOutlined,
   HistoryOutlined,
   HolderOutlined,
@@ -39,9 +40,17 @@ import { useIsMobile } from '../../../../lib/hooks/useIsMobile'
 import { MarkdownComposer } from '../../../../lib/markdown/MarkdownComposer'
 import { MarkdownMessage } from '../../../../lib/markdown/MarkdownMessage'
 import { rewriteAiResumeBullet } from '../../../ai/api/aiApi'
+import { CoverLetterModal } from '../../../ai/components/CoverLetterModal'
 import { AiResumeAssistant } from '../../../ai/components/AiResumeAssistant'
 import { ResumeScoreButton } from '../../../ai/components/ResumeScoreButton'
-import type { AiBulletRewriteResponse, AiResumeSuggestion, AiResumeTranslationMode, AiResumeTranslationTarget } from '../../../ai/types'
+import type {
+  AiBulletRewriteResponse,
+  AiCoverLetter,
+  AiCoverLetterGenerateRequest,
+  AiResumeSuggestion,
+  AiResumeTranslationMode,
+  AiResumeTranslationTarget,
+} from '../../../ai/types'
 import { normalizeRewrittenBulletLine, replaceTextRange } from '../../markdown/bulletLine'
 import { resolveResumeTemplate, type ResumeTemplateDefinition } from '../../templateCatalog'
 import type {
@@ -78,6 +87,7 @@ interface ResumeEditorViewProps {
   onExportJson: () => void
   onExportPdf: (previewRoot?: HTMLElement | null) => Promise<void>
   onFocusModule: (moduleKey: ResumeModuleId) => void
+  onGenerateCoverLetter: (payload: AiCoverLetterGenerateRequest) => Promise<AiCoverLetter>
   onHideSection: (sectionKey: ResumeSectionKey) => void
   onDragEnd: (event: DragEndEvent) => void
   onRestoredVersion: (resume: ResumeDetail) => Promise<void> | void
@@ -127,6 +137,7 @@ export function ResumeEditorView({
   onExportJson,
   onExportPdf,
   onFocusModule,
+  onGenerateCoverLetter,
   onHideSection,
   onDragEnd,
   onRestoredVersion,
@@ -150,6 +161,7 @@ export function ResumeEditorView({
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [versionTimelineOpen, setVersionTimelineOpen] = useState(false)
   const [translationModalOpen, setTranslationModalOpen] = useState(false)
+  const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false)
   const [translationTarget, setTranslationTarget] = useState<AiResumeTranslationTarget>('ENGLISH')
   const [translationMode, setTranslationMode] = useState<AiResumeTranslationMode>('copy')
   const [shareTitle, setShareTitle] = useState('')
@@ -371,6 +383,9 @@ export function ResumeEditorView({
             <Button icon={<GlobalOutlined />} loading={translatingResume} onClick={() => setTranslationModalOpen(true)}>
               {t('editor.translation.button')}
             </Button>
+            <Button icon={<FileTextOutlined />} onClick={() => setCoverLetterModalOpen(true)}>
+              {t('editor.coverLetter.button')}
+            </Button>
             <InterviewMenuButton interviewMenuItems={interviewMenuItems} />
             <ResumeScoreButton draft={draft} />
             <Button icon={<HistoryOutlined />} onClick={() => setVersionTimelineOpen(true)}>
@@ -399,6 +414,7 @@ export function ResumeEditorView({
               onExportDocx={() => void onExportDocx()}
               onExportPdf={() => void onExportPdf(exportPreviewRef.current)}
               onOpenShare={openShareModal}
+              onOpenCoverLetter={() => setCoverLetterModalOpen(true)}
               onOpenTranslation={() => setTranslationModalOpen(true)}
               onOpenVersionTimeline={() => setVersionTimelineOpen(true)}
               translatingResume={translatingResume}
@@ -745,6 +761,13 @@ export function ResumeEditorView({
         onRestoredVersion={onRestoredVersion}
       />
 
+      <CoverLetterModal
+        draft={draft}
+        open={coverLetterModalOpen}
+        onClose={() => setCoverLetterModalOpen(false)}
+        onGenerate={onGenerateCoverLetter}
+      />
+
       <AiResumeAssistant draft={draft} onApplyPatch={onApplyPatch} />
     </div>
   )
@@ -817,6 +840,7 @@ function MoreActionsMenu({
   onExportDocx,
   onExportPdf,
   onOpenShare,
+  onOpenCoverLetter,
   onOpenTranslation,
   onOpenVersionTimeline,
   translatingResume,
@@ -829,6 +853,7 @@ function MoreActionsMenu({
   onExportDocx: () => void
   onExportPdf: () => void
   onOpenShare: () => void
+  onOpenCoverLetter: () => void
   onOpenTranslation: () => void
   onOpenVersionTimeline: () => void
   translatingResume: boolean
@@ -855,6 +880,12 @@ function MoreActionsMenu({
             icon: <GlobalOutlined />,
             disabled: translatingResume,
             onClick: onOpenTranslation,
+          },
+          {
+            key: 'coverLetter',
+            label: t('editor.coverLetter.button'),
+            icon: <FileTextOutlined />,
+            onClick: onOpenCoverLetter,
           },
           {
             key: 'versionTimeline',

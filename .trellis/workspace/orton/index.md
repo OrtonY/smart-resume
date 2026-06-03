@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 74
+- **Total Sessions**: 75
 - **Last Active**: 2026-06-03
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~505 | Active |
+| `journal-2.md` | ~538 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 75 | 2026-06-03 | Add cover letter generation | `33fe5f8` | `codex/cover-letter-generation` |
 | 74 | 2026-06-03 | Release v1.2.0 | `d576276` | `codex/finish-release-1.2.0` |
 | 73 | 2026-06-03 | Refresh bilingual README screenshots | `060bee2` | `codex/rewrite-readme-screenshots` |
 | 72 | 2026-06-03 | Frontend responsive layout fixes | `ce56489` | `codex/frontend-responsive-layout` |
