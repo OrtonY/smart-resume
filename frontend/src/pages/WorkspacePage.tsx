@@ -991,6 +991,7 @@ function ShareLinksModal({
       footer={null}
       destroyOnHidden
       width={600}
+      className="share-links-modal"
     >
       {loading ? (
         <div className="resume-list-card__share-loading">

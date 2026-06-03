@@ -1,5 +1,5 @@
-import { CloudDownloadOutlined, DeleteOutlined, HistoryOutlined, MessageOutlined, PlusOutlined, RobotOutlined, SettingOutlined } from '@ant-design/icons'
-import { App, Button, Card, Empty, Form, Input, List, Popconfirm, Select, Segmented, Space, Spin, Tag, Typography } from 'antd'
+import { CloudDownloadOutlined, DeleteOutlined, HistoryOutlined, MessageOutlined, PlusOutlined, QuestionCircleOutlined, RobotOutlined, SettingOutlined } from '@ant-design/icons'
+import { App, Button, Card, Empty, Form, Input, List, Popconfirm, Select, Segmented, Space, Spin, Tag, Tooltip, Typography } from 'antd'
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
@@ -17,6 +17,7 @@ import {
 } from '../api/aiApi'
 import { MarkdownMessage } from '../../../lib/markdown/MarkdownMessage'
 import { MarkdownComposer } from '../../../lib/markdown/MarkdownComposer'
+import { useIsMobile } from '../../../lib/hooks/useIsMobile'
 import type {
   AiChatConversation,
   AiChatMessage,
@@ -126,6 +127,7 @@ interface AiResumeAssistantProps {
 export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProps) {
   const { t } = useTranslation('ai')
   const { message } = App.useApp()
+  const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [conversations, setConversations] = useState<AiChatConversation[]>([])
@@ -416,6 +418,7 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
     () => conversations.find((item) => item.conversationId === selectedConversationId) ?? null,
     [conversations, selectedConversationId],
   )
+  const activeStyleLabel = styleLabel(selectedConversation?.style ?? pendingStyle)
 
   async function handleSend() {
     const trimmed = input.trim()
@@ -666,8 +669,9 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                 { label: <span><HistoryOutlined /> {t('assistant.tabHistory')}</span>, value: 'history' },
               ]}
             />
-            <Space size={8}>
+            <Space className="ai-chat-toolbar__actions" size={8}>
               <Select
+                className="ai-chat-style-select"
                 value={pendingStyle}
                 onChange={(value) => setPendingStyle(value)}
                 disabled={!!selectedConversationId || streaming}
@@ -678,22 +682,41 @@ export function AiResumeAssistant({ draft, onApplyPatch }: AiResumeAssistantProp
                   { label: t('assistant.styleSarcastic'), value: 'SARCASTIC' },
                 ]}
               />
-              <Button icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
+              <Button className="ai-chat-new-button" icon={<PlusOutlined />} onClick={startNewChat} disabled={streaming}>
                 {t('assistant.newChat')}
               </Button>
             </Space>
           </div>
 
           <div className="ai-chat-context">
-            <Tag color="blue">{t('assistant.boundResume')}</Tag>
-            <Text strong>{draft.title}</Text>
+            {!isMobile ? <Tag color="blue">{t('assistant.boundResume')}</Tag> : null}
+            <Text className="ai-chat-context__title" strong>{draft.title}</Text>
             {selectedConversationId ? <Tag color="default">{t('assistant.continuingChat')}</Tag> : <Tag color="green">{t('assistant.newChatTag')}</Tag>}
-            <Tag color="purple">{t('assistant.styleLabel', { style: styleLabel(selectedConversation?.style ?? pendingStyle) })}</Tag>
-            <Text type="secondary" style={{ fontSize: 12 }}>{t('assistant.retentionHint')}</Text>
+            <Tag color="purple">{isMobile ? activeStyleLabel : t('assistant.styleLabel', { style: activeStyleLabel })}</Tag>
+            {isMobile ? (
+              <Tooltip
+                destroyOnHidden
+                getPopupContainer={() => document.body}
+                overlayInnerStyle={{ maxWidth: 240, whiteSpace: 'normal' }}
+                placement="topRight"
+                title={t('assistant.retentionHintHelp')}
+                trigger={['click']}
+              >
+                <Button
+                  aria-label={t('assistant.retentionHintHelp')}
+                  className="ai-chat-retention-help"
+                  icon={<QuestionCircleOutlined />}
+                  size="small"
+                  type="text"
+                />
+              </Tooltip>
+            ) : (
+              <Text type="secondary" style={{ fontSize: 12 }}>{t('assistant.retentionHint')}</Text>
+            )}
           </div>
 
           {activeTab === 'history' ? (
-            <Spin spinning={loadingConversations}>
+            <Spin className="ai-chat-history" spinning={loadingConversations}>
               <List
                 className="ai-chat-conversation-list"
                 dataSource={conversations}

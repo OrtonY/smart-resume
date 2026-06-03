@@ -49,6 +49,7 @@
     "styleSarcastic": "Sarcastic",
     "styleLabel": "Style: {{style}}",
     "retentionHint": "Only the latest 10 chats are kept.",
+    "retentionHintHelp": "History keeps the latest 10 conversations; the current chat is not limited.",
     "deleteHistoryConfirmTitle": "Delete this chat history?",
     "deleteHistoryConfirmDescription": "The conversation and related AI messages will be deleted after archival.",
     "deleteHistoryConfirmOk": "Delete",
