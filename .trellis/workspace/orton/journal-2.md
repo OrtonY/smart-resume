@@ -470,3 +470,36 @@ Rewrote English and Chinese README files to use the new web and mobile screensho
 ### Next Steps
 
 - None - task complete
+
+
+## Session 74: Release v1.2.0
+
+**Date**: 2026-06-03
+**Task**: Release v1.2.0
+**Branch**: `codex/finish-release-1.2.0`
+
+### Summary
+
+Published Smart Resume v1.2.0: bumped backend/frontend versions, verified frontend/backend builds and tests, merged release PRs, tagged v1.2.0, and created the GitHub Release.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d576276` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
