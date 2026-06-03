@@ -7,6 +7,9 @@ import com.smartresume.ai.dto.AiDtos.AiBulletRewriteResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatMessage;
 import com.smartresume.ai.dto.AiDtos.AiChatCompletionResponse;
 import com.smartresume.ai.dto.AiDtos.AiChatRequest;
+import com.smartresume.ai.dto.AiDtos.AiCoverLetterGenerateRequest;
+import com.smartresume.ai.dto.AiDtos.AiCoverLetterResponse;
+import com.smartresume.ai.dto.AiDtos.AiCoverLetterUpdateRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeTranslationRequest;
 import com.smartresume.ai.dto.AiDtos.AiResumeTranslationResponse;
 import com.smartresume.ai.dto.AiDtos.AiSuggestionStatusUpdateRequest;
@@ -24,6 +27,7 @@ import com.smartresume.ai.provider.VendorMetadata;
 import com.smartresume.ai.service.AiAgentService;
 import com.smartresume.ai.service.AiChatHistoryService;
 import com.smartresume.ai.service.AiConfigurationService;
+import com.smartresume.ai.service.AiCoverLetterService;
 import com.smartresume.ai.service.AiResumeScoringService;
 import com.smartresume.ai.service.AiResumeTranslationService;
 import com.smartresume.common.api.ApiResponse;
@@ -51,6 +55,7 @@ public class AiController {
     private final AiChatHistoryService aiChatHistoryService;
     private final AiResumeScoringService aiResumeScoringService;
     private final AiResumeTranslationService aiResumeTranslationService;
+    private final AiCoverLetterService aiCoverLetterService;
     private final ChatModelProviderRegistry chatModelProviderRegistry;
 
     public AiController(
@@ -59,6 +64,7 @@ public class AiController {
         AiChatHistoryService aiChatHistoryService,
         AiResumeScoringService aiResumeScoringService,
         AiResumeTranslationService aiResumeTranslationService,
+        AiCoverLetterService aiCoverLetterService,
         ChatModelProviderRegistry chatModelProviderRegistry
     ) {
         this.aiConfigurationService = aiConfigurationService;
@@ -66,6 +72,7 @@ public class AiController {
         this.aiChatHistoryService = aiChatHistoryService;
         this.aiResumeScoringService = aiResumeScoringService;
         this.aiResumeTranslationService = aiResumeTranslationService;
+        this.aiCoverLetterService = aiCoverLetterService;
         this.chatModelProviderRegistry = chatModelProviderRegistry;
     }
 
@@ -105,6 +112,45 @@ public class AiController {
         @Valid @RequestBody AiResumeTranslationRequest request
     ) {
         return ApiResponse.success(aiResumeTranslationService.translateResume(resumeId, request), "Resume translated");
+    }
+
+    @PostMapping("/resumes/{resumeId}/cover-letters")
+    public ApiResponse<AiCoverLetterResponse> generateCoverLetter(
+        @PathVariable String resumeId,
+        @Valid @RequestBody AiCoverLetterGenerateRequest request
+    ) {
+        return ApiResponse.success(aiCoverLetterService.generate(resumeId, request), "Cover letter generated");
+    }
+
+    @GetMapping("/resumes/{resumeId}/cover-letters")
+    public ApiResponse<List<AiCoverLetterResponse>> listCoverLetters(@PathVariable String resumeId) {
+        return ApiResponse.success(aiCoverLetterService.list(resumeId));
+    }
+
+    @GetMapping("/resumes/{resumeId}/cover-letters/{coverLetterId}")
+    public ApiResponse<AiCoverLetterResponse> getCoverLetter(
+        @PathVariable String resumeId,
+        @PathVariable String coverLetterId
+    ) {
+        return ApiResponse.success(aiCoverLetterService.get(resumeId, coverLetterId));
+    }
+
+    @PutMapping("/resumes/{resumeId}/cover-letters/{coverLetterId}")
+    public ApiResponse<AiCoverLetterResponse> updateCoverLetter(
+        @PathVariable String resumeId,
+        @PathVariable String coverLetterId,
+        @Valid @RequestBody AiCoverLetterUpdateRequest request
+    ) {
+        return ApiResponse.success(aiCoverLetterService.update(resumeId, coverLetterId, request), "Cover letter updated");
+    }
+
+    @DeleteMapping("/resumes/{resumeId}/cover-letters/{coverLetterId}")
+    public ApiResponse<Void> deleteCoverLetter(
+        @PathVariable String resumeId,
+        @PathVariable String coverLetterId
+    ) {
+        aiCoverLetterService.delete(resumeId, coverLetterId);
+        return ApiResponse.success(null, "Cover letter deleted");
     }
 
     @GetMapping("/resumes/{resumeId}/score")

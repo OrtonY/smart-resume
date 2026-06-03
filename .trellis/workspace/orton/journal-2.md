@@ -503,3 +503,36 @@ Published Smart Resume v1.2.0: bumped backend/frontend versions, verified fronte
 ### Next Steps
 
 - None - task complete
+
+
+## Session 75: Add cover letter generation
+
+**Date**: 2026-06-03
+**Task**: Add cover letter generation
+**Branch**: `codex/cover-letter-generation`
+
+### Summary
+
+Implemented persisted AI cover letter generation from the resume editor with optional application linkage, editable history, backend API/storage/tests, frontend modal/i18n, and code-spec documentation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `33fe5f8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

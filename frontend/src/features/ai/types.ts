@@ -109,6 +109,37 @@ export interface AiResumeTranslationResponse {
   content: ResumeContent
 }
 
+export type AiCoverLetterOutputLanguage = 'CHINESE' | 'ENGLISH'
+
+export interface AiCoverLetterGenerateRequest {
+  applicationId?: string
+  company: string
+  position: string
+  jobDescription?: string
+  extraNotes?: string
+  outputLanguage: AiCoverLetterOutputLanguage
+}
+
+export interface AiCoverLetterUpdateRequest {
+  title: string
+  body: string
+}
+
+export interface AiCoverLetter {
+  id: string
+  resumeId: string
+  applicationId: string | null
+  company: string
+  position: string
+  jobDescription: string | null
+  extraNotes: string | null
+  outputLanguage: AiCoverLetterOutputLanguage
+  title: string
+  body: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface AiResumeScoreSuggestionGroup {
   title: string
   suggestions: string[]
