@@ -2192,12 +2192,31 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 .resume-score-modal .ant-modal-body {
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .resume-score-panel {
   display: grid;
   gap: 16px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
   width: 100%;
+  min-width: 0;
+  min-height: 0;
+  contain: layout paint style;
+}
+
+.resume-score-scroll-region {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  contain: layout paint style;
+}
+
+.resume-score-scroll-region > .ant-spin-nested-loading,
+.resume-score-scroll-region > .ant-spin-nested-loading > .ant-spin-container {
   min-width: 0;
 }
 
@@ -2273,6 +2292,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   display: grid;
   gap: 16px;
   width: 100%;
+  contain: layout paint style;
 }
 
 .resume-score-result__hero,
@@ -2280,18 +2300,44 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-group,
 .resume-score-heatmap {
   padding: 16px 18px;
-  border-radius: 20px;
+  border-radius: 14px;
   border: 1px solid rgba(20, 33, 61, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 255, 0.8)),
-    radial-gradient(circle at top right, rgba(255, 140, 66, 0.1), transparent 28%);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .resume-score-result__hero {
   display: grid;
-  gap: 14px;
-  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  grid-template-columns: 112px minmax(0, 1fr);
   align-items: center;
+}
+
+.resume-score-result__meter {
+  width: 112px;
+  min-width: 112px;
+}
+
+.resume-score-gauge {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  border: 8px solid rgba(49, 87, 164, 0.18);
+  color: #3157a4;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.resume-score-gauge strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.resume-score-gauge span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
 }
 
 .resume-score-result__summary {
@@ -2308,7 +2354,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-panel .ant-tag {
   min-width: 0;
   max-width: 100%;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
@@ -2350,6 +2396,7 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-heatmap {
   display: grid;
   gap: 16px;
+  contain: layout paint style;
 }
 
 .resume-score-heatmap__header {
@@ -2362,8 +2409,78 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .resume-score-section-heatmap,
 .resume-score-requirements,
 .resume-score-requirements__list {
-  display: grid;
-  gap: 12px;
+  min-width: 0;
+}
+
+.resume-score-requirements {
+  contain: layout paint style;
+}
+
+.resume-score-requirements__list {
+  overflow-x: hidden;
+  contain: layout paint style;
+}
+
+.resume-score-requirement + .resume-score-requirement {
+  margin-top: 12px;
+}
+
+.resume-score-chip-list {
+  display: block;
+  min-width: 0;
+}
+
+.resume-score-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 22px;
+  margin: 0 6px 6px 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  background: rgba(20, 33, 61, 0.04);
+  overflow-wrap: break-word;
+}
+
+.resume-score-chip--blue,
+.resume-score-chip--medium,
+.resume-score-chip--geekblue {
+  color: #3157a4;
+  border-color: rgba(49, 87, 164, 0.22);
+  background: rgba(49, 87, 164, 0.1);
+}
+
+.resume-score-chip--matched,
+.resume-score-chip--strong {
+  color: #138047;
+  border-color: rgba(24, 160, 88, 0.22);
+  background: rgba(24, 160, 88, 0.1);
+}
+
+.resume-score-chip--partial,
+.resume-score-chip--weak {
+  color: #a15c00;
+  border-color: rgba(212, 107, 8, 0.22);
+  background: rgba(212, 107, 8, 0.1);
+}
+
+.resume-score-chip--missing {
+  color: #b42318;
+  border-color: rgba(207, 19, 34, 0.22);
+  background: rgba(207, 19, 34, 0.1);
+}
+
+.resume-score-muted {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.resume-score-requirement__suggestion p {
+  margin: 0;
 }
 
 .resume-score-section-heatmap__grid {
@@ -2374,33 +2491,40 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 .resume-score-section-card,
 .resume-score-requirement {
-  display: grid;
-  gap: 10px;
   padding: 12px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(20, 33, 61, 0.08);
   background: rgba(255, 255, 255, 0.72);
 }
 
+.resume-score-section-card,
+.resume-score-requirement,
+.resume-score-group {
+  contain: layout paint style;
+}
+
 .resume-score-section-card__heading,
 .resume-score-requirement__heading {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 10px;
 }
 
 .resume-score-requirement__title {
-  display: grid;
-  gap: 6px;
+  min-width: 0;
+}
+
+.resume-score-section-card > .resume-score-bar,
+.resume-score-requirement > .resume-score-bar {
+  margin-bottom: 8px;
 }
 
 .resume-score-requirement__sections,
 .resume-score-requirement__block,
 .resume-score-requirement__suggestion {
-  display: grid;
-  gap: 6px;
+  margin-top: 10px;
 }
 
 .resume-score-requirement__details-button,
@@ -4335,13 +4459,17 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   /* Resume score panel mobile */
   .responsive-modal-drawer.resume-score-modal .ant-drawer-body {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
     overscroll-behavior: contain;
   }
 
   .resume-score-panel {
     gap: 12px;
+    height: 100%;
     width: 100%;
     min-width: 0;
+    min-height: 0;
   }
 
   .resume-score-panel__intro {
@@ -4401,6 +4529,10 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
   .resume-score-section-heatmap__grid {
     grid-template-columns: 1fr;
+  }
+
+  .resume-score-requirements__list {
+    padding-right: 0;
   }
 
   .resume-score-bar {
