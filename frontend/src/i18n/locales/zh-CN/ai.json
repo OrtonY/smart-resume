@@ -99,6 +99,7 @@
     "mockAlertTitle": "当前展示的是 Mock 评分结果",
     "mockAlertDescription": "接口结构已经稳定，后续接入真实 AI 时无需调整页面交互。",
     "scoreUnit": "{{score}} 分",
+    "scoreGaugeUnit": "分",
     "scoreCompleted": "评分完成",
     "withJd": "已结合 JD",
     "withoutJd": "未填写 JD",

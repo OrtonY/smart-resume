@@ -1,24 +1,21 @@
 import { BarChartOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Empty, Input, Progress, Space, Spin, Tag, Typography } from 'antd'
-import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
-import { useEffect, useState, type CSSProperties } from 'react'
+import { Alert, App, Button, Empty, Input, Space, Spin, Tag, Typography } from 'antd'
+import { startTransition, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getPersistedAiResumeScore, scoreAiResume } from '../api/aiApi'
-import type { AiResumeHeatmapStatus, AiResumeRequirementStatus, AiResumeScoreResponse } from '../types'
+import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import type { ResumeDetail } from '../../resume/types'
-import { useIsMobile } from '../../../lib/hooks/useIsMobile'
+import { getPersistedAiResumeScore, scoreAiResume } from '../api/aiApi'
+import type {
+  AiResumeHeatmapStatus,
+  AiResumeRequirementMatch,
+  AiResumeRequirementStatus,
+  AiResumeScoreResponse,
+  AiResumeScoreSuggestionGroup,
+  AiResumeSectionHeatmap,
+} from '../types'
 
 const { Paragraph, Text } = Typography
 const { TextArea } = Input
-
-const STATUS_TAG_COLORS: Record<string, string> = {
-  matched: 'green',
-  partial: 'gold',
-  missing: 'red',
-  strong: 'green',
-  medium: 'blue',
-  weak: 'orange',
-}
 
 const SECTION_STROKE_COLORS: Record<string, string> = {
   strong: '#18a058',
@@ -27,26 +24,25 @@ const SECTION_STROKE_COLORS: Record<string, string> = {
   missing: '#cf1322',
 }
 
-const MOBILE_REQUIREMENT_INITIAL_COUNT = 6
-const MOBILE_REQUIREMENT_BATCH_SIZE = 6
-
-function getStatusTagColor(status: AiResumeRequirementStatus | AiResumeHeatmapStatus | string) {
-  return STATUS_TAG_COLORS[status] ?? 'default'
-}
+type Translate = (key: string, options?: Record<string, unknown>) => string
 
 function getSectionStrokeColor(status: AiResumeHeatmapStatus | string) {
   return SECTION_STROKE_COLORS[status] ?? '#3157a4'
 }
 
-function getHeatmapStatusLabel(status: string, t: (key: string, options?: Record<string, unknown>) => string) {
+function getRequirementStrokeColor(status: AiResumeRequirementStatus | string) {
+  return status === 'missing' ? '#cf1322' : '#3157a4'
+}
+
+function getHeatmapStatusLabel(status: string, t: Translate) {
   return t('score.heatmapStatus.' + status, { defaultValue: status })
 }
 
-function getImportanceLabel(importance: string, t: (key: string, options?: Record<string, unknown>) => string) {
+function getImportanceLabel(importance: string, t: Translate) {
   return t('score.heatmapImportance.' + importance, { defaultValue: importance })
 }
 
-function getSectionLabel(sectionKey: string, fallback: string, t: (key: string, options?: Record<string, unknown>) => string) {
+function getSectionLabel(sectionKey: string, fallback: string, t: Translate) {
   return t('section.' + sectionKey, { defaultValue: fallback || sectionKey })
 }
 
@@ -55,6 +51,13 @@ function normalizeScorePercent(score: number) {
     return 0
   }
   return Math.max(0, Math.min(100, Math.round(score)))
+}
+
+function getScoreChipTone(status: AiResumeRequirementStatus | AiResumeHeatmapStatus | string) {
+  if (status === 'matched' || status === 'partial' || status === 'missing' || status === 'strong' || status === 'medium' || status === 'weak') {
+    return status
+  }
+  return 'default'
 }
 
 function HeatmapScoreBar({ color, percent }: { color: string; percent: number }) {
@@ -81,15 +84,122 @@ function HeatmapScoreBar({ color, percent }: { color: string; percent: number })
   )
 }
 
-function getInitialVisibleRequirementCount(result: AiResumeScoreResponse, isMobile: boolean) {
-  const requirementCount = result.requirementMatches?.length ?? 0
-  return isMobile ? Math.min(MOBILE_REQUIREMENT_INITIAL_COUNT, requirementCount) : requirementCount
+function ScoreGauge({ score, t }: { score: number; t: Translate }) {
+  const normalizedScore = normalizeScorePercent(score)
+
+  return (
+    <div
+      aria-label={t('score.scoreUnit', { score: normalizedScore })}
+      className="resume-score-gauge"
+      role="img"
+    >
+      <strong>{normalizedScore}</strong>
+      <span>{t('score.scoreGaugeUnit', { defaultValue: 'pts' })}</span>
+    </div>
+  )
+}
+
+function ScoreChip({ children, tone = 'default' }: { children: ReactNode; tone?: string }) {
+  return (
+    <span className={'resume-score-chip resume-score-chip--' + tone}>
+      {children}
+    </span>
+  )
+}
+
+function SectionHeatmapCard({ section, t }: { section: AiResumeSectionHeatmap; t: Translate }) {
+  return (
+    <div className="resume-score-section-card">
+      <div className="resume-score-section-card__heading">
+        <strong>{getSectionLabel(section.sectionKey, section.sectionLabel, t)}</strong>
+        <ScoreChip tone={getScoreChipTone(section.status)}>
+          {getHeatmapStatusLabel(section.status, t)}
+        </ScoreChip>
+      </div>
+      <HeatmapScoreBar color={getSectionStrokeColor(section.status)} percent={section.score} />
+      <span className="resume-score-muted">
+        {t('score.sectionHeatmapCounts', {
+          matched: section.matchedCount,
+          missing: section.missingCount,
+        })}
+      </span>
+      {section.summary ? <p className="resume-score-paragraph resume-score-muted">{section.summary}</p> : null}
+    </div>
+  )
+}
+
+function RequirementMatchCard({ item, index, t }: { item: AiResumeRequirementMatch; index: number; t: Translate }) {
+  return (
+    <div className="resume-score-requirement" key={item.text + index}>
+      <div className="resume-score-requirement__heading">
+        <div className="resume-score-requirement__title">
+          <strong>{item.text}</strong>
+          <div className="resume-score-chip-list">
+            {item.category ? <ScoreChip>{item.category}</ScoreChip> : null}
+            {item.importance ? (
+              <ScoreChip tone="blue">
+                {getImportanceLabel(item.importance, t)}
+              </ScoreChip>
+            ) : null}
+          </div>
+        </div>
+        <ScoreChip tone={getScoreChipTone(item.status)}>
+          {getHeatmapStatusLabel(item.status, t)}
+        </ScoreChip>
+      </div>
+
+      <HeatmapScoreBar color={getRequirementStrokeColor(item.status)} percent={item.score} />
+
+      {item.matchedSections.length > 0 ? (
+        <div className="resume-score-requirement__sections">
+          <span className="resume-score-muted">{t('score.matchedSectionsLabel')}</span>
+          <div className="resume-score-chip-list">
+            {item.matchedSections.map((section) => (
+              <ScoreChip key={section} tone="geekblue">
+                {getSectionLabel(section, section, t)}
+              </ScoreChip>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {item.evidence.length > 0 ? (
+        <div className="resume-score-requirement__block">
+          <span className="resume-score-muted">{t('score.evidenceLabel')}</span>
+          <ul>
+            {item.evidence.map((evidence, evidenceIndex) => (
+              <li key={evidence + evidenceIndex}>{evidence}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {item.suggestion ? (
+        <div className="resume-score-requirement__suggestion">
+          <span className="resume-score-muted">{t('score.suggestionLabel')}</span>
+          <p>{item.suggestion}</p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function SuggestionGroupCard({ group }: { group: AiResumeScoreSuggestionGroup }) {
+  return (
+    <div className="resume-score-group">
+      <strong>{group.title}</strong>
+      <ul>
+        {group.suggestions.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
   const { t } = useTranslation('ai')
   const { message } = App.useApp()
-  const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [jobDescription, setJobDescription] = useState('')
   const [savedJobDescription, setSavedJobDescription] = useState('')
@@ -98,15 +208,9 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
   const [restored, setRestored] = useState(false)
   const [result, setResult] = useState<AiResumeScoreResponse | null>(null)
   const [showJobDescriptionInput, setShowJobDescriptionInput] = useState(true)
-  const [visibleRequirementCount, setVisibleRequirementCount] = useState(0)
-  const [expandedRequirementKey, setExpandedRequirementKey] = useState<string | null>(null)
   const requirementMatches = result?.requirementMatches ?? []
   const sectionHeatmap = result?.sectionHeatmap ?? []
   const hasHeatmap = Boolean(result?.jobDescriptionProvided && (requirementMatches.length > 0 || sectionHeatmap.length > 0))
-  const visibleRequirementMatches = isMobile
-    ? requirementMatches.slice(0, visibleRequirementCount)
-    : requirementMatches
-  const hasHiddenRequirementMatches = isMobile && visibleRequirementCount < requirementMatches.length
 
   useEffect(() => {
     if (!open || restored) {
@@ -122,12 +226,12 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
           return
         }
         if (persisted) {
-          setJobDescription(persisted.jobDescription)
-          setSavedJobDescription(persisted.jobDescription)
-          setVisibleRequirementCount(getInitialVisibleRequirementCount(persisted.result, isMobile))
-          setExpandedRequirementKey(null)
-          setResult(persisted.result)
-          setShowJobDescriptionInput(false)
+          startTransition(() => {
+            setJobDescription(persisted.jobDescription)
+            setSavedJobDescription(persisted.jobDescription)
+            setResult(persisted.result)
+            setShowJobDescriptionInput(false)
+          })
         }
         setRestored(true)
       } catch (error) {
@@ -146,7 +250,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
     return () => {
       canceled = true
     }
-  }, [draft.id, isMobile, message, open, restored, t])
+  }, [draft.id, message, open, restored, t])
 
   function handleClose() {
     if (scoring || restoring) {
@@ -173,12 +277,12 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
         jobDescription: normalizedJobDescription || undefined,
       })
 
-      setVisibleRequirementCount(getInitialVisibleRequirementCount(response, isMobile))
-      setExpandedRequirementKey(null)
-      setResult(response)
-      setJobDescription(normalizedJobDescription)
-      setSavedJobDescription(normalizedJobDescription)
-      setShowJobDescriptionInput(false)
+      startTransition(() => {
+        setResult(response)
+        setJobDescription(normalizedJobDescription)
+        setSavedJobDescription(normalizedJobDescription)
+        setShowJobDescriptionInput(false)
+      })
     } catch (error) {
       void message.error(error instanceof Error ? error.message : t('score.scoreFailed'))
     } finally {
@@ -197,14 +301,14 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
         title={t('score.modalTitle')}
         onCancel={handleClose}
         footer={null}
-        destroyOnHidden={false}
+        destroyOnHidden
         width={720}
         className="resume-score-modal"
         styles={{
           body: {
-            maxHeight: '70vh',
+            height: '70vh',
             overflowX: 'hidden',
-            overflowY: 'auto',
+            overflowY: 'hidden',
           },
         }}
       >
@@ -253,9 +357,10 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
             </div>
           )}
 
-          <Spin spinning={scoring || restoring}>
-            {result ? (
-              <div className="resume-score-result">
+          <div className="resume-score-scroll-region">
+            <Spin spinning={scoring || restoring}>
+              {result ? (
+                <div className="resume-score-result">
                 {result.mode === 'mock' ? (
                   <Alert
                     showIcon
@@ -267,12 +372,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
 
                 <div className="resume-score-result__hero">
                   <div className="resume-score-result__meter">
-                    <Progress
-                      type="dashboard"
-                      percent={result.score}
-                      strokeColor="#3157a4"
-                      format={(percent) => t('score.scoreUnit', { score: percent ?? 0 })}
-                    />
+                    <ScoreGauge score={result.score} t={t} />
                   </div>
                   <div className="resume-score-result__summary">
                     <Space wrap>
@@ -286,11 +386,11 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
 
                 <div className="resume-score-result__strengths">
                   <Text strong>{t('score.strengthsTitle')}</Text>
-                  <div className="resume-score-result__tag-list">
+                  <div className="resume-score-chip-list">
                     {result.strengths.map((item) => (
-                      <Tag color="blue" key={item}>
+                      <ScoreChip key={item} tone="blue">
                         {item}
-                      </Tag>
+                      </ScoreChip>
                     ))}
                   </div>
                 </div>
@@ -314,28 +414,7 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
                         <Text strong>{t('score.sectionHeatmapTitle')}</Text>
                         <div className="resume-score-section-heatmap__grid">
                           {sectionHeatmap.map((section) => (
-                            <div className="resume-score-section-card" key={section.sectionKey}>
-                              <div className="resume-score-section-card__heading">
-                                <Text strong>
-                                  {getSectionLabel(section.sectionKey, section.sectionLabel, t)}
-                                </Text>
-                                <Tag color={getStatusTagColor(section.status)}>
-                                  {getHeatmapStatusLabel(section.status, t)}
-                                </Tag>
-                              </div>
-                              <HeatmapScoreBar color={getSectionStrokeColor(section.status)} percent={section.score} />
-                              <Text type="secondary">
-                                {t('score.sectionHeatmapCounts', {
-                                  matched: section.matchedCount,
-                                  missing: section.missingCount,
-                                })}
-                              </Text>
-                              {section.summary ? (
-                                <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                                  {section.summary}
-                                </Paragraph>
-                              ) : null}
-                            </div>
+                            <SectionHeatmapCard key={section.sectionKey} section={section} t={t} />
                           ))}
                         </div>
                       </div>
@@ -345,96 +424,10 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
                       <div className="resume-score-requirements">
                         <Text strong>{t('score.requirementMatchesTitle')}</Text>
                         <div className="resume-score-requirements__list">
-                          {visibleRequirementMatches.map((item, index) => {
-                            const requirementKey = item.text + index
-                            const hasRequirementDetails = item.matchedSections.length > 0 || item.evidence.length > 0 || Boolean(item.suggestion)
-                            const showRequirementDetails = !isMobile || expandedRequirementKey === requirementKey
-
-                            return (
-                              <div className="resume-score-requirement" key={requirementKey}>
-                                <div className="resume-score-requirement__heading">
-                                  <div className="resume-score-requirement__title">
-                                    <Text strong>{item.text}</Text>
-                                    <Space size={4} wrap>
-                                      {item.category ? <Tag>{item.category}</Tag> : null}
-                                      {item.importance ? (
-                                        <Tag color="blue">
-                                          {getImportanceLabel(item.importance, t)}
-                                        </Tag>
-                                      ) : null}
-                                    </Space>
-                                  </div>
-                                  <Tag color={getStatusTagColor(item.status)}>
-                                    {getHeatmapStatusLabel(item.status, t)}
-                                  </Tag>
-                                </div>
-
-                                <HeatmapScoreBar
-                                  color={getStatusTagColor(item.status) === 'red' ? '#cf1322' : '#3157a4'}
-                                  percent={item.score}
-                                />
-
-                                {isMobile && hasRequirementDetails ? (
-                                  <Button
-                                    className="resume-score-requirement__details-button"
-                                    size="small"
-                                    type="text"
-                                    onClick={() => setExpandedRequirementKey(showRequirementDetails ? null : requirementKey)}
-                                  >
-                                    {showRequirementDetails
-                                      ? t('score.hideRequirementDetails', { defaultValue: '收起详情' })
-                                      : t('score.showRequirementDetails', { defaultValue: '查看详情' })}
-                                  </Button>
-                                ) : null}
-
-                                {showRequirementDetails && item.matchedSections.length > 0 ? (
-                                  <div className="resume-score-requirement__sections">
-                                    <Text type="secondary">{t('score.matchedSectionsLabel')}</Text>
-                                    <Space size={4} wrap>
-                                      {item.matchedSections.map((section) => (
-                                        <Tag color="geekblue" key={section}>
-                                          {getSectionLabel(section, section, t)}
-                                        </Tag>
-                                      ))}
-                                    </Space>
-                                  </div>
-                                ) : null}
-
-                                {showRequirementDetails && item.evidence.length > 0 ? (
-                                  <div className="resume-score-requirement__block">
-                                    <Text type="secondary">{t('score.evidenceLabel')}</Text>
-                                    <ul>
-                                      {item.evidence.map((evidence) => (
-                                        <li key={evidence}>{evidence}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ) : null}
-
-                                {showRequirementDetails && item.suggestion ? (
-                                  <div className="resume-score-requirement__suggestion">
-                                    <Text type="secondary">{t('score.suggestionLabel')}</Text>
-                                    <Paragraph style={{ marginBottom: 0 }}>{item.suggestion}</Paragraph>
-                                  </div>
-                                ) : null}
-                              </div>
-                            )
-                          })}
+                          {requirementMatches.map((item, index) => (
+                            <RequirementMatchCard index={index} item={item} key={item.text + index} t={t} />
+                          ))}
                         </div>
-                        {hasHiddenRequirementMatches ? (
-                          <Button
-                            block
-                            className="resume-score-requirements__more"
-                            onClick={() => {
-                              setVisibleRequirementCount((current) => Math.min(current + MOBILE_REQUIREMENT_BATCH_SIZE, requirementMatches.length))
-                            }}
-                          >
-                            {t('score.showMoreRequirementMatches', {
-                              count: requirementMatches.length - visibleRequirementCount,
-                              defaultValue: '查看更多要求（剩余 {{count}} 条）',
-                            })}
-                          </Button>
-                        ) : null}
                       </div>
                     ) : null}
                   </div>
@@ -442,26 +435,20 @@ export function ResumeScoreButton({ draft }: { draft: ResumeDetail }) {
 
                 <div className="resume-score-result__groups">
                   {result.suggestionGroups.map((group) => (
-                    <div className="resume-score-group" key={group.title}>
-                      <Text strong>{group.title}</Text>
-                      <ul>
-                        {group.suggestions.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <SuggestionGroupCard group={group} key={group.title} />
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div className="resume-score-empty">
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={t('score.emptyDescription')}
-                />
-              </div>
-            )}
-          </Spin>
+                </div>
+              ) : (
+                <div className="resume-score-empty">
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={t('score.emptyDescription')}
+                  />
+                </div>
+              )}
+            </Spin>
+          </div>
         </div>
       </ResponsiveModal>
     </>

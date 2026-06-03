@@ -99,6 +99,7 @@
     "mockAlertTitle": "This is a mock scoring result",
     "mockAlertDescription": "The API shape is stable, so the UI will not need changes when real AI is integrated.",
     "scoreUnit": "{{score}} pts",
+    "scoreGaugeUnit": "pts",
     "scoreCompleted": "Scoring complete",
     "withJd": "JD included",
     "withoutJd": "No JD",
