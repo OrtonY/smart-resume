@@ -437,3 +437,36 @@ Fixed mobile AI chat toolbar/context layout, restored scroll behavior for chat h
 ### Next Steps
 
 - None - task complete
+
+
+## Session 73: Refresh bilingual README screenshots
+
+**Date**: 2026-06-03
+**Task**: Refresh bilingual README screenshots
+**Branch**: `codex/rewrite-readme-screenshots`
+
+### Summary
+
+Rewrote English and Chinese README files to use the new web and mobile screenshot directories, included all 44 screenshots, and removed obsolete root docs screenshots.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `060bee2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

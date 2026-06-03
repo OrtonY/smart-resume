@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 72
+- **Total Sessions**: 73
 - **Last Active**: 2026-06-03
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~439 | Active |
+| `journal-2.md` | ~472 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 73 | 2026-06-03 | Refresh bilingual README screenshots | `060bee2` | `codex/rewrite-readme-screenshots` |
 | 72 | 2026-06-03 | Frontend responsive layout fixes | `ce56489` | `codex/frontend-responsive-layout` |
 | 71 | 2026-06-03 | Optimize resume score rendering | `8aae96b` | `codex/optimize-resume-score-rendering` |
 | 70 | 2026-06-02 | Optimize mobile resume JD heatmap | `233f963`, `8c548b5` | `codex/resume-jd-heatmap-eval` |
