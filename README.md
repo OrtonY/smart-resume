@@ -2,122 +2,140 @@
 
 [中文说明](./README.zh-CN.md)
 
-Smart Resume is a private, multi-user resume workspace for writing, refining, sharing, and practicing with AI. The repository combines a Spring Boot backend with a React + Vite frontend and focuses on one complete workflow: account registration and login, structured editing, live preview, template switching, scoring, sharing, PDF export, and mock interviews.
+Smart Resume is a private, multi-user resume workspace for creating, improving, sharing, exporting, and rehearsing resumes with AI. It combines a Spring Boot backend with a React + Vite frontend and covers the full resume workflow: account access, structured editing, live preview, templates, scoring, public sharing, PDF export, submissions, and interview practice.
 
 ## Highlights
 
-- Multi-user account system with registration and login, admin-controlled registration toggle
-- Resume hub for creating, copying, deleting, and recovering multiple resumes
-- Structured editor with live preview, section visibility, and layout customization
-- Built-in and custom template support
-- AI configuration, resume assistant chat, resume scoring, and interview simulation
-- Public share links with optional password protection
-- Two PDF export modes:
-  - Quick export: client-side screenshot (`html2canvas` + `jspdf`), pixel-perfect to the preview
-  - High-quality export: server-side rendering via Playwright + Chromium, producing real-text, ATS-friendly PDFs that match the preview pixel-for-pixel
+- Multi-user login and registration with admin-controlled registration settings
+- Resume hub for creating, editing, copying, deleting, recovering, versioning, and sharing resumes
+- Structured editor with real-time preview, A4 preview, section settings, and template management
+- AI provider configuration, resume chat, resume scoring, translation, and interview assistance
+- Interview workspace with target company context, AI answer suggestions, chat history, and reports
+- Submission tracking for job applications and resume delivery
+- Two PDF export paths:
+  - Quick export in the browser with `html2canvas` and `jspdf`
+  - High-quality server-side export with Playwright and Chromium
 
-## Product Tour
+## Product Screenshots
 
-### Access and workspace
+### Web Experience
 
-![Login](./docs/login.png)
+#### Access and Workspace
 
-Register a new account or log in with username and password to enter your private workspace.
+| Login | Resume Homepage |
+|---|---|
+| <img src="./docs/web/login.png" alt="Web login" width="420"> | <img src="./docs/web/resume-homepage.png" alt="Web resume homepage" width="420"> |
 
-![System configuration](./docs/System-Config.png)
+| AI Configuration | Recycle Bin |
+|---|---|
+| <img src="./docs/web/AI-config.png" alt="Web AI configuration" width="420"> | <img src="./docs/web/Recycle.png" alt="Web recycle bin" width="420"> |
 
-Manage system settings from the workspace: toggle public registration (admin only), change your password, and configure AI providers.
+#### Resume Editing and Preview
 
-![Resume workspace](./docs/Resume-Homepage.png)
+| Resume Editor | A4 Preview |
+|---|---|
+| <img src="./docs/web/resume-edit.png" alt="Web resume editor" width="420"> | <img src="./docs/web/resume-a4-preview.png" alt="Web A4 resume preview" width="420"> |
 
-Manage multiple resumes, jump to templates, interviews, AI settings, and the recycle bin from the main hub.
+| Resume Chat | Resume Translation |
+|---|---|
+| <img src="./docs/web/resume-chat.png" alt="Web resume chat" width="420"> | <img src="./docs/web/resume-translate.png" alt="Web resume translation" width="420"> |
 
-![Recycle bin](./docs/Resume-Recycle-Bin.png)
+| Score Overview | Score Details | Score Suggestions |
+|---|---|---|
+| <img src="./docs/web/resume-score1.png" alt="Web resume score overview" width="300"> | <img src="./docs/web/resume-score2.png" alt="Web resume score details" width="300"> | <img src="./docs/web/resume-score3.png" alt="Web resume score suggestions" width="300"> |
 
-Recover deleted resumes from the recycle bin without leaving the same workspace flow.
+| Resume Version | Resume Share | Share Detail |
+|---|---|---|
+| <img src="./docs/web/resume-version.png" alt="Web resume version" width="300"> | <img src="./docs/web/resume-share.png" alt="Web resume share" width="300"> | <img src="./docs/web/resume-share-detail.png" alt="Web resume share detail" width="300"> |
 
-### Editing and templates
+#### Templates and Submissions
 
-![Resume editor](./docs/Resume-Edit.png)
+| Template Homepage | Template Editor | Resume Import |
+|---|---|---|
+| <img src="./docs/web/template-homepage.png" alt="Web template homepage" width="300"> | <img src="./docs/web/template-edit.png" alt="Web template editor" width="300"> | <img src="./docs/web/template-resume-import.png" alt="Web resume import from template" width="300"> |
 
-Edit structured resume sections on the left and watch the rendered preview update in real time on the right.
+| Submission Tracking |
+|---|
+| <img src="./docs/web/submission.png" alt="Web submission tracking" width="420"> |
 
-![Standard A4 preview](./docs/Resume-Preview.png)
+#### Interview Practice
 
-Open a clean A4 preview to inspect layout details before exporting or sharing.
+| Interview Homepage | Interview Chat |
+|---|---|
+| <img src="./docs/web/interview-homepage.png" alt="Web interview homepage" width="420"> | <img src="./docs/web/interview-chat.png" alt="Web interview chat" width="420"> |
 
-![Template gallery](./docs/Resume-Template.png)
+| AI Answer | Interview Report 1 | Interview Report 2 |
+|---|---|---|
+| <img src="./docs/web/interview-ai-answer.png" alt="Web interview AI answer" width="300"> | <img src="./docs/web/interview-report1.png" alt="Web interview report overview" width="300"> | <img src="./docs/web/interview-report2.png" alt="Web interview report details" width="300"> |
 
-Switch between built-in templates or start from a custom template variant.
+### Mobile Experience
 
-### AI-assisted workflow
+#### Access and Workspace
 
-![AI configuration](./docs/AI-Config.png)
+| Login | Resume Homepage | AI Configuration |
+|---|---|---|
+| <img src="./docs/mobile/login.png" alt="Mobile login" width="220"> | <img src="./docs/mobile/resume-homepage.png" alt="Mobile resume homepage" width="220"> | <img src="./docs/mobile/AI-config.png" alt="Mobile AI configuration" width="220"> |
 
-Configure OpenAI-compatible providers, DeepSeek, or Ollama from the UI instead of hard-coding provider details in the frontend.
+| Recycle Bin | Submission Tracking | Resume Settings |
+|---|---|---|
+| <img src="./docs/mobile/Recycle.png" alt="Mobile recycle bin" width="220"> | <img src="./docs/mobile/submission.png" alt="Mobile submission tracking" width="220"> | <img src="./docs/mobile/resume-settings.png" alt="Mobile resume settings" width="220"> |
 
-![AI resume chat](./docs/Resume-Edit-AI-Chat.png)
+#### Resume Editing and Sharing
 
-Use the in-editor AI assistant to review resume content, continue the conversation, and apply targeted suggestions.
+| Resume Editor | Resume Preview | Resume Chat |
+|---|---|---|
+| <img src="./docs/mobile/resume-edit.png" alt="Mobile resume editor" width="220"> | <img src="./docs/mobile/resume-preview.png" alt="Mobile resume preview" width="220"> | <img src="./docs/mobile/resume-chat.png" alt="Mobile resume chat" width="220"> |
 
-![Resume scoring](./docs/Resume-Score.png)
+| Score Overview | Score Details | Share Detail |
+|---|---|---|
+| <img src="./docs/mobile/resume-score1.png" alt="Mobile resume score overview" width="220"> | <img src="./docs/mobile/resume-score2.png" alt="Mobile resume score details" width="220"> | <img src="./docs/mobile/resume-share-detail.png" alt="Mobile resume share detail" width="220"> |
 
-Score a resume against general quality or a target job description and review structured feedback.
+| Version List | Version Detail |
+|---|---|
+| <img src="./docs/mobile/resume-version1.png" alt="Mobile resume version list" width="220"> | <img src="./docs/mobile/resume-version2.png" alt="Mobile resume version detail" width="220"> |
 
-### Sharing and interviews
+#### Templates and Interviews
 
-![Resume sharing](./docs/Resume-Share.png)
+| Template Homepage | Template Editor |
+|---|---|
+| <img src="./docs/mobile/template-homepage.png" alt="Mobile template homepage" width="220"> | <img src="./docs/mobile/template-edit.png" alt="Mobile template editor" width="220"> |
 
-Create public share links, choose the share mode, and optionally protect the link with a password.
+| Interview Homepage | Target Company | Interview Chat |
+|---|---|---|
+| <img src="./docs/mobile/interview-homepage.png" alt="Mobile interview homepage" width="220"> | <img src="./docs/mobile/interview-target-company.png" alt="Mobile interview target company" width="220"> | <img src="./docs/mobile/interview-chat.png" alt="Mobile interview chat" width="220"> |
 
-![Interview center](./docs/Interview-Hompage.png)
-
-Create interview sessions, track progress, and review generated interview reports in the interview center.
-
-![Interview in progress](./docs/Interview2.png)
-
-Run timed interview rounds, view company context, and answer directly inside the interview workspace.
-
-![Interview history view](./docs/Interview.png)
-
-Review earlier rounds in read-only mode when you want to revisit a previous question and answer exchange.
-
-![Interview report](./docs/Interview-Report.png)
-
-Inspect the generated report with overall score, dimension breakdown, strengths, and improvement suggestions.
+| AI Answer | Interview Report |
+|---|---|
+| <img src="./docs/mobile/interview-ai-answer.png" alt="Mobile interview AI answer" width="220"> | <img src="./docs/mobile/interview-report.png" alt="Mobile interview report" width="220"> |
 
 ## Tech Stack
 
 ### Backend
 
 - Java 21
-- Spring Boot 3.5
+- Spring Boot 3.5.14
 - PostgreSQL
 - Flyway
 - MyBatis-Flex
 - Spring AI
+- Playwright 1.60.0 for high-quality PDF export
 
 ### Frontend
 
-- React 19
+- React 19.2
 - TypeScript
-- Vite
-- Ant Design
+- Vite 8
+- Ant Design 6
 - React Router 7
-- `html2canvas` + `jspdf` for the client-side quick PDF export
-
-### PDF Export Pipeline (optional, server-side)
-
-- Playwright + headless Chromium for high-quality, ATS-friendly PDF export
-- Renders the same React preview component used in the editor, so server-side PDFs are pixel-identical to the live preview
+- `html2canvas` and `jspdf` for quick browser-side PDF export
 
 ## Repository Layout
 
 ```text
 smart-resume/
-|-- backend/   Spring Boot API, database migrations, domain services
+|-- backend/   Spring Boot API, database migrations, domain services, PDF export
 |-- docs/      README screenshots and supporting assets
-|-- frontend/  React application for the workspace, editor, sharing, and interviews
+|-- frontend/  React application for workspace, editor, sharing, templates, and interviews
 `-- .trellis/  Project workflow, specs, and task records
 ```
 
@@ -131,11 +149,11 @@ smart-resume/
 
 Optional for AI features:
 
-- an OpenAI-compatible API key
-- a DeepSeek API key
-- or a local Ollama instance
+- An OpenAI-compatible API key
+- A DeepSeek API key
+- Or a local Ollama instance
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone <your-repo-url>
@@ -152,10 +170,10 @@ CREATE DATABASE smart_resume;
 
 Default backend settings:
 
-- database URL: `jdbc:postgresql://localhost:5432/smart_resume`
-- username: `postgres`
-- password: `postgres`
-- backend port: `8080`
+- Database URL: `jdbc:postgresql://localhost:5432/smart_resume`
+- Username: `postgres`
+- Password: `postgres`
+- Backend port: `8080`
 
 You can override them with environment variables:
 
@@ -167,9 +185,9 @@ export SMART_RESUME_BACKEND_PORT=8080
 export SMART_RESUME_TOKEN_SECRET=change-this-secret
 ```
 
-If you use PowerShell, set them with `$env:NAME='value'` instead of `export`.
+In PowerShell, use `$env:NAME='value'` instead of `export`.
 
-### 3. Install frontend dependencies
+### 3. Install Frontend Dependencies
 
 ```bash
 cd frontend
@@ -179,9 +197,7 @@ cd ..
 
 ## Run the Application
 
-You have two options: an all-in-one script for production-style runs, or two terminals for development.
-
-### Option A: One-command script (production-style)
+### Option A: One-command Script
 
 From the project root:
 
@@ -189,35 +205,24 @@ From the project root:
 ./start.sh
 ```
 
-The script will:
+The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, builds the backend JAR, installs Playwright Chromium when missing, and starts the server.
 
-1. Check Node.js (>= 20) and Java (>= 21) versions and abort with a clear message if either is missing or out of date — it will not switch versions for you, please run `nvm use 20` (or equivalent) first.
-2. Install frontend dependencies and build the frontend (multi-entry: `index.html` for the app, `export.html` for server-side PDF rendering).
-3. Sync the built frontend `dist/` into `backend/src/main/resources/static/` so Spring Boot can serve it.
-4. Build the backend JAR.
-5. Check whether Playwright's bundled Chromium is already installed, and install it only when missing (required for high-quality PDF export).
-6. Launch the backend, which now serves both the API and the frontend on the configured port.
-
-If you only want to build without launching, use:
+To build without starting the server:
 
 ```bash
 ./build.sh
 ```
 
-### Option B: Two terminals (development)
+### Option B: Development Mode
 
-Use this when you are actively iterating on the frontend with hot reload.
-
-#### Terminal 1: start the backend
+Start the backend:
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-Flyway migrations run automatically on startup.
-
-#### Terminal 2: start the frontend
+Start the frontend in another terminal:
 
 ```bash
 cd frontend
@@ -234,35 +239,24 @@ echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
 
-In dev mode, the **high-quality (server-side) PDF export** will be unavailable because the backend cannot find `static/export.html`; the API returns a friendly 503 with a localized message. The **quick (client-side) PDF export** keeps working in dev. To exercise the server-side path during development, run `./build.sh` once and start the backend from the produced JAR.
-
-## First-Time Setup
-
-After both services are running:
+## First-time Use
 
 1. Open the frontend in your browser.
 2. Log in with the default admin account: username `admin`, password `admin123`.
-3. Change the default password immediately from the system settings.
-4. Other users can register new accounts when public registration is enabled (default).
+3. Change the default password immediately from system settings.
+4. Other users can register new accounts when public registration is enabled.
 
 ## AI Providers
 
-AI features are configured from the application UI. The current backend supports:
+AI features are configured from the application UI. The backend supports OpenAI-compatible endpoints, DeepSeek, and Ollama. These providers are used by resume chat, resume scoring, translation, interview generation, AI answer suggestions, and interview reports.
 
-- OpenAI-compatible endpoints
-- DeepSeek
-- Ollama
+## PDF Export Notes
 
-Typical use cases include resume chat, resume scoring, interview generation, and interview report generation.
-
-## Notes
-
-- Public share pages can be open or password-protected. Logged-in viewers and public share visitors can both download the high-quality PDF if the server is configured for it.
-- PDF export has two paths:
-  - **Quick export** (client-side, `html2canvas` + `jspdf`): always available, generated entirely in the browser. The output is image-based, so the text inside is not selectable or ATS-parsable.
-  - **High-quality export** (server-side, Playwright + Chromium): produces real-text, ATS-friendly PDFs that match the live preview pixel-for-pixel. Requires the steps performed by `start.sh` / `build.sh` (frontend `dist/` synced into `static/` and Chromium checked/installed when missing).
-  - If the server is missing either piece, the backend still starts normally and only the high-quality export endpoint returns a 503 with a localized message; all other features keep working.
-- The frontend has its own package-level guide in [frontend/README.md](./frontend/README.md).
+- Public share pages can be open or password-protected.
+- Quick export runs fully in the browser and produces an image-based PDF.
+- High-quality export runs on the backend with Playwright and Chromium and produces a real-text, ATS-friendly PDF.
+- In development mode, high-quality export may return 503 until `frontend/dist/` has been built and copied into backend static resources.
+- The frontend has a package-level guide in [frontend/README.md](./frontend/README.md).
 
 ## License
 
