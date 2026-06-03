@@ -95,6 +95,50 @@ public final class AiDtos {
     ) {
     }
 
+    public record AiCoverLetterGenerateRequest(
+        String applicationId,
+        @NotBlank(message = "{validation.ai.coverLetterCompanyRequired}")
+        String company,
+        @NotBlank(message = "{validation.ai.coverLetterPositionRequired}")
+        String position,
+        String jobDescription,
+        String extraNotes,
+        @NotBlank(message = "{validation.ai.coverLetterLanguageRequired}")
+        String outputLanguage
+    ) {
+    }
+
+    public record AiCoverLetterUpdateRequest(
+        String title,
+        @NotBlank(message = "{validation.ai.coverLetterBodyRequired}")
+        String body
+    ) {
+    }
+
+    public record AiCoverLetterGenerationResult(
+        @NotBlank(message = "{validation.ai.coverLetterTitleRequired}")
+        String title,
+        @NotBlank(message = "{validation.ai.coverLetterBodyRequired}")
+        String body
+    ) {
+    }
+
+    public record AiCoverLetterResponse(
+        String id,
+        String resumeId,
+        String applicationId,
+        String company,
+        String position,
+        String jobDescription,
+        String extraNotes,
+        String outputLanguage,
+        String title,
+        String body,
+        String createdAt,
+        String updatedAt
+    ) {
+    }
+
     public record AiResumeContext(
         @NotBlank(message = "{validation.ai.resumeIdRequired}")
         String id,

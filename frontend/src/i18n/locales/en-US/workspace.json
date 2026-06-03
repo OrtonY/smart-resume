@@ -122,6 +122,69 @@
       "cancelText": "Cancel",
       "copyTitle": "{{title}} - {{language}} version"
     },
+    "coverLetter": {
+      "button": "Cover letter",
+      "title": "Generate cover letter",
+      "tabs": {
+        "generate": "Generate",
+        "history": "History"
+      },
+      "fields": {
+        "application": "Linked application",
+        "company": "Company",
+        "position": "Position",
+        "jobDescription": "Job description",
+        "extraNotes": "Extra notes",
+        "outputLanguage": "Output language"
+      },
+      "placeholders": {
+        "application": "Choose an existing application to fill company and position",
+        "company": "Target company",
+        "position": "Target position",
+        "jobDescription": "Paste the JD, responsibilities, or requirements",
+        "extraNotes": "Add experience, motivation, or application context to emphasize",
+        "title": "Cover letter title",
+        "body": "Cover letter body"
+      },
+      "validation": {
+        "companyRequired": "Enter the company name.",
+        "positionRequired": "Enter the position name.",
+        "languageRequired": "Choose the output language."
+      },
+      "languages": {
+        "chinese": "Chinese",
+        "english": "English"
+      },
+      "generate": "Generate and save",
+      "historyTitle": "Saved cover letters",
+      "refresh": "Refresh",
+      "emptyHistory": "No cover letters yet. Generate one first.",
+      "selectHistory": "Select a cover letter to view details.",
+      "linkedApplication": "Linked application",
+      "editHint": "Edit the body directly and save to update this cover letter.",
+      "copy": "Copy body",
+      "save": "Save changes",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "deleteConfirmTitle": "Delete this cover letter?",
+      "deleteConfirmDescription": "It cannot be restored from history after deletion.",
+      "deleteConfirmOk": "Delete",
+      "feedback": {
+        "loadFailed": "Unable to load cover letter history.",
+        "loadApplicationsFailed": "Unable to load applications.",
+        "loadDetailFailed": "Unable to load cover letter details.",
+        "generated": "Cover letter generated and saved.",
+        "generateFailed": "Cover letter generation failed. Please try again.",
+        "titleRequired": "Enter a cover letter title.",
+        "bodyRequired": "Enter cover letter body.",
+        "saved": "Cover letter saved.",
+        "saveFailed": "Failed to save cover letter.",
+        "copied": "Cover letter body copied.",
+        "copyFailed": "Copy failed. Please copy manually.",
+        "deleted": "Cover letter deleted.",
+        "deleteFailed": "Failed to delete cover letter."
+      }
+    },
     "moduleCount": "{{count}} modules",
     "structureTitle": "Resume structure",
     "structureDescription": "Reorder and toggle visibility here. The preview updates live.",
