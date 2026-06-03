@@ -2095,6 +2095,11 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   margin-bottom: 12px;
 }
 
+.ai-chat-toolbar > .ant-segmented,
+.ai-chat-toolbar__actions {
+  flex-shrink: 0;
+}
+
 .ai-chat-main {
   display: flex;
   flex-direction: column;
@@ -2112,6 +2117,23 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.ai-chat-history,
+.ai-chat-history > .ant-spin-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-chat-conversation-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .ai-chat-conversation-list .ant-list-item {
@@ -2582,7 +2604,32 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 
 @media (max-width: 720px) {
   .ai-chat-toolbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .ai-chat-toolbar > .ant-segmented {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ai-chat-toolbar .ant-segmented-item-label {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
+  .ai-chat-toolbar__actions.ant-space {
+    flex: 0 0 auto;
+    column-gap: 6px !important;
+  }
+
+  .ai-chat-style-select.ant-select {
+    width: 94px !important;
+  }
+
+  .ai-chat-new-button.ant-btn {
+    gap: 4px;
+    padding-inline: 8px;
   }
 
   .resume-score-panel__actions,
@@ -2598,6 +2645,11 @@ html.resume-export-document .resume-preview-paper--page:last-child {
 .share-list {
   display: grid;
   gap: 10px;
+  max-height: min(62vh, 560px);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .share-row {
@@ -2610,6 +2662,12 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.share-links-modal .ant-modal-body {
+  max-height: min(70vh, 640px);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .template-editor-grid {
@@ -4039,6 +4097,37 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   .resume-version-modal__diff-card .ant-card-head-title {
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+
+  .responsive-modal-drawer .ai-chat-context {
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  .responsive-modal-drawer .ai-chat-context__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .responsive-modal-drawer .ai-chat-context .ant-tag {
+    flex: 0 0 auto;
+    margin-inline-end: 0;
+    padding-inline: 6px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+
+  .ai-chat-retention-help.ant-btn-sm {
+    flex: 0 0 auto;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0;
   }
   /* Auth */
   .auth-shell {
