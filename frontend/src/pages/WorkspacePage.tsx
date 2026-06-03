@@ -32,9 +32,14 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ResponsiveModal } from '../components/shared/ResponsiveModal'
 import { LanguageSwitcher } from '../components/shared/LanguageSwitcher'
-import { translateAiResume } from '../features/ai/api/aiApi'
+import { generateAiCoverLetter, translateAiResume } from '../features/ai/api/aiApi'
 import { AiConfigurationButton } from '../features/ai/components/AiResumeAssistant'
-import type { AiResumeSuggestion, AiResumeTranslationMode, AiResumeTranslationTarget } from '../features/ai/types'
+import type {
+  AiCoverLetterGenerateRequest,
+  AiResumeSuggestion,
+  AiResumeTranslationMode,
+  AiResumeTranslationTarget,
+} from '../features/ai/types'
 import { ResumeEditorView, type ResumeEditorSaveState } from '../features/resume/components/editor/ResumeEditorView'
 import { moduleAnchorId, type ResumeModuleId, useResumeModuleDefinitions } from '../features/resume/components/editor/moduleDefinitions'
 import { ResumeVisualGrid } from '../features/resume/components/ResumeVisualGrid'
@@ -402,6 +407,15 @@ export function WorkspacePage({
     }
   }
 
+  async function handleGenerateCoverLetter(payload: AiCoverLetterGenerateRequest) {
+    if (!resumeId || !draft) {
+      throw new Error(t('editor.missing'))
+    }
+
+    await saveDraftNow(resumeId, draft)
+    return generateAiCoverLetter(resumeId, payload)
+  }
+
   async function handleRestoreResume(targetResumeId: string) {
     await restoreResume(targetResumeId)
     void message.success(t('feedback.restoreSuccess'))
@@ -608,6 +622,7 @@ export function WorkspacePage({
         onExportJson={handleExportJson}
         onExportPdf={handleExportPdf}
         onFocusModule={focusModule}
+        onGenerateCoverLetter={handleGenerateCoverLetter}
         onHideSection={hideSection}
         onRestoredVersion={handleRestoredVersion}
         onShowSection={showSection}

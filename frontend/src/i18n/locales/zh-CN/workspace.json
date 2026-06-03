@@ -122,6 +122,69 @@
       "cancelText": "取消",
       "copyTitle": "{{title}} - {{language}}版"
     },
+    "coverLetter": {
+      "button": "求职信",
+      "title": "生成求职信",
+      "tabs": {
+        "generate": "生成",
+        "history": "历史"
+      },
+      "fields": {
+        "application": "关联投递",
+        "company": "公司",
+        "position": "职位",
+        "jobDescription": "职位描述",
+        "extraNotes": "补充说明",
+        "outputLanguage": "输出语言"
+      },
+      "placeholders": {
+        "application": "选择一个已有投递，可自动带入公司和职位",
+        "company": "目标公司",
+        "position": "目标职位",
+        "jobDescription": "粘贴岗位 JD、职责或招聘要求",
+        "extraNotes": "补充你希望强调的经历、动机或投递背景",
+        "title": "求职信标题",
+        "body": "求职信正文"
+      },
+      "validation": {
+        "companyRequired": "请输入公司名称。",
+        "positionRequired": "请输入职位名称。",
+        "languageRequired": "请选择输出语言。"
+      },
+      "languages": {
+        "chinese": "中文",
+        "english": "英文"
+      },
+      "generate": "生成并保存",
+      "historyTitle": "已保存求职信",
+      "refresh": "刷新",
+      "emptyHistory": "还没有求职信，先生成一封。",
+      "selectHistory": "请选择一封求职信查看详情。",
+      "linkedApplication": "已关联投递",
+      "editHint": "可直接编辑正文，保存后会更新这封求职信。",
+      "copy": "复制正文",
+      "save": "保存修改",
+      "delete": "删除",
+      "cancel": "取消",
+      "deleteConfirmTitle": "删除这封求职信？",
+      "deleteConfirmDescription": "删除后无法在历史记录中恢复。",
+      "deleteConfirmOk": "删除",
+      "feedback": {
+        "loadFailed": "无法加载求职信历史。",
+        "loadApplicationsFailed": "无法加载投递列表。",
+        "loadDetailFailed": "无法加载求职信详情。",
+        "generated": "求职信已生成并保存。",
+        "generateFailed": "求职信生成失败，请重试。",
+        "titleRequired": "请输入求职信标题。",
+        "bodyRequired": "请输入求职信正文。",
+        "saved": "求职信已保存。",
+        "saveFailed": "保存求职信失败。",
+        "copied": "求职信正文已复制。",
+        "copyFailed": "复制失败，请手动复制。",
+        "deleted": "求职信已删除。",
+        "deleteFailed": "删除求职信失败。"
+      }
+    },
     "moduleCount": "{{count}} 个模块",
     "structureTitle": "简历结构",
     "structureDescription": "直接在这里调整顺序和显隐，右侧预览会同步更新。",
