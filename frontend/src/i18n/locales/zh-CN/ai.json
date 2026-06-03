@@ -49,6 +49,7 @@
     "styleSarcastic": "阴阳怪气",
     "styleLabel": "风格：{{style}}",
     "retentionHint": "仅保留最近 10 条历史对话。",
+    "retentionHintHelp": "历史记录仅保留最近 10 个对话，不限制当前对话轮次。",
     "deleteHistoryConfirmTitle": "删除这条历史对话？",
     "deleteHistoryConfirmDescription": "对话和关联的 AI 消息会归档后删除。",
     "deleteHistoryConfirmOk": "删除",
