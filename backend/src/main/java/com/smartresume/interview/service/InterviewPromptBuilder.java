@@ -71,6 +71,9 @@ public class InterviewPromptBuilder {
             """
     );
 
+    public record QuestionBankPromptItem(String question, List<String> focusPoints) {
+    }
+
     public static String buildSystemPrompt(
         String role,
         String difficulty,
@@ -90,6 +93,8 @@ public class InterviewPromptBuilder {
             companyContextSummary,
             currentQuestionCount,
             maxQuestions,
+            List.of(),
+            null,
             List.of()
         );
     }
@@ -104,6 +109,34 @@ public class InterviewPromptBuilder {
         int currentQuestionCount,
         int maxQuestions,
         List<String> previousRoundTopics
+    ) {
+        return buildSystemPrompt(
+            role,
+            difficulty,
+            resumeJson,
+            jobDescription,
+            targetCompany,
+            companyContextSummary,
+            currentQuestionCount,
+            maxQuestions,
+            previousRoundTopics,
+            null,
+            List.of()
+        );
+    }
+
+    public static String buildSystemPrompt(
+        String role,
+        String difficulty,
+        String resumeJson,
+        String jobDescription,
+        String targetCompany,
+        List<String> companyContextSummary,
+        int currentQuestionCount,
+        int maxQuestions,
+        List<String> previousRoundTopics,
+        String questionBankRelevance,
+        List<QuestionBankPromptItem> questionBankQuestions
     ) {
         StringBuilder prompt = new StringBuilder();
 
@@ -130,6 +163,12 @@ public class InterviewPromptBuilder {
         String companyContext = buildTargetCompanyContext(targetCompany, companyContextSummary);
         if (!companyContext.isBlank()) {
             prompt.append(companyContext);
+            prompt.append("\n\n");
+        }
+
+        String questionBankContext = buildQuestionBankContext(questionBankRelevance, questionBankQuestions);
+        if (!questionBankContext.isBlank()) {
+            prompt.append(questionBankContext);
             prompt.append("\n\n");
         }
 
@@ -195,6 +234,47 @@ public class InterviewPromptBuilder {
         }
         builder.append("使用原则：只在少量合适的问题中自然结合以上信息，不要把整场面试都绑定到该公司。\n");
         return builder.toString();
+    }
+
+    private static String buildQuestionBankContext(String relevance, List<QuestionBankPromptItem> questions) {
+        if (questions == null || questions.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("# 面试题库参考（后端已随机抽样）\n\n");
+        builder.append(buildQuestionBankRelevanceRule(relevance));
+        builder.append("\n");
+        builder.append("使用原则：\n");
+        builder.append("- 题库内容只作为本轮出题素材和考察点参考，不要逐题机械复述。\n");
+        builder.append("- 仍需优先结合候选人简历、JD、面试官角色、难度和候选人当前回答动态追问。\n");
+        builder.append("- 每次只问一个问题，可以围绕抽样题目改写、组合或追问，但不要暴露题库列表。\n");
+        builder.append("抽样题目：\n");
+        int index = 1;
+        for (QuestionBankPromptItem question : questions) {
+            if (question == null || question.question() == null || question.question().isBlank()) {
+                continue;
+            }
+            builder.append(index++).append(". ").append(question.question().trim()).append("\n");
+            if (question.focusPoints() != null && !question.focusPoints().isEmpty()) {
+                builder.append("   考察点：").append(String.join("、", question.focusPoints())).append("\n");
+            }
+        }
+        return builder.toString();
+    }
+
+    private static String buildQuestionBankRelevanceRule(String relevance) {
+        if (relevance == null || relevance.isBlank()) {
+            return "题库相关度：中。题库提供本轮主要参考方向，但你仍可根据候选人回答追问和切换问题。";
+        }
+        return switch (relevance) {
+            case InterviewConstants.QUESTION_BANK_RELEVANCE_LOW ->
+                "题库相关度：低。题库只提供少量主题参考，面试主体仍应围绕简历、JD 和候选人回答展开。";
+            case InterviewConstants.QUESTION_BANK_RELEVANCE_HIGH ->
+                "题库相关度：高。优先覆盖题库核心题目或主题，但仍要保留自然追问和必要的问题切换。";
+            default ->
+                "题库相关度：中。题库提供本轮主要参考方向，但你仍可根据候选人回答追问和切换问题。";
+        };
     }
 
     private static String buildOutputRules() {
