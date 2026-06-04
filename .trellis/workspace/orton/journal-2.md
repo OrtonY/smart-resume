@@ -536,3 +536,37 @@ Implemented persisted AI cover letter generation from the resume editor with opt
 ### Next Steps
 
 - None - task complete
+
+
+## Session 76: Interview question bank
+
+**Date**: 2026-06-04
+**Task**: Interview question bank
+**Branch**: `codex/interview-question-bank`
+
+### Summary
+
+Added user-managed interview question banks with backend CRUD/sampling integration and responsive frontend management flows.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f8d178a` | (see git log) |
+| `2beb8d8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
