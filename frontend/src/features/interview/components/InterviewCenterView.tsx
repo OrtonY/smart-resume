@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Button, Card, Empty, Input, Pagination, Popconfirm, Select, Space, Spin, Tag, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -57,6 +57,9 @@ export function InterviewCenterView({
           <div className="workspace-hub__actions">
             <Link to="/app">
               <Button icon={<ArrowLeftOutlined />}>{t('center.backToHome')}</Button>
+            </Link>
+            <Link to="/app/interview-question-banks">
+              <Button icon={<UnorderedListOutlined />}>{t('center.questionBanks')}</Button>
             </Link>
             <Button icon={<PlusOutlined />} onClick={onCreate}>
               {t('center.newInterview')}

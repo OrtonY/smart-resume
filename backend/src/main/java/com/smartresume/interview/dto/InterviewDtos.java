@@ -1,5 +1,6 @@
 package com.smartresume.interview.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
@@ -19,8 +20,22 @@ public final class InterviewDtos {
         @NotBlank(message = "{validation.interview.difficultyRequired}")
         String difficulty,
         @NotEmpty(message = "{validation.interview.rolesRequired}")
-        List<@NotBlank(message = "{validation.interview.roleNotBlank}") String> interviewerRoles
+        List<@NotBlank(message = "{validation.interview.roleNotBlank}") String> interviewerRoles,
+        String questionBankId,
+        @JsonAlias("questionBankTags")
+        List<String> selectedTags,
+        String questionBankRelevance
     ) {
+        public InterviewCreateRequest(
+            String resumeId,
+            String targetCompany,
+            String title,
+            String jobDescription,
+            String difficulty,
+            List<String> interviewerRoles
+        ) {
+            this(resumeId, targetCompany, title, jobDescription, difficulty, interviewerRoles, null, List.of(), null);
+        }
     }
 
     public record InterviewMessageRequest(
@@ -37,6 +52,10 @@ public final class InterviewDtos {
         String title,
         String jobDescription,
         String targetCompany,
+        String questionBankId,
+        String questionBankName,
+        List<String> selectedTags,
+        String questionBankRelevance,
         String difficulty,
         List<String> interviewerRoles,
         List<String> companyContextSummary,
@@ -78,6 +97,10 @@ public final class InterviewDtos {
         String title,
         String jobDescription,
         String targetCompany,
+        String questionBankId,
+        String questionBankName,
+        List<String> selectedTags,
+        String questionBankRelevance,
         String difficulty,
         List<String> interviewerRoles,
         List<String> companyContextSummary,
@@ -94,4 +117,5 @@ public final class InterviewDtos {
         LocalDateTime endedAt
     ) {
     }
+
 }

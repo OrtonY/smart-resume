@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { ResponsiveModal } from '../../../components/shared/ResponsiveModal'
 import { InterviewerRoleSorter } from './InterviewerRoleSorter'
 import { INTERVIEW_MODAL_WIDTH } from '../constants'
-import { getInterviewDifficultyOptions, INTERVIEWER_ROLE_OPTIONS } from '../types'
+import { getInterviewDifficultyOptions, getQuestionBankRelevanceOptions, INTERVIEWER_ROLE_OPTIONS } from '../types'
+import type { InterviewQuestionBank } from '../questionBankTypes'
 import type { ResumeSummary } from '../../resume/types'
 import type { CreateFormValues } from '../interviewPageUtils'
 
@@ -14,7 +15,9 @@ interface InterviewCreateModalProps {
   filterResumeId?: string
   form: FormInstance<CreateFormValues>
   open: boolean
+  questionBanks: InterviewQuestionBank[]
   resumes: ResumeSummary[]
+  selectedQuestionBankId?: string
   selectedInterviewerRoles: string[]
   onCancel: () => void
   onSubmit: (values: CreateFormValues) => void
@@ -25,13 +28,18 @@ export function InterviewCreateModal({
   filterResumeId,
   form,
   open,
+  questionBanks,
   resumes,
+  selectedQuestionBankId,
   selectedInterviewerRoles,
   onCancel,
   onSubmit,
 }: InterviewCreateModalProps) {
   const { t } = useTranslation('interview')
   const resumeOptions = resumes.map((resume) => ({ value: resume.id, label: resume.title }))
+  const questionBankOptions = questionBanks.map((bank) => ({ value: bank.id, label: bank.name }))
+  const selectedQuestionBank = questionBanks.find((bank) => bank.id === selectedQuestionBankId)
+  const questionTagOptions = (selectedQuestionBank?.tags ?? []).map((tag) => ({ value: tag, label: tag }))
 
   return (
     <ResponsiveModal
@@ -48,7 +56,7 @@ export function InterviewCreateModal({
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ difficulty: 'MEDIUM', resumeId: filterResumeId, interviewerRoles: [] }}
+          initialValues={{ difficulty: 'MEDIUM', resumeId: filterResumeId, interviewerRoles: [], selectedTags: [], questionBankRelevance: 'MEDIUM' }}
           onFinish={(values) => void onSubmit(values)}
         >
           <Form.Item
@@ -75,6 +83,32 @@ export function InterviewCreateModal({
           <Form.Item name="targetCompany" label={t('create.companyLabel')} extra={t('create.companyExtra')}>
             <Input maxLength={200} placeholder={t('create.companyPlaceholder')} />
           </Form.Item>
+
+          <Form.Item name="questionBankId" label={t('create.questionBankLabel')} extra={t('create.questionBankExtra')}>
+            <Select
+              allowClear
+              placeholder={t('create.questionBankPlaceholder')}
+              options={questionBankOptions}
+              onChange={() => form.setFieldsValue({ selectedTags: [] })}
+            />
+          </Form.Item>
+
+          {selectedQuestionBank ? (
+            <>
+              <Form.Item name="selectedTags" label={t('create.questionBankTagsLabel')} extra={t('create.questionBankTagsExtra')}>
+                <Select
+                  mode="multiple"
+                  allowClear
+                  placeholder={t('create.questionBankTagsPlaceholder')}
+                  options={questionTagOptions}
+                />
+              </Form.Item>
+
+              <Form.Item name="questionBankRelevance" label={t('create.questionBankRelevanceLabel')}>
+                <Select options={getQuestionBankRelevanceOptions(t)} />
+              </Form.Item>
+            </>
+          ) : null}
 
           <Form.Item
             name="jobDescription"

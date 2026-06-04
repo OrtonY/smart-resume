@@ -16,6 +16,9 @@ public class InterviewSessionEntity {
     private String aiConversationId;
     private String jobDescription;
     private String targetCompany;
+    private String questionBankId;
+    private String questionBankTagsJson;
+    private String questionBankRelevance;
     private String difficulty;
     private String interviewerRolesJson;
     private String companyContextSummaryJson;
@@ -84,6 +87,30 @@ public class InterviewSessionEntity {
 
     public void setTargetCompany(String targetCompany) {
         this.targetCompany = targetCompany;
+    }
+
+    public String getQuestionBankId() {
+        return questionBankId;
+    }
+
+    public void setQuestionBankId(String questionBankId) {
+        this.questionBankId = questionBankId;
+    }
+
+    public String getQuestionBankTagsJson() {
+        return questionBankTagsJson;
+    }
+
+    public void setQuestionBankTagsJson(String questionBankTagsJson) {
+        this.questionBankTagsJson = questionBankTagsJson;
+    }
+
+    public String getQuestionBankRelevance() {
+        return questionBankRelevance;
+    }
+
+    public void setQuestionBankRelevance(String questionBankRelevance) {
+        this.questionBankRelevance = questionBankRelevance;
     }
 
     public String getDifficulty() {

@@ -16,6 +16,9 @@ import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
 import com.smartresume.interview.dto.InterviewDtos.InterviewMessageRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewPageResponse;
+import com.smartresume.interview.dto.InterviewQuestionBankDtos.QuestionBankCreateRequest;
+import com.smartresume.interview.dto.InterviewQuestionBankDtos.QuestionBankResponse;
+import com.smartresume.interview.dto.InterviewQuestionBankDtos.QuestionCreateRequest;
 import com.smartresume.resume.domain.ResumeEntity;
 import com.smartresume.resume.mapper.ResumeMapper;
 import java.lang.reflect.Constructor;
@@ -48,6 +51,9 @@ class InterviewServiceTest {
 
     @Autowired
     private JdbcChatMemoryRepository chatMemoryRepository;
+
+    @Autowired
+    private InterviewQuestionBankService questionBankService;
 
     @MockitoBean
     private AiChatService aiChatService;
@@ -96,6 +102,9 @@ class InterviewServiceTest {
                 interviewer_roles_json text not null,
                 company_context_summary_json text,
                 company_context_status varchar(30),
+                question_bank_id varchar(64),
+                question_bank_tags_json text,
+                question_bank_relevance varchar(20),
                 active_round_index integer not null default 0,
                 status varchar(30) not null,
                 report_status varchar(30) not null,
@@ -110,6 +119,9 @@ class InterviewServiceTest {
         jdbcTemplate.execute("alter table interview_sessions add column if not exists target_company varchar(200)");
         jdbcTemplate.execute("alter table interview_sessions add column if not exists company_context_summary_json text");
         jdbcTemplate.execute("alter table interview_sessions add column if not exists company_context_status varchar(30)");
+        jdbcTemplate.execute("alter table interview_sessions add column if not exists question_bank_id varchar(64)");
+        jdbcTemplate.execute("alter table interview_sessions add column if not exists question_bank_tags_json text");
+        jdbcTemplate.execute("alter table interview_sessions add column if not exists question_bank_relevance varchar(20)");
         jdbcTemplate.execute("""
             create table if not exists interview_messages (
                 id varchar(64) primary key,
@@ -149,6 +161,30 @@ class InterviewServiceTest {
             )
             """);
         jdbcTemplate.execute("""
+            create table if not exists interview_question_banks (
+                id varchar(64) primary key,
+                user_id bigint not null,
+                name varchar(200) not null,
+                description text null,
+                tags_json text not null default '[]',
+                created_at timestamp not null,
+                updated_at timestamp not null
+            )
+            """);
+        jdbcTemplate.execute("""
+            create table if not exists interview_questions (
+                id varchar(64) primary key,
+                user_id bigint not null,
+                question_bank_id varchar(64) not null,
+                question text not null,
+                difficulty varchar(20) not null,
+                tags_json text not null default '[]',
+                focus_points text null,
+                created_at timestamp not null,
+                updated_at timestamp not null
+            )
+            """);
+        jdbcTemplate.execute("""
             create table if not exists spring_ai_chat_memory (
                 conversation_id varchar(128) not null,
                 content text not null,
@@ -173,6 +209,8 @@ class InterviewServiceTest {
         jdbcTemplate.update("delete from spring_ai_chat_memory");
         jdbcTemplate.update("delete from ai_history");
         jdbcTemplate.update("delete from interview_ai_assists");
+        jdbcTemplate.update("delete from interview_questions");
+        jdbcTemplate.update("delete from interview_question_banks");
         jdbcTemplate.update("delete from interview_round_topics");
         jdbcTemplate.update("delete from interview_messages");
         jdbcTemplate.update("delete from interview_sessions");
@@ -346,6 +384,112 @@ class InterviewServiceTest {
         assertThat(created.companyContextStatus()).isEqualTo("FAILED");
         assertThat(created.companyContextSummary()).isEmpty();
         assertThat(created.messages()).hasSize(1);
+    }
+
+    @Test
+    void questionBankCrudRequiresQuestionTagsFromBankTags() {
+        QuestionBankResponse bank = questionBankService.createBank(new QuestionBankCreateRequest(
+            "Java Backend Bank",
+            "Backend interview questions",
+            List.of("Redis", "Spring")
+        ));
+
+        assertThat(questionBankService.listBanks("backend")).hasSize(1);
+        assertThat(questionBankService.createQuestion(
+            bank.id(),
+            new QuestionCreateRequest(
+                "How do you prevent Redis cache penetration?",
+                "MEDIUM",
+                List.of("Redis"),
+                "缓存空值\n布隆过滤器"
+            )
+        ).tags()).containsExactly("Redis");
+
+        assertThatThrownBy(() -> questionBankService.createQuestion(
+            bank.id(),
+            new QuestionCreateRequest(
+                "Explain Kafka consumer lag.",
+                "MEDIUM",
+                List.of("Kafka"),
+                "消费堆积"
+            )
+        ))
+            .isInstanceOf(AppException.class)
+            .hasMessageContaining("Question tags must belong to the question bank");
+
+        CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(2L, "bob", false));
+        assertThatThrownBy(() -> questionBankService.getBank(bank.id()))
+            .isInstanceOf(AppException.class)
+            .hasMessageContaining("Question bank not found");
+        CurrentUserContext.set(new CurrentUserContext.AuthenticatedUser(1L, "admin", true));
+    }
+
+    @Test
+    void createInterviewPersistsQuestionBankSelectionAndInjectsLimitedSampleIntoPrompt() {
+        String resumeId = createResume("Question Bank Resume");
+        String bankId = createQuestionBankWithQuestions("Prompt Bank", "Redis", "QB-SAMPLE-", 10);
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Question Bank Interview",
+            "Focus on cache design",
+            "MEDIUM",
+            List.of("Leader"),
+            bankId,
+            List.of("Redis"),
+            "HIGH"
+        ));
+
+        assertThat(created.questionBankId()).isEqualTo(bankId);
+        assertThat(created.selectedTags()).containsExactly("Redis");
+        assertThat(created.questionBankRelevance()).isEqualTo("HIGH");
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService, atLeastOnce()).call(captor.capture());
+        AiInvocationRequest interviewPrompt = captor.getAllValues().stream()
+            .filter(request -> request.conversationId().endsWith("-round-0"))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(interviewPrompt.systemPrompt())
+            .contains("面试题库参考")
+            .contains("题库相关度：高")
+            .contains("Focus point 1");
+        assertThat(countOccurrences(interviewPrompt.systemPrompt(), "QB-SAMPLE-")).isLessThanOrEqualTo(8);
+    }
+
+    @Test
+    void questionBankPromptSamplingExcludesPreviouslyUsedQuestionsWithinSession() {
+        when(aiChatService.call(any(AiInvocationRequest.class)))
+            .thenReturn("Opening question")
+            .thenReturn("Follow up question");
+        String resumeId = createResume("Duplicate Avoidance Resume");
+        String bankId = createQuestionBankWithQuestions("Duplicate Bank", "Redis", "QB-USED-", 6);
+
+        InterviewDetailResponse created = interviewService.createInterview(new InterviewCreateRequest(
+            resumeId,
+            null,
+            "Duplicate Avoidance Interview",
+            "Focus on cache design",
+            "MEDIUM",
+            List.of("Leader"),
+            bankId,
+            List.of("Redis"),
+            "MEDIUM"
+        ));
+
+        interviewService.submitMessage(created.id(), new InterviewMessageRequest("I used Redis in production."));
+
+        ArgumentCaptor<AiInvocationRequest> captor = ArgumentCaptor.forClass(AiInvocationRequest.class);
+        verify(aiChatService, atLeastOnce()).call(captor.capture());
+        List<AiInvocationRequest> roundPrompts = captor.getAllValues().stream()
+            .filter(request -> request.conversationId().equals("interview-" + created.id() + "-round-0"))
+            .toList();
+
+        assertThat(roundPrompts).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(countOccurrences(roundPrompts.get(0).systemPrompt(), "QB-USED-")).isEqualTo(5);
+        assertThat(countOccurrences(roundPrompts.get(1).systemPrompt(), "QB-USED-")).isEqualTo(1);
     }
 
     @Test
@@ -555,6 +699,53 @@ class InterviewServiceTest {
         resume.setUpdatedAt(now);
         resumeMapper.insert(resume);
         return resume.getId();
+    }
+
+    private String createQuestionBankWithQuestions(String name, String tag, String prefix, int count) {
+        LocalDateTime now = LocalDateTime.now();
+        String bankId = UUID.randomUUID().toString();
+        jdbcTemplate.update(
+            """
+                insert into interview_question_banks (id, user_id, name, description, tags_json, created_at, updated_at)
+                values (?, ?, ?, ?, ?, ?, ?)
+                """,
+            bankId,
+            1L,
+            name,
+            "Prompt source",
+            "[\"" + tag + "\"]",
+            now,
+            now
+        );
+        for (int index = 1; index <= count; index++) {
+            jdbcTemplate.update(
+                """
+                    insert into interview_questions
+                        (id, user_id, question_bank_id, question, difficulty, tags_json, focus_points, created_at, updated_at)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                UUID.randomUUID().toString(),
+                1L,
+                bankId,
+                prefix + index + " question",
+                "MEDIUM",
+                "[\"" + tag + "\"]",
+                "Focus point " + index,
+                now,
+                now
+            );
+        }
+        return bankId;
+    }
+
+    private int countOccurrences(String value, String token) {
+        int count = 0;
+        int index = 0;
+        while ((index = value.indexOf(token, index)) >= 0) {
+            count++;
+            index += token.length();
+        }
+        return count;
     }
 
     private int countRows(String tableName, String columnName, String value) {

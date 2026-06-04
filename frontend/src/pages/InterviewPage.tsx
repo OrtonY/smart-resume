@@ -14,6 +14,7 @@ import {
   regenerateStreamInterviewMessage,
   streamInterviewMessage,
 } from '../features/interview/api/interviewApi'
+import { listQuestionBanks } from '../features/interview/api/questionBankApi'
 import { InterviewCenterView } from '../features/interview/components/InterviewCenterView'
 import { InterviewCreateModal } from '../features/interview/components/InterviewCreateModal'
 import { InterviewDetailView } from '../features/interview/components/InterviewDetailView'
@@ -24,6 +25,7 @@ import {
   type InterviewStatus,
 } from '../features/interview/types'
 import { INTERVIEWS_PER_PAGE, type CreateFormValues } from '../features/interview/interviewPageUtils'
+import type { InterviewQuestionBank } from '../features/interview/questionBankTypes'
 import { listResumes } from '../features/resume/api/resumeApi'
 import type { ResumeSummary } from '../features/resume/types'
 
@@ -43,6 +45,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   const [interviewPage, setInterviewPage] = useState<InterviewPageData | null>(null)
   const [detail, setDetail] = useState<InterviewDetail | null>(null)
   const [resumes, setResumes] = useState<ResumeSummary[]>([])
+  const [questionBanks, setQuestionBanks] = useState<InterviewQuestionBank[]>([])
   const [loadingList, setLoadingList] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(Boolean(interviewId))
   const [creating, setCreating] = useState(false)
@@ -67,6 +70,7 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   const keyword = searchParams.get('keyword') ?? ''
 
   const resumeOptions = useMemo(() => resumes.map((resume) => ({ value: resume.id, label: resume.title })), [resumes])
+  const selectedQuestionBankId = Form.useWatch('questionBankId', form)
 
   const loadResumes = useCallback(async () => {
     try {
@@ -74,6 +78,14 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       setResumes(pageResult.items)
     } catch (error) {
       void message.error(error instanceof Error ? error.message : t('feedback.loadResumeFailed'))
+    }
+  }, [message, t])
+
+  const loadQuestionBanks = useCallback(async () => {
+    try {
+      setQuestionBanks(await listQuestionBanks())
+    } catch (error) {
+      void message.error(error instanceof Error ? error.message : t('questionBank.feedback.loadBanksFailed'))
     }
   }, [message, t])
 
@@ -117,9 +129,10 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadResumes()
+      void loadQuestionBanks()
     }, 0)
     return () => window.clearTimeout(timeoutId)
-  }, [loadResumes])
+  }, [loadQuestionBanks, loadResumes])
 
   useEffect(() => {
     if (!interviewId) {
@@ -156,6 +169,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         targetCompany: undefined,
         difficulty: 'MEDIUM',
         interviewerRoles: [],
+        questionBankId: undefined,
+        selectedTags: [],
+        questionBankRelevance: 'MEDIUM',
       })
     }, 0)
 
@@ -180,6 +196,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
       targetCompany: undefined,
       difficulty: 'MEDIUM',
       interviewerRoles: [],
+      questionBankId: undefined,
+      selectedTags: [],
+      questionBankRelevance: 'MEDIUM',
     })
     setCreateOpen(true)
     updateSearch({ create: '1' })
@@ -201,6 +220,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         jobDescription: values.jobDescription?.trim() || null,
         difficulty: values.difficulty,
         interviewerRoles: values.interviewerRoles.map((role) => role.trim()).filter(Boolean),
+        questionBankId: values.questionBankId || null,
+        selectedTags: values.questionBankId ? (values.selectedTags ?? []) : [],
+        questionBankRelevance: values.questionBankId ? (values.questionBankRelevance ?? 'MEDIUM') : null,
       }
       const created = await createInterview(payload)
 
@@ -441,7 +463,9 @@ export function InterviewPage({ onLogout }: InterviewPageProps) {
         filterResumeId={filterResumeId}
         form={form}
         open={createOpen}
+        questionBanks={questionBanks}
         resumes={resumes}
+        selectedQuestionBankId={selectedQuestionBankId}
         selectedInterviewerRoles={selectedInterviewerRoles}
         onCancel={closeCreateModal}
         onSubmit={(values) => void handleCreate(values)}

@@ -214,6 +214,14 @@ public class InterviewSessionSupportService {
         return readCompanyContextSummary(session, true);
     }
 
+    public List<String> readQuestionBankTags(InterviewSessionEntity session) {
+        return readQuestionBankTags(session, false);
+    }
+
+    public List<String> readQuestionBankTagsBestEffort(InterviewSessionEntity session) {
+        return readQuestionBankTags(session, true);
+    }
+
     public int currentRoundIndex(InterviewSessionEntity session) {
         List<String> roles = readInterviewerRoles(session);
         if (roles.isEmpty()) {
@@ -245,6 +253,15 @@ public class InterviewSessionSupportService {
                 InterviewConstants.COMPANY_CONTEXT_NOT_REQUESTED -> normalized;
             default -> InterviewConstants.COMPANY_CONTEXT_NOT_REQUESTED;
         };
+    }
+
+    public String normalizeQuestionBankRelevance(String relevance) {
+        String normalized = normalizeOptionalText(relevance);
+        if (normalized == null) {
+            return null;
+        }
+        normalized = normalized.toUpperCase();
+        return InterviewConstants.QUESTION_BANK_RELEVANCES.contains(normalized) ? normalized : null;
     }
 
     public List<String> getPreviousRoundTopics(String sessionId, long userId, int currentRoundIndex) {
@@ -317,6 +334,26 @@ public class InterviewSessionSupportService {
             return List.of();
         }
     }
+
+    private List<String> readQuestionBankTags(InterviewSessionEntity session, boolean bestEffort) {
+        String json = session.getQuestionBankTagsJson();
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return normalizeDistinctValues(
+                objectMapper.readValue(json, new TypeReference<List<String>>() {}),
+                Integer.MAX_VALUE
+            );
+        } catch (Exception exception) {
+            if (!bestEffort) {
+                throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to parse question bank tags");
+            }
+            log.warn("Unable to parse question bank tags for session {}: {}", session.getId(), exception.getMessage());
+            return List.of();
+        }
+    }
+
 
     private InterviewMessageEntity buildMessage(
         InterviewSessionEntity session,
