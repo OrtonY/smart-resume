@@ -3126,6 +3126,144 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   align-content: flex-start;
 }
 
+.question-bank-page {
+  box-sizing: border-box;
+  height: calc(100dvh - 36px);
+  max-height: calc(100dvh - 36px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.question-bank-filter-card__content,
+.question-bank-search {
+  width: 100%;
+}
+
+.question-bank-search {
+  max-width: 280px;
+}
+
+.question-bank-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.36fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.question-bank-list,
+.question-bank-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.question-bank-list .ant-card-body,
+.question-bank-detail .ant-card-body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  scroll-padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
+
+.question-bank-detail .ant-card-head-wrapper {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.question-bank-detail .ant-card-extra {
+  min-width: 0;
+  margin-inline-start: 0;
+}
+
+.question-bank-detail__actions {
+  justify-content: flex-end;
+}
+
+.question-bank-list__item {
+  appearance: none;
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.question-bank-list__item:hover,
+.question-bank-list__item:focus-visible,
+.question-bank-list__item.is-active {
+  border-color: rgba(49, 87, 164, 0.28);
+  box-shadow: 0 14px 28px rgba(49, 87, 164, 0.1);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.question-bank-list__item span {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.question-bank-list__tags,
+.question-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.question-bank-list__tags .ant-tag,
+.question-card__tags .ant-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.question-card-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.question-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.88)),
+    linear-gradient(135deg, rgba(49, 87, 164, 0.08), transparent 60%);
+}
+
+.question-card > strong,
+.question-card .ant-typography {
+  overflow-wrap: anywhere;
+}
+
+.question-card__head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .interview-role-sorter {
   display: grid;
   gap: 12px;
@@ -3864,6 +4002,59 @@ html.resume-export-document .resume-preview-paper--page:last-child {
     grid-template-columns: 1fr;
   }
 
+  .question-bank-layout {
+    grid-template-columns: 1fr;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .question-bank-page {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .question-bank-list .ant-card-body {
+    display: grid;
+  }
+
+  .question-bank-list .ant-card-body,
+  .question-bank-detail .ant-card-body {
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .question-bank-detail__actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .question-bank-detail__actions .ant-space-item {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .question-bank-detail__actions .ant-btn {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+
+  .question-bank-detail__actions .ant-btn > span:not(.ant-btn-icon) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .question-card-grid {
+    grid-template-columns: 1fr;
+  }
+
   .interview-company-chip {
     max-width: 100%;
   }
@@ -4270,6 +4461,77 @@ html.resume-export-document .resume-preview-paper--page:last-child {
   /* Interview */
   .interview-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .question-bank-page {
+    min-width: 0;
+  }
+
+  .question-bank-filter-card .ant-card-body {
+    padding: 12px;
+  }
+
+  .question-bank-search {
+    max-width: none;
+  }
+
+  .question-bank-layout {
+    display: grid;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .question-bank-list .ant-card-body {
+    display: grid;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 12px;
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .question-bank-list__item {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .question-bank-detail .ant-card-head {
+    padding: 0 12px;
+  }
+
+  .question-bank-detail .ant-card-head-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 0;
+  }
+
+  .question-bank-detail .ant-card-head-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .question-bank-detail .ant-card-extra {
+    width: 100%;
+    padding: 0;
+  }
+
+  .question-bank-detail__actions {
+    width: 100%;
+  }
+
+  .question-bank-detail .ant-card-body {
+    padding: 12px;
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .question-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .question-card__head {
+    align-items: flex-start;
   }
 
   .interview-detail {
