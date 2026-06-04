@@ -4,6 +4,7 @@ import com.smartresume.ai.dto.AiDtos.AiChatEvent;
 import com.smartresume.common.exception.AppException;
 import com.smartresume.common.security.CurrentUserContext;
 import com.smartresume.interview.domain.InterviewMessageEntity;
+import com.smartresume.interview.domain.InterviewQuestionBankEntity;
 import com.smartresume.interview.domain.InterviewSessionEntity;
 import com.smartresume.interview.dto.InterviewDtos.InterviewCreateRequest;
 import com.smartresume.interview.dto.InterviewDtos.InterviewDetailResponse;
@@ -34,6 +35,8 @@ public class InterviewService {
     private final InterviewAiOrchestrationService interviewAiOrchestrationService;
     private final InterviewReportService interviewReportService;
     private final InterviewPhysicalDeleteService interviewPhysicalDeleteService;
+    private final InterviewQuestionBankService questionBankService;
+    private final InterviewQuestionBankSamplingService questionBankSamplingService;
 
     public InterviewService(
         InterviewSessionMapper interviewSessionMapper,
@@ -41,7 +44,9 @@ public class InterviewService {
         InterviewSessionSupportService sessionSupportService,
         InterviewAiOrchestrationService interviewAiOrchestrationService,
         InterviewReportService interviewReportService,
-        InterviewPhysicalDeleteService interviewPhysicalDeleteService
+        InterviewPhysicalDeleteService interviewPhysicalDeleteService,
+        InterviewQuestionBankService questionBankService,
+        InterviewQuestionBankSamplingService questionBankSamplingService
     ) {
         this.interviewSessionMapper = interviewSessionMapper;
         this.interviewQueryService = interviewQueryService;
@@ -49,6 +54,8 @@ public class InterviewService {
         this.interviewAiOrchestrationService = interviewAiOrchestrationService;
         this.interviewReportService = interviewReportService;
         this.interviewPhysicalDeleteService = interviewPhysicalDeleteService;
+        this.questionBankService = questionBankService;
+        this.questionBankSamplingService = questionBankSamplingService;
     }
 
     public InterviewPageResponse listInterviews(String resumeId, String status, String targetCompany, String keyword, int page, int pageSize) {
@@ -66,6 +73,7 @@ public class InterviewService {
         }
 
         ResumeEntity resume = resumeId != null ? sessionSupportService.requireActiveResume(resumeId, userId) : null;
+        InterviewQuestionBankSelection questionBankSelection = normalizeQuestionBankSelection(request, userId);
         LocalDateTime now = LocalDateTime.now();
 
         InterviewSessionEntity session = new InterviewSessionEntity();
@@ -76,6 +84,9 @@ public class InterviewService {
         session.setAiConversationId("interview-" + session.getId());
         session.setJobDescription(jobDescription);
         session.setTargetCompany(targetCompany);
+        session.setQuestionBankId(questionBankSelection.questionBankId());
+        session.setQuestionBankTagsJson(sessionSupportService.toJson(questionBankSelection.tags()));
+        session.setQuestionBankRelevance(questionBankSelection.relevance());
         session.setDifficulty(normalizeDifficulty(request.difficulty()));
         session.setInterviewerRolesJson(sessionSupportService.toJson(normalizeInterviewerRoles(request.interviewerRoles())));
         session.setCompanyContextSummaryJson(sessionSupportService.toJson(List.of()));
@@ -123,6 +134,7 @@ public class InterviewService {
     @Transactional
     public void deleteInterview(String interviewId) {
         interviewPhysicalDeleteService.deleteOwnedInterview(interviewId, CurrentUserContext.requireUserId());
+        questionBankSamplingService.clearSession(interviewId);
     }
 
     @Transactional
@@ -463,6 +475,32 @@ public class InterviewService {
         return normalized;
     }
 
+    private InterviewQuestionBankSelection normalizeQuestionBankSelection(InterviewCreateRequest request, long userId) {
+        String questionBankId = normalizeOptionalText(request.questionBankId());
+        if (questionBankId == null) {
+            return new InterviewQuestionBankSelection(null, List.of(), null);
+        }
+        InterviewQuestionBankEntity bank = questionBankService.requireOwnedBank(questionBankId, userId);
+        List<String> tags = questionBankService.normalizeSelectionTags(request.selectedTags(), bank);
+        return new InterviewQuestionBankSelection(
+            bank.getId(),
+            tags,
+            normalizeQuestionBankRelevance(request.questionBankRelevance())
+        );
+    }
+
+    private String normalizeQuestionBankRelevance(String relevance) {
+        String normalized = normalizeOptionalText(relevance);
+        if (normalized == null) {
+            return InterviewConstants.QUESTION_BANK_RELEVANCE_MEDIUM;
+        }
+        normalized = normalized.toUpperCase(Locale.ROOT);
+        if (!InterviewConstants.QUESTION_BANK_RELEVANCES.contains(normalized)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Question bank relevance must be LOW, MEDIUM, or HIGH");
+        }
+        return normalized;
+    }
+
     private List<String> normalizeInterviewerRoles(List<String> interviewerRoles) {
         List<String> roles = interviewerRoles == null ? List.of() : interviewerRoles.stream()
             .map(this::normalizeOptionalText)
@@ -479,5 +517,8 @@ public class InterviewService {
             return null;
         }
         return value.trim();
+    }
+
+    private record InterviewQuestionBankSelection(String questionBankId, List<String> tags, String relevance) {
     }
 }

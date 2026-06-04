@@ -28,6 +28,7 @@ public class InterviewAiOrchestrationService {
     private final AiChatService aiChatService;
     private final InterviewSessionSupportService sessionSupportService;
     private final ResumeContentService resumeContentService;
+    private final InterviewQuestionBankSamplingService questionBankSamplingService;
 
     private record RoundTopicExtractionResult(List<String> topics) {
     }
@@ -38,11 +39,13 @@ public class InterviewAiOrchestrationService {
     public InterviewAiOrchestrationService(
         AiChatService aiChatService,
         InterviewSessionSupportService sessionSupportService,
-        ResumeContentService resumeContentService
+        ResumeContentService resumeContentService,
+        InterviewQuestionBankSamplingService questionBankSamplingService
     ) {
         this.aiChatService = aiChatService;
         this.sessionSupportService = sessionSupportService;
         this.resumeContentService = resumeContentService;
+        this.questionBankSamplingService = questionBankSamplingService;
     }
 
     public String generateAiResponse(InterviewSessionEntity session, ResumeEntity resume, String userMessage, int currentQuestionCount) {
@@ -206,6 +209,8 @@ public class InterviewAiOrchestrationService {
         List<String> companySummary = companyContextEnabled
             ? sessionSupportService.readCompanyContextSummary(session)
             : List.of();
+        InterviewQuestionBankSamplingService.QuestionBankPromptContext questionBankContext =
+            questionBankSamplingService.sampleForPrompt(session);
 
         String systemPrompt = InterviewPromptBuilder.buildSystemPrompt(
             currentRole,
@@ -216,7 +221,9 @@ public class InterviewAiOrchestrationService {
             companySummary,
             currentQuestionCount,
             InterviewConstants.MAX_QUESTIONS_PER_ROUND,
-            previousRoundTopics
+            previousRoundTopics,
+            questionBankContext.relevance(),
+            questionBankContext.questions()
         );
 
         return new AiInvocationRequest(

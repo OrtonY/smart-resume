@@ -4,6 +4,7 @@ export type InterviewReportStatus = 'PENDING' | 'GENERATING' | 'READY' | 'FAILED
 export type InterviewMessageRole = 'INTERVIEWER' | 'CANDIDATE' | 'SYSTEM'
 export type InterviewMessageStatus = 'NORMAL' | 'ABORTED'
 export type CompanyContextStatus = 'NOT_REQUESTED' | 'READY' | 'FAILED'
+import type { QuestionBankRelevance } from './questionBankTypes'
 
 export interface InterviewSummary {
   id: string
@@ -13,6 +14,10 @@ export interface InterviewSummary {
   title: string
   jobDescription: string | null
   targetCompany: string | null
+  questionBankId: string | null
+  questionBankName: string | null
+  selectedTags: string[]
+  questionBankRelevance: QuestionBankRelevance | null
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
   companyContextSummary: string[]
@@ -57,6 +62,9 @@ export interface InterviewCreatePayload {
   jobDescription?: string | null
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
+  questionBankId?: string | null
+  selectedTags?: string[]
+  questionBankRelevance?: QuestionBankRelevance | null
 }
 
 export interface InterviewListQuery {
@@ -85,6 +93,14 @@ export function getInterviewStatusOptions(t: TFunction): Array<{ value: Intervie
     { value: 'IN_PROGRESS', label: t('interview:status.inProgress') },
     { value: 'PAUSED', label: t('interview:status.paused') },
     { value: 'ENDED', label: t('interview:status.ended') },
+  ]
+}
+
+export function getQuestionBankRelevanceOptions(t: TFunction): Array<{ value: QuestionBankRelevance; label: string }> {
+  return [
+    { value: 'LOW', label: t('interview:questionBank.relevance.low') },
+    { value: 'MEDIUM', label: t('interview:questionBank.relevance.medium') },
+    { value: 'HIGH', label: t('interview:questionBank.relevance.high') },
   ]
 }
 

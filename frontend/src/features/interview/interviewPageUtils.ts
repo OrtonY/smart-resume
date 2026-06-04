@@ -9,6 +9,7 @@ import {
   type InterviewDifficulty,
   type InterviewStatus,
 } from './types'
+import type { QuestionBankRelevance } from './questionBankTypes'
 
 export const INTERVIEWS_PER_PAGE = DEFAULT_PAGE_SIZE
 
@@ -19,6 +20,9 @@ export type CreateFormValues = {
   jobDescription?: string
   difficulty: InterviewDifficulty
   interviewerRoles: string[]
+  questionBankId?: string
+  selectedTags?: string[]
+  questionBankRelevance?: QuestionBankRelevance
 }
 
 export function statusColor(status: InterviewStatus) {

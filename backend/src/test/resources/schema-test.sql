@@ -189,6 +189,9 @@ CREATE TABLE IF NOT EXISTS interview_sessions (
     target_company VARCHAR(200) NULL,
     company_context_summary_json TEXT NOT NULL DEFAULT '[]',
     company_context_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED',
+    question_bank_id VARCHAR(64) NULL,
+    question_bank_tags_json TEXT NOT NULL DEFAULT '[]',
+    question_bank_relevance VARCHAR(20) NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     ended_at TIMESTAMP NULL
@@ -216,6 +219,28 @@ CREATE TABLE IF NOT EXISTS interview_round_topics (
 
 CREATE INDEX IF NOT EXISTS idx_round_topics_session
     ON interview_round_topics(session_id);
+
+CREATE TABLE IF NOT EXISTS interview_question_banks (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS interview_questions (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    question_bank_id VARCHAR(64) NOT NULL,
+    question TEXT NOT NULL,
+    difficulty VARCHAR(20) NOT NULL,
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    focus_points TEXT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS resume_templates (
     key VARCHAR(80) PRIMARY KEY,
@@ -307,6 +332,15 @@ CREATE INDEX IF NOT EXISTS idx_interview_messages_user_session
 
 CREATE INDEX IF NOT EXISTS idx_interview_round_topics_user_session
     ON interview_round_topics (user_id, session_id, round_index);
+
+CREATE INDEX IF NOT EXISTS idx_interview_question_banks_user_updated
+    ON interview_question_banks (user_id, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_interview_questions_user_bank_updated
+    ON interview_questions (user_id, question_bank_id, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_question_bank
+    ON interview_sessions (user_id, question_bank_id);
 
 CREATE INDEX IF NOT EXISTS idx_resume_templates_deleted
     ON resume_templates (deleted, updated_at);

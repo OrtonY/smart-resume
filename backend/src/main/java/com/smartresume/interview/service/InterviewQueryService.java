@@ -24,13 +24,16 @@ public class InterviewQueryService {
 
     private final InterviewSessionMapper interviewSessionMapper;
     private final InterviewSessionSupportService sessionSupportService;
+    private final InterviewQuestionBankService questionBankService;
 
     public InterviewQueryService(
         InterviewSessionMapper interviewSessionMapper,
-        InterviewSessionSupportService sessionSupportService
+        InterviewSessionSupportService sessionSupportService,
+        InterviewQuestionBankService questionBankService
     ) {
         this.interviewSessionMapper = interviewSessionMapper;
         this.sessionSupportService = sessionSupportService;
+        this.questionBankService = questionBankService;
     }
 
     public InterviewPageResponse listInterviews(String resumeId, String status, String targetCompany, String keyword, int page, int pageSize) {
@@ -82,6 +85,7 @@ public class InterviewQueryService {
 
     private InterviewSummaryResponse toSummary(InterviewSessionEntity session) {
         ResumeEntity resume = sessionSupportService.loadOwnedResumeForSession(session);
+        String questionBankName = questionBankService.findOwnedBankName(session.getQuestionBankId(), session.getUserId());
         return new InterviewSummaryResponse(
             session.getId(),
             session.getResumeId(),
@@ -90,6 +94,10 @@ public class InterviewQueryService {
             session.getTitle(),
             session.getJobDescription(),
             session.getTargetCompany(),
+            session.getQuestionBankId(),
+            questionBankName,
+            questionBankService.readTagsJsonBestEffort(session.getQuestionBankTagsJson()),
+            normalizeQuestionBankRelevanceForResponse(session),
             session.getDifficulty(),
             sessionSupportService.readInterviewerRoles(session),
             sessionSupportService.readCompanyContextSummary(session),
@@ -106,6 +114,7 @@ public class InterviewQueryService {
     private InterviewDetailResponse toDetail(InterviewSessionEntity session) {
         ResumeEntity resume = sessionSupportService.loadOwnedResumeForSession(session);
         long totalElapsed = session.getTotalElapsedSeconds() == null ? 0L : session.getTotalElapsedSeconds();
+        String questionBankName = questionBankService.findOwnedBankName(session.getQuestionBankId(), session.getUserId());
         return new InterviewDetailResponse(
             session.getId(),
             session.getResumeId(),
@@ -114,6 +123,10 @@ public class InterviewQueryService {
             session.getTitle(),
             session.getJobDescription(),
             session.getTargetCompany(),
+            session.getQuestionBankId(),
+            questionBankName,
+            questionBankService.readTagsJsonBestEffort(session.getQuestionBankTagsJson()),
+            normalizeQuestionBankRelevanceForResponse(session),
             session.getDifficulty(),
             sessionSupportService.readInterviewerRoles(session),
             sessionSupportService.readCompanyContextSummary(session),
@@ -148,5 +161,12 @@ public class InterviewQueryService {
             return null;
         }
         return value.trim();
+    }
+
+    private String normalizeQuestionBankRelevanceForResponse(InterviewSessionEntity session) {
+        if (session.getQuestionBankId() == null || session.getQuestionBankRelevance() == null) {
+            return null;
+        }
+        return questionBankService.normalizeRelevanceOrDefault(session.getQuestionBankRelevance());
     }
 }
