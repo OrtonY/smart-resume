@@ -94,7 +94,7 @@ public class JobApplicationService {
         entity.setPosition(request.position().trim());
         entity.setStatus(request.status().trim().toLowerCase(Locale.ROOT));
         entity.setChannel(trimOrNull(request.channel()));
-        entity.setResumeId(trimOrNull(request.resumeId()));
+        entity.setResumeId(validateOwnedResumeId(request.resumeId(), userId));
         entity.setAppliedAt(request.appliedAt() != null ? request.appliedAt() : LocalDateTime.now());
         entity.setNotes(trimOrNull(request.notes()));
 
@@ -115,7 +115,7 @@ public class JobApplicationService {
         entity.setPosition(request.position().trim());
         entity.setStatus(request.status().trim().toLowerCase(Locale.ROOT));
         entity.setChannel(trimOrNull(request.channel()));
-        entity.setResumeId(trimOrNull(request.resumeId()));
+        entity.setResumeId(validateOwnedResumeId(request.resumeId(), entity.getUserId()));
         entity.setAppliedAt(request.appliedAt() != null ? request.appliedAt() : entity.getAppliedAt());
         entity.setNotes(trimOrNull(request.notes()));
         entity.setUpdatedAt(LocalDateTime.now());
@@ -149,7 +149,7 @@ public class JobApplicationService {
         String resumeTitle = null;
         if (entity.getResumeId() != null) {
             ResumeEntity resume = resumeMapper.selectOneById(entity.getResumeId());
-            if (resume != null) {
+            if (resume != null && Long.valueOf(entity.getUserId()).equals(resume.getUserId())) {
                 resumeTitle = resume.getTitle();
             }
         }
@@ -173,5 +173,17 @@ public class JobApplicationService {
             return null;
         }
         return value.trim();
+    }
+
+    private String validateOwnedResumeId(String resumeId, long userId) {
+        String normalized = trimOrNull(resumeId);
+        if (normalized == null) {
+            return null;
+        }
+        ResumeEntity resume = resumeMapper.selectOneById(normalized);
+        if (resume == null || !Long.valueOf(userId).equals(resume.getUserId())) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Resume not found");
+        }
+        return normalized;
     }
 }

@@ -59,6 +59,7 @@ class JobApplicationServiceTest {
 
     @Test
     void createPersistsNormalizedFieldsAndAssignsCurrentUser() {
+        when(resumeMapper.selectOneById("resume-1")).thenReturn(resume("resume-1", USER_ID, "Frontend Resume"));
         JobApplicationCreateRequest request = new JobApplicationCreateRequest(
             "  ByteDance  ",
             "  Frontend Engineer  ",
@@ -129,11 +130,22 @@ class JobApplicationServiceTest {
     }
 
     @Test
+    void createRejectsResumeOwnedByAnotherUser() {
+        when(resumeMapper.selectOneById("resume-2")).thenReturn(resume("resume-2", OTHER_USER_ID, "Other Resume"));
+        JobApplicationCreateRequest request = new JobApplicationCreateRequest(
+            "Acme", "Backend", "applied", null, "resume-2", null, null
+        );
+
+        assertThatThrownBy(() -> service.create(request))
+            .isInstanceOfSatisfying(AppException.class, ex ->
+                assertThat(ex.getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(jobApplicationMapper, never()).insert(any());
+    }
+
+    @Test
     void createPopulatesResumeTitleWhenResumeFound() {
-        ResumeEntity resume = new ResumeEntity();
-        resume.setId("resume-1");
-        resume.setTitle("Frontend Resume");
-        when(resumeMapper.selectOneById("resume-1")).thenReturn(resume);
+        when(resumeMapper.selectOneById("resume-1")).thenReturn(resume("resume-1", USER_ID, "Frontend Resume"));
 
         JobApplicationCreateRequest request = new JobApplicationCreateRequest(
             "Acme", "Backend", "applied", null, "resume-1", null, null
@@ -179,13 +191,14 @@ class JobApplicationServiceTest {
     void updateAppliesNormalizedChangesForOwnedRecord() {
         JobApplicationEntity entity = sampleEntity("app-1", USER_ID);
         when(jobApplicationMapper.selectOneById("app-1")).thenReturn(entity);
+        when(resumeMapper.selectOneById("resume-1")).thenReturn(resume("resume-1", USER_ID, "Frontend Resume"));
 
         JobApplicationUpdateRequest request = new JobApplicationUpdateRequest(
             "  ByteDance  ",
             "  Senior FE  ",
             "INTERVIEWING",
             "Boss直聘",
-            null,
+            "resume-1",
             LocalDateTime.of(2026, 5, 10, 9, 0),
             "round 1"
         );
@@ -197,11 +210,28 @@ class JobApplicationServiceTest {
         assertThat(entity.getPosition()).isEqualTo("Senior FE");
         assertThat(entity.getStatus()).isEqualTo("interviewing");
         assertThat(entity.getChannel()).isEqualTo("Boss直聘");
-        assertThat(entity.getResumeId()).isNull();
+        assertThat(entity.getResumeId()).isEqualTo("resume-1");
         assertThat(entity.getAppliedAt()).isEqualTo(LocalDateTime.of(2026, 5, 10, 9, 0));
         assertThat(entity.getNotes()).isEqualTo("round 1");
         assertThat(entity.getUpdatedAt()).isNotNull();
         assertThat(response.status()).isEqualTo("interviewing");
+    }
+
+    @Test
+    void updateRejectsResumeOwnedByAnotherUser() {
+        JobApplicationEntity entity = sampleEntity("app-1", USER_ID);
+        when(jobApplicationMapper.selectOneById("app-1")).thenReturn(entity);
+        when(resumeMapper.selectOneById("resume-2")).thenReturn(resume("resume-2", OTHER_USER_ID, "Other Resume"));
+
+        JobApplicationUpdateRequest request = new JobApplicationUpdateRequest(
+            "Acme", "Backend", "applied", null, "resume-2", null, null
+        );
+
+        assertThatThrownBy(() -> service.update("app-1", request))
+            .isInstanceOfSatisfying(AppException.class, ex ->
+                assertThat(ex.getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(jobApplicationMapper, never()).update(any(JobApplicationEntity.class));
     }
 
     @Test
@@ -311,5 +341,13 @@ class JobApplicationServiceTest {
         entity.setCreatedAt(LocalDateTime.of(2026, 4, 1, 9, 0));
         entity.setUpdatedAt(LocalDateTime.of(2026, 4, 1, 9, 0));
         return entity;
+    }
+
+    private ResumeEntity resume(String id, long userId, String title) {
+        ResumeEntity resume = new ResumeEntity();
+        resume.setId(id);
+        resume.setUserId(userId);
+        resume.setTitle(title);
+        return resume;
     }
 }
