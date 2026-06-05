@@ -12,6 +12,7 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 - 支持 AI 提供方配置、简历对话、简历评分、简历翻译和面试辅助
 - 面试工作台支持目标公司信息、AI 回答建议、对话历史和面试报告
 - 支持记录求职投递和简历交付进度
+- BOSS 直聘浏览器插件支持抓取岗位信息、保存投递记录和生成 AI 求职信
 - 提供两种 PDF 导出方式：
   - 浏览器端快速导出：基于 `html2canvas` 和 `jspdf`
   - 服务端高质量导出：基于 Playwright 和 Chromium
@@ -108,6 +109,16 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 |---|---|
 | <img src="./docs/mobile/interview-ai-answer.png" alt="Mobile 面试 AI 回答" width="220"> | <img src="./docs/mobile/interview-report.png" alt="Mobile 面试报告" width="220"> |
 
+### 浏览器插件
+
+| 登录 | 服务地址 |
+|---|---|
+| <img src="./docs/extension/login.png" alt="浏览器插件登录" width="220"> | <img src="./docs/extension/url-config.png" alt="浏览器插件服务地址配置" width="220"> |
+
+| 岗位抓取 | AI 求职信 |
+|---|---|
+| <img src="./docs/extension/control-page.png" alt="浏览器插件 BOSS 岗位抓取" width="420"> | <img src="./docs/extension/ai-cover-letter.png" alt="浏览器插件 AI 求职信" width="420"> |
+
 ## 技术栈
 
 ### 后端
@@ -129,11 +140,18 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 - React Router 7
 - `html2canvas` 和 `jspdf`，用于浏览器端快速 PDF 导出
 
+### 浏览器插件
+
+- TypeScript
+- Vite
+- Chrome extension APIs
+
 ## 仓库结构
 
 ```text
 smart-resume/
 |-- backend/   Spring Boot API、数据库迁移、领域服务和 PDF 导出
+|-- browser-extension/  BOSS 直聘岗位抓取与求职信生成浏览器插件
 |-- docs/      README 截图与辅助资源
 |-- frontend/  工作台、编辑器、分享页、模板和面试流程前端应用
 `-- .trellis/  项目流程、规范与任务记录

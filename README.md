@@ -12,6 +12,7 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 - AI provider configuration, resume chat, resume scoring, translation, and interview assistance
 - Interview workspace with target company context, AI answer suggestions, chat history, and reports
 - Submission tracking for job applications and resume delivery
+- BOSS Zhipin browser extension for capturing job details, saving applications, and generating AI cover letters
 - Two PDF export paths:
   - Quick export in the browser with `html2canvas` and `jspdf`
   - High-quality server-side export with Playwright and Chromium
@@ -108,6 +109,16 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 |---|---|
 | <img src="./docs/mobile/interview-ai-answer.png" alt="Mobile interview AI answer" width="220"> | <img src="./docs/mobile/interview-report.png" alt="Mobile interview report" width="220"> |
 
+### Browser Extension
+
+| Login | Service URL |
+|---|---|
+| <img src="./docs/extension/login.png" alt="Browser extension login" width="220"> | <img src="./docs/extension/url-config.png" alt="Browser extension service URL configuration" width="220"> |
+
+| Job Capture | AI Cover Letter |
+|---|---|
+| <img src="./docs/extension/control-page.png" alt="Browser extension BOSS job capture" width="420"> | <img src="./docs/extension/ai-cover-letter.png" alt="Browser extension AI cover letter" width="420"> |
+
 ## Tech Stack
 
 ### Backend
@@ -129,11 +140,18 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 - React Router 7
 - `html2canvas` and `jspdf` for quick browser-side PDF export
 
+### Browser Extension
+
+- TypeScript
+- Vite
+- Chrome extension APIs
+
 ## Repository Layout
 
 ```text
 smart-resume/
 |-- backend/   Spring Boot API, database migrations, domain services, PDF export
+|-- browser-extension/  BOSS Zhipin browser extension for job capture and cover letters
 |-- docs/      README screenshots and supporting assets
 |-- frontend/  React application for workspace, editor, sharing, templates, and interviews
 `-- .trellis/  Project workflow, specs, and task records
