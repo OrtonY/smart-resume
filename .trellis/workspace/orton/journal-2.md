@@ -570,3 +570,36 @@ Added user-managed interview question banks with backend CRUD/sampling integrati
 ### Next Steps
 
 - None - task complete
+
+
+## Session 77: Validate job application resume ownership
+
+**Date**: 2026-06-05
+**Task**: Validate job application resume ownership
+**Branch**: `codex/boss-browser-extension`
+
+### Summary
+
+Enforced per-user resume ownership when creating or updating job applications, hid cross-user resume titles in responses, and added service regression tests for cross-user resume rejection.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4cf75d3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

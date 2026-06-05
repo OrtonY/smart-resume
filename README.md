@@ -12,6 +12,7 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 - AI provider configuration, resume chat, resume scoring, translation, and interview assistance
 - Interview workspace with target company context, AI answer suggestions, chat history, and reports
 - Submission tracking for job applications and resume delivery
+- BOSS Zhipin browser extension for capturing job details, saving applications, and generating AI cover letters
 - Two PDF export paths:
   - Quick export in the browser with `html2canvas` and `jspdf`
   - High-quality server-side export with Playwright and Chromium
@@ -108,6 +109,16 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 |---|---|
 | <img src="./docs/mobile/interview-ai-answer.png" alt="Mobile interview AI answer" width="220"> | <img src="./docs/mobile/interview-report.png" alt="Mobile interview report" width="220"> |
 
+### Browser Extension
+
+| Login | Service URL |
+|---|---|
+| <img src="./docs/extension/login.png" alt="Browser extension login" width="220"> | <img src="./docs/extension/url-config.png" alt="Browser extension service URL configuration" width="220"> |
+
+| Job Capture | AI Cover Letter |
+|---|---|
+| <img src="./docs/extension/control-page.png" alt="Browser extension BOSS job capture" width="420"> | <img src="./docs/extension/ai-cover-letter.png" alt="Browser extension AI cover letter" width="420"> |
+
 ## Tech Stack
 
 ### Backend
@@ -129,11 +140,18 @@ Smart Resume is a private, multi-user resume workspace for creating, improving, 
 - React Router 7
 - `html2canvas` and `jspdf` for quick browser-side PDF export
 
+### Browser Extension
+
+- TypeScript
+- Vite
+- Chrome extension APIs
+
 ## Repository Layout
 
 ```text
 smart-resume/
 |-- backend/   Spring Boot API, database migrations, domain services, PDF export
+|-- browser-extension/  BOSS Zhipin browser extension for job capture and cover letters
 |-- docs/      README screenshots and supporting assets
 |-- frontend/  React application for workspace, editor, sharing, templates, and interviews
 `-- .trellis/  Project workflow, specs, and task records
@@ -205,7 +223,9 @@ From the project root:
 ./start.sh
 ```
 
-The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, builds the backend JAR, installs Playwright Chromium when missing, and starts the server.
+The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, installs and builds the browser extension, builds the backend JAR, installs Playwright Chromium when missing, then starts the Vite frontend dev server and the backend server together.
+
+The frontend is available at `http://localhost:5173` by default, and the backend is available at `http://localhost:8080`.
 
 To build without starting the server:
 
@@ -238,6 +258,36 @@ cd frontend
 echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
+
+## Browser Extension Usage
+
+The BOSS Zhipin helper is a local Chrome/Edge extension. It reads the active BOSS job page, sends the extracted job details to your Smart Resume service, and can create an application record or AI cover letter from a selected resume.
+
+### Build and Install
+
+1. Start Smart Resume first, either with the one-command script or with the backend running at `http://localhost:8080`.
+2. If you ran `./start.sh` or `./build.sh`, the extension has already been built at `browser-extension/dist`. To build only the extension manually:
+
+```bash
+cd browser-extension
+npm install
+npm run build
+```
+
+3. Open `chrome://extensions` or `edge://extensions`.
+4. Enable developer mode.
+5. Choose "Load unpacked" and select `browser-extension/dist`.
+
+### Use on BOSS Zhipin
+
+1. Open a BOSS Zhipin job page, such as `https://www.zhipin.com/web/geek/job*` or `https://www.zhipin.com/job_detail/*`.
+2. Open the Smart Resume BOSS Helper extension.
+3. On first use, enter the Smart Resume service URL, for example `http://localhost:8080`, and save it.
+4. Sign in with your Smart Resume account.
+5. Select a resume. The extension fills company, position, JD, salary, education, and work-duration notes from the current job page.
+6. When switching between jobs in the same BOSS page, click "Refresh" in the extension before saving or generating.
+7. Click "Save application" to create or reuse a BOSS application record, or click "Generate cover letter" to create an AI cover letter.
+8. After a cover letter is generated, use the Job/Cover letter tabs to switch back and review or copy the generated letter again.
 
 ## First-time Use
 
