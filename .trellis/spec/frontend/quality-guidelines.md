@@ -225,6 +225,56 @@ params.set('pageSize', String(query.pageSize ?? DEFAULT_PAGE_SIZE))
 
 (To be filled by the team)
 
+## Scenario: BOSS Browser Extension Extraction
+
+### 1. Scope / Trigger
+- Trigger: the standalone `browser-extension/` package extracts visible BOSS Zhipin job data and sends user-confirmed values to Smart Resume.
+- This needs code-spec depth because it depends on a third-party SPA DOM, Chrome MV3 messaging, and application payload fields.
+
+### 2. Signatures
+- Content request: `{ type: 'GET_JOB_SNAPSHOT' }`
+- Content response: `{ company: string; position: string; jobDescription: string; url: string; warnings: string[] }`
+- Popup fallback: if `chrome.tabs.sendMessage` fails, inject `content-script.js` with `chrome.scripting.executeScript`, then retry the same request.
+- Application create payload from extension: `channel: 'Boss直聘'`, `status: 'applied'`, selected `resumeId`, and notes containing the source URL plus JD summary.
+
+### 3. Contracts
+- Extraction reads only the current visible page DOM in the user's active tab.
+- Prefer specific BOSS selectors such as `.job-name`, `.boss-name`, `.company-name`, and `.job-detail-body .desc`.
+- Do not use broad selectors such as `[class*="company"] [class*="name"]` when a narrower BOSS-specific selector exists, because they can match entire mixed company/location/card sections.
+- Normalize extracted position text by removing salary ranges before it enters popup state.
+- The extension must keep extracted fields editable before any Smart Resume write or AI request.
+
+### 4. Validation & Error Matrix
+- Content script is not loaded -> popup injects `content-script.js` and retries once.
+- Company missing after extraction -> return `company_missing` in `warnings`.
+- Position missing after extraction -> return `position_missing` in `warnings`.
+- JD missing after extraction -> return `job_description_missing` in `warnings`.
+- BOSS security/verification page is visible instead of job DOM -> extraction may return warnings; the popup remains a manual-edit form.
+
+### 5. Good/Base/Bad Cases
+- Good: a list/detail page returns company from `.boss-name` or `.company-name`, position from `.job-name`, and JD from `.job-detail-body .desc`.
+- Base: selectors fail but the document title provides a partial company or position, with warnings for fields still missing.
+- Bad: position includes salary text such as `15-25K`, causing application records to store salary inside the job title.
+- Bad: a broad company selector returns company plus location, financing, industry, or job-card text.
+
+### 6. Tests Required
+- `browser-extension` type-check must pass after changing content script, popup messaging, or Chrome API typings.
+- `browser-extension` build must pass so `dist/manifest.json`, `dist/content-script.js`, `dist/popup.js`, and `dist/service-worker.js` stay loadable.
+- Manual assertion on a logged-in BOSS job page: refresh updates company, position, JD, and URL from the active tab.
+
+### 7. Wrong vs Correct
+#### Wrong
+```typescript
+const company = firstText(['[class*="company"] [class*="name"]'])
+const position = firstText(['[class*="job"] h1'])
+```
+
+#### Correct
+```typescript
+const company = firstText(['.job-detail-company .company-name', '.company-name', '.boss-name'])
+const position = cleanPosition(firstText(['.job-name', 'a.job-name', '.job-title']))
+```
+
 ---
 
 ## Code Review Checklist
