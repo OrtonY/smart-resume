@@ -1,0 +1,199 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 380px;
+  height: 600px;
+  overflow: hidden;
+}
+
+body {
+  min-width: 360px;
+  max-width: 420px;
+  margin: 0;
+  color: #172033;
+  background: #f5f7fb;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.extension-shell {
+  width: 380px;
+  height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px;
+}
+
+.extension-header,
+.extension-section-head,
+.extension-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.extension-header h1,
+.extension-panel h2,
+.extension-panel h3,
+.extension-header p,
+.extension-panel p {
+  margin: 0;
+}
+
+.extension-header h1 {
+  font-size: 18px;
+}
+
+.extension-header p,
+.extension-muted,
+.extension-panel p {
+  color: #657084;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.extension-stack,
+.extension-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.extension-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+  padding: 4px;
+  background: #eaf0f8;
+}
+
+.extension-tab {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  color: #34517a;
+  background: transparent;
+  cursor: pointer;
+}
+
+.extension-tab--active {
+  color: #172033;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(23 32 51 / 10%);
+}
+
+.extension-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.extension-panel h2 {
+  font-size: 15px;
+}
+
+.extension-panel h3 {
+  font-size: 14px;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #cfd7e6;
+  border-radius: 6px;
+  padding: 8px 9px;
+  color: #172033;
+  background: #fff;
+  font-size: 13px;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.extension-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.extension-button {
+  min-height: 34px;
+  border: 1px solid #bcc8db;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #1f2a44;
+  background: #fff;
+  cursor: pointer;
+}
+
+.extension-button--primary {
+  border-color: #1f73ff;
+  color: #fff;
+  background: #1f73ff;
+}
+
+.extension-button--ghost {
+  border-color: transparent;
+  color: #34517a;
+  background: transparent;
+}
+
+.extension-alert {
+  margin-top: 10px;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.extension-alert--success {
+  color: #155e2f;
+  background: #eaf8ef;
+}
+
+.extension-alert--error {
+  color: #9f1d1d;
+  background: #fff0f0;
+}
+
+.extension-alert--warning {
+  color: #7a4b00;
+  background: #fff7dc;
+}
+
+.extension-letter {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border: 1px solid #dfe5ef;
+  border-radius: 6px;
+  padding: 10px;
+  background: #f8fafc;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+}

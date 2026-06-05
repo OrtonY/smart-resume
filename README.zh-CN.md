@@ -12,6 +12,7 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 - 支持 AI 提供方配置、简历对话、简历评分、简历翻译和面试辅助
 - 面试工作台支持目标公司信息、AI 回答建议、对话历史和面试报告
 - 支持记录求职投递和简历交付进度
+- BOSS 直聘浏览器插件支持抓取岗位信息、保存投递记录和生成 AI 求职信
 - 提供两种 PDF 导出方式：
   - 浏览器端快速导出：基于 `html2canvas` 和 `jspdf`
   - 服务端高质量导出：基于 Playwright 和 Chromium
@@ -108,6 +109,16 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 |---|---|
 | <img src="./docs/mobile/interview-ai-answer.png" alt="Mobile 面试 AI 回答" width="220"> | <img src="./docs/mobile/interview-report.png" alt="Mobile 面试报告" width="220"> |
 
+### 浏览器插件
+
+| 登录 | 服务地址 |
+|---|---|
+| <img src="./docs/extension/login.png" alt="浏览器插件登录" width="220"> | <img src="./docs/extension/url-config.png" alt="浏览器插件服务地址配置" width="220"> |
+
+| 岗位抓取 | AI 求职信 |
+|---|---|
+| <img src="./docs/extension/control-page.png" alt="浏览器插件 BOSS 岗位抓取" width="420"> | <img src="./docs/extension/ai-cover-letter.png" alt="浏览器插件 AI 求职信" width="420"> |
+
 ## 技术栈
 
 ### 后端
@@ -129,11 +140,18 @@ Smart Resume 是一个支持多用户的私有化简历工作台，用于创建�
 - React Router 7
 - `html2canvas` 和 `jspdf`，用于浏览器端快速 PDF 导出
 
+### 浏览器插件
+
+- TypeScript
+- Vite
+- Chrome extension APIs
+
 ## 仓库结构
 
 ```text
 smart-resume/
 |-- backend/   Spring Boot API、数据库迁移、领域服务和 PDF 导出
+|-- browser-extension/  BOSS 直聘岗位抓取与求职信生成浏览器插件
 |-- docs/      README 截图与辅助资源
 |-- frontend/  工作台、编辑器、分享页、模板和面试流程前端应用
 `-- .trellis/  项目流程、规范与任务记录
@@ -205,7 +223,9 @@ cd ..
 ./start.sh
 ```
 
-脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、构建后端 JAR、在缺失时安装 Playwright Chromium，并启动服务。
+脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、安装并构建浏览器插件、构建后端 JAR、在缺失时安装 Playwright Chromium，然后同时启动 Vite 前端开发服务和后端服务。
+
+前端默认访问地址为 `http://localhost:5173`，后端默认访问地址为 `http://localhost:8080`。
 
 如果只想构建而不启动：
 
@@ -238,6 +258,36 @@ cd frontend
 echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
+
+## 浏览器插件使用方式
+
+BOSS 直聘助手是一个本地 Chrome/Edge 插件。它会读取当前打开的 BOSS 岗位页面，把抓取到的岗位信息发送到你的 Smart Resume 服务，并基于选中的简历创建投递记录或生成 AI 求职信。
+
+### 构建与安装
+
+1. 先启动 Smart Resume，可以使用一键脚本，也可以确保后端运行在 `http://localhost:8080`。
+2. 如果已经执行过 `./start.sh` 或 `./build.sh`，插件会自动构建到 `browser-extension/dist`。如果只想单独构建插件：
+
+```bash
+cd browser-extension
+npm install
+npm run build
+```
+
+3. 打开 `chrome://extensions` 或 `edge://extensions`。
+4. 开启开发者模式。
+5. 选择“加载已解压的扩展程序”，并选择 `browser-extension/dist` 目录。
+
+### 在 BOSS 直聘中使用
+
+1. 打开 BOSS 直聘岗位页面，例如 `https://www.zhipin.com/web/geek/job*` 或 `https://www.zhipin.com/job_detail/*`。
+2. 打开 Smart Resume BOSS Helper 插件。
+3. 首次使用时填写 Smart Resume 服务地址，例如 `http://localhost:8080`，并保存配置。
+4. 使用 Smart Resume 账号登录。
+5. 选择一份简历。插件会从当前岗位页填充公司、岗位、JD、薪资、学历要求和工作时长备注。
+6. 在同一个 BOSS 页面里切换不同岗位后，保存或生成前请点击插件里的“刷新”。
+7. 点击“投递记录入库”可创建或复用 BOSS 投递记录；点击“生成求职信”可生成 AI 求职信。
+8. 求职信生成后，可通过“职位信息 / 求职信”切换页返回查看，并重复复制已生成内容。
 
 ## 首次使用
 

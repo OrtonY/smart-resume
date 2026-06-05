@@ -3,6 +3,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
+BROWSER_EXTENSION_DIR="$PROJECT_ROOT/browser-extension"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 BACKEND_STATIC_DIR="$BACKEND_DIR/src/main/resources/static"
 
@@ -86,6 +87,13 @@ echo "==> Syncing frontend dist to backend static resources..."
 rm -rf "$BACKEND_STATIC_DIR"
 cp -r "$FRONTEND_DIR/dist" "$BACKEND_STATIC_DIR"
 
+echo "==> Installing browser extension dependencies..."
+cd "$BROWSER_EXTENSION_DIR"
+npm install --silent
+
+echo "==> Building browser extension..."
+npm run build
+
 echo "==> Building backend..."
 cd "$BACKEND_DIR"
 ./mvnw package -DskipTests -q
@@ -100,5 +108,6 @@ fi
 echo ""
 echo "=== Build complete ==="
 echo "Backend JAR: $BACKEND_DIR/target/backend-1.2.0.jar"
+echo "Browser extension: $BROWSER_EXTENSION_DIR/dist"
 echo ""
 echo "To start: java -jar backend/target/backend-1.2.0.jar"
