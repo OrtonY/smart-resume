@@ -223,7 +223,7 @@ From the project root:
 ./start.sh
 ```
 
-The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, builds the backend JAR, installs Playwright Chromium when missing, and starts the server.
+The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, installs and builds the browser extension, builds the backend JAR, installs Playwright Chromium when missing, and starts the server.
 
 To build without starting the server:
 
@@ -264,7 +264,7 @@ The BOSS Zhipin helper is a local Chrome/Edge extension. It reads the active BOS
 ### Build and Install
 
 1. Start Smart Resume first, either with the one-command script or with the backend running at `http://localhost:8080`.
-2. Build the extension:
+2. If you ran `./start.sh` or `./build.sh`, the extension has already been built at `browser-extension/dist`. To build only the extension manually:
 
 ```bash
 cd browser-extension

@@ -223,7 +223,7 @@ cd ..
 ./start.sh
 ```
 
-脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、构建后端 JAR、在缺失时安装 Playwright Chromium，并启动服务。
+脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、安装并构建浏览器插件、构建后端 JAR、在缺失时安装 Playwright Chromium，并启动服务。
 
 如果只想构建而不启动：
 
@@ -264,7 +264,7 @@ BOSS 直聘助手是一个本地 Chrome/Edge 插件。它会读取当前打开�
 ### 构建与安装
 
 1. 先启动 Smart Resume，可以使用一键脚本，也可以确保后端运行在 `http://localhost:8080`。
-2. 构建插件：
+2. 如果已经执行过 `./start.sh` 或 `./build.sh`，插件会自动构建到 `browser-extension/dist`。如果只想单独构建插件：
 
 ```bash
 cd browser-extension
