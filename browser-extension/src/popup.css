@@ -2,6 +2,13 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  width: 380px;
+  height: 600px;
+  overflow: hidden;
+}
+
 body {
   min-width: 360px;
   max-width: 420px;
@@ -20,8 +27,9 @@ textarea {
 
 .extension-shell {
   width: 380px;
-  max-height: 620px;
-  overflow: auto;
+  height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 14px;
 }
 
@@ -58,6 +66,32 @@ textarea {
 .extension-panel {
   display: grid;
   gap: 12px;
+}
+
+.extension-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+  padding: 4px;
+  background: #eaf0f8;
+}
+
+.extension-tab {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  color: #34517a;
+  background: transparent;
+  cursor: pointer;
+}
+
+.extension-tab--active {
+  color: #172033;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(23 32 51 / 10%);
 }
 
 .extension-panel {
@@ -152,8 +186,6 @@ textarea {
 }
 
 .extension-letter {
-  max-height: 220px;
-  overflow: auto;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;

@@ -13,6 +13,7 @@ import type {
 
 type Step = 'config' | 'login' | 'main'
 type OutputLanguage = 'CHINESE' | 'ENGLISH'
+type ViewMode = 'job' | 'letter'
 
 interface RuntimeEnvelope<T> {
   ok: boolean
@@ -34,6 +35,7 @@ interface ViewState {
   resumes: ResumeOption[]
   resumeId: string
   outputLanguage: OutputLanguage
+  activeView: ViewMode
   coverLetter: CoverLetterResponse | null
   feedback: string | null
   error: string | null
@@ -139,6 +141,9 @@ const LOCALES = {
 
 const locale = navigator.language.startsWith('en') ? 'en-US' : 'zh-CN'
 const text = LOCALES[locale]
+const viewText = locale === 'en-US'
+  ? { job: 'Job', letter: 'Cover letter' }
+  : { job: '职位信息', letter: '求职信' }
 const root = document.getElementById('extension-root')
 
 let state: ViewState = {
@@ -150,6 +155,7 @@ let state: ViewState = {
   resumes: [],
   resumeId: '',
   outputLanguage: 'CHINESE',
+  activeView: 'job',
   coverLetter: null,
   feedback: null,
   error: null,
@@ -254,6 +260,33 @@ function renderLogin() {
 }
 
 function renderMain() {
+  const hasCoverLetter = Boolean(state.coverLetter)
+  const content = state.activeView === 'letter' && state.coverLetter
+    ? renderCoverLetter(state.coverLetter)
+    : renderJobView()
+
+  return `
+    <section class="extension-stack">
+      ${hasCoverLetter ? renderViewTabs() : ''}
+      ${content}
+    </section>
+  `
+}
+
+function renderViewTabs() {
+  return `
+    <nav class="extension-tabs" aria-label="Result views">
+      <button class="extension-tab ${state.activeView === 'job' ? 'extension-tab--active' : ''}" data-action="show-job" type="button">
+        ${escapeHtml(viewText.job)}
+      </button>
+      <button class="extension-tab ${state.activeView === 'letter' ? 'extension-tab--active' : ''}" data-action="show-letter" type="button">
+        ${escapeHtml(viewText.letter)}
+      </button>
+    </nav>
+  `
+}
+
+function renderJobView() {
   return `
     <section class="extension-stack">
       <section class="extension-panel">
@@ -290,7 +323,6 @@ function renderMain() {
           <button class="extension-button extension-button--primary" data-action="generate-letter" type="button">${escapeHtml(state.loading ? text.working : text.generateCoverLetter)}</button>
         </div>
       </section>
-      ${state.coverLetter ? renderCoverLetter(state.coverLetter) : ''}
     </section>
   `
 }
@@ -373,6 +405,16 @@ async function handleAction(action: string) {
       break
     case 'refresh':
       await hydrate()
+      break
+    case 'show-job':
+      state = { ...state, activeView: 'job' }
+      render()
+      break
+    case 'show-letter':
+      if (state.coverLetter) {
+        state = { ...state, activeView: 'letter' }
+        render()
+      }
       break
     case 'save-application':
       await saveApplication()
@@ -470,6 +512,7 @@ async function generateCoverLetter() {
     state = {
       ...state,
       coverLetter,
+      activeView: 'letter',
       feedback: text.coverLetterGenerated,
     }
   })
