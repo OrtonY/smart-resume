@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 77
+- **Total Sessions**: 78
 - **Last Active**: 2026-06-05
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~605 | Active |
+| `journal-2.md` | ~638 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 78 | 2026-06-05 | Add friendly links | `d254cea` | `codex/add-friendly-links` |
 | 77 | 2026-06-05 | Validate job application resume ownership | `4cf75d3` | `codex/boss-browser-extension` |
 | 76 | 2026-06-04 | Interview question bank | `f8d178a`, `2beb8d8` | `codex/interview-question-bank` |
 | 75 | 2026-06-03 | Add cover letter generation | `33fe5f8` | `codex/cover-letter-generation` |
