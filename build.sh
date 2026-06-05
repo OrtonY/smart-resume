@@ -107,7 +107,7 @@ fi
 
 echo ""
 echo "=== Build complete ==="
-echo "Backend JAR: $BACKEND_DIR/target/backend-1.2.0.jar"
+echo "Backend JAR: $BACKEND_DIR/target/backend-1.3.0.jar"
 echo "Browser extension: $BROWSER_EXTENSION_DIR/dist"
 echo ""
-echo "To start: java -jar backend/target/backend-1.2.0.jar"
+echo "To start: java -jar backend/target/backend-1.3.0.jar"
