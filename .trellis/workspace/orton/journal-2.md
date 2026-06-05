@@ -603,3 +603,36 @@ Enforced per-user resume ownership when creating or updating job applications, h
 ### Next Steps
 
 - None - task complete
+
+
+## Session 78: Add friendly links
+
+**Date**: 2026-06-05
+**Task**: Add friendly links
+**Branch**: `codex/add-friendly-links`
+
+### Summary
+
+Added friendly links to the English and Chinese READMEs and clarified the Trellis description.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d254cea` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
