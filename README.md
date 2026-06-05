@@ -257,6 +257,36 @@ echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
 
+## Browser Extension Usage
+
+The BOSS Zhipin helper is a local Chrome/Edge extension. It reads the active BOSS job page, sends the extracted job details to your Smart Resume service, and can create an application record or AI cover letter from a selected resume.
+
+### Build and Install
+
+1. Start Smart Resume first, either with the one-command script or with the backend running at `http://localhost:8080`.
+2. Build the extension:
+
+```bash
+cd browser-extension
+npm install
+npm run build
+```
+
+3. Open `chrome://extensions` or `edge://extensions`.
+4. Enable developer mode.
+5. Choose "Load unpacked" and select `browser-extension/dist`.
+
+### Use on BOSS Zhipin
+
+1. Open a BOSS Zhipin job page, such as `https://www.zhipin.com/web/geek/job*` or `https://www.zhipin.com/job_detail/*`.
+2. Open the Smart Resume BOSS Helper extension.
+3. On first use, enter the Smart Resume service URL, for example `http://localhost:8080`, and save it.
+4. Sign in with your Smart Resume account.
+5. Select a resume. The extension fills company, position, JD, salary, education, and work-duration notes from the current job page.
+6. When switching between jobs in the same BOSS page, click "Refresh" in the extension before saving or generating.
+7. Click "Save application" to create or reuse a BOSS application record, or click "Generate cover letter" to create an AI cover letter.
+8. After a cover letter is generated, use the Job/Cover letter tabs to switch back and review or copy the generated letter again.
+
 ## First-time Use
 
 1. Open the frontend in your browser.

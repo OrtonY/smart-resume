@@ -257,6 +257,36 @@ echo 'VITE_API_BASE_URL=http://localhost:8080' > .env.local
 npm run dev
 ```
 
+## 浏览器插件使用方式
+
+BOSS 直聘助手是一个本地 Chrome/Edge 插件。它会读取当前打开的 BOSS 岗位页面，把抓取到的岗位信息发送到你的 Smart Resume 服务，并基于选中的简历创建投递记录或生成 AI 求职信。
+
+### 构建与安装
+
+1. 先启动 Smart Resume，可以使用一键脚本，也可以确保后端运行在 `http://localhost:8080`。
+2. 构建插件：
+
+```bash
+cd browser-extension
+npm install
+npm run build
+```
+
+3. 打开 `chrome://extensions` 或 `edge://extensions`。
+4. 开启开发者模式。
+5. 选择“加载已解压的扩展程序”，并选择 `browser-extension/dist` 目录。
+
+### 在 BOSS 直聘中使用
+
+1. 打开 BOSS 直聘岗位页面，例如 `https://www.zhipin.com/web/geek/job*` 或 `https://www.zhipin.com/job_detail/*`。
+2. 打开 Smart Resume BOSS Helper 插件。
+3. 首次使用时填写 Smart Resume 服务地址，例如 `http://localhost:8080`，并保存配置。
+4. 使用 Smart Resume 账号登录。
+5. 选择一份简历。插件会从当前岗位页填充公司、岗位、JD、薪资、学历要求和工作时长备注。
+6. 在同一个 BOSS 页面里切换不同岗位后，保存或生成前请点击插件里的“刷新”。
+7. 点击“投递记录入库”可创建或复用 BOSS 投递记录；点击“生成求职信”可生成 AI 求职信。
+8. 求职信生成后，可通过“职位信息 / 求职信”切换页返回查看，并重复复制已生成内容。
+
 ## 首次使用
 
 1. 在浏览器中打开前端页面。
