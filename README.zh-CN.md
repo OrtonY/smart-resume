@@ -223,7 +223,9 @@ cd ..
 ./start.sh
 ```
 
-脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、安装并构建浏览器插件、构建后端 JAR、在缺失时安装 Playwright Chromium，并启动服务。
+脚本会检查 Node.js 与 Java 版本、安装前端依赖、构建前端、把 `frontend/dist/` 同步到后端静态资源目录、安装并构建浏览器插件、构建后端 JAR、在缺失时安装 Playwright Chromium，然后同时启动 Vite 前端开发服务和后端服务。
+
+前端默认访问地址为 `http://localhost:5173`，后端默认访问地址为 `http://localhost:8080`。
 
 如果只想构建而不启动：
 

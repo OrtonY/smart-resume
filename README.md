@@ -223,7 +223,9 @@ From the project root:
 ./start.sh
 ```
 
-The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, installs and builds the browser extension, builds the backend JAR, installs Playwright Chromium when missing, and starts the server.
+The script checks Node.js and Java versions, installs frontend dependencies, builds the frontend, syncs `frontend/dist/` into the backend static resources, installs and builds the browser extension, builds the backend JAR, installs Playwright Chromium when missing, then starts the Vite frontend dev server and the backend server together.
+
+The frontend is available at `http://localhost:5173` by default, and the backend is available at `http://localhost:8080`.
 
 To build without starting the server:
 
