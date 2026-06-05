@@ -636,3 +636,36 @@ Added friendly links to the English and Chinese READMEs and clarified the Trelli
 ### Next Steps
 
 - None - task complete
+
+
+## Session 79: Release v1.3.0
+
+**Date**: 2026-06-05
+**Task**: Release v1.3.0
+**Branch**: `codex/release-v1-3-0`
+
+### Summary
+
+Prepared Smart Resume v1.3.0 release version updates across backend, frontend, browser extension, and build/start scripts; release tag and master promotion are already present remotely.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1526509` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
