@@ -128,7 +128,7 @@ async function listResumes() {
 async function ensureApplication(message: CreateApplicationMessage) {
   const storage = await readStorage()
   const mappings = await pruneApplicationMappingsIfNeeded(storage.applicationMappings)
-  const key = applicationMappingKey(message.job.url, message.resumeId)
+  const key = applicationMappingKey(message.job, message.resumeId)
   const existingApplicationId = mappings[key]?.applicationId
   if (existingApplicationId) {
     return { id: existingApplicationId, reused: true }
@@ -141,7 +141,7 @@ async function ensureApplication(message: CreateApplicationMessage) {
 
 async function generateCoverLetter(message: GenerateCoverLetterMessage) {
   const storage = await readStorage()
-  const key = applicationMappingKey(message.job.url, message.resumeId)
+  const key = applicationMappingKey(message.job, message.resumeId)
   const mappings = await pruneApplicationMappingsIfNeeded(storage.applicationMappings)
   let applicationId = mappings[key]?.applicationId
 
@@ -200,7 +200,7 @@ function buildApplicationNotes(job: EditableJobPayload) {
   const summary = summarize(job.jobDescription)
   return [
     '来源: Boss直聘',
-    `URL: ${job.url}`,
+    job.url ? `URL: ${job.url}` : null,
     summary ? `JD摘要: ${summary}` : null,
     job.extraNotes ? `备注: ${job.extraNotes}` : null,
   ].filter(Boolean).join('\n')
@@ -243,8 +243,8 @@ async function apiRequest<T>(
   return payload.data
 }
 
-function applicationMappingKey(url: string, resumeId: string) {
-  return `${normalizeUrl(url)}::${resumeId}`
+function applicationMappingKey(job: EditableJobPayload, resumeId: string) {
+  return `${jobIdentity(job)}::${resumeId}`
 }
 
 async function saveApplicationMapping(key: string, applicationId: string) {
@@ -318,6 +318,14 @@ function normalizeUrl(value: string) {
   } catch {
     return value.trim()
   }
+}
+
+function jobIdentity(job: EditableJobPayload) {
+  const normalizedUrl = normalizeUrl(job.url)
+  if (normalizedUrl) {
+    return normalizedUrl
+  }
+  return `manual:${job.company.trim()}::${job.position.trim()}`
 }
 
 function summarize(value: string) {

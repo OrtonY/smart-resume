@@ -22,6 +22,7 @@ export interface JobSnapshot {
   company: string
   position: string
   jobDescription: string
+  extraNotes: string
   url: string
   warnings: string[]
 }

@@ -233,15 +233,18 @@ params.set('pageSize', String(query.pageSize ?? DEFAULT_PAGE_SIZE))
 
 ### 2. Signatures
 - Content request: `{ type: 'GET_JOB_SNAPSHOT' }`
-- Content response: `{ company: string; position: string; jobDescription: string; url: string; warnings: string[] }`
+- Content response: `{ company: string; position: string; jobDescription: string; extraNotes: string; url: string; warnings: string[] }`
 - Popup fallback: if `chrome.tabs.sendMessage` fails, inject `content-script.js` with `chrome.scripting.executeScript`, then retry the same request.
-- Application create payload from extension: `channel: 'Boss直聘'`, `status: 'applied'`, selected `resumeId`, and notes containing the source URL plus JD summary.
+- Application create payload from extension: `channel: 'Boss直聘'`, `status: 'applied'`, selected `resumeId`, and notes containing the captured source URL plus JD summary and extra metadata.
 
 ### 3. Contracts
 - Extraction reads only the current visible page DOM in the user's active tab.
 - Prefer specific BOSS selectors such as `.job-name`, `.boss-name`, `.company-name`, and `.job-detail-body .desc`.
+- On BOSS SPA pages, do not treat `window.location.href` as the only source identity. Prefer the current job card's `a.job-name[href]` or `a[href*="/job_detail/"]` because switching jobs may update the detail pane without changing the address bar.
 - Do not use broad selectors such as `[class*="company"] [class*="name"]` when a narrower BOSS-specific selector exists, because they can match entire mixed company/location/card sections.
 - Normalize extracted position text by removing salary ranges before it enters popup state.
+- Put salary, education requirement, and work-duration/experience tags into `extraNotes`; do not store them in `position`.
+- The popup should not render an editable source URL field for BOSS jobs. Keep the captured URL internal for notes and duplicate prevention.
 - The extension must keep extracted fields editable before any Smart Resume write or AI request.
 
 ### 4. Validation & Error Matrix
@@ -250,17 +253,19 @@ params.set('pageSize', String(query.pageSize ?? DEFAULT_PAGE_SIZE))
 - Position missing after extraction -> return `position_missing` in `warnings`.
 - JD missing after extraction -> return `job_description_missing` in `warnings`.
 - BOSS security/verification page is visible instead of job DOM -> extraction may return warnings; the popup remains a manual-edit form.
+- Captured card URL is missing -> duplicate mapping falls back to `company + position + resumeId`.
 
 ### 5. Good/Base/Bad Cases
 - Good: a list/detail page returns company from `.boss-name` or `.company-name`, position from `.job-name`, and JD from `.job-detail-body .desc`.
 - Base: selectors fail but the document title provides a partial company or position, with warnings for fields still missing.
 - Bad: position includes salary text such as `15-25K`, causing application records to store salary inside the job title.
 - Bad: a broad company selector returns company plus location, financing, industry, or job-card text.
+- Bad: switching jobs in the same BOSS SPA pane keeps using `window.location.href`, causing stale URL and duplicate mapping drift.
 
 ### 6. Tests Required
 - `browser-extension` type-check must pass after changing content script, popup messaging, or Chrome API typings.
 - `browser-extension` build must pass so `dist/manifest.json`, `dist/content-script.js`, `dist/popup.js`, and `dist/service-worker.js` stay loadable.
-- Manual assertion on a logged-in BOSS job page: refresh updates company, position, JD, and URL from the active tab.
+- Manual assertion on a logged-in BOSS job page: switching jobs and clicking refresh updates company, position, JD, and extra notes from the active detail pane even if the address bar does not change.
 
 ### 7. Wrong vs Correct
 #### Wrong

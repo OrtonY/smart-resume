@@ -184,7 +184,7 @@ async function loadCurrentJob() {
         position: snapshot.position,
         jobDescription: snapshot.jobDescription,
         url: snapshot.url,
-        extraNotes: '',
+        extraNotes: snapshot.extraNotes,
       },
       jobWarnings: snapshot.warnings,
     }
@@ -264,7 +264,6 @@ function renderMain() {
         ${state.jobWarnings.length > 0 ? `<div class="extension-alert extension-alert--warning">${escapeHtml(text.warnings)}</div>` : ''}
         ${renderInput('company', text.company, state.job.company)}
         ${renderInput('position', text.position, state.job.position)}
-        ${renderInput('url', text.url, state.job.url)}
         ${renderTextarea('jobDescription', text.jobDescription, state.job.jobDescription, 6)}
         ${renderTextarea('extraNotes', text.extraNotes, state.job.extraNotes ?? '', 3, text.extraNotesPlaceholder)}
       </section>
@@ -501,7 +500,7 @@ async function runAction(action: () => Promise<void>, rerenderStart = true) {
 }
 
 function isReady() {
-  return Boolean(state.job.company.trim() && state.job.position.trim() && state.job.url.trim() && state.resumeId)
+  return Boolean(state.job.company.trim() && state.job.position.trim() && state.resumeId)
 }
 
 function fieldValue(name: string) {
