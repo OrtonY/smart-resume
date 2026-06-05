@@ -3,6 +3,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
+BROWSER_EXTENSION_DIR="$PROJECT_ROOT/browser-extension"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 BACKEND_STATIC_DIR="$BACKEND_DIR/src/main/resources/static"
 BACKEND_JAR="$BACKEND_DIR/target/backend-1.2.0.jar"
@@ -11,6 +12,18 @@ REQUIRED_NODE_MAJOR=20
 REQUIRED_JAVA_MAJOR=21
 PLAYWRIGHT_CHROMIUM_REVISION=1223
 PLAYWRIGHT_CHROMIUM_HEADLESS_SHELL_REVISION=1223
+FRONTEND_PID=""
+
+cleanup() {
+  if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
+    echo ""
+    echo "==> Stopping frontend dev server..."
+    kill "$FRONTEND_PID" 2>/dev/null || true
+    wait "$FRONTEND_PID" 2>/dev/null || true
+  fi
+}
+
+trap cleanup EXIT INT TERM
 
 playwright_browsers_path() {
   if [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ "${PLAYWRIGHT_BROWSERS_PATH}" != "0" ]; then
@@ -87,6 +100,13 @@ echo "==> Syncing frontend dist to backend static resources..."
 rm -rf "$BACKEND_STATIC_DIR"
 cp -r "$FRONTEND_DIR/dist" "$BACKEND_STATIC_DIR"
 
+echo "==> Installing browser extension dependencies..."
+cd "$BROWSER_EXTENSION_DIR"
+npm install --silent
+
+echo "==> Building browser extension..."
+npm run build
+
 echo "==> Building backend..."
 cd "$BACKEND_DIR"
 ./mvnw package -DskipTests -q
@@ -99,7 +119,19 @@ else
 fi
 
 echo ""
-echo "=== Build complete. Starting server... ==="
+echo "=== Build complete. Starting servers... ==="
+echo "Browser extension: $BROWSER_EXTENSION_DIR/dist"
 echo ""
 
-exec java -jar "$BACKEND_JAR"
+echo "==> Starting frontend dev server..."
+cd "$FRONTEND_DIR"
+npm run dev &
+FRONTEND_PID=$!
+echo "Frontend dev server PID: $FRONTEND_PID"
+echo "Frontend URL: http://localhost:5173"
+echo ""
+
+echo "==> Starting backend server..."
+echo "Backend URL: http://localhost:8080"
+cd "$PROJECT_ROOT"
+java -jar "$BACKEND_JAR"

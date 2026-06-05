@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Resume BOSS Helper",
+  "description": "Save BOSS Zhipin job details to Smart Resume and generate cover letters.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://www.zhipin.com/*",
+    "https://*.zhipin.com/*",
+    "http://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.zhipin.com/job_detail/*",
+        "https://www.zhipin.com/web/geek/job*"
+      ],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

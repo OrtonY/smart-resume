@@ -225,6 +225,67 @@ params.set('pageSize', String(query.pageSize ?? DEFAULT_PAGE_SIZE))
 
 (To be filled by the team)
 
+## Scenario: BOSS Browser Extension Extraction
+
+### 1. Scope / Trigger
+- Trigger: the standalone `browser-extension/` package extracts visible BOSS Zhipin job data and sends user-confirmed values to Smart Resume.
+- This needs code-spec depth because it depends on a third-party SPA DOM, Chrome MV3 messaging, and application payload fields.
+
+### 2. Signatures
+- Content request: `{ type: 'GET_JOB_SNAPSHOT' }`
+- Content response: `{ company: string; position: string; jobDescription: string; extraNotes: string; url: string; warnings: string[] }`
+- Popup fallback: if `chrome.tabs.sendMessage` fails, inject `content-script.js` with `chrome.scripting.executeScript`, then retry the same request.
+- Application create payload from extension: `channel: 'Boss直聘'`, `status: 'applied'`, selected `resumeId`, and notes containing the captured source URL plus JD summary and extra metadata.
+- Popup view state: after a cover letter is generated, keep it in popup state and expose a `job` / `letter` tab switch so users can return to the generated letter without regenerating it.
+
+### 3. Contracts
+- Extraction reads only the current visible page DOM in the user's active tab.
+- Prefer specific BOSS selectors such as `.job-name`, `.boss-name`, `.company-name`, and `.job-detail-body .desc`.
+- On BOSS SPA pages, do not treat `window.location.href` as the only source identity. Prefer the current job card's `a.job-name[href]` or `a[href*="/job_detail/"]` because switching jobs may update the detail pane without changing the address bar.
+- Do not use broad selectors such as `[class*="company"] [class*="name"]` when a narrower BOSS-specific selector exists, because they can match entire mixed company/location/card sections.
+- Normalize extracted position text by removing salary ranges before it enters popup state.
+- Put salary, education requirement, and work-duration/experience tags into `extraNotes`; do not store them in `position`.
+- The popup should not render an editable source URL field for BOSS jobs. Keep the captured URL internal for notes and duplicate prevention.
+- The extension must keep extracted fields editable before any Smart Resume write or AI request.
+- The popup must have only one primary page scrollbar. Keep `html`/`body` overflow hidden and let `.extension-shell` own vertical scrolling; avoid stacking the browser popup scrollbar on top of the app scrollbar.
+- Generated cover letters should render in a separate view instead of being appended below the job form, so long letters do not bury the current job controls.
+
+### 4. Validation & Error Matrix
+- Content script is not loaded -> popup injects `content-script.js` and retries once.
+- Company missing after extraction -> return `company_missing` in `warnings`.
+- Position missing after extraction -> return `position_missing` in `warnings`.
+- JD missing after extraction -> return `job_description_missing` in `warnings`.
+- BOSS security/verification page is visible instead of job DOM -> extraction may return warnings; the popup remains a manual-edit form.
+- Captured card URL is missing -> duplicate mapping falls back to `company + position + resumeId`.
+- Cover letter exists and user switches back to job form -> keep the existing `coverLetter` in state and allow switching back to it.
+
+### 5. Good/Base/Bad Cases
+- Good: a list/detail page returns company from `.boss-name` or `.company-name`, position from `.job-name`, and JD from `.job-detail-body .desc`.
+- Base: selectors fail but the document title provides a partial company or position, with warnings for fields still missing.
+- Bad: position includes salary text such as `15-25K`, causing application records to store salary inside the job title.
+- Bad: a broad company selector returns company plus location, financing, industry, or job-card text.
+- Bad: switching jobs in the same BOSS SPA pane keeps using `window.location.href`, causing stale URL and duplicate mapping drift.
+- Bad: appending the generated cover letter below the job form, producing a long nested-scroll popup where users cannot easily return to the result.
+
+### 6. Tests Required
+- `browser-extension` type-check must pass after changing content script, popup messaging, or Chrome API typings.
+- `browser-extension` build must pass so `dist/manifest.json`, `dist/content-script.js`, `dist/popup.js`, and `dist/service-worker.js` stay loadable.
+- Manual assertion on a logged-in BOSS job page: switching jobs and clicking refresh updates company, position, JD, and extra notes from the active detail pane even if the address bar does not change.
+- Manual assertion in the popup: after generating a cover letter, the `职位信息` / `求职信` switch toggles views and the outer browser scrollbar is not visible.
+
+### 7. Wrong vs Correct
+#### Wrong
+```typescript
+const company = firstText(['[class*="company"] [class*="name"]'])
+const position = firstText(['[class*="job"] h1'])
+```
+
+#### Correct
+```typescript
+const company = firstText(['.job-detail-company .company-name', '.company-name', '.boss-name'])
+const position = cleanPosition(firstText(['.job-name', 'a.job-name', '.job-title']))
+```
+
 ---
 
 ## Code Review Checklist
