@@ -308,6 +308,11 @@ AI features are configured from the application UI. The backend supports OpenAI-
 - In development mode, high-quality export may return 503 until `frontend/dist/` has been built and copied into backend static resources.
 - The frontend has a package-level guide in [frontend/README.md](./frontend/README.md).
 
+## Friendly Links
+
+- [linux.do](https://linux.do) - 上L站，学AI
+- [Trellis](https://github.com/mindfold-ai/Trellis) - 本项目使用的 AI 开发工作流工具
+
 ## License
 
 Smart Resume is licensed under the Apache License 2.0. See [LICENSE](./LICENSE) for the full text and [NOTICE](./NOTICE) for attribution details.

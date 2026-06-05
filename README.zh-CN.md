@@ -308,6 +308,11 @@ AI 功能通过应用内界面配置。当前后端支持 OpenAI 兼容接口、
 - 开发模式下，如果尚未构建并复制 `frontend/dist/` 到后端静态资源目录，高质量导出可能返回 503。
 - 前端还有单独的包级文档：[frontend/README.md](./frontend/README.md)。
 
+## 友情链接
+
+- [linux.do](https://linux.do) - 上L站，学AI
+- [Trellis](https://github.com/mindfold-ai/Trellis) - 本项目使用的 AI 开发工作流工具
+
 ## 开源协议
 
 Smart Resume 基于 Apache License 2.0 发布。完整协议见 [LICENSE](./LICENSE)，归属说明见 [NOTICE](./NOTICE)。
