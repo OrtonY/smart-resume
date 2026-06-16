@@ -136,9 +136,9 @@ function parseTemplateDefinition(value: unknown): ResumeTemplateDefinition | nul
   }
 
   const key = readString(value.key)
-  const name = readString(value.name)
-  const summary = readString(value.summary)
-  const category = readString(value.category)
+  const name = readLocalizedField(value.name)
+  const summary = readLocalizedField(value.summary)
+  const category = readLocalizedField(value.category)
   if (!key || !name || !summary || !category) {
     return null
   }
@@ -240,6 +240,36 @@ function readRecord(value: unknown) {
 
 function readBoolean(value: unknown) {
   return typeof value === 'boolean' ? value : null
+}
+
+function readLocalizedField(value: unknown): string | Record<string, string> | null {
+  // If it's a plain string, return it
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim()
+  }
+
+  // If it's an i18n object (e.g. {zh: "...", en: "..."}), validate and return it
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>
+
+    // Check if it has at least one valid string value
+    const hasValidValue = Object.values(obj).some(
+      (val) => typeof val === 'string' && val.trim().length > 0
+    )
+
+    if (hasValidValue) {
+      // Return the i18n object, filtering out non-string or empty values
+      const cleanedObj: Record<string, string> = {}
+      for (const [key, val] of Object.entries(obj)) {
+        if (typeof val === 'string' && val.trim().length > 0) {
+          cleanedObj[key] = val.trim()
+        }
+      }
+      return cleanedObj
+    }
+  }
+
+  return null
 }
 
 function readString(value: unknown) {

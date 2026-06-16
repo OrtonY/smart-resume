@@ -65,7 +65,7 @@ import { exportResumePdf } from '../features/resume/export/pdfExport'
 import { exportResumeServerPdf } from '../features/resume/export/serverPdfExport'
 import { useResumeTemplateCatalog } from '../features/resume/hooks/useResumeTemplateCatalog'
 import { useResumePreviewDetails } from '../features/resume/hooks/useResumePreviewDetails'
-import { resolveResumeTemplate } from '../features/resume/templateCatalog'
+import { getLocalizedField, resolveResumeTemplate } from '../features/resume/templateCatalog'
 import { createDefaultResumeLayout, normalizeResumeLayout } from '../features/resume/types'
 import { WorkspaceSessionCard } from '../features/system/components/WorkspaceSessionCard'
 import type { RegistrationSettingsResponse, SessionUser } from '../features/system/types'
@@ -113,7 +113,7 @@ export function WorkspacePage({
   registrationEnabled,
   onRegistrationEnabledChange,
 }: WorkspacePageProps) {
-  const { t } = useTranslation('workspace')
+  const { t, i18n } = useTranslation('workspace')
   const navigate = useNavigate()
   const location = useLocation()
   const { resumeId } = useParams()
@@ -646,7 +646,7 @@ export function WorkspacePage({
         onRestoreResume={handleRestoreResume}
         resumePage={resumePage}
         resumeList={resumeList}
-        selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
+        selectedTemplateName={(templateKey) => getLocalizedField(resolveResumeTemplate(templates, templateKey).name, i18n.language)}
         templates={templates}
       />
     )
@@ -665,7 +665,7 @@ export function WorkspacePage({
       registrationEnabled={registrationEnabled}
       resumePage={resumePage}
       resumeList={resumeList}
-      selectedTemplateName={(templateKey) => resolveResumeTemplate(templates, templateKey).name}
+      selectedTemplateName={(templateKey) => getLocalizedField(resolveResumeTemplate(templates, templateKey).name, i18n.language)}
       templates={templates}
     />
   )

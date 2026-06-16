@@ -702,3 +702,36 @@ Bump version to 1.3.1 in backend, frontend, browser extension, and build scripts
 ### Next Steps
 
 - None - task complete
+
+
+## Session 81: 修复模板 i18n 对象渲染错误
+
+**Date**: 2026-06-16
+**Task**: 修复模板 i18n 对象渲染错误
+**Branch**: `develop`
+
+### Summary
+
+修复 v1.3.2 版本中 name/summary/category 字段支持 i18n 对象导致的 React error #31。更新类型定义支持 LocalizedField，添加辅助函数处理字符串和对象两种格式，修复所有显示和编辑组件。确保内置模板支持多语言显示，自定义模板保持字符串格式。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `549ba42` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

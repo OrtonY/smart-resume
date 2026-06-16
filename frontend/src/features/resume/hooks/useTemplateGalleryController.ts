@@ -185,8 +185,9 @@ export function useTemplateGalleryController() {
     const template = templates.find((item) => item.key === templateKey)
     setCreatingResumeTemplateKey(templateKey)
     try {
+      const templateName = template ? getLocalizedField(template.name, locale) : t('gallery.draft.untitledResume')
       const detail = await createResume({
-        title: template ? t('gallery.draft.defaultResumeName', { name: template.name }) : t('gallery.draft.untitledResume'),
+        title: template ? t('gallery.draft.defaultResumeName', { name: templateName }) : t('gallery.draft.untitledResume'),
         templateKey,
       })
       void message.success(t('gallery.message.resumeCreated'))
@@ -213,7 +214,7 @@ export function useTemplateGalleryController() {
   function handleCreateFromCurrent() {
     setSelectionTouched(true)
     setEditorMode('create')
-    setEditorDraft(createNewTemplateDraft(selectedTemplate, templates, t))
+    setEditorDraft(createNewTemplateDraft(selectedTemplate, templates, t, locale))
     if (isMobile) {
       setMobileExpanded(true)
       setMobileView('edit')
