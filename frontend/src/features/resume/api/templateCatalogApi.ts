@@ -1,3 +1,4 @@
+import i18n from '../../../i18n'
 import { request } from '../../../lib/http/apiClient'
 import {
   FALLBACK_RESUME_TEMPLATE_CATALOG,
@@ -242,7 +243,59 @@ function readBoolean(value: unknown) {
 }
 
 function readString(value: unknown) {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
+  // 支持字符串或 i18n 对象（如 {en: "...", "zh-CN": "..."}）
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim()
+  }
+
+  // 如果是对象，根据当前语言环境提取对应的文本
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>
+
+    // 获取当前语言（zh-CN 或 en-US）
+    const currentLang = i18n.language || 'zh-CN'
+
+    // 语言映射：前端 i18n 使用 zh-CN/en-US，后端可能使用 zh-CN/en
+    const langMap: Record<string, string[]> = {
+      'zh-CN': ['zh-CN', 'zh'],
+      'en-US': ['en-US', 'en'],
+    }
+
+    // 根据当前语言查找对应的后端语言键
+    const possibleKeys = langMap[currentLang] || [currentLang]
+
+    // 优先使用当前语言的所有可能键
+    for (const key of possibleKeys) {
+      if (typeof obj[key] === 'string' && obj[key].trim().length > 0) {
+        return obj[key].trim()
+      }
+    }
+
+    // 回退到中文
+    if (typeof obj['zh-CN'] === 'string' && obj['zh-CN'].trim().length > 0) {
+      return obj['zh-CN'].trim()
+    }
+    if (typeof obj['zh'] === 'string' && obj['zh'].trim().length > 0) {
+      return obj['zh'].trim()
+    }
+
+    // 最后回退到英文
+    if (typeof obj['en-US'] === 'string' && obj['en-US'].trim().length > 0) {
+      return obj['en-US'].trim()
+    }
+    if (typeof obj['en'] === 'string' && obj['en'].trim().length > 0) {
+      return obj['en'].trim()
+    }
+
+    // 尝试任意可用的语言
+    for (const key of Object.keys(obj)) {
+      if (typeof obj[key] === 'string' && obj[key].trim().length > 0) {
+        return obj[key].trim()
+      }
+    }
+  }
+
+  return null
 }
 
 function readNullableString(value: unknown) {
