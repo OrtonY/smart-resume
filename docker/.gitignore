@@ -1,0 +1,11 @@
+# Docker 相关文件
+.env
+docker-compose.override.yml
+
+# SSL 证书（不应提交到版本控制）
+docker/nginx/ssl/*.pem
+docker/nginx/ssl/*.key
+docker/nginx/ssl/*.crt
+
+# 数据卷备份
+backup/
