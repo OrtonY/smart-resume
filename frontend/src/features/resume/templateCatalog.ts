@@ -39,9 +39,9 @@ export interface ResumeTemplatePreview {
 
 export interface ResumeTemplateDefinition {
   key: string
-  name: string
-  summary: string
-  category: string
+  name: LocalizedField
+  summary: LocalizedField
+  category: LocalizedField
   layout: ResumeTemplateLayout
   theme: ResumeTemplateTheme
   preview: ResumeTemplatePreview

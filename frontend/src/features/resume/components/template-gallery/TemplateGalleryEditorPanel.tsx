@@ -12,6 +12,7 @@ import {
   type EditorMode,
 } from '../../templateGalleryUtils'
 import type {
+  LocalizedField,
   ManagedResumeTemplateDefinition,
   ResumeTemplateLayout,
   ResumeTemplatePreview,
@@ -20,6 +21,20 @@ import type {
 
 const { Text } = Typography
 const { TextArea } = Input
+
+/**
+ * Convert LocalizedField to string for editing.
+ * For objects (i18n), we take the first available value.
+ * For strings, return as-is.
+ */
+function localizedFieldToEditableString(field: LocalizedField): string {
+  if (typeof field === 'string') {
+    return field
+  }
+  // For i18n objects, take the first available value (shouldn't happen for editable templates)
+  const values = Object.values(field)
+  return values[0] ?? ''
+}
 
 export function TemplateGalleryEditorPanel({
   deletingTemplateKey,
@@ -87,11 +102,17 @@ export function TemplateGalleryEditorPanel({
                     </div>
                     <div className="template-editor-field">
                       <Text type="secondary">{t('gallery.editor.field.name')}</Text>
-                      <Input value={editorDraft.name} onChange={(event) => updateDraftField('name', event.target.value)} />
+                      <Input
+                        value={localizedFieldToEditableString(editorDraft.name)}
+                        onChange={(event) => updateDraftField('name', event.target.value)}
+                      />
                     </div>
                     <div className="template-editor-field">
                       <Text type="secondary">{t('gallery.editor.field.category')}</Text>
-                      <Input value={editorDraft.category} onChange={(event) => updateDraftField('category', event.target.value)} />
+                      <Input
+                        value={localizedFieldToEditableString(editorDraft.category)}
+                        onChange={(event) => updateDraftField('category', event.target.value)}
+                      />
                     </div>
                     <div className="template-editor-field">
                       <Text type="secondary">{t('gallery.editor.field.layout')}</Text>
@@ -103,7 +124,11 @@ export function TemplateGalleryEditorPanel({
                     </div>
                     <div className="template-editor-field template-editor-field--span-2">
                       <Text type="secondary">{t('gallery.editor.field.summary')}</Text>
-                      <TextArea rows={4} value={editorDraft.summary} onChange={(event) => updateDraftField('summary', event.target.value)} />
+                      <TextArea
+                        rows={4}
+                        value={localizedFieldToEditableString(editorDraft.summary)}
+                        onChange={(event) => updateDraftField('summary', event.target.value)}
+                      />
                     </div>
                   </div>
                 ),
