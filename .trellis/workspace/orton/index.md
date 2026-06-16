@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 79
-- **Last Active**: 2026-06-05
+- **Total Sessions**: 80
+- **Last Active**: 2026-06-16
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~671 | Active |
+| `journal-2.md` | ~704 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 80 | 2026-06-16 | Release v1.3.1 | `1be35e9` | `release/v1.3.1` |
 | 79 | 2026-06-05 | Release v1.3.0 | `1526509` | `codex/release-v1-3-0` |
 | 78 | 2026-06-05 | Add friendly links | `d254cea` | `codex/add-friendly-links` |
 | 77 | 2026-06-05 | Validate job application resume ownership | `4cf75d3` | `codex/boss-browser-extension` |

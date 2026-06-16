@@ -669,3 +669,36 @@ Prepared Smart Resume v1.3.0 release version updates across backend, frontend, b
 ### Next Steps
 
 - None - task complete
+
+
+## Session 80: Release v1.3.1
+
+**Date**: 2026-06-16
+**Task**: Release v1.3.1
+**Branch**: `release/v1.3.1`
+
+### Summary
+
+Bump version to 1.3.1 in backend, frontend, browser extension, and build scripts
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1be35e9` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
