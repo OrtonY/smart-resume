@@ -215,7 +215,26 @@ cd ..
 
 ## Run the Application
 
-### Option A: One-command Script
+### Option A: Docker (Recommended for Production)
+
+Deploy the entire stack (PostgreSQL 17.6, Spring Boot 3, React, Nginx) with one command:
+
+```bash
+# Copy environment configuration
+cp .env.example .env
+
+# Edit configuration (modify passwords and secrets for production)
+vim .env
+
+# Deploy with Docker Compose
+docker-compose up -d
+```
+
+Access the application at http://localhost
+
+For detailed deployment instructions, see [Docker Deployment Guide](docker/README.md)
+
+### Option B: One-command Script
 
 From the project root:
 
@@ -233,7 +252,7 @@ To build without starting the server:
 ./build.sh
 ```
 
-### Option B: Development Mode
+### Option C: Development Mode
 
 Start the backend:
 

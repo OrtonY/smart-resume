@@ -215,7 +215,26 @@ cd ..
 
 ## 启动项目
 
-### 方式 A：一键脚本
+### 方式 A：Docker 部署（生产环境推荐）
+
+一键部署完整技术栈（PostgreSQL 17.6、Spring Boot 3、React、Nginx）：
+
+```bash
+# 复制环境变量配置文件
+cp .env.example .env
+
+# 编辑配置（生产环境请务必修改密码和密钥）
+vim .env
+
+# 使用 Docker Compose 部署
+docker-compose up -d
+```
+
+访问地址：http://localhost
+
+详细部署说明请查看 [Docker 部署指南](docker/README.md)
+
+### 方式 B：一键脚本
 
 在项目根目录执行：
 
@@ -233,7 +252,7 @@ cd ..
 ./build.sh
 ```
 
-### 方式 B：开发模式
+### 方式 C：开发模式
 
 启动后端：
 
