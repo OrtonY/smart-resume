@@ -52,7 +52,7 @@ import type {
   AiResumeTranslationTarget,
 } from '../../../ai/types'
 import { normalizeRewrittenBulletLine, replaceTextRange } from '../../markdown/bulletLine'
-import { resolveResumeTemplate, type ResumeTemplateDefinition } from '../../templateCatalog'
+import { getLocalizedField, resolveResumeTemplate, type ResumeTemplateDefinition } from '../../templateCatalog'
 import type {
   CertificateItem,
   EducationItem,
@@ -150,7 +150,7 @@ export function ResumeEditorView({
   templates,
   translatingResume,
 }: ResumeEditorViewProps) {
-  const { t } = useTranslation('workspace')
+  const { t, i18n } = useTranslation('workspace')
   const { message } = App.useApp()
   const isMobile = useIsMobile()
   const [mobileEditorTab, setMobileEditorTab] = useState<'structure' | 'content' | 'preview'>('content')
@@ -359,7 +359,7 @@ export function ResumeEditorView({
               <Link to="/app">
                 <Button icon={<ArrowLeftOutlined />}>{t('actions.backToList')}</Button>
               </Link>
-              <Tag color="gold">{selectedTemplate.category}</Tag>
+              <Tag color="gold">{getLocalizedField(selectedTemplate.category, i18n.language)}</Tag>
               <Tag className="save-state" color={saveStateColor(saveState)}>
                 {saveStateLabel(saveState, t)}
               </Tag>

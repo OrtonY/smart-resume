@@ -4,6 +4,8 @@ import {
   DEFAULT_RESUME_TEMPLATE_KEY,
   FALLBACK_RESUME_TEMPLATE_CATALOG,
   getDefaultResumeTemplate,
+  getLocalizedField,
+  type LocalizedField,
   type ManagedResumeTemplateDefinition,
   type ResumeTemplateDefinition,
   type ResumeTemplateLayout,
@@ -14,6 +16,25 @@ import {
 
 export type EditorMode = 'edit' | 'create'
 export type ColorTokenKind = 'color' | 'gradient'
+
+/**
+ * Helper function to safely convert LocalizedField to string for the current locale.
+ * Uses a default locale of 'zh-CN' for consistency.
+ */
+function localizedFieldToString(field: LocalizedField, locale: string = 'zh-CN'): string {
+  return getLocalizedField(field, locale)
+}
+
+/**
+ * Helper function to check if a LocalizedField has content.
+ */
+function isLocalizedFieldEmpty(field: LocalizedField): boolean {
+  if (typeof field === 'string') {
+    return field.trim().length === 0
+  }
+  // For objects, check if any value has content
+  return Object.values(field).every((value) => typeof value !== 'string' || value.trim().length === 0)
+}
 
 export const LAYOUT_OPTION_KEYS: Array<{ value: ResumeTemplateLayout; labelKey: string }> = [
   { value: 'classic', labelKey: 'layout.classic' },
@@ -167,9 +188,15 @@ export function createNewTemplateDraft(
   template: ResumeTemplateDefinition | null,
   existingTemplates: ManagedResumeTemplateDefinition[],
   t: (key: string, options?: Record<string, unknown>) => string,
+  locale: string = 'zh-CN',
 ): ManagedResumeTemplateDefinition {
   const base = template ?? FALLBACK_MANAGED_TEMPLATE
   const baseKey = normalizeTemplateKey(`${base.key}-copy`) || 'custom-template'
+
+  // Convert LocalizedField to string for new custom template
+  const baseName = localizedFieldToString(base.name, locale)
+  const baseSummary = localizedFieldToString(base.summary, locale)
+  const baseCategory = localizedFieldToString(base.category, locale)
 
   return {
     ...cloneManagedTemplate({
@@ -178,7 +205,9 @@ export function createNewTemplateDraft(
       updatedAt: null,
     }),
     key: createUniqueTemplateKey(baseKey, existingTemplates),
-    name: t('gallery.draft.copyName', { name: base.name }),
+    name: t('gallery.draft.copyName', { name: baseName }),
+    summary: baseSummary,
+    category: baseCategory,
     builtIn: false,
     updatedAt: null,
   }
@@ -233,8 +262,13 @@ export function validateTemplateDraft(
     return t('gallery.validation.keyRequired')
   }
 
-  const basicFields = [template.name, template.summary, template.category, template.layout]
-  if (basicFields.some((field) => field.trim().length === 0)) {
+  // Check LocalizedField values
+  if (
+    isLocalizedFieldEmpty(template.name) ||
+    isLocalizedFieldEmpty(template.summary) ||
+    isLocalizedFieldEmpty(template.category) ||
+    !template.layout.trim()
+  ) {
     return t('gallery.validation.basicRequired')
   }
 
@@ -251,9 +285,9 @@ export function validateTemplateDraft(
 
 export function toUpdatePayload(template: ManagedResumeTemplateDefinition): ResumeTemplateUpdatePayload {
   return {
-    name: template.name.trim(),
-    summary: template.summary.trim(),
-    category: template.category.trim(),
+    name: localizedFieldToString(template.name).trim(),
+    summary: localizedFieldToString(template.summary).trim(),
+    category: localizedFieldToString(template.category).trim(),
     layout: template.layout,
     theme: trimTheme(template.theme),
     preview: trimPreview(template.preview),

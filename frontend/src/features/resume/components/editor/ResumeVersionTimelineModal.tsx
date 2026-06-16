@@ -13,6 +13,7 @@ import {
   restoreResumeFromVersion,
 } from '../../api/resumeApi'
 import { RESUME_VERSION_MODAL_WIDTH } from '../../constants'
+import { getLocalizedField } from '../../templateCatalog'
 import type { ResumeDetail, ResumeSectionKey, ResumeVersionDetail, ResumeVersionSummary } from '../../types'
 
 const { Paragraph, Text } = Typography
@@ -312,7 +313,9 @@ export function ResumeVersionTimelineModal({
             {
               key: 'template',
               label: t('versionTimeline.snapshotTemplate'),
-              children: activeSelectedVersion.snapshot.resolvedTemplate?.name ?? activeSelectedVersion.snapshot.templateKey,
+              children: activeSelectedVersion.snapshot.resolvedTemplate
+                ? getLocalizedField(activeSelectedVersion.snapshot.resolvedTemplate.name, i18n.language)
+                : activeSelectedVersion.snapshot.templateKey,
             },
             {
               key: 'updatedAt',
