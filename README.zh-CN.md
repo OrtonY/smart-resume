@@ -230,7 +230,13 @@ vim .env
 docker-compose up -d
 ```
 
-访问地址：http://localhost
+也可以运行部署辅助脚本，它会在需要时创建 `.env`、检查端口和 HTTPS 证书，然后启动完整服务：
+
+```bash
+./deploy.sh
+```
+
+默认访问地址为 `http://localhost`；如果在 `.env` 中配置了 `APP_DOMAIN` 或 HTTPS，则使用对应域名和协议访问。
 
 详细部署说明请查看 [Docker 部署指南](docker/README.md)
 

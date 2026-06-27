@@ -26,8 +26,15 @@
     │
     ├── nginx/
     │   ├── nginx.conf              # Nginx 主配置
-    │   ├── conf.d/
-    │   │   └── default.conf        # 站点配置（反向代理规则）
+    │   ├── docker-entrypoint.d/
+    │   │   └── 10-select-templates.sh # 按 ENABLE_HTTPS 选择模板
+    │   ├── optional-templates/
+    │   │   └── https.conf.template # HTTPS 配置模板（按需启用）
+    │   ├── snippets/
+    │   │   └── proxy-locations.conf # HTTP/HTTPS 共用代理规则
+    │   ├── templates/
+    │   │   ├── 00-upstreams.conf.template # 上游服务配置模板
+    │   │   └── default.conf.template # HTTP 站点配置模板
     │   └── ssl/                    # SSL 证书目录（需自行放置）
     │
     └── init-db/
@@ -137,17 +144,23 @@ vim .env  # 修改配置
 - 调整压缩策略
 - 修改上传大小限制
 
-### docker/nginx/conf.d/default.conf
+### docker/nginx/templates/*.template
 
-**作用**：Nginx 站点配置，定义反向代理规则。
+**作用**：Nginx 基础配置模板，定义上游服务和 HTTP 站点，并通过 `.env` 中的 `APP_DOMAIN` 渲染 `server_name`。
 
 **核心功能**：
-- `/api/` 请求代理到后端服务（解决跨域）
-- `/` 请求代理到前端服务
-- 静态资源缓存策略
-- 安全响应头设置
-- WebSocket 支持
-- HTTPS 配置模板（已注释）
+- 上游服务配置（backend/frontend）
+- HTTP `server` 配置
+- 通过片段复用代理规则
+
+### docker/nginx/optional-templates/https.conf.template
+
+**作用**：HTTPS 配置模板。仅当 `.env` 中 `ENABLE_HTTPS=true` 时由启动脚本复制并渲染。
+
+**核心功能**：
+- 启用 443 SSL 监听
+- 使用 `docker/nginx/ssl/cert.pem` 和 `key.pem`
+- 复用 HTTP 相同的代理规则
 
 **代理规则**：
 ```
@@ -286,7 +299,10 @@ docker-compose.yml
 ├── 构建 backend/Dockerfile
 ├── 构建 frontend/Dockerfile
 ├── 挂载 docker/nginx/nginx.conf
-├── 挂载 docker/nginx/conf.d/default.conf
+├── 挂载 docker/nginx/docker-entrypoint.d/10-select-templates.sh
+├── 挂载 docker/nginx/templates/*.template
+├── 挂载 docker/nginx/optional-templates/*.template
+├── 挂载 docker/nginx/snippets/*.conf
 └── 挂载 docker/init-db/*.sql
 
 deploy.sh
@@ -314,9 +330,9 @@ verify-db.sh
 - 重启：`docker-compose up -d frontend`
 
 ### 修改 Nginx 配置
-- 编辑 `docker/nginx/conf.d/default.conf`
+- 编辑 `docker/nginx/templates/default.conf.template`、`docker/nginx/optional-templates/https.conf.template` 或 `docker/nginx/snippets/proxy-locations.conf`
+- 重建 Nginx 容器以重新渲染模板：`docker-compose up -d --force-recreate nginx`
 - 测试：`docker-compose exec nginx nginx -t`
-- 重载：`docker-compose exec nginx nginx -s reload`
 
 ### 添加数据库扩展
 - 编辑 `docker/init-db/01-init.sql`
@@ -328,9 +344,8 @@ verify-db.sh
 
 ### 启用 HTTPS
 1. 准备证书放到 `docker/nginx/ssl/`
-2. 编辑 `docker/nginx/conf.d/default.conf`
-3. 编辑 `.env` 设置 `NGINX_HTTPS_PORT=443`
-4. 重启：`docker-compose restart nginx`
+2. 编辑 `.env` 设置 `ENABLE_HTTPS=true`，按需设置 `NGINX_HTTPS_PORT=443`
+3. 重建 Nginx 容器：`docker-compose up -d --force-recreate nginx`
 
 ## 📖 学习路径建议
 

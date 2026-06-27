@@ -1,0 +1,7 @@
+# HTTP 服务器
+server {
+    listen 80;
+    server_name ${APP_DOMAIN};
+
+    include /etc/nginx/snippets/proxy-locations.conf;
+}
