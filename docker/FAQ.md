@@ -213,9 +213,10 @@ Nginx 配置已经优化：
 
 简要步骤：
 1. 准备 SSL 证书放到 `docker/nginx/ssl/`
-2. 编辑 `docker/nginx/conf.d/default.conf`，取消 HTTPS server 块的注释
-3. 修改 `.env` 文件：`NGINX_HTTPS_PORT=443`
-4. 重启：`docker-compose restart nginx`
+2. 修改 `.env` 文件：`ENABLE_HTTPS=true`，按需设置 `NGINX_HTTPS_PORT=443`
+3. 重新创建 Nginx 容器：`docker-compose up -d --force-recreate nginx`
+
+如果缺少 `docker/nginx/ssl/cert.pem` 或 `docker/nginx/ssl/key.pem`，Nginx 容器会停止并在日志中提示证书文件缺失。
 
 ### Q: 如何修改 Nginx 配置？
 
@@ -223,16 +224,14 @@ Nginx 配置已经优化：
 
 ```bash
 # 编辑配置
-vim docker/nginx/conf.d/default.conf
+vim docker/nginx/templates/default.conf.template
+vim docker/nginx/snippets/proxy-locations.conf
 
-# 测试配置是否正确
+# 重新创建 Nginx 容器以重新渲染模板
+docker-compose up -d --force-recreate nginx
+
+# 测试生成后的配置是否正确
 docker-compose exec nginx nginx -t
-
-# 重新加载配置（不中断服务）
-docker-compose exec nginx nginx -s reload
-
-# 或重启 Nginx 服务
-docker-compose restart nginx
 ```
 
 ### Q: Nginx 日志在哪里？

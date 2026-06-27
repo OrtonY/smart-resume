@@ -44,6 +44,7 @@ vim .env
 |--------|------|--------|--------------|
 | `DB_PASSWORD` | 数据库密码 | `postgres` | ✅ 生产环境必须修改 |
 | `TOKEN_SECRET` | JWT 密钥 | `change-me-in-production-use-a-long-random-string` | ✅ 生产环境必须修改 |
+| `APP_DOMAIN` | 应用访问域名，用于 Nginx `server_name` | `localhost` | ✅ 域名部署时修改 |
 | `NGINX_HTTP_PORT` | HTTP 端口 | `80` | ⚠️ 端口冲突时修改 |
 | `BACKEND_PORT` | 后端服务端口 | `8080` | ⚠️ 端口冲突时修改 |
 | `DB_PORT` | 数据库端口 | `5432` | ⚠️ 端口冲突时修改 |
@@ -169,8 +170,15 @@ cat backup.sql | docker-compose exec -T database psql -U postgres -d smart_resum
 └── docker/
     ├── nginx/
     │   ├── nginx.conf          # Nginx 主配置
-    │   ├── conf.d/
-    │   │   └── default.conf    # 站点配置（反向代理规则）
+    │   ├── docker-entrypoint.d/
+    │   │   └── 10-select-templates.sh # 按 ENABLE_HTTPS 选择模板
+    │   ├── optional-templates/
+    │   │   └── https.conf.template # HTTPS 配置模板
+    │   ├── snippets/
+    │   │   └── proxy-locations.conf # HTTP/HTTPS 共用代理规则
+    │   ├── templates/
+    │   │   ├── 00-upstreams.conf.template # 上游服务配置
+    │   │   └── default.conf.template # HTTP 站点配置模板
     │   └── ssl/                # SSL 证书目录（可选）
     └── init-db/
         └── 01-init.sql         # 数据库初始化脚本
@@ -186,18 +194,18 @@ cat backup.sql | docker-compose exec -T database psql -U postgres -d smart_resum
    docker/nginx/ssl/key.pem
    ```
 
-2. 编辑 `docker/nginx/conf.d/default.conf`，取消 HTTPS server 块的注释
-
-3. 修改 `.env` 文件：
+2. 修改 `.env` 文件：
    ```env
    ENABLE_HTTPS=true
    NGINX_HTTPS_PORT=443
    ```
 
-4. 重启 Nginx 服务：
+3. 重新创建 Nginx 容器，使启动脚本自动生成 HTTPS 配置：
    ```bash
-   docker-compose restart nginx
+   docker-compose up -d --force-recreate nginx
    ```
+
+启用 HTTPS 时，Nginx 启动脚本会检查证书文件是否存在；缺少 `cert.pem` 或 `key.pem` 时容器会停止并输出错误。
 
 ### 自定义 JVM 参数
 
@@ -208,11 +216,13 @@ JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200
 
 ### 修改 Nginx 配置
 
-1. 编辑 `docker/nginx/conf.d/default.conf`
-2. 重新加载配置：
+1. 编辑 `docker/nginx/templates/default.conf.template`、`docker/nginx/optional-templates/https.conf.template` 或 `docker/nginx/snippets/proxy-locations.conf`
+2. 重新创建 Nginx 容器以重新渲染模板：
    ```bash
-   docker-compose exec nginx nginx -s reload
+   docker-compose up -d --force-recreate nginx
    ```
+
+修改 `.env` 中的 `APP_DOMAIN` 或 `ENABLE_HTTPS` 后同样需要重新创建 Nginx 容器，生成后的 `server_name` 和 HTTPS server 会使用新的配置。
 
 ### 数据持久化
 

@@ -59,13 +59,19 @@ openssl rand -base64 64 | tr -d '\n'
   - [ ] `backend/Dockerfile`
   - [ ] `frontend/Dockerfile`
   - [ ] `docker/nginx/nginx.conf`
-  - [ ] `docker/nginx/conf.d/default.conf`
+  - [ ] `docker/nginx/docker-entrypoint.d/10-select-templates.sh`
+  - [ ] `docker/nginx/templates/00-upstreams.conf.template`
+  - [ ] `docker/nginx/templates/default.conf.template`
+  - [ ] `docker/nginx/optional-templates/https.conf.template`
+  - [ ] `docker/nginx/snippets/proxy-locations.conf`
   - [ ] `docker/init-db/01-init.sql`
 
 验证文件：
 ```bash
 ls -l docker-compose.yml backend/Dockerfile frontend/Dockerfile
-ls -l docker/nginx/nginx.conf docker/nginx/conf.d/default.conf
+ls -l docker/nginx/nginx.conf docker/nginx/docker-entrypoint.d/10-select-templates.sh
+ls -l docker/nginx/templates/00-upstreams.conf.template docker/nginx/templates/default.conf.template
+ls -l docker/nginx/optional-templates/https.conf.template docker/nginx/snippets/proxy-locations.conf
 ls -l docker/init-db/01-init.sql
 ```
 
