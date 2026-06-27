@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 81
-- **Last Active**: 2026-06-16
+- **Total Sessions**: 82
+- **Last Active**: 2026-06-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~737 | Active |
+| `journal-2.md` | ~773 | Active |
 | `journal-1.md` | ~1980 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 82 | 2026-06-27 | Support configurable nginx domain | `7f6bd8d` | `codex/support-app-domain-nginx` |
 | 81 | 2026-06-16 | 修复模板 i18n 对象渲染错误 | `549ba42` | `develop` |
 | 80 | 2026-06-16 | Release v1.3.1 | `1be35e9` | `release/v1.3.1` |
 | 79 | 2026-06-05 | Release v1.3.0 | `1526509` | `codex/release-v1-3-0` |
