@@ -28,6 +28,14 @@ print_error() {
     echo -e "${RED}[✗]${NC} $1"
 }
 
+docker_compose() {
+    if command -v docker-compose &> /dev/null; then
+        docker-compose "$@"
+    else
+        docker compose "$@"
+    fi
+}
+
 # 加载环境变量
 if [ -f .env ]; then
     source .env
@@ -46,16 +54,16 @@ echo ""
 
 # 检查容器是否运行
 print_info "检查容器状态..."
-if ! docker-compose ps database | grep -q "Up"; then
+if ! docker_compose ps database | grep -q "Up"; then
     print_error "数据库容器未运行"
-    print_info "尝试启动: docker-compose up -d database"
+    print_info "尝试启动: docker compose up -d database"
     exit 1
 fi
 print_success "数据库容器正在运行"
 
 # 检查数据库连接
 print_info "检查数据库连接..."
-if ! docker-compose exec -T database pg_isready -U $DB_USER > /dev/null 2>&1; then
+if ! docker_compose exec -T database pg_isready -U $DB_USER > /dev/null 2>&1; then
     print_error "无法连接到数据库"
     exit 1
 fi
@@ -63,7 +71,7 @@ print_success "数据库连接正常"
 
 # 检查数据库是否存在
 print_info "检查数据库 '$DB_NAME' 是否存在..."
-DB_EXISTS=$(docker-compose exec -T database psql -U $DB_USER -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null || echo "")
+DB_EXISTS=$(docker_compose exec -T database psql -U $DB_USER -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null || echo "")
 if [ "$DB_EXISTS" = "1" ]; then
     print_success "数据库 '$DB_NAME' 已创建"
 else
@@ -74,7 +82,7 @@ fi
 
 # 检查扩展
 print_info "检查数据库扩展..."
-EXTENSIONS=$(docker-compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SELECT extname FROM pg_extension WHERE extname IN ('uuid-ossp', 'pg_trgm')" 2>/dev/null | tr '\n' ' ')
+EXTENSIONS=$(docker_compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SELECT extname FROM pg_extension WHERE extname IN ('uuid-ossp', 'pg_trgm')" 2>/dev/null | tr '\n' ' ')
 if [[ $EXTENSIONS == *"uuid-ossp"* ]]; then
     print_success "扩展 uuid-ossp 已安装"
 else
@@ -89,24 +97,24 @@ fi
 
 # 检查时区设置
 print_info "检查时区设置..."
-TIMEZONE=$(docker-compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SHOW timezone" 2>/dev/null | tr -d '[:space:]')
+TIMEZONE=$(docker_compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SHOW timezone" 2>/dev/null | tr -d '[:space:]')
 print_success "时区: $TIMEZONE"
 
 # 检查数据库版本
 print_info "检查 PostgreSQL 版本..."
-PG_VERSION=$(docker-compose exec -T database psql -U $DB_USER -tAc "SELECT version()" 2>/dev/null | head -n 1)
+PG_VERSION=$(docker_compose exec -T database psql -U $DB_USER -tAc "SELECT version()" 2>/dev/null | head -n 1)
 print_success "$PG_VERSION"
 
 # 检查表是否已创建（Flyway 迁移）
 print_info "检查数据库表..."
-TABLE_COUNT=$(docker-compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null || echo "0")
+TABLE_COUNT=$(docker_compose exec -T database psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null || echo "0")
 if [ "$TABLE_COUNT" -gt 0 ]; then
     print_success "已创建 $TABLE_COUNT 张表"
 
     # 列出所有表
     echo ""
     print_info "数据库表列表："
-    docker-compose exec -T database psql -U $DB_USER -d $DB_NAME -c "\dt" 2>/dev/null || true
+    docker_compose exec -T database psql -U $DB_USER -d $DB_NAME -c "\dt" 2>/dev/null || true
 else
     print_warning "未发现任何表"
     print_info "如果后端还未启动，这是正常的。表结构由 Flyway 在后端启动时创建。"
@@ -126,5 +134,5 @@ echo "  Database: $DB_NAME"
 echo "  Username: $DB_USER"
 echo ""
 print_info "使用以下命令连接数据库："
-echo "  docker-compose exec database psql -U $DB_USER -d $DB_NAME"
+echo "  docker compose exec database psql -U $DB_USER -d $DB_NAME"
 echo ""

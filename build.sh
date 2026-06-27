@@ -12,6 +12,17 @@ REQUIRED_JAVA_MAJOR=21
 PLAYWRIGHT_CHROMIUM_REVISION=1223
 PLAYWRIGHT_CHROMIUM_HEADLESS_SHELL_REVISION=1223
 
+backend_version() {
+  awk '
+    /<artifactId>backend<\/artifactId>/ { seen = 1; next }
+    seen && /<version>/ {
+      gsub(/.*<version>|<\/version>.*/, "")
+      print
+      exit
+    }
+  ' "$BACKEND_DIR/pom.xml"
+}
+
 playwright_browsers_path() {
   if [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ "${PLAYWRIGHT_BROWSERS_PATH}" != "0" ]; then
     echo "$PLAYWRIGHT_BROWSERS_PATH"
@@ -98,6 +109,13 @@ echo "==> Building backend..."
 cd "$BACKEND_DIR"
 ./mvnw package -DskipTests -q
 
+BACKEND_VERSION="$(backend_version)"
+BACKEND_JAR="$BACKEND_DIR/target/backend-${BACKEND_VERSION}.jar"
+if [ ! -f "$BACKEND_JAR" ]; then
+  echo "[ERROR] Backend JAR not found: $BACKEND_JAR"
+  exit 1
+fi
+
 if playwright_chromium_installed; then
   echo "[OK] Playwright Chromium is already installed."
 else
@@ -107,7 +125,7 @@ fi
 
 echo ""
 echo "=== Build complete ==="
-echo "Backend JAR: $BACKEND_DIR/target/backend-1.3.1.jar"
+echo "Backend JAR: $BACKEND_JAR"
 echo "Browser extension: $BROWSER_EXTENSION_DIR/dist"
 echo ""
-echo "To start: java -jar backend/target/backend-1.3.1.jar"
+echo "To start: java -jar backend/target/backend-${BACKEND_VERSION}.jar"

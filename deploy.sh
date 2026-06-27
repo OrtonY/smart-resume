@@ -23,6 +23,21 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+docker_compose() {
+    if command -v docker-compose &> /dev/null; then
+        docker-compose "$@"
+    else
+        docker compose "$@"
+    fi
+}
+
+is_truthy() {
+    case "$(printf '%s' "${1:-false}" | tr '[:upper:]' '[:lower:]')" in
+        true|1|yes|on) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # 检查 Docker 是否安装
 check_docker() {
     if ! command -v docker &> /dev/null; then
@@ -62,8 +77,8 @@ check_env_file() {
 check_ports() {
     source .env 2>/dev/null || true
 
-    local ports=(${NGINX_HTTP_PORT:-80} ${BACKEND_PORT:-8080} ${DB_PORT:-5432})
-    local port_names=("Nginx HTTP" "Backend" "Database")
+    local ports=(${NGINX_HTTP_PORT:-80} ${NGINX_HTTPS_PORT:-443} ${BACKEND_PORT:-8080} ${DB_PORT:-5432})
+    local port_names=("Nginx HTTP" "Nginx HTTPS" "Backend" "Database")
 
     for i in "${!ports[@]}"; do
         local port=${ports[$i]}
@@ -81,19 +96,30 @@ check_ports() {
     done
 }
 
+check_https_config() {
+    source .env 2>/dev/null || true
+
+    if is_truthy "${ENABLE_HTTPS:-false}"; then
+        if [ ! -r docker/nginx/ssl/cert.pem ] || [ ! -r docker/nginx/ssl/key.pem ]; then
+            print_error "ENABLE_HTTPS=true 需要 docker/nginx/ssl/cert.pem 和 docker/nginx/ssl/key.pem"
+            exit 1
+        fi
+    fi
+}
+
 # 构建并启动服务
 start_services() {
     print_info "开始构建 Docker 镜像..."
-    docker-compose build
+    docker_compose build
 
     print_info "启动服务..."
-    docker-compose up -d
+    docker_compose up -d
 
     print_info "等待服务启动..."
     sleep 10
 
     print_info "检查服务状态..."
-    docker-compose ps
+    docker_compose ps
 }
 
 # 显示访问信息
@@ -101,6 +127,21 @@ show_access_info() {
     source .env 2>/dev/null || true
 
     local http_port=${NGINX_HTTP_PORT:-80}
+    local https_port=${NGINX_HTTPS_PORT:-443}
+    local app_domain=${APP_DOMAIN:-localhost}
+    local primary_domain=${app_domain%% *}
+    local scheme="http"
+    local app_port="$http_port"
+
+    if is_truthy "${ENABLE_HTTPS:-false}"; then
+        scheme="https"
+        app_port="$https_port"
+    fi
+
+    local base_url="${scheme}://${primary_domain}"
+    if { [ "$scheme" = "http" ] && [ "$app_port" != "80" ]; } || { [ "$scheme" = "https" ] && [ "$app_port" != "443" ]; }; then
+        base_url="${base_url}:${app_port}"
+    fi
 
     echo ""
     print_info "========================================"
@@ -108,8 +149,9 @@ show_access_info() {
     print_info "========================================"
     echo ""
     print_info "访问地址:"
-    print_info "  前端应用: http://localhost:${http_port}"
-    print_info "  后端 API: http://localhost:${http_port}/api"
+    print_info "  前端应用: ${base_url}"
+    print_info "  后端 API: ${base_url}/api"
+    print_info "  Nginx server_name: ${app_domain}"
     echo ""
     print_info "数据库连接信息:"
     print_info "  Host: localhost"
@@ -118,10 +160,11 @@ show_access_info() {
     print_info "  Username: ${DB_USER:-postgres}"
     echo ""
     print_info "常用命令:"
-    print_info "  查看日志: docker-compose logs -f"
-    print_info "  停止服务: docker-compose stop"
-    print_info "  重启服务: docker-compose restart"
-    print_info "  删除服务: docker-compose down"
+    print_info "  查看日志: docker compose logs -f"
+    print_info "  停止服务: docker compose stop"
+    print_info "  重启服务: docker compose restart"
+    print_info "  删除服务: docker compose down"
+    print_info "  修改 APP_DOMAIN/ENABLE_HTTPS 后重建 Nginx: docker compose up -d --force-recreate nginx"
     echo ""
 }
 
@@ -132,6 +175,7 @@ main() {
     check_docker
     check_env_file
     check_ports
+    check_https_config
     start_services
     show_access_info
 

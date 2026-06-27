@@ -230,7 +230,13 @@ vim .env
 docker-compose up -d
 ```
 
-Access the application at http://localhost
+Or run the deployment helper, which creates `.env` when needed, checks ports and HTTPS certificates, then starts the stack:
+
+```bash
+./deploy.sh
+```
+
+Access the application at `http://localhost` by default, or at the `APP_DOMAIN`/HTTPS URL configured in `.env`.
 
 For detailed deployment instructions, see [Docker Deployment Guide](docker/README.md)
 
