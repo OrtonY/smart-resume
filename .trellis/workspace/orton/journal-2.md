@@ -735,3 +735,75 @@ Bump version to 1.3.1 in backend, frontend, browser extension, and build scripts
 ### Next Steps
 
 - None - task complete
+
+
+## Session 82: Support configurable nginx domain
+
+**Date**: 2026-06-27
+**Task**: Support configurable nginx domain
+**Branch**: `codex/support-app-domain-nginx`
+
+### Summary
+
+Support changing the deployed domain through .env and Docker Compose nginx template rendering.
+
+### Main Changes
+
+- Added APP_DOMAIN-driven nginx templates so server_name is rendered from Docker environment.
+- Added HTTPS template selection through the nginx entrypoint while keeping HTTP deploys working by default.
+- Verified docker compose config and nginx -T render APP_DOMAIN into the final nginx config.
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7f6bd8d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 82: Support configurable nginx domain
+
+**Date**: 2026-06-27
+**Task**: Support configurable nginx domain
+**Branch**: `codex/support-app-domain-nginx`
+
+### Summary
+
+Support changing the deployed domain through .env and Docker Compose nginx template rendering.
+
+### Main Changes
+
+- Added APP_DOMAIN-driven nginx templates so server_name is rendered from Docker environment.
+- Added HTTPS template selection through the nginx entrypoint while keeping HTTP deploys working by default.
+- Verified docker compose config and nginx -T render APP_DOMAIN into the final nginx config.
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7f6bd8d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
