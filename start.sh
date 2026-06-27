@@ -6,7 +6,6 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 BROWSER_EXTENSION_DIR="$PROJECT_ROOT/browser-extension"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 BACKEND_STATIC_DIR="$BACKEND_DIR/src/main/resources/static"
-BACKEND_JAR="$BACKEND_DIR/target/backend-1.3.1.jar"
 
 REQUIRED_NODE_MAJOR=20
 REQUIRED_JAVA_MAJOR=21
@@ -24,6 +23,17 @@ cleanup() {
 }
 
 trap cleanup EXIT INT TERM
+
+backend_version() {
+  awk '
+    /<artifactId>backend<\/artifactId>/ { seen = 1; next }
+    seen && /<version>/ {
+      gsub(/.*<version>|<\/version>.*/, "")
+      print
+      exit
+    }
+  ' "$BACKEND_DIR/pom.xml"
+}
 
 playwright_browsers_path() {
   if [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ "${PLAYWRIGHT_BROWSERS_PATH}" != "0" ]; then
@@ -110,6 +120,13 @@ npm run build
 echo "==> Building backend..."
 cd "$BACKEND_DIR"
 ./mvnw package -DskipTests -q
+
+BACKEND_VERSION="$(backend_version)"
+BACKEND_JAR="$BACKEND_DIR/target/backend-${BACKEND_VERSION}.jar"
+if [ ! -f "$BACKEND_JAR" ]; then
+  echo "[ERROR] Backend JAR not found: $BACKEND_JAR"
+  exit 1
+fi
 
 if playwright_chromium_installed; then
   echo "[OK] Playwright Chromium is already installed."
