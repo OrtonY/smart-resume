@@ -1,5 +1,5 @@
 # 多阶段构建 - 构建阶段
-FROM maven:3.9-amazoncorretto-21-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests -B
 
 # 运行阶段
-FROM alpine/java:21-jre
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
